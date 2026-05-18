@@ -44,6 +44,26 @@ class SourceLicensePolicy:
 Rows without acceptable license metadata are excluded from public dataset
 artifacts unless a source-level license grants use.
 
+The default public full-text artifact policy allows only clearly permissive
+licenses:
+
+```python
+PERMISSIVE_PUBLIC_LICENSES = (
+    "apache-2.0",
+    "bsd-2-clause",
+    "bsd-3-clause",
+    "cc0-1.0",
+    "isc",
+    "mit",
+    "unlicense",
+)
+```
+
+Missing, unknown, copyleft, or otherwise non-allowlisted license values produce
+`LicenseDecision(allowed=False, artifact_policy="exclude")`. The decision is
+attached to filter drop records so public dataset reports can account for every
+license exclusion.
+
 ## Public Artifact Policy
 
 - Public dataset cards must state source mix, license policy, row counts, and
