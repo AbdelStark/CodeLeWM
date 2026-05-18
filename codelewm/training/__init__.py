@@ -20,6 +20,17 @@ from .config import (
     load_train_config,
     validate_train_config,
 )
+from .runner import (
+    TRAINING_METRICS_SCHEMA_VERSION,
+    TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
+    TrainingExecutor,
+    TrainingExecutorResult,
+    TrainingRunContext,
+    TrainingRunError,
+    TrainingRunManifest,
+    read_training_run_manifest,
+    train,
+)
 
 __all__ = [
     "DEFAULT_SMALL_TRAIN_CONFIG",
@@ -33,9 +44,18 @@ __all__ = [
     "TrainDataConfig",
     "TrainerConfig",
     "TrainingLossConfig",
+    "TRAINING_METRICS_SCHEMA_VERSION",
+    "TRAINING_RUN_MANIFEST_SCHEMA_VERSION",
+    "TrainingExecutor",
+    "TrainingExecutorResult",
+    "TrainingRunContext",
+    "TrainingRunError",
+    "TrainingRunManifest",
     "WorldModelTrainConfig",
     "default_train_config_paths",
     "load_default_train_configs",
     "load_train_config",
+    "read_training_run_manifest",
+    "train",
     "validate_train_config",
 ]
