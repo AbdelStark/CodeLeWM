@@ -146,6 +146,27 @@ Drop rows with:
 - huge literal/table changes;
 - syntax-invalid after states.
 
+Filter passes must emit machine-readable drop records. At minimum each dropped
+row records a stable row identifier, a reason code, a human-readable message,
+and structured details. The initial reason-code set is:
+
+```python
+DropReasonCode = Literal[
+    "parse_error",
+    "non_python_path",
+    "empty_state",
+    "whitespace_only_change",
+    "edit_size",
+    "edit_ratio",
+    "message_length",
+    "generated_file",
+    "license_denied",
+]
+```
+
+Filter reports include `total_before`, `total_after`, `total_dropped`, and
+`drop_reasons` counts. Silent row drops are invalid.
+
 ## Split Policy
 
 Primary split key:
