@@ -22,6 +22,22 @@ from .actions import (
     TextActionEncoderConfig,
     TextActionTokenizer,
 )
+from .checkpoint import (
+    CHECKPOINT_SCHEMA_VERSION,
+    DEFAULT_RECORD_SCHEMA_VERSION,
+    CheckpointCompatibilityError,
+    CheckpointCompatibilitySpec,
+    CheckpointManifest,
+    CheckpointMetadata,
+    build_checkpoint_metadata,
+    compute_config_hash,
+    load_checkpoint_manifest,
+    migrate_checkpoint_manifest,
+    read_checkpoint_manifest,
+    validate_checkpoint_compatibility,
+    validate_checkpoint_file,
+    write_checkpoint_manifest,
+)
 from .predictor import (
     CodeLatentPredictor,
     CodeLatentPredictorConfig,
@@ -29,6 +45,12 @@ from .predictor import (
 
 __all__ = [
     "ABSTRACT_ACTION_SEQUENCE_LENGTH",
+    "CHECKPOINT_SCHEMA_VERSION",
+    "DEFAULT_RECORD_SCHEMA_VERSION",
+    "CheckpointCompatibilityError",
+    "CheckpointCompatibilitySpec",
+    "CheckpointManifest",
+    "CheckpointMetadata",
     "CodeLatentPredictor",
     "CodeLatentPredictorConfig",
     "LATENT_DIM",
@@ -43,7 +65,15 @@ __all__ = [
     "TextActionEncoderConfig",
     "TextActionTokenizer",
     "TransitionBatch",
+    "build_checkpoint_metadata",
+    "compute_config_hash",
     "expected_action_sequence_length",
     "infer_shape",
+    "load_checkpoint_manifest",
+    "migrate_checkpoint_manifest",
+    "read_checkpoint_manifest",
     "transition_energy",
+    "validate_checkpoint_compatibility",
+    "validate_checkpoint_file",
+    "write_checkpoint_manifest",
 ]

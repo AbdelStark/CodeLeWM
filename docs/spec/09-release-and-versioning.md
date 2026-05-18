@@ -16,6 +16,25 @@ Dataset schemas, manifests, score outputs, and evaluation reports carry explicit
 schema versions. A schema version can be loaded only by compatible code or by an
 explicit migration command.
 
+## Checkpoint Compatibility
+
+Checkpoint artifacts must be accompanied by a JSON manifest before model weights
+are loaded. The manifest records:
+
+- checkpoint schema version;
+- transition-record schema version;
+- latent dimension;
+- action view;
+- resolved training config hash;
+- checkpoint file checksum;
+- optional migration hook name.
+
+The loader verifies the manifest schema, checkpoint checksum, record schema,
+latent dimension, action view, and config hash before any serialized checkpoint
+object is loaded. Mismatches raise `CheckpointCompatibilityError`. A recorded
+migration hook is only a placeholder for an explicit migration command; loading
+never runs migration implicitly.
+
 ## Deprecation
 
 Deprecations require:
