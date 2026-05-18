@@ -37,6 +37,7 @@ All commands support:
 ```python
 from pathlib import Path
 from codelewm.harness import load_scorer
+from codelewm.model import AbstractActionEncoderConfig, TextActionEncoderConfig
 
 scorer = load_scorer(Path("runs/v0_1/checkpoint.pt"), device="cuda")
 result = scorer.score_files(
@@ -45,6 +46,10 @@ result = scorer.score_files(
     candidate=Path("after.py"),
 )
 ```
+
+Public model configuration helpers include `TextActionEncoderConfig` for the
+headline text action path and `AbstractActionEncoderConfig` for structural
+ablation runs. Both project action encodings to the v0.1 latent dimension.
 
 `ScoreResult` schema:
 
