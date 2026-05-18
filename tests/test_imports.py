@@ -11,11 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 class PackageImportBoundaryTest(unittest.TestCase):
     def test_lightweight_package_namespaces_import(self) -> None:
         import codelewm
+        import codelewm.eval
         import codelewm.harness
         import codelewm.model
         import codelewm.training
 
         self.assertEqual(codelewm.__version__, "0.0.0")
+        self.assertIn("ActionViewReportPolicy", codelewm.eval.__all__)
         self.assertTrue(hasattr(codelewm.harness, "main"))
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)
