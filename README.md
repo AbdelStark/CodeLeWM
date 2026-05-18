@@ -45,20 +45,20 @@ The current package includes:
 - `codelewm.model`: tensor contracts, text and abstract action tokenizers and
   encoders, pooled code-latent predictor adapter, transition energy, checkpoint
   compatibility manifests, MSE plus SIGReg objective, and gated retrieval loss;
-- `codelewm.eval`: action-view report policy, retrieval metrics and candidate
-  pool reports, collapse diagnostics, evaluation gates, and kill-report
-  artifacts;
+- `codelewm.eval`: action-view report policy, retrieval metrics, easy and hard
+  candidate-pool reports, collapse diagnostics, evaluation gates, and
+  kill-report artifacts;
 - `codelewm.harness`: package CLI entry point and the boundary for future
   scoring and reranking commands;
 - `codelewm.security`: license decision policy helpers;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
-the CPU smoke training path, and the retrieval report contract are implemented;
-the patch scorer, reranker, and release CI still need to land. Root `train.py`,
-`eval.py`, and the existing Hydra configs are inherited from the original
-LeWorldModel seed and are kept for compatibility while the package runtime
-continues to replace them.
+the CPU smoke training path, retrieval reports, and hard-negative sampling are
+implemented; the patch scorer, reranker, and release CI still need to land. Root
+`train.py`, `eval.py`, and the existing Hydra configs are inherited from the
+original LeWorldModel seed and are kept for compatibility while the package
+runtime continues to replace them.
 
 ## Core Concepts
 

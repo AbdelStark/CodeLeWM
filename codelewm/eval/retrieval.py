@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import random
@@ -15,6 +16,8 @@ from typing import Any
 RETRIEVAL_METRICS_SCHEMA_VERSION = "codelewm.eval.retrieval_metrics.v1"
 RETRIEVAL_REPORT_SCHEMA_VERSION = "codelewm.eval.retrieval_report.v1"
 CANDIDATE_POOL_SCHEMA_VERSION = "codelewm.eval.candidate_pool.v1"
+HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION = "codelewm.eval.hard_negative_sample.v1"
+HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION = "codelewm.eval.hard_negative_sampler_report.v1"
 TRAIN_SPLITS = frozenset({"train"})
 
 
@@ -124,6 +127,7 @@ class CandidatePool:
     seed: int | None = None
     max_size: int | None = None
     excluded_splits: tuple[str, ...] = ("train",)
+    metadata: Mapping[str, Any] = field(default_factory=dict)
     schema_version: str = CANDIDATE_POOL_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -142,6 +146,7 @@ class CandidatePool:
             "max_size": self.max_size,
             "excluded_splits": list(self.excluded_splits),
             "entries": [entry.to_dict() for entry in self.entries],
+            "metadata": dict(self.metadata),
         }
 
     @classmethod
@@ -156,6 +161,147 @@ class CandidatePool:
             max_size=_optional_int(payload.get("max_size"), "max_size"),
             excluded_splits=tuple(_split_name(split) for split in payload.get("excluded_splits", ("train",))),
             entries=entries,
+            metadata=dict(payload.get("metadata", {})),
+        )
+
+
+@dataclass(frozen=True)
+class HardNegativeSamplerConfig:
+    """Configuration for deterministic hard-negative sampling."""
+
+    max_negatives: int = 1000
+    seed: int = 0
+    edit_size_bucket_width: int = 10
+    exclude_splits: tuple[str, ...] = ("train",)
+    pool_name: str = "hard-1k"
+
+    def __post_init__(self) -> None:
+        _positive_int(self.max_negatives, "max_negatives")
+        _positive_int(self.edit_size_bucket_width, "edit_size_bucket_width")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise RetrievalEvalError("seed must be an integer")
+        if not self.pool_name:
+            raise RetrievalEvalError("pool_name must not be empty")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "max_negatives": self.max_negatives,
+            "seed": self.seed,
+            "edit_size_bucket_width": self.edit_size_bucket_width,
+            "exclude_splits": list(self.exclude_splits),
+            "pool_name": self.pool_name,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "HardNegativeSamplerConfig":
+        return cls(
+            max_negatives=_positive_int(payload.get("max_negatives", 1000), "max_negatives"),
+            seed=int(payload.get("seed", 0)),
+            edit_size_bucket_width=_positive_int(
+                payload.get("edit_size_bucket_width", 10),
+                "edit_size_bucket_width",
+            ),
+            exclude_splits=tuple(_split_name(split) for split in payload.get("exclude_splits", ("train",))),
+            pool_name=str(payload.get("pool_name", "hard-1k")),
+        )
+
+
+@dataclass(frozen=True)
+class HardNegativeSample:
+    """Hard-negative selection and composition for one query target."""
+
+    query_id: str
+    target_id: str
+    negative_ids: tuple[str, ...]
+    requested_negatives: int
+    available_negatives: int
+    composition: Mapping[str, int]
+    rejected: Mapping[str, int]
+    schema_version: str = HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION:
+            raise RetrievalEvalError("unsupported hard-negative sample schema")
+        if not self.query_id or not self.target_id:
+            raise RetrievalEvalError("hard-negative sample requires query_id and target_id")
+        if self.target_id in self.negative_ids:
+            raise RetrievalEvalError("hard-negative sample cannot include the true target")
+        if len(set(self.negative_ids)) != len(self.negative_ids):
+            raise RetrievalEvalError("hard-negative sample ids must be unique")
+        _non_negative_int(self.requested_negatives, "requested_negatives")
+        _non_negative_int(self.available_negatives, "available_negatives")
+        _validate_count_mapping(self.composition, "composition")
+        _validate_count_mapping(self.rejected, "rejected")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "query_id": self.query_id,
+            "target_id": self.target_id,
+            "negative_ids": list(self.negative_ids),
+            "requested_negatives": self.requested_negatives,
+            "available_negatives": self.available_negatives,
+            "returned_negatives": len(self.negative_ids),
+            "composition": dict(self.composition),
+            "rejected": dict(self.rejected),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "HardNegativeSample":
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            query_id=str(payload["query_id"]),
+            target_id=str(payload["target_id"]),
+            negative_ids=tuple(str(negative_id) for negative_id in payload["negative_ids"]),
+            requested_negatives=_non_negative_int(payload["requested_negatives"], "requested_negatives"),
+            available_negatives=_non_negative_int(payload["available_negatives"], "available_negatives"),
+            composition={
+                str(key): _non_negative_int(value, f"composition.{key}")
+                for key, value in payload["composition"].items()
+            },
+            rejected={
+                str(key): _non_negative_int(value, f"rejected.{key}")
+                for key, value in payload["rejected"].items()
+            },
+        )
+
+
+@dataclass(frozen=True)
+class HardNegativeSamplerReport:
+    """Aggregate sampler report over one or more query selections."""
+
+    samples: tuple[HardNegativeSample, ...]
+    config: HardNegativeSamplerConfig = field(default_factory=HardNegativeSamplerConfig)
+    schema_version: str = HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION:
+            raise RetrievalEvalError("unsupported hard-negative sampler report schema")
+        if not self.samples:
+            raise RetrievalEvalError("hard-negative sampler report requires at least one sample")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "sample_count": len(self.samples),
+            "requested_negatives": sum(sample.requested_negatives for sample in self.samples),
+            "available_negatives": sum(sample.available_negatives for sample in self.samples),
+            "returned_negatives": sum(len(sample.negative_ids) for sample in self.samples),
+            "composition": _sum_count_mappings(sample.composition for sample in self.samples),
+            "rejected": _sum_count_mappings(sample.rejected for sample in self.samples),
+            "config": self.config.to_dict(),
+            "samples": [sample.to_dict() for sample in self.samples],
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "HardNegativeSamplerReport":
+        samples = tuple(HardNegativeSample.from_dict(sample) for sample in payload["samples"])
+        if payload.get("sample_count") is not None and int(payload["sample_count"]) != len(samples):
+            raise RetrievalEvalError("hard-negative sampler sample_count does not match samples")
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            config=HardNegativeSamplerConfig.from_dict(payload["config"]),
+            samples=samples,
         )
 
 
@@ -373,6 +519,103 @@ def build_fixture_candidate_pool(
     )
 
 
+def sample_hard_negatives(
+    query: Any,
+    candidates: Iterable[Any],
+    *,
+    target_id: str | None = None,
+    config: HardNegativeSamplerConfig | None = None,
+) -> HardNegativeSample:
+    """Select deterministic hard negatives for a held-out query."""
+
+    config = HardNegativeSamplerConfig() if config is None else config
+    query_entry = _coerce_pool_entry(query)
+    target_value = query_entry.transition_id if target_id is None else str(target_id)
+    excluded = frozenset(config.exclude_splits) | TRAIN_SPLITS
+    if query_entry.split in excluded:
+        raise RetrievalEvalError(f"hard-negative query {query_entry.transition_id!r} must be held out")
+
+    rejected = {"true_target": 0, "train_leakage": 0}
+    candidate_entries = _unique_candidate_entries(candidates)
+    scored: list[_ScoredHardNegative] = []
+    rng = random.Random(config.seed + _stable_seed_offset(query_entry.transition_id))
+
+    for candidate in sorted(candidate_entries, key=lambda entry: entry.transition_id):
+        if candidate.transition_id == target_value:
+            rejected["true_target"] += 1
+            continue
+        if candidate.split in excluded:
+            rejected["train_leakage"] += 1
+            continue
+        scored.append(_score_hard_negative(query_entry, candidate, config, tie_breaker=rng.random()))
+
+    scored.sort(key=lambda item: item.sort_key)
+    selected = tuple(item for item in scored[: config.max_negatives])
+    return HardNegativeSample(
+        query_id=query_entry.transition_id,
+        target_id=target_value,
+        negative_ids=tuple(item.entry.transition_id for item in selected),
+        requested_negatives=config.max_negatives,
+        available_negatives=len(scored),
+        composition=_hard_negative_composition(selected),
+        rejected=rejected,
+    )
+
+
+def build_hard_candidate_pool(
+    query: Any,
+    candidates: Iterable[Any],
+    *,
+    target_id: str | None = None,
+    config: HardNegativeSamplerConfig | None = None,
+) -> tuple[CandidatePool, HardNegativeSample]:
+    """Return a query-specific hard pool containing target plus sampled negatives."""
+
+    config = HardNegativeSamplerConfig() if config is None else config
+    query_entry = _coerce_pool_entry(query)
+    target_value = query_entry.transition_id if target_id is None else str(target_id)
+    candidate_entries = _unique_candidate_entries(candidates)
+    by_id = {entry.transition_id: entry for entry in candidate_entries}
+    if target_value not in by_id:
+        if target_value == query_entry.transition_id:
+            by_id[target_value] = query_entry
+        else:
+            raise RetrievalEvalError(f"target id not found in candidates: {target_value}")
+
+    sample = sample_hard_negatives(
+        query_entry,
+        candidate_entries,
+        target_id=target_value,
+        config=config,
+    )
+    entries = (by_id[target_value], *(by_id[negative_id] for negative_id in sample.negative_ids))
+    pool = CandidatePool(
+        name=config.pool_name,
+        entries=entries,
+        seed=config.seed,
+        max_size=config.max_negatives + 1,
+        excluded_splits=config.exclude_splits,
+        metadata={
+            "query_id": sample.query_id,
+            "target_id": sample.target_id,
+            "negative_count": len(sample.negative_ids),
+            "sampler": sample.to_dict(),
+        },
+    )
+    return pool, sample
+
+
+def build_hard_negative_sampler_report(
+    samples: Iterable[HardNegativeSample],
+    *,
+    config: HardNegativeSamplerConfig | None = None,
+) -> HardNegativeSamplerReport:
+    """Build an aggregate report for hard-negative sampler composition."""
+
+    config = HardNegativeSamplerConfig() if config is None else config
+    return HardNegativeSamplerReport(samples=tuple(samples), config=config)
+
+
 def build_retrieval_report(
     ranks: Iterable[int],
     *,
@@ -418,6 +661,7 @@ def validate_candidate_pool(pool: CandidatePool) -> CandidatePool:
     leaked = [entry.transition_id for entry in pool.entries if entry.split in excluded]
     if leaked:
         raise RetrievalEvalError(f"candidate pool includes training rows: {', '.join(leaked)}")
+    _require_json_native(pool.metadata, "candidate pool metadata")
     return pool
 
 
@@ -534,6 +778,117 @@ def _coerce_pool_entry(value: Any) -> CandidatePoolEntry:
         raise RetrievalEvalError("candidate row must include transition_id and split") from exc
 
 
+@dataclass(frozen=True)
+class _ScoredHardNegative:
+    entry: CandidatePoolEntry
+    primary_reasons: tuple[str, ...]
+    similarity: float | None
+    tie_breaker: float
+
+    @property
+    def sort_key(self) -> tuple[int, float, float, str]:
+        similarity = float("-inf") if self.similarity is None else self.similarity
+        return (-len(self.primary_reasons), -similarity, self.tie_breaker, self.entry.transition_id)
+
+
+def _score_hard_negative(
+    query: CandidatePoolEntry,
+    candidate: CandidatePoolEntry,
+    config: HardNegativeSamplerConfig,
+    *,
+    tie_breaker: float,
+) -> _ScoredHardNegative:
+    reasons: list[str] = []
+    if candidate.source == query.source:
+        reasons.append("same_source")
+    if _edit_size_bucket(candidate.edit_size, config.edit_size_bucket_width) == _edit_size_bucket(
+        query.edit_size,
+        config.edit_size_bucket_width,
+    ):
+        reasons.append("same_edit_size_bucket")
+    query_cluster = _action_cluster(query)
+    candidate_cluster = _action_cluster(candidate)
+    if query_cluster is not None and query_cluster == candidate_cluster:
+        reasons.append("same_action_cluster")
+    return _ScoredHardNegative(
+        entry=candidate,
+        primary_reasons=tuple(reasons),
+        similarity=_entry_similarity(candidate),
+        tie_breaker=tie_breaker,
+    )
+
+
+def _hard_negative_composition(selected: Sequence[_ScoredHardNegative]) -> dict[str, int]:
+    composition = {
+        "same_source": 0,
+        "same_edit_size_bucket": 0,
+        "same_action_cluster": 0,
+        "similarity_ranked": 0,
+        "fallback": 0,
+    }
+    for item in selected:
+        for reason in item.primary_reasons:
+            composition[reason] += 1
+        if item.similarity is not None:
+            composition["similarity_ranked"] += 1
+        if not item.primary_reasons and item.similarity is None:
+            composition["fallback"] += 1
+    return composition
+
+
+def _unique_candidate_entries(rows: Iterable[Any]) -> tuple[CandidatePoolEntry, ...]:
+    entries: dict[str, CandidatePoolEntry] = {}
+    for row in rows:
+        entry = _coerce_pool_entry(row)
+        if entry.transition_id in entries:
+            raise RetrievalEvalError(f"duplicate candidate row id: {entry.transition_id}")
+        entries[entry.transition_id] = entry
+    return tuple(entries.values())
+
+
+def _action_cluster(entry: CandidatePoolEntry) -> str | None:
+    for key in ("action_cluster", "weak_action_cluster", "action_abs_cluster"):
+        value = entry.metadata.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return None
+
+
+def _entry_similarity(entry: CandidatePoolEntry) -> float | None:
+    for key in ("similarity", "similarity_to_query", "state_similarity", "lexical_similarity"):
+        if key not in entry.metadata or entry.metadata[key] is None:
+            continue
+        value = float(entry.metadata[key])
+        if not math.isfinite(value):
+            raise RetrievalEvalError(f"candidate {entry.transition_id!r} has non-finite similarity")
+        return value
+    return None
+
+
+def _edit_size_bucket(edit_size: int, bucket_width: int) -> int:
+    return int(edit_size) // bucket_width
+
+
+def _stable_seed_offset(value: str) -> int:
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16)
+
+
+def _validate_count_mapping(value: Mapping[str, int], name: str) -> None:
+    for key, count in value.items():
+        if not key:
+            raise RetrievalEvalError(f"{name} keys must not be empty")
+        _non_negative_int(count, f"{name}.{key}")
+
+
+def _sum_count_mappings(values: Iterable[Mapping[str, int]]) -> dict[str, int]:
+    summed: dict[str, int] = {}
+    for value in values:
+        for key, count in value.items():
+            summed[key] = summed.get(key, 0) + int(count)
+    return dict(sorted(summed.items()))
+
+
 def _recall_at(ranks: Sequence[int], cutoff: int) -> float:
     return sum(1 for rank in ranks if rank <= cutoff) / len(ranks)
 
@@ -554,6 +909,18 @@ def _optional_int(value: Any, name: str) -> int | None:
     if value is None:
         return None
     return _positive_int(value, name)
+
+
+def _non_negative_int(value: Any, name: str) -> int:
+    if isinstance(value, bool):
+        raise RetrievalEvalError(f"{name} must be a non-negative integer")
+    try:
+        result = int(value)
+    except (TypeError, ValueError) as exc:
+        raise RetrievalEvalError(f"{name} must be a non-negative integer") from exc
+    if result < 0 or result != value:
+        raise RetrievalEvalError(f"{name} must be a non-negative integer")
+    return result
 
 
 def _split_name(value: Any) -> str:
