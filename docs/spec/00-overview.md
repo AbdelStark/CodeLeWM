@@ -57,6 +57,16 @@ Deliverables:
   baselines.
 - `codelewm score` CLI that accepts before code, instruction, and candidate code.
 
+The v0.1 synthetic edit generator is intentionally narrow. It emits only
+parse-valid Python before/after rows for controlled local rewrites:
+
+- rename a `value` function parameter to `result` when the target name is unused;
+- add explicit `return None` to functions that otherwise return implicitly;
+- replace `set([...])` over constant elements with a set literal.
+
+Every synthetic row records `synthetic_transform_id`,
+`synthetic_transform_version`, and a SHA-256 `source_digest`.
+
 Pass gates:
 
 - HDF5 smoke dataset contains at least 40k train transitions and 5k validation
