@@ -121,6 +121,19 @@ class TransitionRecord:
 `action_patch` can be omitted from v0.1 packs. If omitted, the manifest must set
 `features.action_patch=false`.
 
+Packed HDF5 files store `schema_version`, `features.action_patch`, and
+`row_count` as root attributes. Dataset manifests are JSON objects with:
+
+- `schema_version`;
+- `row_count`;
+- `features`;
+- artifact entries with `path`, `kind`, `rows`, `sha256`, and `bytes`;
+- `split_counts`;
+- `source_counts`.
+
+Manifest checksums are SHA-256 over artifact bytes. Parquet staging shards are
+written before HDF5 packing and are listed alongside the HDF5 artifact.
+
 ## Filtering Rules
 
 Keep rows only when:
