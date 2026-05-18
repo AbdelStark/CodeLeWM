@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .sources import (
     AdapterKind,
+    CommitPackFTSourceAdapter,
     FixtureSourceAdapter,
     RawEditRecord,
     SourceAdapter,
@@ -17,6 +18,7 @@ from .sources import (
 
 __all__ = [
     "AdapterKind",
+    "CommitPackFTSourceAdapter",
     "FixtureSourceAdapter",
     "RawEditRecord",
     "SourceAdapter",

@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from codelewm.data import (
+    CommitPackFTSourceAdapter,
     FixtureSourceAdapter,
     RawEditRecord,
     SourceRecordError,
@@ -86,8 +87,10 @@ class SourceAdapterTest(unittest.TestCase):
             list(adapter.iter_records(SourceSpec(source="fixture", path=Path("missing.jsonl"))))
 
     def test_unknown_adapter_raises_source_unavailable(self) -> None:
+        self.assertIsInstance(get_source_adapter("commitpackft"), CommitPackFTSourceAdapter)
+
         with self.assertRaisesRegex(SourceUnavailableError, "No source adapter"):
-            get_source_adapter("commitpackft")
+            get_source_adapter("commitpack")
 
     def test_invalid_record_reports_schema_error(self) -> None:
         row = _record()

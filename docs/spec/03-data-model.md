@@ -14,6 +14,25 @@ AdapterKind = SourceKind | Literal["fixture"]
 tests and local smoke data; emitted `RawEditRecord.source` values still use the
 canonical `SourceKind` set.
 
+The `commitpackft` adapter accepts local `.jsonl` and `.jsonl.gz` shards, or a
+directory containing those shards. It streams rows without materializing the full
+source and maps CommitPackFT fields into `RawEditRecord` as follows:
+
+| CommitPackFT field | RawEditRecord field |
+| --- | --- |
+| `repos` | `repo` |
+| `commit` | `commit` |
+| `old_file` | `path_before` |
+| `new_file` | `path_after` |
+| `old_contents` | `before` |
+| `new_contents` | `after` |
+| `message` | `message` |
+| `license` | `license` |
+
+Rows must declare `lang`/`language` as `Python` unless the source spec overrides
+the expected language. The adapter stores `subject`, shard path, line number, and
+language in record metadata.
+
 ```python
 @dataclass(frozen=True)
 class RawEditRecord:
