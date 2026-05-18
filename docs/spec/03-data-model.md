@@ -277,6 +277,10 @@ Candidate pools must reject `train` split rows. Hard-negative reports must recor
 how many selected negatives match source, edit-size bucket, action cluster,
 similarity metadata, and fallback selection.
 
+Lexical baselines operate on caller-supplied query and candidate text. Reports
+must not embed raw source code by default; if candidate text is persisted, it
+must already be an approved redacted or fixture-safe representation.
+
 ## Invariants
 
 - INV-DATA-001: `state_after` must not appear in `action_text` or `action_abs`.

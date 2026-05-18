@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import random
+import re
 import statistics
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -19,6 +20,8 @@ CANDIDATE_POOL_SCHEMA_VERSION = "codelewm.eval.candidate_pool.v1"
 HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION = "codelewm.eval.hard_negative_sample.v1"
 HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION = "codelewm.eval.hard_negative_sampler_report.v1"
 TRAIN_SPLITS = frozenset({"train"})
+REQUIRED_HEADLINE_BASELINES = ("random", "lexical", "no_action", "shuffled_action")
+_LEXICAL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 
 
 class RetrievalEvalError(ValueError):
@@ -453,6 +456,125 @@ def rank_targets(
     return tuple(ranks)
 
 
+def random_baseline_ranks(
+    candidate_ids_by_query: Sequence[Sequence[str]],
+    target_ids: Sequence[str],
+    *,
+    seed: int = 0,
+) -> tuple[int, ...]:
+    """Return deterministic random-rank baseline targets for each query."""
+
+    if len(candidate_ids_by_query) != len(target_ids):
+        raise RetrievalEvalError("candidate_ids_by_query and target_ids must have equal length")
+    ranks: list[int] = []
+    rng = random.Random(seed)
+    for row_index, (candidate_ids, target_id) in enumerate(zip(candidate_ids_by_query, target_ids)):
+        candidate_values = tuple(str(candidate_id) for candidate_id in candidate_ids)
+        target_value = str(target_id)
+        if not candidate_values:
+            raise RetrievalEvalError(f"candidate row {row_index} must not be empty")
+        if len(set(candidate_values)) != len(candidate_values):
+            raise RetrievalEvalError(f"candidate ids for row {row_index} must be unique")
+        if candidate_values.count(target_value) != 1:
+            raise RetrievalEvalError(f"target id {target_value!r} must appear exactly once in row {row_index}")
+        shuffled = list(candidate_values)
+        rng.shuffle(shuffled)
+        ranks.append(shuffled.index(target_value) + 1)
+    return tuple(ranks)
+
+
+def lexical_baseline_ranks(
+    query_texts: Sequence[str],
+    candidate_texts_by_query: Sequence[Sequence[str]],
+    candidate_ids_by_query: Sequence[Sequence[str]],
+    target_ids: Sequence[str],
+) -> tuple[int, ...]:
+    """Rank targets with a lightweight lexical cosine baseline."""
+
+    if (
+        len(query_texts) != len(candidate_texts_by_query)
+        or len(query_texts) != len(candidate_ids_by_query)
+        or len(query_texts) != len(target_ids)
+    ):
+        raise RetrievalEvalError("query_texts, candidate_texts, candidate_ids, and target_ids must align")
+    score_rows: list[tuple[float, ...]] = []
+    for row_index, (query_text, candidate_texts, candidate_ids) in enumerate(
+        zip(query_texts, candidate_texts_by_query, candidate_ids_by_query)
+    ):
+        if len(candidate_texts) != len(candidate_ids):
+            raise RetrievalEvalError(f"candidate text row {row_index} length does not match candidate ids")
+        score_rows.append(tuple(_lexical_cosine(query_text, candidate_text) for candidate_text in candidate_texts))
+    return rank_targets(score_rows, candidate_ids_by_query, target_ids)
+
+
+def no_action_baseline_ranks(
+    score_rows: Sequence[Sequence[float]],
+    candidate_ids_by_query: Sequence[Sequence[str]],
+    target_ids: Sequence[str],
+    *,
+    larger_is_better: bool = True,
+) -> tuple[int, ...]:
+    """Rank targets from a scoring path that intentionally ignores actions."""
+
+    return rank_targets(
+        score_rows,
+        candidate_ids_by_query,
+        target_ids,
+        larger_is_better=larger_is_better,
+    )
+
+
+def shuffled_action_baseline_ranks(
+    score_rows: Sequence[Sequence[float]],
+    candidate_ids_by_query: Sequence[Sequence[str]],
+    target_ids: Sequence[str],
+    *,
+    seed: int = 0,
+    larger_is_better: bool = True,
+) -> tuple[int, ...]:
+    """Rank targets after shuffling action-conditioned score rows across queries."""
+
+    if len(score_rows) != len(candidate_ids_by_query) or len(score_rows) != len(target_ids):
+        raise RetrievalEvalError("score_rows, candidate_ids_by_query, and target_ids must have equal length")
+    order = _deranged_order(len(score_rows), seed=seed)
+    shuffled_rows = tuple(score_rows[index] for index in order)
+    return rank_targets(
+        shuffled_rows,
+        candidate_ids_by_query,
+        target_ids,
+        larger_is_better=larger_is_better,
+    )
+
+
+def build_baseline_metrics(
+    baseline_ranks: Mapping[str, Iterable[int]],
+    *,
+    candidate_counts: Mapping[str, Iterable[int]] | None = None,
+) -> dict[str, RetrievalMetrics]:
+    """Build retrieval metrics for named baseline rank streams."""
+
+    metrics: dict[str, RetrievalMetrics] = {}
+    for name, ranks in baseline_ranks.items():
+        counts = None if candidate_counts is None else candidate_counts.get(name)
+        metrics[str(name)] = compute_retrieval_metrics(ranks, candidate_counts=counts)
+    return metrics
+
+
+def validate_required_headline_baselines(
+    report: RetrievalReport,
+    *,
+    required: Sequence[str] = REQUIRED_HEADLINE_BASELINES,
+) -> RetrievalReport:
+    """Reject headline retrieval reports that omit required baseline metrics."""
+
+    missing = tuple(name for name in required if name not in report.baselines)
+    if missing:
+        raise RetrievalEvalError(f"headline retrieval report missing required baselines: {', '.join(missing)}")
+    for name in required:
+        validate_retrieval_metrics(report.baselines[name])
+    return report
+
+
 def build_easy_candidate_pool(
     rows: Iterable[Any],
     *,
@@ -844,6 +966,37 @@ def _unique_candidate_entries(rows: Iterable[Any]) -> tuple[CandidatePoolEntry, 
             raise RetrievalEvalError(f"duplicate candidate row id: {entry.transition_id}")
         entries[entry.transition_id] = entry
     return tuple(entries.values())
+
+
+def _lexical_cosine(query_text: str, candidate_text: str) -> float:
+    query_counts = _term_counts(query_text)
+    candidate_counts = _term_counts(candidate_text)
+    if not query_counts or not candidate_counts:
+        return 0.0
+    dot = sum(count * candidate_counts.get(term, 0) for term, count in query_counts.items())
+    query_norm = math.sqrt(sum(count * count for count in query_counts.values()))
+    candidate_norm = math.sqrt(sum(count * count for count in candidate_counts.values()))
+    return dot / max(query_norm * candidate_norm, 1e-12)
+
+
+def _term_counts(text: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for token in _LEXICAL_TOKEN_RE.findall(text.lower()):
+        counts[token] = counts.get(token, 0) + 1
+    return counts
+
+
+def _deranged_order(length: int, *, seed: int) -> tuple[int, ...]:
+    if length <= 0:
+        return ()
+    order = list(range(length))
+    rng = random.Random(seed)
+    rng.shuffle(order)
+    if length > 1 and any(index == value for index, value in enumerate(order)):
+        order = order[1:] + order[:1]
+        if any(index == value for index, value in enumerate(order)):
+            order = list(range(1, length)) + [0]
+    return tuple(order)
 
 
 def _action_cluster(entry: CandidatePoolEntry) -> str | None:
