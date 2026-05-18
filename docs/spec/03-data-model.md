@@ -257,6 +257,26 @@ per-split kept counts, and drop-reason counts. Drop reasons are:
 DedupDropReasonCode = Literal["exact_duplicate", "train_leakage"]
 ```
 
+## Retrieval Candidate Metadata
+
+Retrieval candidate pools reference packed transition rows by `transition_id`.
+The hard-negative sampler consumes the following fields from each candidate:
+
+- `transition_id`;
+- `split`;
+- `source`;
+- `repo`;
+- `path`;
+- `edit_size`;
+- optional `metadata.action_cluster`, `metadata.weak_action_cluster`, or
+  `metadata.action_abs_cluster`;
+- optional `metadata.similarity`, `metadata.similarity_to_query`,
+  `metadata.state_similarity`, or `metadata.lexical_similarity`.
+
+Candidate pools must reject `train` split rows. Hard-negative reports must record
+how many selected negatives match source, edit-size bucket, action cluster,
+similarity metadata, and fallback selection.
+
 ## Invariants
 
 - INV-DATA-001: `state_after` must not appear in `action_text` or `action_abs`.

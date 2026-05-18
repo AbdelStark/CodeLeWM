@@ -21,6 +21,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("ActionViewReportPolicy", codelewm.eval.__all__)
         self.assertIn("RetrievalReport", codelewm.eval.__all__)
         self.assertIn("compute_retrieval_metrics", codelewm.eval.__all__)
+        self.assertIn("HardNegativeSamplerConfig", codelewm.eval.__all__)
+        self.assertIn("sample_hard_negatives", codelewm.eval.__all__)
         self.assertTrue(hasattr(codelewm.harness, "main"))
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)

@@ -48,6 +48,7 @@ The release gate must expose:
 ```bash
 python -m pytest
 python -m pytest tests/data/test_codestate_fixtures.py
+python -m pytest tests/eval/test_hard_negatives.py
 python -m pytest tests/eval/test_retrieval_metrics.py
 python -m pytest tests/integration/test_action_conditioning.py
 python -m pytest tests/integration/test_cpu_train_smoke.py
@@ -68,6 +69,7 @@ v0.1 gates:
 - deterministic synthetic retrieval beats random;
 - retrieval metric reports validate `Recall@1`, `Recall@5`, `Recall@10`, MRR,
   median rank, and held-out candidate-pool lineage;
+- hard-negative pools exclude true targets and `train` split rows;
 - headline retrieval reports use `action_text`, not `action_patch`;
 - JSON schemas validate for dataset, checkpoint, eval report, and score output.
 

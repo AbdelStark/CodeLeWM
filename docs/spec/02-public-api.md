@@ -68,9 +68,20 @@ Retrieval evaluation exposes the metric and report contract independently of the
 model runtime:
 
 ```python
-from codelewm.eval import build_easy_candidate_pool, build_retrieval_report, rank_targets
+from codelewm.eval import (
+    HardNegativeSamplerConfig,
+    build_easy_candidate_pool,
+    build_hard_candidate_pool,
+    build_retrieval_report,
+    rank_targets,
+)
 
 pool = build_easy_candidate_pool(rows, max_size=1000, seed=0)
+hard_pool, hard_negative_sample = build_hard_candidate_pool(
+    query,
+    rows,
+    config=HardNegativeSamplerConfig(max_negatives=1000),
+)
 ranks = rank_targets(score_rows, candidate_ids_by_query, target_ids)
 report = build_retrieval_report(ranks, candidate_pool=pool)
 ```

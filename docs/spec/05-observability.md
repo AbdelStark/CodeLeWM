@@ -81,6 +81,11 @@ class RetrievalReport:
 Candidate pools use `schema_version=codelewm.eval.candidate_pool.v1`, store
 held-out transition IDs, and reject any `train` split rows. The v0.1 easy pool is
 a deterministic random sample of up to 1,000 validation/test after-states.
+Hard-negative sampler reports use
+`schema_version=codelewm.eval.hard_negative_sampler_report.v1` and include
+selected negative IDs, target/train rejection counts, and aggregate composition
+counts for source, edit-size bucket, action-cluster, similarity, and fallback
+selection.
 
 ## Artifact Lineage
 
