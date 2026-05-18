@@ -17,6 +17,10 @@ from .transition import (
     transition_energy,
 )
 from .actions import (
+    ABSTRACT_ACTION_BASE_VOCABULARY,
+    AbstractActionEncoder,
+    AbstractActionEncoderConfig,
+    AbstractActionTokenizer,
     ModelRuntimeUnavailableError,
     TextActionEncoder,
     TextActionEncoderConfig,
@@ -45,8 +49,12 @@ from .predictor import (
 
 __all__ = [
     "ABSTRACT_ACTION_SEQUENCE_LENGTH",
+    "ABSTRACT_ACTION_BASE_VOCABULARY",
     "CHECKPOINT_SCHEMA_VERSION",
     "DEFAULT_RECORD_SCHEMA_VERSION",
+    "AbstractActionEncoder",
+    "AbstractActionEncoderConfig",
+    "AbstractActionTokenizer",
     "CheckpointCompatibilityError",
     "CheckpointCompatibilitySpec",
     "CheckpointManifest",

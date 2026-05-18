@@ -97,6 +97,25 @@ TextActionEncoderConfig(
 `TextActionTokenizer` emits `ActionBatch(action_view="text")` with padded
 `input_ids` and `attention_mask`. Empty text actions fail before encoding.
 
+`AbstractActionEncoder` is the structural ablation action path for v0.1. Its
+contract is:
+
+```python
+AbstractActionEncoderConfig(
+    max_length=192,
+    latent_dim=256,
+    embed_dim=256,
+    num_layers=3,
+    num_heads=8,
+)
+```
+
+`AbstractActionTokenizer` emits `ActionBatch(action_view="abstract")` from
+abstract operation scripts such as `OP_UPDATE NODE_Return PATH_DEPTH_2`.
+Common operation, node, depth, scope, and size tokens are assigned reserved IDs;
+unseen structural tokens are deterministically hashed into the remaining
+vocabulary. Empty abstract action scripts fail before encoding.
+
 `CodeLatentPredictor` is the v0.1 pooled-code-latent predictor adapter around
 the LeWM autoregressive predictor. Its default contract is:
 
