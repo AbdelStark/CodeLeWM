@@ -232,8 +232,11 @@ SPEC.md                         top-level specification index
 docs/spec/                      canonical system specification
 docs/rfcs/                      accepted design decisions
 docs/roadmap/IMPLEMENTATION.md  GitHub issue tracker
-jepa.py                         LeWM-derived JEPA wrapper seed
-module.py                       LeWM-derived modules, including SIGReg and ARPredictor
+codelewm/                       package boundary for new implementation work
+codelewm/model/                 LeWM-derived JEPA and model module seed
+codelewm/training/              current training helper seed
+jepa.py                         compatibility wrapper for codelewm.model.jepa
+module.py                       compatibility wrapper for codelewm.model.modules
 train.py                        current LeWM-derived training entrypoint
 eval.py                         current LeWM-derived evaluation entrypoint
 config/                         current Hydra configs inherited from LeWM

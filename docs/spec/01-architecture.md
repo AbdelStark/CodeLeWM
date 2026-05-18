@@ -9,10 +9,17 @@ CodeLeWM has four bounded subsystems:
 - `codelewm.eval`: measures retrieval, surprise, collapse, and baselines.
 - `codelewm.harness`: indexes historical transitions and scores candidate edits.
 
-The existing root files `jepa.py`, `module.py`, `train.py`, and `eval.py` are the
-LeWM-derived implementation seed. New code must move project-specific behavior
-under `codelewm/` while preserving compatibility with Hydra and Lightning-style
-training entry points.
+The LeWM-derived implementation seed now lives under package boundaries:
+
+- `codelewm.model.jepa` contains the JEPA wrapper.
+- `codelewm.model.modules` contains SIGReg, the autoregressive predictor, and
+  supporting network blocks.
+- `codelewm.training.utils` contains current training helpers.
+
+Root `jepa.py`, `module.py`, and `utils.py` remain compatibility wrappers for
+existing Hydra configs and scripts. Root `train.py` and `eval.py` remain
+LeWM-derived entry points until the CodeLeWM training and evaluation runners are
+implemented.
 
 ## Data Flow
 
