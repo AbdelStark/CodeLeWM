@@ -36,6 +36,8 @@ ML regression tests:
 - embeddings have non-zero variance;
 - shuffled actions underperform true actions on deterministic fixtures;
 - patch-action upper bound outperforms no-action on deterministic fixtures.
+- headline evaluation reports reject `action_patch`; patch-action reports must
+  be tagged as diagnostic upper bounds.
 
 ## Required Commands
 
@@ -59,6 +61,7 @@ v0.1 gates:
 - tiny CPU training step succeeds;
 - collapse metrics are finite and above minimum variance;
 - deterministic synthetic retrieval beats random;
+- headline retrieval reports use `action_text`, not `action_patch`;
 - JSON schemas validate for dataset, checkpoint, eval report, and score output.
 
 v1.0 gates:
