@@ -64,6 +64,7 @@ class CodeState:
     primary: str
     token_count: int
     changed_hunk_mask: tuple[bool, ...]
+    fallback_reason: str | None
 ```
 
 ```python
