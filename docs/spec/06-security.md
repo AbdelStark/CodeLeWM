@@ -19,6 +19,19 @@ CodeLeWM parses and transforms source text. It must not import, evaluate, run
 tests for, or execute untrusted project code during dataset construction,
 training, scoring, indexing, or evaluation.
 
+All parser-facing dataset and harness code routes Python validation through
+`codelewm.security.parse_python_source_text`, which is limited to text parsing
+with `ast.parse`. It returns syntax trees for inspection and transformation; it
+does not compile modules, import project packages, call user functions, run test
+commands, or load user-supplied Python plugins.
+
+Configs loaded from outside the package are also part of the trust boundary.
+Validation rejects explicit execution requests such as `run_tests`,
+`execute_user_code`, `eval_user_code`, `import_user_modules`, and
+`test_command`. CodeLeWM may support sandboxed execution later, but that must be
+a separate opt-in subsystem with its own isolation, manifest, and logging
+contract.
+
 ## Secrets Handling
 
 - Secrets are read only from the environment or the user's configured credential
@@ -84,7 +97,8 @@ Threats:
 
 Controls:
 
-- text-only parsing;
+- text-only parsing through the shared non-execution parser;
+- rejection of configs that request untrusted code execution;
 - tokenizer length limits;
 - manifest checksums;
 - safe checkpoint formats where possible;

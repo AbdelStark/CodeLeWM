@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 import hashlib
 import json
 import math
@@ -13,6 +12,7 @@ from typing import Any, Literal, Protocol
 
 from codelewm.model.checkpoint import sha256_file
 from codelewm.model.transition import transition_energy
+from codelewm.security import parse_python_source_text
 
 
 SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
@@ -402,7 +402,7 @@ def rerank_result_json_schema() -> dict[str, Any]:
 def _read_python_file(path: Path, label: str) -> str:
     text = _read_text_file(path, label)
     try:
-        ast.parse(text, filename=str(path))
+        parse_python_source_text(text, filename=str(path))
     except SyntaxError as exc:
         raise ScoreError(
             f"{label} file is not valid Python",

@@ -16,6 +16,7 @@ from codelewm.model import (
     ObjectiveConfig,
     expected_action_sequence_length,
 )
+from codelewm.security import NonExecutionPolicyError, reject_code_execution_config
 
 
 TRAIN_CONFIG_SCHEMA_VERSION = "codelewm.train_config.v1"
@@ -380,6 +381,10 @@ class TrainConfig:
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any]) -> "TrainConfig":
+        try:
+            reject_code_execution_config(payload, context="train config")
+        except NonExecutionPolicyError as exc:
+            raise TrainConfigError(str(exc)) from exc
         _reject_unknown(
             payload,
             {

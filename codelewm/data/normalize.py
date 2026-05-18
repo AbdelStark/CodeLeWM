@@ -8,6 +8,7 @@ import textwrap
 from dataclasses import dataclass
 
 from codelewm.data.codestate import CodeState
+from codelewm.security import parse_python_source_text
 
 
 _TOKEN_PATTERN = re.compile(r"\w+|[^\w\s]")
@@ -173,7 +174,7 @@ def _normalize_primary(primary: str, *, config: CodeStateNormalizationConfig) ->
     if not source:
         return ""
     try:
-        tree = ast.parse(source)
+        tree = parse_python_source_text(source, filename="primary")
     except SyntaxError:
         return _normalize_block(source)
     tree = _LiteralNormalizer(config).visit(tree)

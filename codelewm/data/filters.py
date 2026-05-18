@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 import difflib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -16,6 +15,7 @@ from codelewm.security.license_policy import (
     SourceLicensePolicy,
     decide_license,
 )
+from codelewm.security.non_execution import parse_python_source_text
 
 
 MappingDetails = dict[str, Any]
@@ -279,7 +279,7 @@ def _generated_path(record: RawEditRecord, policy: FilterPolicy) -> str | None:
 def _parse_error(record: RawEditRecord) -> DropReason | None:
     for field_name, source in (("before", record.before), ("after", record.after)):
         try:
-            ast.parse(source)
+            parse_python_source_text(source, filename=field_name)
         except SyntaxError as exc:
             return DropReason(
                 code="parse_error",

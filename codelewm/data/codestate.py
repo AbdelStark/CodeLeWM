@@ -9,6 +9,7 @@ from pathlib import PurePosixPath
 from typing import Literal
 
 from codelewm.data.sources import RawEditRecord
+from codelewm.security import parse_python_source_text
 
 
 CodeStateKind = Literal["function", "method", "class", "region", "small_file"]
@@ -183,7 +184,7 @@ def module_name_from_path(path: str) -> str:
 
 def _parse_python(source: str, *, field_name: str) -> ast.Module:
     try:
-        return ast.parse(source)
+        return parse_python_source_text(source, filename=field_name)
     except SyntaxError as exc:
         raise CodeStateExtractionError(
             f"{field_name} source is not parse-valid Python: {exc.msg}"

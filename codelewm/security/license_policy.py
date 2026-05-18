@@ -5,10 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from codelewm.data.sources import SourceKind
-
 
 ArtifactPolicy = Literal["exclude", "metadata_only", "embeddings", "full_text"]
+SourceKind = Literal["commitpackft", "commitpack", "agentpack", "synthetic", "local_repo"]
 
 PERMISSIVE_PUBLIC_LICENSES = (
     "apache-2.0",
