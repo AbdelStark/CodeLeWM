@@ -200,7 +200,7 @@ def _candidate_nodes(tree: ast.Module) -> list[_Candidate]:
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             continue
-        start_line = getattr(node, "lineno", None)
+        start_line = _node_start_line(node)
         end_line = getattr(node, "end_lineno", None)
         if start_line is None or end_line is None:
             continue
@@ -227,6 +227,13 @@ def _candidate_nodes(tree: ast.Module) -> list[_Candidate]:
             )
         )
     return candidates
+
+
+def _node_start_line(node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> int | None:
+    line_numbers = [getattr(node, "lineno", None)]
+    line_numbers.extend(getattr(decorator, "lineno", None) for decorator in getattr(node, "decorator_list", ()))
+    valid = [line_number for line_number in line_numbers if line_number is not None]
+    return min(valid) if valid else None
 
 
 def _best_candidate(candidates: list[_Candidate], changed_lines: set[int]) -> _Candidate | None:
