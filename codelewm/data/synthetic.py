@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 
 from codelewm.data.sources import RawEditRecord
 from codelewm.data.split_dedup import SplitName
+from codelewm.security import parse_python_source_text
 
 
 class SyntheticTransformError(ValueError):
@@ -115,7 +116,7 @@ def _validate_source(source: SyntheticSourceFile) -> None:
 
 def _parse_python(source: str, *, field_name: str) -> ast.Module:
     try:
-        return ast.parse(source)
+        return parse_python_source_text(source, filename=field_name)
     except SyntaxError as exc:
         raise SyntheticTransformError(
             f"{field_name} source is not parse-valid Python: {exc.msg}"

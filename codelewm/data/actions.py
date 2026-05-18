@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 from codelewm.data.codestate import changed_line_numbers
 from codelewm.data.sources import RawEditRecord
+from codelewm.security import parse_python_source_text
 
 
 class ActionExtractionError(ValueError):
@@ -121,7 +122,7 @@ def _patch_action(record: RawEditRecord) -> str:
 
 def _parse(source: str, *, field_name: str) -> ast.Module:
     try:
-        return ast.parse(source)
+        return parse_python_source_text(source, filename=field_name)
     except SyntaxError as exc:
         raise ActionExtractionError(f"{field_name} source is not parse-valid Python: {exc.msg}") from exc
 
