@@ -21,7 +21,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertTrue(hasattr(codelewm.harness, "main"))
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)
-        self.assertEqual(codelewm.training.__all__, [])
+        self.assertIn("TrainConfig", codelewm.training.__all__)
+        self.assertIn("load_train_config", codelewm.training.__all__)
 
     def test_moved_seed_modules_have_package_specs(self) -> None:
         expected = [
