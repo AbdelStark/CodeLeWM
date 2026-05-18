@@ -1,0 +1,49 @@
+schema_version: codelewm.train_config.v1
+name: codelewm_tiny
+seed: 1337
+
+data:
+  train: data/codelewm_v0_1/train.hdf5
+  val: data/codelewm_v0_1/val.hdf5
+  manifest: data/codelewm_v0_1/manifest.json
+
+wm:
+  history_size: 1
+  num_preds: 1
+  embed_dim: 256
+  action_view: text
+  state_sequence_length: 1024
+  action_sequence_length: 256
+
+trainer:
+  max_steps: 16
+  accelerator: cpu
+  devices: 1
+  precision: float32
+  gradient_clip_val: 1.0
+
+loader:
+  batch_size: 4
+  num_workers: 0
+  shuffle: true
+  pin_memory: false
+  persistent_workers: false
+
+optimizer:
+  type: AdamW
+  lr: 0.0001
+  weight_decay: 0.001
+
+loss:
+  sigreg_weight: 0.09
+  enable_retrieval_loss: false
+  retrieval_weight: 0.0
+  retrieval_temperature: 0.1
+  sigreg_knots: 17
+  sigreg_num_proj: 1024
+
+output:
+  run_dir: runs/codelewm_tiny
+  checkpoint_dir: runs/codelewm_tiny/checkpoints
+  metrics_path: runs/codelewm_tiny/metrics.jsonl
+  manifest_path: runs/codelewm_tiny/training_manifest.json

@@ -32,6 +32,36 @@ v1.0 small model:
 - effective batch size `128`;
 - main run target `60k-100k` steps.
 
+## Training Config Defaults
+
+`config/train/codelewm_tiny.yaml` is the local smoke config. It uses:
+
+- `history_size=1`;
+- `num_preds=1`;
+- `embed_dim=256`;
+- `action_view=text`;
+- CPU accelerator;
+- batch size `4`;
+- `16` max steps;
+- `float32` precision;
+- retrieval loss disabled.
+
+`config/train/codelewm_small.yaml` is the initial single-device training config.
+It uses:
+
+- `history_size=1`;
+- `num_preds=1`;
+- `embed_dim=256`;
+- `action_view=text`;
+- accelerator `auto` with `devices=1`;
+- batch size `64`;
+- `10000` max steps;
+- `bf16-mixed` precision;
+- retrieval loss disabled.
+
+Neither default config may reference the inherited image-control datasets or
+pixel/proprioception loader keys.
+
 ## Indexing And Scoring
 
 Index targets:
