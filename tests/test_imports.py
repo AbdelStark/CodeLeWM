@@ -36,6 +36,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)
         self.assertIn("ArtifactManifest", codelewm.observability.__all__)
+        self.assertIn("LogEvent", codelewm.observability.__all__)
+        self.assertIn("write_log_event_jsonl", codelewm.observability.__all__)
         self.assertIn("parse_python_source_text", codelewm.security.__all__)
         self.assertIn("reject_code_execution_config", codelewm.security.__all__)
         self.assertIn("TrainConfig", codelewm.training.__all__)

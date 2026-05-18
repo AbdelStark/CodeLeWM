@@ -2,7 +2,9 @@
 
 ## Logging
 
-All commands emit structured JSONL logs when `--json` is enabled:
+Commands that support local machine-readable logging expose `--log-jsonl <path>`
+and append one JSON object per line. JSON command output remains reserved for
+the command result itself.
 
 ```python
 @dataclass(frozen=True)
@@ -17,8 +19,10 @@ class LogEvent:
     fields: Mapping[str, Any]
 ```
 
+Structured log events use `schema_version=codelewm.log_event.v1`.
 Human-readable logs are allowed by default, but every release gate consumes JSONL
-or report JSON.
+or report JSON. Current harness commands emit start, completion, and request
+error events when `--log-jsonl` is provided.
 
 ## Metrics
 
@@ -148,6 +152,15 @@ Logs and reports must not include:
 - full source code snippets by default;
 - absolute user home paths by default;
 - private repository names unless the input source is explicitly marked public.
+
+The shared log redaction layer:
+
+- redacts fields whose keys contain token, key, password, credential, or secret
+  markers;
+- redacts common secret-looking values such as API tokens;
+- replaces the current user's home directory prefix with `~`;
+- replaces long text payloads with a digest-bearing placeholder instead of
+  storing raw source snippets.
 
 ## Kill Reports
 

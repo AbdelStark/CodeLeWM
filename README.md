@@ -48,6 +48,8 @@ The current package includes:
 - `codelewm.eval`: action-view report policy, retrieval metrics, required
   baseline reports, easy and hard candidate-pool reports, collapse diagnostics,
   evaluation gates, and kill-report artifacts;
+- `codelewm.observability`: artifact manifests, structured JSONL log events,
+  and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm score` and
   `codelewm rerank` commands, and structured score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers and non-execution
@@ -57,7 +59,8 @@ The current package includes:
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
 validation, local scoring, and safe candidate reranking are implemented; release
-CI still needs to land. Root `train.py`, `eval.py`, and the existing Hydra
+CI still needs to land. Core harness commands can write local JSONL logs with
+redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the existing Hydra
 configs are inherited from the original LeWorldModel seed and are kept for
 compatibility while the package runtime continues to replace them.
 
@@ -259,6 +262,7 @@ docs/roadmap/IMPLEMENTATION.md  implementation tracker
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
 codelewm/eval/                  action policy, collapse gates, kill reports
+codelewm/observability/         manifests, JSONL log events, redaction
 codelewm/harness/               CLI, scorer, reranker, and output schemas
 codelewm/security/              license policy and non-execution helpers
 tests/                          unit and integration coverage

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+import uuid
 from collections.abc import Sequence
 from pathlib import Path
 
 from codelewm import __version__
 from codelewm.harness.scorer import ScoreError, load_scorer
+from codelewm.observability import LogEvent, write_log_event_jsonl
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,6 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
     score.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
     score.add_argument("--json", action="store_true", help="emit JSON output")
+    score.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     score.set_defaults(func=_score_command)
     rerank = subparsers.add_parser("rerank", help="rerank candidate after-states or patches")
     rerank.add_argument("--before", type=Path, required=True, help="before-state Python file")
@@ -46,6 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     rerank.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
     rerank.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
     rerank.add_argument("--json", action="store_true", help="emit JSON output")
+    rerank.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     rerank.set_defaults(func=_rerank_command)
     parser.set_defaults(func=_print_help)
     return parser
@@ -57,15 +62,45 @@ def _print_help(args: argparse.Namespace) -> int:
 
 
 def _score_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
     try:
         instruction = _instruction_arg_to_text(args.instruction)
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.score.start",
+                level="info",
+                run_id=run_id,
+                step="score",
+                message="score command started",
+                fields={
+                    "before": str(args.before),
+                    "candidate": str(args.candidate),
+                    "checkpoint": str(args.checkpoint),
+                    "device": args.device,
+                    "instruction_sha256": _sha256_text(instruction),
+                },
+            ),
+        )
         scorer = load_scorer(args.checkpoint, device=args.device)
         result = scorer.score_files(
             before=args.before,
             instruction=instruction,
             candidate=args.candidate,
         )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.score.complete",
+                level="info",
+                run_id=run_id,
+                step="score",
+                message="score command completed",
+                fields={"result": result.to_dict()},
+            ),
+        )
     except ScoreError as exc:
+        _emit_error_log(args, run_id=run_id, step="score", event="harness.score.error", exc=exc)
         if args.json:
             print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
         else:
@@ -82,15 +117,50 @@ def _score_command(args: argparse.Namespace) -> int:
 
 
 def _rerank_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
     try:
         instruction = _instruction_arg_to_text(args.instruction)
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.rerank.start",
+                level="info",
+                run_id=run_id,
+                step="rerank",
+                message="rerank command started",
+                fields={
+                    "before": str(args.before),
+                    "candidates": str(args.candidates),
+                    "checkpoint": str(args.checkpoint),
+                    "device": args.device,
+                    "instruction_sha256": _sha256_text(instruction),
+                },
+            ),
+        )
         scorer = load_scorer(args.checkpoint, device=args.device)
         result = scorer.rerank_files(
             before=args.before,
             instruction=instruction,
             candidates=args.candidates,
         )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.rerank.complete",
+                level="info",
+                run_id=run_id,
+                step="rerank",
+                message="rerank command completed",
+                fields={
+                    "result_count": len(result.results),
+                    "valid_count": sum(1 for item in result.results if hasattr(item, "final_score")),
+                    "error_count": sum(1 for item in result.results if hasattr(item, "error_type")),
+                    "warnings": list(result.warnings),
+                },
+            ),
+        )
     except ScoreError as exc:
+        _emit_error_log(args, run_id=run_id, step="rerank", event="harness.rerank.error", exc=exc)
         if args.json:
             print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
         else:
@@ -115,6 +185,53 @@ def _instruction_arg_to_text(value: str) -> str:
             raise ScoreError(f"instruction path is not a file: {path}")
         return path.read_text()
     return value
+
+
+def _emit_cli_log(args: argparse.Namespace, event: LogEvent) -> None:
+    log_path = getattr(args, "log_jsonl", None)
+    if log_path is None:
+        return
+    try:
+        write_log_event_jsonl(event, log_path)
+    except OSError as exc:
+        raise ScoreError(
+            f"failed to write structured log: {log_path}",
+            remediation="provide a writable --log-jsonl path",
+            artifact=str(log_path),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ) from exc
+
+
+def _emit_error_log(
+    args: argparse.Namespace,
+    *,
+    run_id: str,
+    step: str,
+    event: str,
+    exc: ScoreError,
+) -> None:
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event=event,
+                level="error",
+                run_id=run_id,
+                step=step,
+                message=str(exc),
+                fields={"error": exc.to_error_report().to_dict()},
+            ),
+        )
+    except ScoreError:
+        pass
+
+
+def _run_id() -> str:
+    return uuid.uuid4().hex
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def main(argv: Sequence[str] | None = None) -> int:
