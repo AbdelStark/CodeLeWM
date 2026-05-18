@@ -77,6 +77,30 @@ Missing, unknown, copyleft, or otherwise non-allowlisted license values produce
 attached to filter drop records so public dataset reports can account for every
 license exclusion.
 
+Public artifact gates use `schema_version=codelewm.public_license_gate.v1`:
+
+```python
+@dataclass(frozen=True)
+class PublicLicenseGateReport:
+    schema_version: str
+    artifact_policy: Literal["exclude", "metadata_only", "embeddings", "full_text"]
+    included_rows: int
+    excluded_rows: int
+    blocked_rows: int
+    release_allowed: bool
+    included_licenses: Mapping[str, int]
+    excluded_licenses: Mapping[str, int]
+    included_sources: Mapping[str, int]
+    excluded_sources: Mapping[str, int]
+    excluded_reasons: Mapping[str, int]
+```
+
+Public full-text artifacts fail the gate when any included row has a denied
+decision or an artifact policy other than `full_text`. Excluded rows are allowed
+only when their decision is counted in the gate report. Dataset manifests include
+an included-row license summary and can embed the full gate report under
+`metadata.license_gate_report`.
+
 ## Public Artifact Policy
 
 - Public dataset cards must state source mix, license policy, row counts, and

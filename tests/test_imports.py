@@ -40,6 +40,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("write_log_event_jsonl", codelewm.observability.__all__)
         self.assertIn("parse_python_source_text", codelewm.security.__all__)
         self.assertIn("reject_code_execution_config", codelewm.security.__all__)
+        self.assertIn("PublicLicenseGateReport", codelewm.security.__all__)
+        self.assertIn("enforce_public_license_gate", codelewm.security.__all__)
         self.assertIn("TrainConfig", codelewm.training.__all__)
         self.assertIn("load_train_config", codelewm.training.__all__)
         self.assertIn("train", codelewm.training.__all__)
