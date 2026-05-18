@@ -259,6 +259,9 @@ class ARPredictor(nn.Module):
         emb_dropout=0.0,
     ):
         super().__init__()
+        self.num_frames = num_frames
+        self.input_dim = input_dim
+        self.output_dim = output_dim or input_dim
         self.pos_embedding = nn.Parameter(torch.randn(1, num_frames, input_dim))
         self.dropout = nn.Dropout(emb_dropout)
         self.transformer = Transformer(
@@ -275,11 +278,30 @@ class ARPredictor(nn.Module):
 
     def forward(self, x, c):
         """
-        x: (B, T, d)
-        c: (B, T, act_dim)
+        x: (B, T, d) or pooled code latents (B, d)
+        c: (B, T, act_dim) or pooled action embeddings (B, act_dim)
         """
+        if x.ndim != c.ndim:
+            raise ValueError(f"x and c must have matching ranks; got {x.ndim} and {c.ndim}")
+
+        pooled = x.ndim == 2
+        if pooled:
+            x = x.unsqueeze(1)
+            c = c.unsqueeze(1)
+
+        if x.ndim != 3:
+            raise ValueError(f"ARPredictor expects rank-2 or rank-3 inputs; got rank {x.ndim}")
+        if x.shape[:2] != c.shape[:2]:
+            raise ValueError(f"x and c must share batch/time shape; got {tuple(x.shape)} and {tuple(c.shape)}")
+        if x.size(-1) != self.input_dim:
+            raise ValueError(f"x latent dim must be {self.input_dim}; got {x.size(-1)}")
+        if c.size(-1) != self.input_dim:
+            raise ValueError(f"c action dim must be {self.input_dim}; got {c.size(-1)}")
+
         T = x.size(1)
+        if T > self.num_frames:
+            raise ValueError(f"sequence length {T} exceeds configured num_frames {self.num_frames}")
         x = x + self.pos_embedding[:, :T]
         x = self.dropout(x)
         x = self.transformer(x, c)
-        return x
+        return x[:, -1, :] if pooled else x

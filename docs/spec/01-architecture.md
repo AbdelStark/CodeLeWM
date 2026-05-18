@@ -72,6 +72,7 @@ class TransitionBatch: ...
 class CodeStateEncoder(nn.Module): ...
 class TextActionEncoder(nn.Module): ...
 class AbstractActionEncoder(nn.Module): ...
+class CodeLatentPredictor(nn.Module): ...
 class CodeTransitionModel(nn.Module): ...
 ```
 
@@ -95,6 +96,26 @@ TextActionEncoderConfig(
 
 `TextActionTokenizer` emits `ActionBatch(action_view="text")` with padded
 `input_ids` and `attention_mask`. Empty text actions fail before encoding.
+
+`CodeLatentPredictor` is the v0.1 pooled-code-latent predictor adapter around
+the LeWM autoregressive predictor. Its default contract is:
+
+```python
+CodeLatentPredictorConfig(
+    history_size=1,
+    num_preds=1,
+    latent_dim=256,
+    action_dim=256,
+    hidden_dim=256,
+)
+```
+
+`predict_after(z_before, action_emb)` accepts pooled `[batch, 256]` tensors for
+one-step edits, normalizes them to the predictor's `[batch, history, dim]`
+sequence form, and returns a projected `[batch, 256]` after-state latent. The
+prediction projection head is still applied after the autoregressive predictor,
+matching the existing JEPA path. Multi-step edit trajectories are outside the
+v0.1 contract.
 
 ### `codelewm.eval`
 
