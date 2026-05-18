@@ -22,9 +22,15 @@ from .actions import (
     TextActionEncoderConfig,
     TextActionTokenizer,
 )
+from .predictor import (
+    CodeLatentPredictor,
+    CodeLatentPredictorConfig,
+)
 
 __all__ = [
     "ABSTRACT_ACTION_SEQUENCE_LENGTH",
+    "CodeLatentPredictor",
+    "CodeLatentPredictorConfig",
     "LATENT_DIM",
     "STATE_SEQUENCE_LENGTH",
     "TEXT_ACTION_SEQUENCE_LENGTH",
