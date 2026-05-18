@@ -41,6 +41,7 @@ Training metrics:
 - `loss/sigreg_weighted`;
 - optional retrieval loss;
 - embedding effective rank;
+- embedding effective rank ratio;
 - per-dimension variance min/median/max;
 - mean pairwise cosine;
 - embedding norm mean/std;
@@ -87,3 +88,12 @@ Logs and reports must not include:
 Training and evaluation gates write a kill report when they fail. The report must
 name the failed threshold, observed value, command, config hash, and suggested
 next RFC-governed action.
+
+Collapse kill reports use `schema_version=codelewm.eval.kill_report.v1` and
+include:
+
+- `reason=embedding_collapse`;
+- `collapse_report` with effective-rank, variance, cosine, norm, and
+  nearest-neighbor entropy metrics;
+- one entry per failed threshold;
+- command and config hash when available.
