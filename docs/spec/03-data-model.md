@@ -182,6 +182,8 @@ Policy:
 - `test`: 10% of split keys.
 - Synthetic transforms inherit the split of their source file before generation.
 - Rows cannot move split after packing.
+- Split assignment is deterministic from `sha256(seed + split_key)` and happens
+  before tokenization.
 
 ## Deduplication
 
@@ -189,11 +191,19 @@ Dedup keys:
 
 - exact normalized `(before, action_text, after)` SHA-256;
 - exact normalized `(before, after)` SHA-256;
-- near-duplicate SimHash for `state_before`;
+- near-duplicate 64-bit SimHash for `state_before`;
 - diff-shape hash for operation histogram and size bucket.
 
 Validation and test rows are rejected if their near-duplicate distance to train
-rows is below the configured threshold.
+rows is below the configured Hamming threshold. The v0.1 default threshold is
+`3`.
+
+Split/dedup reports include `total_before`, `total_after`, `total_dropped`,
+per-split kept counts, and drop-reason counts. Drop reasons are:
+
+```python
+DedupDropReasonCode = Literal["exact_duplicate", "train_leakage"]
+```
 
 ## Invariants
 
