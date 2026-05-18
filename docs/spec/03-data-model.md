@@ -88,7 +88,15 @@ class EditAction:
     text: str
     abstract: tuple[str, ...]
     patch: str | None
+    patch_is_leaky: bool
+    metadata: Mapping[str, Any]
 ```
+
+`action_text` is the normalized row message or synthetic transform template,
+truncated to the configured action-text length. `action_abs` contains structural
+operation tokens only and must not include full inserted after-code lines.
+`action_patch` is optional diagnostic data; when present, `patch_is_leaky=true`
+and it cannot be used for headline inference.
 
 ```python
 @dataclass(frozen=True)

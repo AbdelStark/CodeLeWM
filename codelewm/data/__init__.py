@@ -81,6 +81,13 @@ from .masks import (
     stable_token_id,
     tokenize_normalized_codestate,
 )
+from .actions import (
+    ActionExtractionConfig,
+    ActionExtractionError,
+    EditAction,
+    extract_abstract_actions,
+    extract_edit_action,
+)
 from .filters import (
     DropReason,
     DroppedRecord,
@@ -93,6 +100,8 @@ from .filters import (
 
 __all__ = [
     "AdapterKind",
+    "ActionExtractionConfig",
+    "ActionExtractionError",
     "ArtifactInfo",
     "CodeState",
     "CodeStateConfig",
@@ -110,6 +119,7 @@ __all__ = [
     "DatasetManifest",
     "DropReason",
     "DroppedRecord",
+    "EditAction",
     "FixtureSourceAdapter",
     "FilteredRecords",
     "FilterPolicy",
@@ -146,6 +156,8 @@ __all__ = [
     "evaluate_raw_edit_record",
     "extract_codestate",
     "extract_codestate_pair",
+    "extract_abstract_actions",
+    "extract_edit_action",
     "filter_raw_edit_records",
     "get_source_adapter",
     "generate_synthetic_records",
