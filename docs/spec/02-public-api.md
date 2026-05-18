@@ -84,13 +84,22 @@ reports/
 @dataclass(frozen=True)
 class ArtifactManifest:
     schema_version: str
-    artifact_kind: Literal["dataset", "checkpoint", "index", "eval_report"]
+    artifact_id: str
+    artifact_kind: Literal[
+        "dataset",
+        "checkpoint",
+        "training_run",
+        "index",
+        "eval_report",
+        "score_report",
+    ]
     created_at: str
     source_git_sha: str
     command: list[str]
     config_sha256: str
-    files: tuple[ManifestFile, ...]
     parent_artifacts: tuple[str, ...]
+    files: tuple[ManifestFile, ...]
+    metadata: Mapping[str, Any]
 ```
 
 ## Compatibility Policy
