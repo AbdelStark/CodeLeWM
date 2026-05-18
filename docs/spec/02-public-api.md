@@ -70,10 +70,14 @@ model runtime:
 ```python
 from codelewm.eval import (
     HardNegativeSamplerConfig,
+    build_baseline_metrics,
     build_easy_candidate_pool,
     build_hard_candidate_pool,
     build_retrieval_report,
+    lexical_baseline_ranks,
     rank_targets,
+    random_baseline_ranks,
+    validate_required_headline_baselines,
 )
 
 pool = build_easy_candidate_pool(rows, max_size=1000, seed=0)
@@ -83,7 +87,15 @@ hard_pool, hard_negative_sample = build_hard_candidate_pool(
     config=HardNegativeSamplerConfig(max_negatives=1000),
 )
 ranks = rank_targets(score_rows, candidate_ids_by_query, target_ids)
-report = build_retrieval_report(ranks, candidate_pool=pool)
+baselines = build_baseline_metrics({
+    "random": random_baseline_ranks(candidate_ids_by_query, target_ids),
+    "lexical": lexical_baseline_ranks(query_texts, candidate_texts, candidate_ids_by_query, target_ids),
+    "no_action": no_action_ranks,
+    "shuffled_action": shuffled_action_ranks,
+})
+report = validate_required_headline_baselines(
+    build_retrieval_report(ranks, candidate_pool=pool, baselines=baselines)
+)
 ```
 
 Reports use `schema_version=codelewm.eval.retrieval_report.v1`; candidate pools

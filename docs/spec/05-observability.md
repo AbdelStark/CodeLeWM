@@ -86,6 +86,8 @@ Hard-negative sampler reports use
 selected negative IDs, target/train rejection counts, and aggregate composition
 counts for source, edit-size bucket, action-cluster, similarity, and fallback
 selection.
+Headline retrieval reports are invalid unless the `baselines` mapping includes
+`random`, `lexical`, `no_action`, and `shuffled_action` metrics.
 
 ## Artifact Lineage
 
