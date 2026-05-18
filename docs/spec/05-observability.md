@@ -35,8 +35,10 @@ Dataset metrics:
 
 Training metrics:
 
-- prediction loss;
-- SIGReg loss;
+- `loss/total`;
+- `loss/prediction_mse`;
+- `loss/sigreg`;
+- `loss/sigreg_weighted`;
 - optional retrieval loss;
 - embedding effective rank;
 - per-dimension variance min/median/max;
