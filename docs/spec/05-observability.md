@@ -74,6 +74,42 @@ Every dataset, checkpoint, index, and report includes:
 - host platform and Python version;
 - dependency lock hash when available.
 
+Shared artifact manifests use `schema_version=codelewm.artifact_manifest.v1`.
+The manifest is JSON-native and validates before any release gate consumes it:
+
+```python
+@dataclass(frozen=True)
+class ManifestFile:
+    path: str
+    sha256: str
+    bytes: int
+
+@dataclass(frozen=True)
+class ArtifactManifest:
+    schema_version: str
+    artifact_id: str
+    artifact_kind: Literal[
+        "dataset",
+        "checkpoint",
+        "training_run",
+        "index",
+        "eval_report",
+        "score_report",
+    ]
+    created_at: str
+    source_git_sha: str
+    command: tuple[str, ...]
+    config_sha256: str
+    parent_artifacts: tuple[str, ...]
+    files: tuple[ManifestFile, ...]
+    metadata: Mapping[str, Any]
+```
+
+Manifest file paths are relative to the artifact root and cannot contain `..` or
+absolute paths. Checksums are lowercase SHA-256 digests over file bytes.
+`parent_artifacts` records upstream manifest IDs, such as the dataset manifest
+used by a training run or the checkpoint manifest used by an evaluation report.
+
 ## Redaction Rules
 
 Logs and reports must not include:

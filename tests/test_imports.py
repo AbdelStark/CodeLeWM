@@ -14,6 +14,7 @@ class PackageImportBoundaryTest(unittest.TestCase):
         import codelewm.eval
         import codelewm.harness
         import codelewm.model
+        import codelewm.observability
         import codelewm.training
 
         self.assertEqual(codelewm.__version__, "0.0.0")
@@ -21,6 +22,7 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertTrue(hasattr(codelewm.harness, "main"))
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)
+        self.assertIn("ArtifactManifest", codelewm.observability.__all__)
         self.assertIn("TrainConfig", codelewm.training.__all__)
         self.assertIn("load_train_config", codelewm.training.__all__)
 
