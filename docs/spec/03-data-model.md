@@ -67,6 +67,21 @@ class CodeState:
     fallback_reason: str | None
 ```
 
+`CodeState` normalization emits the pack format from RFC-0003 after:
+
+- dedenting primary code and normalizing whitespace through Python AST unparse
+  when the primary block parses;
+- replacing over-budget string and numeric literals with typed placeholders;
+- removing docstrings by default;
+- preserving identifiers in the main view.
+
+Truncation is structured, not arbitrary tail clipping. The normalizer first drops
+lower-priority sibling signatures, then callee signatures, then import context.
+Only after those sections are removed may it reduce `primary` to signature or
+decorator lines, changed-hunk vicinity, returns, raises, exception handlers, and
+context-manager lines. Rows that still exceed the token budget fail instead of
+being silently clipped.
+
 ```python
 @dataclass(frozen=True)
 class EditAction:
