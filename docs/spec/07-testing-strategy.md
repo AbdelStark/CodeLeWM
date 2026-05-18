@@ -35,6 +35,8 @@ ML regression tests:
 - smoke training loss is finite;
 - embeddings have non-zero variance;
 - shuffled actions underperform true actions on deterministic fixtures;
+- retrieval auxiliary loss can only run behind an explicit config gate and logs
+  separately from prediction and SIGReg losses;
 - patch-action upper bound outperforms no-action on deterministic fixtures.
 - headline evaluation reports reject `action_patch`; patch-action reports must
   be tagged as diagnostic upper bounds.

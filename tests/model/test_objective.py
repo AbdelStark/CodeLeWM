@@ -59,7 +59,7 @@ class ObjectiveNumpyTest(unittest.TestCase):
             compute_prediction_mse(np.array([float("nan")]), np.array([0.0]))
 
     def test_retrieval_loss_is_disabled_in_base_objective(self) -> None:
-        with self.assertRaisesRegex(ValueError, "retrieval loss"):
+        with self.assertRaisesRegex(ValueError, "enable_retrieval_loss"):
             ObjectiveConfig(retrieval_weight=0.1)
 
 
