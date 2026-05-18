@@ -1,9 +1,33 @@
-"""Model components for CodeLeWM.
-
-The concrete LeWM seed modules import optional ML runtime dependencies, so this
-package initializer intentionally keeps imports lightweight.
-"""
+"""Model components for CodeLeWM."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from .transition import (
+    ABSTRACT_ACTION_SEQUENCE_LENGTH,
+    LATENT_DIM,
+    STATE_SEQUENCE_LENGTH,
+    TEXT_ACTION_SEQUENCE_LENGTH,
+    ActionBatch,
+    CodeStateBatch,
+    CodeTransitionModel,
+    TensorContract,
+    TransitionBatch,
+    expected_action_sequence_length,
+    infer_shape,
+    transition_energy,
+)
+
+__all__ = [
+    "ABSTRACT_ACTION_SEQUENCE_LENGTH",
+    "LATENT_DIM",
+    "STATE_SEQUENCE_LENGTH",
+    "TEXT_ACTION_SEQUENCE_LENGTH",
+    "ActionBatch",
+    "CodeStateBatch",
+    "CodeTransitionModel",
+    "TensorContract",
+    "TransitionBatch",
+    "expected_action_sequence_length",
+    "infer_shape",
+    "transition_energy",
+]
