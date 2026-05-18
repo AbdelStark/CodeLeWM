@@ -49,14 +49,15 @@ The current package includes:
   baseline reports, easy and hard candidate-pool reports, collapse diagnostics,
   evaluation gates, and kill-report artifacts;
 - `codelewm.harness`: package CLI entry point and the boundary for future
-  scoring and reranking commands;
+  scoring and reranking commands, including the initial `codelewm score`
+  contract;
 - `codelewm.security`: license decision policy helpers;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
-the CPU smoke training path, retrieval reports, hard-negative sampling, and
-baseline validation are implemented; the patch scorer, reranker, and release CI
-still need to land. Root `train.py`, `eval.py`, and the existing Hydra configs
+the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
+validation, and the initial score API are implemented; the reranker and release
+CI still need to land. Root `train.py`, `eval.py`, and the existing Hydra configs
 are inherited from the original LeWorldModel seed and are kept for compatibility
 while the package runtime continues to replace them.
 

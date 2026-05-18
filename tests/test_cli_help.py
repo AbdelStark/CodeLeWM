@@ -23,6 +23,7 @@ class CliHelpTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("usage: codelewm", completed.stdout)
         self.assertIn("CodeLeWM command-line interface", completed.stdout)
+        self.assertIn("score", completed.stdout)
 
 
 if __name__ == "__main__":

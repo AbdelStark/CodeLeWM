@@ -108,6 +108,7 @@ split rows.
 @dataclass(frozen=True)
 class ScoreResult:
     schema_version: str
+    candidate: str
     transition_energy: float
     retrieval_prior: float | None
     risk_penalty: float | None
@@ -117,6 +118,11 @@ class ScoreResult:
     input_digest: str
     warnings: tuple[str, ...]
 ```
+
+`load_scorer` verifies the checkpoint path and records its SHA-256 before
+scoring. The initial runtime-light backend is deterministic and intended for API
+and fixture validation; model-backed checkpoint execution can replace the backend
+without changing `ScoreResult`.
 
 ## Artifact Contracts
 
