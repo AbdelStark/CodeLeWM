@@ -50,7 +50,7 @@ The current package includes:
   evaluation gates, and kill-report artifacts;
 - `codelewm.harness`: package CLI entry point and the boundary for future
   scoring and reranking commands, including the initial `codelewm score`
-  contract;
+  contract and structured score/error schemas;
 - `codelewm.security`: license decision policy helpers;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 

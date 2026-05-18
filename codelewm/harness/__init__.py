@@ -2,28 +2,56 @@
 
 from __future__ import annotations
 
-from .cli import main
+from collections.abc import Sequence
+
 from .scorer import (
+    ERROR_REPORT_SCHEMA_VERSION,
+    RERANK_RESULT_SCHEMA_VERSION,
     SCORE_RESULT_SCHEMA_VERSION,
     CodeLeWMScorer,
+    ErrorReport,
     HashingTransitionScoringBackend,
     ScoreError,
     ScoreResult,
     TransitionScoringBackend,
+    error_report_json_schema,
+    error_report_to_json,
     load_scorer,
+    rerank_result_json_schema,
     score_input_digest,
+    score_result_json_schema,
     score_result_to_json,
+    validate_error_report_payload,
+    validate_score_result_payload,
 )
 
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the CLI entry point without importing it during package initialization."""
+
+    from .cli import main as _main
+
+    return _main(argv)
+
+
 __all__ = [
+    "ERROR_REPORT_SCHEMA_VERSION",
+    "RERANK_RESULT_SCHEMA_VERSION",
     "SCORE_RESULT_SCHEMA_VERSION",
     "CodeLeWMScorer",
+    "ErrorReport",
     "HashingTransitionScoringBackend",
     "ScoreError",
     "ScoreResult",
     "TransitionScoringBackend",
+    "error_report_json_schema",
+    "error_report_to_json",
     "load_scorer",
     "main",
+    "rerank_result_json_schema",
     "score_input_digest",
+    "score_result_json_schema",
     "score_result_to_json",
+    "validate_error_report_payload",
+    "validate_score_result_payload",
 ]
