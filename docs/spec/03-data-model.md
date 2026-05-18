@@ -137,6 +137,21 @@ class TransitionRecord:
 `action_patch` can be omitted from v0.1 packs. If omitted, the manifest must set
 `features.action_patch=false`.
 
+State `segment_ids` use stable section codes:
+
+| Segment | ID |
+| --- | ---: |
+| path/module/symbol markers | 1 |
+| imports | 2 |
+| class/kind/enclosing-class markers | 3 |
+| sibling signatures | 4 |
+| callee signatures | 5 |
+| primary code | 6 |
+
+`changed_hunk_mask` is aligned to the tokenized normalized state and is true only
+for primary-code tokens that originate from changed primary lines retained after
+structured truncation.
+
 Packed HDF5 files store `schema_version`, `features.action_patch`, and
 `row_count` as root attributes. Dataset manifests are JSON objects with:
 

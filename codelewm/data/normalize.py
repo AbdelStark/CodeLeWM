@@ -42,6 +42,7 @@ class NormalizedCodeState:
     token_count: int
     dropped_sections: tuple[str, ...]
     primary_line_count: int
+    primary_changed_hunk_mask: tuple[bool, ...]
 
 
 def normalize_codestate(
@@ -52,6 +53,7 @@ def normalize_codestate(
     """Normalize a CodeState and enforce the configured token budget."""
 
     primary = _normalize_primary(state.primary, config=config)
+    primary_changed_hunk_mask = _align_primary_mask(state.changed_hunk_mask, primary)
     sibling_signatures = tuple(_normalize_line(item) for item in state.sibling_signatures)
     callee_signatures = tuple(_normalize_line(item) for item in state.callee_signatures)
     imports = _normalize_block(state.imports)
@@ -59,27 +61,51 @@ def normalize_codestate(
 
     text = _pack_text(state, primary, imports, sibling_signatures, callee_signatures)
     if _count_tokens(text) <= config.token_budget:
-        return _normalized(text, dropped_sections=dropped, primary=primary)
+        return _normalized(
+            text,
+            dropped_sections=dropped,
+            primary=primary,
+            primary_changed_hunk_mask=primary_changed_hunk_mask,
+        )
 
     sibling_signatures = ()
     dropped.append("sibling_signatures")
     text = _pack_text(state, primary, imports, sibling_signatures, callee_signatures)
     if _count_tokens(text) <= config.token_budget:
-        return _normalized(text, dropped_sections=dropped, primary=primary)
+        return _normalized(
+            text,
+            dropped_sections=dropped,
+            primary=primary,
+            primary_changed_hunk_mask=primary_changed_hunk_mask,
+        )
 
     callee_signatures = ()
     dropped.append("callee_signatures")
     text = _pack_text(state, primary, imports, sibling_signatures, callee_signatures)
     if _count_tokens(text) <= config.token_budget:
-        return _normalized(text, dropped_sections=dropped, primary=primary)
+        return _normalized(
+            text,
+            dropped_sections=dropped,
+            primary=primary,
+            primary_changed_hunk_mask=primary_changed_hunk_mask,
+        )
 
     imports = ""
     dropped.append("imports")
     text = _pack_text(state, primary, imports, sibling_signatures, callee_signatures)
     if _count_tokens(text) <= config.token_budget:
-        return _normalized(text, dropped_sections=dropped, primary=primary)
+        return _normalized(
+            text,
+            dropped_sections=dropped,
+            primary=primary,
+            primary_changed_hunk_mask=primary_changed_hunk_mask,
+        )
 
-    primary = _truncate_primary(primary, state.changed_hunk_mask, config=config)
+    primary, primary_changed_hunk_mask = _truncate_primary(
+        primary,
+        primary_changed_hunk_mask,
+        config=config,
+    )
     dropped.append("primary_context")
     text = _pack_text(state, primary, imports, sibling_signatures, callee_signatures)
     token_count = _count_tokens(text)
@@ -88,16 +114,28 @@ def normalize_codestate(
             f"normalized CodeState is {token_count} tokens after structured truncation; "
             f"budget is {config.token_budget}"
         )
-    return _normalized(text, dropped_sections=dropped, primary=primary)
+    return _normalized(
+        text,
+        dropped_sections=dropped,
+        primary=primary,
+        primary_changed_hunk_mask=primary_changed_hunk_mask,
+    )
 
 
-def _normalized(text: str, *, dropped_sections: list[str], primary: str) -> NormalizedCodeState:
+def _normalized(
+    text: str,
+    *,
+    dropped_sections: list[str],
+    primary: str,
+    primary_changed_hunk_mask: tuple[bool, ...],
+) -> NormalizedCodeState:
     normalized = text.rstrip() + "\n"
     return NormalizedCodeState(
         text=normalized,
         token_count=_count_tokens(normalized),
         dropped_sections=tuple(dropped_sections),
         primary_line_count=len(primary.splitlines()),
+        primary_changed_hunk_mask=primary_changed_hunk_mask,
     )
 
 
@@ -158,12 +196,15 @@ def _truncate_primary(
     changed_hunk_mask: tuple[bool, ...],
     *,
     config: CodeStateNormalizationConfig,
-) -> str:
+) -> tuple[str, tuple[bool, ...]]:
     lines = primary.splitlines()
     if not lines:
-        return ""
+        return "", ()
     required = _required_primary_line_indexes(lines, changed_hunk_mask, config.changed_context_lines)
-    return "\n".join(lines[index] for index in sorted(required)).rstrip() + "\n"
+    ordered = sorted(required)
+    truncated = "\n".join(lines[index] for index in ordered).rstrip() + "\n"
+    truncated_mask = tuple(changed_hunk_mask[index] if index < len(changed_hunk_mask) else False for index in ordered)
+    return truncated, truncated_mask
 
 
 def _required_primary_line_indexes(
@@ -189,6 +230,11 @@ def _required_primary_line_indexes(
 
 def _count_tokens(text: str) -> int:
     return len(_TOKEN_PATTERN.findall(text))
+
+
+def _align_primary_mask(changed_hunk_mask: tuple[bool, ...], primary: str) -> tuple[bool, ...]:
+    line_count = len(primary.splitlines())
+    return tuple(changed_hunk_mask[index] if index < len(changed_hunk_mask) else False for index in range(line_count))
 
 
 class _LiteralNormalizer(ast.NodeTransformer):
