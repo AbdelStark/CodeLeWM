@@ -20,7 +20,19 @@ codelewm eval surprise --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm
 codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/train.hdf5 --out indexes/v0_1
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
 codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
+codelewm secret-scan runs/v0_1/ logs/
 ```
+
+`codelewm secret-scan` accepts one or more files or directories and emits a
+`codelewm.secret_scan.v1` JSON report listing every secret-pattern match by
+path, line, pattern name, and redacted digest. The scanner returns exit code 2
+when any match is found. Use `--include-suffix` to extend the default suffix
+set or `--no-recursive` to scan only the top level. See
+`docs/spec/06-security.md#secrets-handling` for the scanner contract.
+
+`score` and `rerank` refuse to load a checkpoint without a paired manifest by
+default; pass `--allow-unsafe-checkpoint` to opt out in a trusted local
+environment. See `docs/spec/06-security.md#checkpoint-trust`.
 
 All commands support:
 

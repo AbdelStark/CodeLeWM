@@ -101,6 +101,7 @@ class StructuredLoggingTest(unittest.TestCase):
                     "--json",
                     "--log-jsonl",
                     str(log_path),
+                    "--allow-unsafe-checkpoint",
                 ],
                 cwd=ROOT,
                 check=False,

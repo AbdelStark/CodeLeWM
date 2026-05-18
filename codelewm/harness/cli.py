@@ -13,6 +13,7 @@ from pathlib import Path
 from codelewm import __version__
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.observability import LogEvent, write_log_event_jsonl
+from codelewm.security import scan_paths
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
     score.add_argument("--json", action="store_true", help="emit JSON output")
     score.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    score.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
     score.set_defaults(func=_score_command)
     rerank = subparsers.add_parser("rerank", help="rerank candidate after-states or patches")
     rerank.add_argument("--before", type=Path, required=True, help="before-state Python file")
@@ -51,7 +57,41 @@ def build_parser() -> argparse.ArgumentParser:
     rerank.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
     rerank.add_argument("--json", action="store_true", help="emit JSON output")
     rerank.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    rerank.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
     rerank.set_defaults(func=_rerank_command)
+    secret_scan = subparsers.add_parser(
+        "secret-scan",
+        help="scan files for secret patterns and emit a redacted JSON report",
+    )
+    secret_scan.add_argument(
+        "paths",
+        nargs="+",
+        type=Path,
+        help="files or directories to scan",
+    )
+    secret_scan.add_argument(
+        "--include-suffix",
+        action="append",
+        default=None,
+        help="restrict scan to files with this suffix; repeatable. Defaults match log/report files.",
+    )
+    secret_scan.add_argument(
+        "--no-recursive",
+        dest="recursive",
+        action="store_false",
+        default=True,
+        help="do not recurse into subdirectories",
+    )
+    secret_scan.add_argument(
+        "--json",
+        action="store_true",
+        help="emit JSON output",
+    )
+    secret_scan.set_defaults(func=_secret_scan_command)
     parser.set_defaults(func=_print_help)
     return parser
 
@@ -82,7 +122,7 @@ def _score_command(args: argparse.Namespace) -> int:
                 },
             ),
         )
-        scorer = load_scorer(args.checkpoint, device=args.device)
+        scorer = load_scorer(args.checkpoint, device=args.device, allow_unsafe=args.allow_unsafe_checkpoint)
         result = scorer.score_files(
             before=args.before,
             instruction=instruction,
@@ -137,7 +177,7 @@ def _rerank_command(args: argparse.Namespace) -> int:
                 },
             ),
         )
-        scorer = load_scorer(args.checkpoint, device=args.device)
+        scorer = load_scorer(args.checkpoint, device=args.device, allow_unsafe=args.allow_unsafe_checkpoint)
         result = scorer.rerank_files(
             before=args.before,
             instruction=instruction,
@@ -176,6 +216,26 @@ def _rerank_command(args: argparse.Namespace) -> int:
             else:
                 print(f"{rank}. {item.artifact or item.record_id} error={item.error_type}: {item.message}")
     return 0
+
+
+def _secret_scan_command(args: argparse.Namespace) -> int:
+    include_suffixes = (
+        None if args.include_suffix is None else tuple(args.include_suffix)
+    )
+    report = scan_paths(
+        args.paths,
+        include_suffixes=include_suffixes,
+        recursive=args.recursive,
+    )
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"paths_scanned: {len(report.paths_scanned)}")
+        print(f"findings: {len(report.findings)}")
+        for finding in report.findings:
+            print(f"  {finding.path}:{finding.line} {finding.pattern} {finding.redacted}")
+        print(f"ok: {'true' if report.ok else 'false'}")
+    return 0 if report.ok else 2
 
 
 def _instruction_arg_to_text(value: str) -> str:
