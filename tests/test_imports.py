@@ -26,6 +26,7 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("TrainConfig", codelewm.training.__all__)
         self.assertIn("load_train_config", codelewm.training.__all__)
         self.assertIn("train", codelewm.training.__all__)
+        self.assertIn("train_cpu_smoke", codelewm.training.__all__)
 
     def test_moved_seed_modules_have_package_specs(self) -> None:
         expected = [

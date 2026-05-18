@@ -20,6 +20,12 @@ from .config import (
     load_train_config,
     validate_train_config,
 )
+from .cpu_smoke import (
+    CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION,
+    CPU_SMOKE_REPORT_SCHEMA_VERSION,
+    cpu_smoke_training_executor,
+    train_cpu_smoke,
+)
 from .runner import (
     TRAINING_METRICS_SCHEMA_VERSION,
     TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
@@ -39,6 +45,8 @@ __all__ = [
     "LoaderConfig",
     "OptimizerConfig",
     "OutputConfig",
+    "CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION",
+    "CPU_SMOKE_REPORT_SCHEMA_VERSION",
     "TrainConfig",
     "TrainConfigError",
     "TrainDataConfig",
@@ -53,9 +61,11 @@ __all__ = [
     "TrainingRunManifest",
     "WorldModelTrainConfig",
     "default_train_config_paths",
+    "cpu_smoke_training_executor",
     "load_default_train_configs",
     "load_train_config",
     "read_training_run_manifest",
     "train",
+    "train_cpu_smoke",
     "validate_train_config",
 ]
