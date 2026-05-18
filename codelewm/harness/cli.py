@@ -34,6 +34,19 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
     score.add_argument("--json", action="store_true", help="emit JSON output")
     score.set_defaults(func=_score_command)
+    rerank = subparsers.add_parser("rerank", help="rerank candidate after-states or patches")
+    rerank.add_argument("--before", type=Path, required=True, help="before-state Python file")
+    rerank.add_argument("--instruction", required=True, help="instruction text or path to a text file")
+    rerank.add_argument(
+        "--candidates",
+        type=Path,
+        required=True,
+        help="candidate after-state file, patch file, or directory",
+    )
+    rerank.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
+    rerank.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
+    rerank.add_argument("--json", action="store_true", help="emit JSON output")
+    rerank.set_defaults(func=_rerank_command)
     parser.set_defaults(func=_print_help)
     return parser
 
@@ -65,6 +78,33 @@ def _score_command(args: argparse.Namespace) -> int:
         print(f"candidate: {result.candidate}")
         print(f"transition_energy: {result.transition_energy:.6g}")
         print(f"final_score: {result.final_score:.6g}")
+    return 0
+
+
+def _rerank_command(args: argparse.Namespace) -> int:
+    try:
+        instruction = _instruction_arg_to_text(args.instruction)
+        scorer = load_scorer(args.checkpoint, device=args.device)
+        result = scorer.rerank_files(
+            before=args.before,
+            instruction=instruction,
+            candidates=args.candidates,
+        )
+    except ScoreError as exc:
+        if args.json:
+            print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
+        else:
+            print(str(exc), file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        for rank, item in enumerate(result.results, start=1):
+            if hasattr(item, "final_score"):
+                print(f"{rank}. {item.candidate} final_score={item.final_score:.6g}")
+            else:
+                print(f"{rank}. {item.artifact or item.record_id} error={item.error_type}: {item.message}")
     return 0
 
 

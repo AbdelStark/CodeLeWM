@@ -124,6 +124,26 @@ scoring. The initial runtime-light backend is deterministic and intended for API
 and fixture validation; model-backed checkpoint execution can replace the backend
 without changing `ScoreResult`.
 
+`codelewm rerank` accepts either one candidate path or a directory of candidates.
+Candidate files are interpreted as complete after-state Python files unless the
+suffix is `.patch` or `.diff`, in which case the candidate is applied as a
+single-file unified diff against the `--before` file in memory. The command never
+modifies the user's working tree.
+
+Valid candidates are sorted by ascending `final_score`. Candidates that fail
+syntax validation or dry-run patch application are represented as `ErrorReport`
+items and appear after valid `ScoreResult` items.
+
+`RerankResult` schema:
+
+```python
+@dataclass(frozen=True)
+class RerankResult:
+    schema_version: str
+    results: tuple[ScoreResult | ErrorReport, ...]
+    warnings: tuple[str, ...]
+```
+
 JSON schema helper functions are available for automation:
 
 ```python

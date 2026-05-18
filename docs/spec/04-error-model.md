@@ -40,8 +40,10 @@ Harness CLI error records use `schema_version=codelewm.error.v1`. Current
 - `scoring_error`.
 
 `codelewm score --json` writes an `ErrorReport` JSON object and exits with code
-`2` for invalid input. Error messages and causes must not include long raw source
-snippets.
+`2` for invalid input. `codelewm rerank --json` returns row-level
+`ErrorReport` items for invalid candidates after all valid candidate scores; the
+command exits with code `2` only when the request itself is invalid. Error
+messages and causes must not include long raw source snippets.
 
 ## Failure Modes
 
