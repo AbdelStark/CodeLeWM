@@ -81,6 +81,21 @@ without the optional ML runtime so package and CLI checks can run in lightweight
 environments; concrete encoders and predictors remain ML-runtime-backed. The
 model package does not read raw datasets or decide split membership.
 
+`TextActionEncoder` is the headline action path for v0.1. Its contract is:
+
+```python
+TextActionEncoderConfig(
+    max_length=256,
+    latent_dim=256,
+    embed_dim=256,
+    num_layers=4,
+    num_heads=8,
+)
+```
+
+`TextActionTokenizer` emits `ActionBatch(action_view="text")` with padded
+`input_ids` and `attention_mask`. Empty text actions fail before encoding.
+
 ### `codelewm.eval`
 
 Public functions:

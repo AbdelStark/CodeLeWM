@@ -16,6 +16,12 @@ from .transition import (
     infer_shape,
     transition_energy,
 )
+from .actions import (
+    ModelRuntimeUnavailableError,
+    TextActionEncoder,
+    TextActionEncoderConfig,
+    TextActionTokenizer,
+)
 
 __all__ = [
     "ABSTRACT_ACTION_SEQUENCE_LENGTH",
@@ -25,7 +31,11 @@ __all__ = [
     "ActionBatch",
     "CodeStateBatch",
     "CodeTransitionModel",
+    "ModelRuntimeUnavailableError",
     "TensorContract",
+    "TextActionEncoder",
+    "TextActionEncoderConfig",
+    "TextActionTokenizer",
     "TransitionBatch",
     "expected_action_sequence_length",
     "infer_shape",
