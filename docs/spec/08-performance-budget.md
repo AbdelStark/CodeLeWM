@@ -1,0 +1,65 @@
+# Performance Budget
+
+## Data Build
+
+Targets on a local workstation:
+
+- parse and filter at least `10` Python files per second per worker for normal
+  source files under 2k lines;
+- write Parquet shards of `10k-50k` rows;
+- keep peak memory under `4 GiB` for v0.1 builds;
+- support resumable source processing by shard.
+
+Rows that exceed parser timeouts or token budgets are dropped with structured
+reasons rather than slowing the full build.
+
+## Model
+
+v0.1 tiny model:
+
+- latent dim `256`;
+- state length `1024`;
+- action text length `256`;
+- abstract action length `192`;
+- parameter target `10M-20M`;
+- CPU one-batch smoke supported;
+- GPU training target fits in `24 GiB` with batch size `64`.
+
+v1.0 small model:
+
+- parameter target `20M-35M`;
+- bf16 mixed precision;
+- effective batch size `128`;
+- main run target `60k-100k` steps.
+
+## Indexing And Scoring
+
+Index targets:
+
+- build embeddings for `250k` transitions in one resumable job;
+- store vectors in a local index with manifest checksums;
+- retrieve top `100` nearest transitions in under `500 ms` on a developer laptop
+  for v0.1 scale.
+
+Scoring targets:
+
+- `codelewm score` returns one candidate result in under `2 s` on CPU for fixture
+  inputs and under `300 ms` on GPU after model load;
+- `codelewm rerank` handles `100` candidates by batching model calls.
+
+## Profiling
+
+Performance reports include:
+
+- examples/sec;
+- tokens/sec;
+- peak resident memory;
+- peak device memory;
+- data loading time percentage;
+- model forward time percentage;
+- index lookup time.
+
+Regression threshold:
+
+- any `>20%` slowdown on fixture performance tests requires a changelog note and
+  justification.
