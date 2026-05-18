@@ -52,8 +52,8 @@ The current package includes:
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm score` and
   `codelewm rerank` commands, and structured score/rerank/error schemas;
-- `codelewm.security`: license decision policy helpers and non-execution
-  parsing guards;
+- `codelewm.security`: license decision policy helpers, public artifact license
+  gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,

@@ -13,6 +13,11 @@ import numpy as np
 
 from codelewm.data.sources import SourceKind
 from codelewm.data.split_dedup import SplitName
+from codelewm.security import (
+    PublicLicenseGateReport,
+    normalize_license,
+    validate_public_license_gate_report,
+)
 
 
 DATASET_SCHEMA_VERSION = "codelewm.transition.v1"
@@ -254,6 +259,7 @@ def write_dataset_artifacts(
     *,
     spec: PackSpec = PackSpec(),
     parquet_shard_size: int = 1000,
+    license_gate_report: PublicLicenseGateReport | dict[str, Any] | None = None,
 ) -> DatasetManifest:
     rows = tuple(transitions)
     parquet_artifacts = write_parquet_staging_shards(
@@ -267,6 +273,7 @@ def write_dataset_artifacts(
         rows,
         artifacts=artifacts,
         spec=spec,
+        license_gate_report=license_gate_report,
     )
     write_dataset_manifest(manifest, output_dir / "manifest.json")
     return manifest
@@ -278,6 +285,7 @@ def build_dataset_manifest(
     artifacts: Iterable[ArtifactInfo],
     spec: PackSpec = PackSpec(),
     metadata: dict[str, object] | None = None,
+    license_gate_report: PublicLicenseGateReport | dict[str, Any] | None = None,
 ) -> DatasetManifest:
     rows = tuple(transitions)
     split_counts = {"train": 0, "val": 0, "test": 0}
@@ -286,6 +294,16 @@ def build_dataset_manifest(
         split_counts[row.split] += 1
         source_counts[row.source] += 1
 
+    metadata_payload: dict[str, object] = {} if metadata is None else dict(metadata)
+    metadata_payload["license_summary"] = _dataset_license_summary(rows)
+    if license_gate_report is not None:
+        gate = (
+            license_gate_report
+            if isinstance(license_gate_report, PublicLicenseGateReport)
+            else validate_public_license_gate_report(license_gate_report)
+        )
+        metadata_payload["license_gate_report"] = gate.to_dict()
+
     return DatasetManifest(
         schema_version=spec.schema_version,
         row_count=len(rows),
@@ -293,7 +311,7 @@ def build_dataset_manifest(
         artifacts=tuple(artifacts),
         split_counts=split_counts,
         source_counts=source_counts,
-        metadata={} if metadata is None else dict(metadata),
+        metadata=metadata_payload,
     )
 
 
@@ -326,6 +344,21 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _dataset_license_summary(rows: tuple[PackedTransition, ...]) -> dict[str, object]:
+    license_counts: dict[str, int] = {}
+    source_license_counts: dict[str, dict[str, int]] = {}
+    for row in rows:
+        license_name = normalize_license(row.license) or "missing"
+        license_counts[license_name] = license_counts.get(license_name, 0) + 1
+        by_source = source_license_counts.setdefault(row.source, {})
+        by_source[license_name] = by_source.get(license_name, 0) + 1
+    return {
+        "included_rows": len(rows),
+        "included_licenses": license_counts,
+        "included_source_licenses": source_license_counts,
+    }
 
 
 def _artifact_info(path: Path, *, kind: str, rows: int) -> ArtifactInfo:

@@ -12,7 +12,9 @@ from codelewm.data.sources import RawEditRecord
 from codelewm.security.license_policy import (
     DEFAULT_PUBLIC_LICENSE_POLICY,
     LicenseDecision,
+    PublicLicenseGateReport,
     SourceLicensePolicy,
+    build_public_license_gate_report,
     decide_license,
 )
 from codelewm.security.non_execution import parse_python_source_text
@@ -121,12 +123,14 @@ class FilteredRecords:
     kept: tuple[RawEditRecord, ...]
     dropped: tuple[DroppedRecord, ...]
     report: FilterReport
+    license_gate_report: PublicLicenseGateReport
 
     def to_dict(self) -> dict[str, object]:
         return {
             "kept": len(self.kept),
             "dropped": [record.to_dict() for record in self.dropped],
             "report": self.report.to_dict(),
+            "license_gate_report": self.license_gate_report.to_dict(),
         }
 
 
@@ -139,11 +143,19 @@ def filter_raw_edit_records(
     kept: list[RawEditRecord] = []
     dropped: list[DroppedRecord] = []
     reason_counts: dict[str, int] = {}
+    included_license_decisions: list[LicenseDecision] = []
+    excluded_license_decisions: list[LicenseDecision] = []
 
     for index, record in enumerate(records):
-        drop = evaluate_raw_edit_record(record, policy=policy, license_policy=license_policy)
+        drop, license_decision = _evaluate_raw_edit_record(
+            record,
+            fallback_index=index,
+            policy=policy,
+            license_policy=license_policy,
+        )
         if drop is None:
             kept.append(record)
+            included_license_decisions.append(license_decision)
             continue
         dropped.append(
             DroppedRecord(
@@ -152,6 +164,7 @@ def filter_raw_edit_records(
                 license_decision=drop.license_decision,
             )
         )
+        excluded_license_decisions.append(license_decision)
         reason_counts[drop.reason.code] = reason_counts.get(drop.reason.code, 0) + 1
 
     report = FilterReport(
@@ -159,7 +172,16 @@ def filter_raw_edit_records(
         total_after=len(kept),
         drop_reasons=reason_counts,
     )
-    return FilteredRecords(kept=tuple(kept), dropped=tuple(dropped), report=report)
+    license_gate_report = build_public_license_gate_report(
+        included=included_license_decisions,
+        excluded=excluded_license_decisions,
+    )
+    return FilteredRecords(
+        kept=tuple(kept),
+        dropped=tuple(dropped),
+        report=report,
+        license_gate_report=license_gate_report,
+    )
 
 
 def evaluate_raw_edit_record(
@@ -168,6 +190,22 @@ def evaluate_raw_edit_record(
     policy: FilterPolicy = FilterPolicy(),
     license_policy: SourceLicensePolicy = DEFAULT_PUBLIC_LICENSE_POLICY,
 ) -> DroppedRecord | None:
+    drop, _ = _evaluate_raw_edit_record(
+        record,
+        fallback_index=0,
+        policy=policy,
+        license_policy=license_policy,
+    )
+    return drop
+
+
+def _evaluate_raw_edit_record(
+    record: RawEditRecord,
+    *,
+    fallback_index: int,
+    policy: FilterPolicy,
+    license_policy: SourceLicensePolicy,
+) -> tuple[DroppedRecord | None, LicenseDecision]:
     reason = _first_drop_reason(record, policy=policy)
     license_decision = decide_license(
         source=record.source,
@@ -182,12 +220,15 @@ def evaluate_raw_edit_record(
         )
 
     if reason is None:
-        return None
+        return None, license_decision
 
-    return DroppedRecord(
-        record_id=_record_id(record, 0),
-        reason=reason,
-        license_decision=license_decision,
+    return (
+        DroppedRecord(
+            record_id=_record_id(record, fallback_index),
+            reason=reason,
+            license_decision=license_decision,
+        ),
+        license_decision,
     )
 
 
