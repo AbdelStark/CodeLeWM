@@ -60,6 +60,28 @@ Evaluation metrics:
 - baseline deltas;
 - per-source and per-edit-size slices.
 
+Retrieval reports use `schema_version=codelewm.eval.retrieval_report.v1` and
+carry the same top-level metrics as the RFC:
+
+```python
+@dataclass(frozen=True)
+class RetrievalReport:
+    schema_version: str
+    recall_at_1: float
+    recall_at_5: float
+    recall_at_10: float
+    mrr: float
+    median_rank: float
+    candidate_pool: CandidatePool | None
+    baselines: Mapping[str, RetrievalMetrics]
+    slices: Mapping[str, RetrievalMetrics]
+    metadata: Mapping[str, Any]
+```
+
+Candidate pools use `schema_version=codelewm.eval.candidate_pool.v1`, store
+held-out transition IDs, and reject any `train` split rows. The v0.1 easy pool is
+a deterministic random sample of up to 1,000 validation/test after-states.
+
 ## Artifact Lineage
 
 Every dataset, checkpoint, index, and report includes:

@@ -64,6 +64,21 @@ The runner owns config validation, parent dataset manifest validation, output
 layout, metrics files, checkpoint hashes, and training-run manifests. Concrete
 CPU/GPU model execution is supplied by an executor implementation.
 
+Retrieval evaluation exposes the metric and report contract independently of the
+model runtime:
+
+```python
+from codelewm.eval import build_easy_candidate_pool, build_retrieval_report, rank_targets
+
+pool = build_easy_candidate_pool(rows, max_size=1000, seed=0)
+ranks = rank_targets(score_rows, candidate_ids_by_query, target_ids)
+report = build_retrieval_report(ranks, candidate_pool=pool)
+```
+
+Reports use `schema_version=codelewm.eval.retrieval_report.v1`; candidate pools
+use `schema_version=codelewm.eval.candidate_pool.v1` and must exclude `train`
+split rows.
+
 `ScoreResult` schema:
 
 ```python
