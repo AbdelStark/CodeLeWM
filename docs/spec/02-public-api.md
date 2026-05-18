@@ -51,6 +51,19 @@ Public model configuration helpers include `TextActionEncoderConfig` for the
 headline text action path and `AbstractActionEncoderConfig` for structural
 ablation runs. Both project action encodings to the v0.1 latent dimension.
 
+Training is exposed through the package runner:
+
+```python
+from codelewm.training import load_train_config, train
+
+cfg = load_train_config("config/train/codelewm_tiny.yaml")
+manifest = train(cfg, executor=executor)
+```
+
+The runner owns config validation, parent dataset manifest validation, output
+layout, metrics files, checkpoint hashes, and training-run manifests. Concrete
+CPU/GPU model execution is supplied by an executor implementation.
+
 `ScoreResult` schema:
 
 ```python
