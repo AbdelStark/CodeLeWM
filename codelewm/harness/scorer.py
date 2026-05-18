@@ -23,6 +23,7 @@ HarnessErrorType = Literal[
     "missing_file",
     "invalid_syntax",
     "patch_apply_failed",
+    "manifest_error",
     "checkpoint_error",
     "scoring_error",
 ]
@@ -76,6 +77,7 @@ class ErrorReport:
             "missing_file",
             "invalid_syntax",
             "patch_apply_failed",
+            "manifest_error",
             "checkpoint_error",
             "scoring_error",
         }:
@@ -444,6 +446,7 @@ def error_report_json_schema() -> dict[str, Any]:
                     "missing_file",
                     "invalid_syntax",
                     "patch_apply_failed",
+                    "manifest_error",
                     "checkpoint_error",
                     "scoring_error",
                 ]
