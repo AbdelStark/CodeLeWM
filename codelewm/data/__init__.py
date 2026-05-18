@@ -50,6 +50,13 @@ from .pack import (
     write_hdf5_pack,
     write_parquet_staging_shards,
 )
+from .synthetic import (
+    DEFAULT_SYNTHETIC_TRANSFORMS,
+    SyntheticSourceFile,
+    SyntheticTransform,
+    SyntheticTransformError,
+    generate_synthetic_records,
+)
 from .filters import (
     DropReason,
     DroppedRecord,
@@ -65,6 +72,7 @@ __all__ = [
     "ArtifactInfo",
     "CommitPackFTSourceAdapter",
     "DATASET_SCHEMA_VERSION",
+    "DEFAULT_SYNTHETIC_TRANSFORMS",
     "DedupDroppedRecord",
     "DedupKeys",
     "DedupPolicy",
@@ -92,6 +100,9 @@ __all__ = [
     "SplitDedupResult",
     "SplitName",
     "SplitPolicy",
+    "SyntheticSourceFile",
+    "SyntheticTransform",
+    "SyntheticTransformError",
     "TokenSequence",
     "assign_split",
     "build_dataset_manifest",
@@ -99,6 +110,7 @@ __all__ = [
     "evaluate_raw_edit_record",
     "filter_raw_edit_records",
     "get_source_adapter",
+    "generate_synthetic_records",
     "hamming_distance_hex",
     "load_source",
     "read_dataset_manifest",
