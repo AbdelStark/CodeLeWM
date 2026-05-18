@@ -30,6 +30,19 @@ class ErrorReport:
     caused_by: str | None
 ```
 
+Harness CLI error records use `schema_version=codelewm.error.v1`. Current
+`error_type` values are:
+
+- `missing_file`;
+- `invalid_syntax`;
+- `patch_apply_failed`;
+- `checkpoint_error`;
+- `scoring_error`.
+
+`codelewm score --json` writes an `ErrorReport` JSON object and exits with code
+`2` for invalid input. Error messages and causes must not include long raw source
+snippets.
+
 ## Failure Modes
 
 ### Source unavailable

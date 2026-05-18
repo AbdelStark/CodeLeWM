@@ -27,6 +27,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("validate_required_headline_baselines", codelewm.eval.__all__)
         self.assertTrue(hasattr(codelewm.harness, "main"))
         self.assertIn("ScoreResult", codelewm.harness.__all__)
+        self.assertIn("ErrorReport", codelewm.harness.__all__)
+        self.assertIn("score_result_json_schema", codelewm.harness.__all__)
         self.assertIn("load_scorer", codelewm.harness.__all__)
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)

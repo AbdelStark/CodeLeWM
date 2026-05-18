@@ -2,24 +2,111 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from codelewm.model.checkpoint import sha256_file
 from codelewm.model.transition import transition_energy
 
 
 SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
+RERANK_RESULT_SCHEMA_VERSION = "codelewm.rerank.v1"
+ERROR_REPORT_SCHEMA_VERSION = "codelewm.error.v1"
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
+HarnessErrorType = Literal[
+    "missing_file",
+    "invalid_syntax",
+    "patch_apply_failed",
+    "checkpoint_error",
+    "scoring_error",
+]
 
 
 class ScoreError(ValueError):
     """Raised when a score request cannot be evaluated."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_type: HarnessErrorType = "scoring_error",
+        remediation: str = "inspect the score request and retry",
+        artifact: str | None = None,
+        caused_by: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.error_type = error_type
+        self.remediation = remediation
+        self.artifact = artifact
+        self.caused_by = caused_by
+
+    def to_error_report(self, *, record_id: str | None = None) -> "ErrorReport":
+        return ErrorReport(
+            error_type=self.error_type,
+            message=str(self),
+            remediation=self.remediation,
+            record_id=record_id,
+            artifact=self.artifact,
+            caused_by=self.caused_by,
+        )
+
+
+@dataclass(frozen=True)
+class ErrorReport:
+    """Schema-versioned CLI error report."""
+
+    error_type: HarnessErrorType
+    message: str
+    remediation: str
+    record_id: str | None = None
+    artifact: str | None = None
+    caused_by: str | None = None
+    schema_version: str = ERROR_REPORT_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != ERROR_REPORT_SCHEMA_VERSION:
+            raise ScoreError("unsupported error report schema")
+        if self.error_type not in {
+            "missing_file",
+            "invalid_syntax",
+            "patch_apply_failed",
+            "checkpoint_error",
+            "scoring_error",
+        }:
+            raise ScoreError(f"unsupported error_type: {self.error_type}")
+        if not self.message:
+            raise ScoreError("error report message must not be empty")
+        if not self.remediation:
+            raise ScoreError("error report remediation must not be empty")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "error_type": self.error_type,
+            "message": self.message,
+            "remediation": self.remediation,
+            "record_id": self.record_id,
+            "artifact": self.artifact,
+            "caused_by": self.caused_by,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "ErrorReport":
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            error_type=payload["error_type"],
+            message=str(payload["message"]),
+            remediation=str(payload["remediation"]),
+            record_id=None if payload.get("record_id") is None else str(payload["record_id"]),
+            artifact=None if payload.get("artifact") is None else str(payload["artifact"]),
+            caused_by=None if payload.get("caused_by") is None else str(payload["caused_by"]),
+        )
 
 
 class TransitionScoringBackend(Protocol):
@@ -128,8 +215,8 @@ class CodeLeWMScorer:
         return self.backend.model_id
 
     def score_files(self, *, before: Path, instruction: str, candidate: Path) -> ScoreResult:
-        before_text = _read_text_file(before, "before")
-        candidate_text = _read_text_file(candidate, "candidate")
+        before_text = _read_python_file(before, "before")
+        candidate_text = _read_python_file(candidate, "candidate")
         return self.score_texts(
             before=before_text,
             instruction=instruction,
@@ -171,7 +258,12 @@ def load_scorer(
 
     checkpoint_path = Path(checkpoint)
     if not checkpoint_path.is_file():
-        raise ScoreError(f"checkpoint file does not exist: {checkpoint_path}")
+        raise ScoreError(
+            f"checkpoint file does not exist: {checkpoint_path}",
+            error_type="missing_file",
+            remediation="provide an existing checkpoint file",
+            artifact=str(checkpoint_path),
+        )
     return CodeLeWMScorer(
         checkpoint=checkpoint_path,
         checkpoint_sha256=sha256_file(checkpoint_path),
@@ -198,9 +290,138 @@ def score_result_to_json(result: ScoreResult) -> str:
     return json.dumps(result.to_dict(), sort_keys=True, separators=(",", ":"))
 
 
+def error_report_to_json(report: ErrorReport) -> str:
+    """Serialize an error report as stable JSON."""
+
+    return json.dumps(report.to_dict(), sort_keys=True, separators=(",", ":"))
+
+
+def validate_score_result_payload(payload: dict[str, Any]) -> ScoreResult:
+    """Return a validated score result payload."""
+
+    return ScoreResult.from_dict(payload)
+
+
+def validate_error_report_payload(payload: dict[str, Any]) -> ErrorReport:
+    """Return a validated error report payload."""
+
+    return ErrorReport.from_dict(payload)
+
+
+def score_result_json_schema() -> dict[str, Any]:
+    """Return the JSON schema for `ScoreResult` payloads."""
+
+    return {
+        "type": "object",
+        "required": [
+            "schema_version",
+            "candidate",
+            "transition_energy",
+            "retrieval_prior",
+            "risk_penalty",
+            "final_score",
+            "model_id",
+            "checkpoint_sha256",
+            "input_digest",
+            "warnings",
+        ],
+        "properties": {
+            "schema_version": {"const": SCORE_RESULT_SCHEMA_VERSION},
+            "candidate": {"type": "string"},
+            "transition_energy": {"type": "number"},
+            "retrieval_prior": {"type": ["number", "null"]},
+            "risk_penalty": {"type": ["number", "null"]},
+            "final_score": {"type": "number"},
+            "model_id": {"type": "string"},
+            "checkpoint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "input_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "warnings": {"type": "array", "items": {"type": "string"}},
+        },
+        "additionalProperties": False,
+    }
+
+
+def error_report_json_schema() -> dict[str, Any]:
+    """Return the JSON schema for CLI error reports."""
+
+    return {
+        "type": "object",
+        "required": [
+            "schema_version",
+            "error_type",
+            "message",
+            "remediation",
+            "record_id",
+            "artifact",
+            "caused_by",
+        ],
+        "properties": {
+            "schema_version": {"const": ERROR_REPORT_SCHEMA_VERSION},
+            "error_type": {
+                "enum": [
+                    "missing_file",
+                    "invalid_syntax",
+                    "patch_apply_failed",
+                    "checkpoint_error",
+                    "scoring_error",
+                ]
+            },
+            "message": {"type": "string"},
+            "remediation": {"type": "string"},
+            "record_id": {"type": ["string", "null"]},
+            "artifact": {"type": ["string", "null"]},
+            "caused_by": {"type": ["string", "null"]},
+        },
+        "additionalProperties": False,
+    }
+
+
+def rerank_result_json_schema() -> dict[str, Any]:
+    """Return the reserved v0.1 JSON schema for rerank outputs."""
+
+    return {
+        "type": "object",
+        "required": ["schema_version", "results", "warnings"],
+        "properties": {
+            "schema_version": {"const": RERANK_RESULT_SCHEMA_VERSION},
+            "results": {
+                "type": "array",
+                "items": {
+                    "oneOf": [
+                        score_result_json_schema(),
+                        error_report_json_schema(),
+                    ]
+                },
+            },
+            "warnings": {"type": "array", "items": {"type": "string"}},
+        },
+        "additionalProperties": False,
+    }
+
+
+def _read_python_file(path: Path, label: str) -> str:
+    text = _read_text_file(path, label)
+    try:
+        ast.parse(text, filename=str(path))
+    except SyntaxError as exc:
+        raise ScoreError(
+            f"{label} file is not valid Python",
+            error_type="invalid_syntax",
+            remediation="provide a parseable Python file",
+            artifact=str(path),
+            caused_by=f"{exc.__class__.__name__}: {exc.msg}",
+        ) from exc
+    return text
+
+
 def _read_text_file(path: Path, label: str) -> str:
     if not path.is_file():
-        raise ScoreError(f"{label} file does not exist: {path}")
+        raise ScoreError(
+            f"{label} file does not exist: {path}",
+            error_type="missing_file",
+            remediation=f"provide an existing {label} file",
+            artifact=str(path),
+        )
     return path.read_text()
 
 

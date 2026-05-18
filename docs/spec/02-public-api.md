@@ -124,6 +124,16 @@ scoring. The initial runtime-light backend is deterministic and intended for API
 and fixture validation; model-backed checkpoint execution can replace the backend
 without changing `ScoreResult`.
 
+JSON schema helper functions are available for automation:
+
+```python
+from codelewm.harness import (
+    error_report_json_schema,
+    rerank_result_json_schema,
+    score_result_json_schema,
+)
+```
+
 ## Artifact Contracts
 
 Every generated artifact directory contains:

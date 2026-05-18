@@ -53,7 +53,10 @@ def _score_command(args: argparse.Namespace) -> int:
             candidate=args.candidate,
         )
     except ScoreError as exc:
-        print(str(exc), file=sys.stderr)
+        if args.json:
+            print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
+        else:
+            print(str(exc), file=sys.stderr)
         return 2
 
     if args.json:
