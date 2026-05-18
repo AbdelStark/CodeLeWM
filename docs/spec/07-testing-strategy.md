@@ -43,6 +43,7 @@ The release gate must expose:
 
 ```bash
 python -m pytest
+python -m pytest tests/data/test_codestate_fixtures.py
 python -m pytest tests/integration
 python -m codelewm dataset build --config tests/fixtures/tiny_dataset.yaml --out .artifacts/tiny
 python -m codelewm train --config tests/fixtures/tiny_train.yaml

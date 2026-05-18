@@ -1,0 +1,42 @@
+{
+  "decorated_async": {
+    "kind": "function",
+    "symbol": "fetch",
+    "enclosing_class": null,
+    "changed_hunk_mask": [false, false, true, false],
+    "sibling_signatures": ["def trace(fn)"],
+    "callee_signatures": ["client.get", "response.json"],
+    "primary": "@trace\nasync def fetch(client, url):\n    response = await client.get(url, timeout=5)\n    return response.json()\n",
+    "normalized_primary": "@trace\nasync def fetch(client, url):\n    response = await client.get(url, timeout=5)\n    return response.json()\n"
+  },
+  "class_method": {
+    "kind": "method",
+    "symbol": "Accumulator.add",
+    "enclosing_class": "Accumulator",
+    "changed_hunk_mask": [false, true, false],
+    "sibling_signatures": ["def reset(self)"],
+    "callee_signatures": [],
+    "primary": "    def add(self, value):\n        self.total = self.total + value\n        return self.total\n",
+    "normalized_primary": "def add(self, value):\n    self.total = self.total + value\n    return self.total\n"
+  },
+  "class_body": {
+    "kind": "class",
+    "symbol": "Settings",
+    "enclosing_class": null,
+    "changed_hunk_mask": [false, true, false],
+    "sibling_signatures": [],
+    "callee_signatures": [],
+    "primary": "class Settings:\n    mode = \"prod\"\n    retries = 1\n",
+    "normalized_primary": "class Settings:\n    mode = 'prod'\n    retries = 1\n"
+  },
+  "nested_function": {
+    "kind": "function",
+    "symbol": "inner",
+    "enclosing_class": null,
+    "changed_hunk_mask": [false, true],
+    "sibling_signatures": [],
+    "callee_signatures": [],
+    "primary": "    def inner(value):\n        return value + 2\n",
+    "normalized_primary": "def inner(value):\n    return value + 2\n"
+  }
+}
