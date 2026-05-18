@@ -7,7 +7,12 @@ SchemaVersion = Literal["codelewm.transition.v1"]
 SplitName = Literal["train", "val", "test"]
 ActionView = Literal["text", "abstract", "patch"]
 SourceKind = Literal["commitpackft", "commitpack", "agentpack", "synthetic", "local_repo"]
+AdapterKind = SourceKind | Literal["fixture"]
 ```
+
+`AdapterKind` names source adapters. The `fixture` adapter is for deterministic
+tests and local smoke data; emitted `RawEditRecord.source` values still use the
+canonical `SourceKind` set.
 
 ```python
 @dataclass(frozen=True)
