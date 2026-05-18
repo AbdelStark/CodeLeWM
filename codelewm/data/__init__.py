@@ -68,6 +68,12 @@ from .codestate import (
     extract_codestate_pair,
     module_name_from_path,
 )
+from .normalize import (
+    CodeStateNormalizationConfig,
+    CodeStateNormalizationError,
+    NormalizedCodeState,
+    normalize_codestate,
+)
 from .filters import (
     DropReason,
     DroppedRecord,
@@ -85,6 +91,8 @@ __all__ = [
     "CodeStateConfig",
     "CodeStateExtractionError",
     "CodeStateKind",
+    "CodeStateNormalizationConfig",
+    "CodeStateNormalizationError",
     "CodeStatePair",
     "CommitPackFTSourceAdapter",
     "DATASET_SCHEMA_VERSION",
@@ -99,6 +107,7 @@ __all__ = [
     "FilteredRecords",
     "FilterPolicy",
     "FilterReport",
+    "NormalizedCodeState",
     "OptionalDependencyError",
     "PackError",
     "PackSpec",
@@ -133,6 +142,7 @@ __all__ = [
     "hamming_distance_hex",
     "load_source",
     "module_name_from_path",
+    "normalize_codestate",
     "read_dataset_manifest",
     "sha256_file",
     "split_and_deduplicate",
