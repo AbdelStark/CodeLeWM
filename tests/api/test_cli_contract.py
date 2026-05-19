@@ -33,6 +33,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("CodeLeWM command-line interface", help_text)
         self.assertIn("score", help_text)
         self.assertIn("rerank", help_text)
+        self.assertIn("train", help_text)
         self.assertIn("dataset", help_text)
         self.assertIn("secret-scan", help_text)
 
@@ -75,6 +76,22 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_train_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("train", "--help")
+
+        for flag in (
+            "--config",
+            "--out",
+            "--device",
+            "--executor",
+            "--resume-from",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_dataset_pack_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("dataset", "pack", "--help")
 
@@ -87,6 +104,7 @@ class PublicCliContractTest(unittest.TestCase):
             ("score", "--instruction", "change"),
             ("score", "--before", "before.py", "--instruction", "change", "--candidate", "after.py", "--checkpoint", "ckpt", "--device", "tpu"),
             ("rerank", "--before", "before.py", "--instruction", "change", "--checkpoint", "ckpt"),
+            ("train", "--config", "missing.json", "--device", "tpu"),
         )
 
         for argv in cases:
