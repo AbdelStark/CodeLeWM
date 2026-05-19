@@ -338,7 +338,8 @@ def validate_artifact_checksums(manifest: ArtifactManifest, *, root: Path | str)
         observed_bytes = path.stat().st_size
         if observed_bytes != file.bytes:
             raise ArtifactManifestError(
-                f"byte size mismatch for {file.path}: expected {file.bytes}, got {observed_bytes}"
+                f"checksum mismatch for {file.path}: byte size differs "
+                f"(expected {file.bytes}, got {observed_bytes})"
             )
         observed_sha256 = sha256_file(path)
         if observed_sha256 != file.sha256:

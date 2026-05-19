@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install lightweight dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest numpy
+
+      - name: Run pytest
+        env:
+          PYTHONPATH: .
+        run: python -m pytest tests/
+
+  syntax-check:
+    name: Compile Python sources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compile codelewm and tests
+        run: python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
+
+  artifact-gates:
+    name: Manifest and secret gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install lightweight dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy
+
+      - name: Build manifest fixture
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          from codelewm.observability import build_artifact_manifest, write_artifact_manifest
+
+          root = Path(".ci/manifest")
+          root.mkdir(parents=True, exist_ok=True)
+          artifact = root / "report.json"
+          artifact.write_text('{"ok": true}\n', encoding="utf-8")
+          manifest = build_artifact_manifest(
+              artifact_kind="eval_report",
+              root=root,
+              files=("report.json",),
+              command=("codelewm", "eval", "retrieval"),
+              config={"name": "ci-fixture"},
+              source_git_sha="0" * 40,
+              artifact_id="ci-eval-report",
+          )
+          write_artifact_manifest(manifest, root / "manifest.json")
+          PY
+
+      - name: Verify manifest fixture
+        env:
+          PYTHONPATH: .
+        run: python -m codelewm.harness.cli manifest verify --manifest .ci/manifest/manifest.json --json
+
+      - name: Run secret scan
+        env:
+          PYTHONPATH: .
+        run: python -m codelewm.harness.cli secret-scan README.md SPEC.md docs .ci/manifest --json
+
+  docs-check:
+    name: Docs sanity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Required docs are present
+        run: |
+          set -euo pipefail
+          required=(
+            "README.md"
+            "LICENSE"
+            "SPEC.md"
+            "docs/spec/00-overview.md"
+            "docs/spec/01-architecture.md"
+            "docs/spec/02-public-api.md"
+            "docs/spec/03-data-model.md"
+            "docs/spec/04-error-model.md"
+            "docs/spec/05-observability.md"
+            "docs/spec/06-security.md"
+            "docs/spec/07-testing-strategy.md"
+            "docs/spec/08-performance-budget.md"
+            "docs/spec/09-release-and-versioning.md"
+            "docs/spec/10-glossary.md"
+          )
+          for path in "${required[@]}"; do
+            if [ ! -f "$path" ]; then
+              echo "missing required doc: $path"
+              exit 1
+            fi
+          done
+
+      - name: Reject TODO markers in spec docs
+        run: |
+          if grep -rnE "\\bTODO\\b|\\bFIXME\\b|\\bXXX\\b" docs/spec; then
+            echo "spec docs must not contain TODO/FIXME/XXX markers"
+            exit 1
+          fi
