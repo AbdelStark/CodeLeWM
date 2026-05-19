@@ -57,6 +57,7 @@ their workflow depends on.
 | Surface                       | Schema version                                  |
 | ----------------------------- | ----------------------------------------------- |
 | Dataset manifest              | `codelewm.dataset.v1`                           |
+| Source acquisition report     | `codelewm.source_acquisition.v1`                |
 | Artifact manifest             | `codelewm.artifact_manifest.v1`                 |
 | Manifest verification report  | `codelewm.manifest_verify.v1`                   |
 | Checkpoint manifest           | `codelewm.checkpoint.v1`                        |

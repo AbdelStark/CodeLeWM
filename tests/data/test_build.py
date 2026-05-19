@@ -10,6 +10,7 @@ from pathlib import Path
 from codelewm.data import (
     DATASET_BUILD_CONFIG_SCHEMA_VERSION,
     DATASET_BUILD_REPORT_SCHEMA_VERSION,
+    SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION,
     DatasetBuildConfigError,
     build_dataset_from_config_path,
     load_dataset_build_config,
@@ -36,6 +37,7 @@ class DatasetBuildTest(unittest.TestCase):
             artifact_manifest = read_artifact_manifest(output_dir / "manifest.json")
             dataset_manifest = read_dataset_manifest(output_dir / "dataset_manifest.json")
             filter_report = _read_json(output_dir / "reports" / "filter_report.json")
+            source_acquisition_report = _read_json(output_dir / "reports" / "source_acquisition_report.json")
             row_counts = _read_json(output_dir / "reports" / "row_counts.json")
 
         self.assertEqual(result.dataset_manifest.row_count, 3)
@@ -47,7 +49,22 @@ class DatasetBuildTest(unittest.TestCase):
         self.assertEqual(row_counts["total_loaded"], 4)
         self.assertTrue(all(row_counts["accounting"].values()))
         self.assertEqual(dataset_manifest.metadata["license_gate_report"]["included_rows"], 3)
+        self.assertEqual(source_acquisition_report["schema_version"], SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION)
+        self.assertTrue(source_acquisition_report["release_allowed"])
+        self.assertFalse(source_acquisition_report["public_path_policy"]["raw_private_paths_published"])
+        self.assertEqual(
+            source_acquisition_report["source_mix"],
+            [{"source": "local_repo", "rows_loaded": 4, "rows_included": 3, "rows_excluded": 1}],
+        )
+        self.assertEqual(
+            dataset_manifest.metadata["source_acquisition_report"]["dataset_card_fields"]["source_mix"],
+            source_acquisition_report["source_mix"],
+        )
         self.assertIn("transitions.jsonl", {artifact.path for artifact in dataset_manifest.artifacts})
+        self.assertIn(
+            "reports/source_acquisition_report.json",
+            {artifact.path for artifact in dataset_manifest.artifacts},
+        )
 
     def test_artifact_manifest_verifies_dataset_build_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -61,7 +78,7 @@ class DatasetBuildTest(unittest.TestCase):
 
             checked = validate_artifact_checksums(manifest, root=output_dir)
 
-        self.assertEqual(len(checked), 7)
+        self.assertEqual(len(checked), 8)
 
     def test_build_accepts_relative_output_dir_for_manifest_files(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
@@ -75,7 +92,7 @@ class DatasetBuildTest(unittest.TestCase):
             manifest = read_artifact_manifest(relative_output / "manifest.json")
             checked = validate_artifact_checksums(manifest, root=relative_output)
 
-        self.assertEqual(len(checked), 7)
+        self.assertEqual(len(checked), 8)
 
     def test_build_is_deterministic_for_transitions_and_splits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -101,6 +118,32 @@ class DatasetBuildTest(unittest.TestCase):
         self.assertEqual(first_manifest.split_counts, second_manifest.split_counts)
         self.assertEqual(first_manifest.source_counts, second_manifest.source_counts)
 
+    def test_build_artifacts_redact_absolute_source_paths(self) -> None:
+        payload = _fixture_config_payload()
+        payload["sources"][0]["path"] = str(FIXTURE_CONFIG.with_name("records.jsonl").resolve())
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "absolute-source.json"
+            output_dir = Path(tmp) / "dataset"
+            config_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            build_dataset_from_config_path(
+                config_path=config_path,
+                output_dir=output_dir,
+                command=("codelewm", "dataset", "build", "--config", str(config_path), "--out", str(output_dir)),
+            )
+            shareable_config = _read_json(output_dir / "config.json")
+            artifact_manifest = _read_json(output_dir / "manifest.json")
+            acquisition_report = _read_json(output_dir / "reports" / "source_acquisition_report.json")
+
+        source_path = payload["sources"][0]["path"]
+        self.assertIsInstance(source_path, str)
+        self.assertNotIn(source_path, json.dumps(shareable_config))
+        self.assertNotIn(source_path, json.dumps(artifact_manifest))
+        self.assertNotIn(source_path, json.dumps(acquisition_report))
+        self.assertIn("<redacted:absolute_path:sha256=", shareable_config["sources"][0]["path"])
+        self.assertEqual(acquisition_report["configured_sources"][0]["path"]["kind"], "absolute_path")
+        self.assertEqual(len(acquisition_report["configured_sources"][0]["path"]["path_sha256"]), 64)
+
     def test_invalid_config_is_rejected_before_build(self) -> None:
         payload = _fixture_config_payload()
         payload["unexpected"] = True
@@ -122,6 +165,7 @@ class DatasetBuildTest(unittest.TestCase):
         self.assertEqual(payload["schema_version"], DATASET_BUILD_REPORT_SCHEMA_VERSION)
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["row_count"], 3)
+        self.assertEqual(payload["source_acquisition_report"]["schema_version"], SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION)
 
     def test_invalid_config_cli_returns_structured_error(self) -> None:
         payload = _fixture_config_payload()

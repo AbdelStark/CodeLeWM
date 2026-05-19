@@ -182,6 +182,7 @@ The command writes:
   reports/
     filter_report.json
     license_gate_report.json
+    source_acquisition_report.json
     split_dedup_report.json
     row_counts.json
 ```
@@ -197,6 +198,13 @@ message, edit-ratio, license, deterministic split, and dedup
 policies before writing transitions. Rejected rows are recorded in
 the filter and split/dedup reports; zero kept transitions fail with
 `codelewm.error.v1`.
+
+`reports/source_acquisition_report.json` has schema
+`codelewm.source_acquisition.v1`. It records configured source adapters,
+rows loaded per source, card-fillable source mix, the public path redaction
+policy, and the embedded license gate result. Shareable build artifacts redact
+absolute or home-relative source paths while preserving relative checked-in
+paths and SHA-256 digests for operator reconciliation.
 
 ### `codelewm dataset pack`
 

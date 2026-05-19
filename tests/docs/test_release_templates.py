@@ -107,6 +107,7 @@ class DatasetCardTemplateTest(unittest.TestCase):
         for schema in (
             "codelewm.dataset.v1",
             "codelewm.artifact_manifest.v1",
+            "codelewm.source_acquisition.v1",
             "codelewm.public_license_gate.v1",
             "codelewm.transition.v1",
         ):

@@ -57,6 +57,7 @@ uv run python -m pytest tests/integration/test_action_conditioning.py
 uv run python -m pytest tests/integration/test_cpu_train_smoke.py
 uv run python -m pytest tests/integration
 uv run codelewm dataset build --config tests/fixtures/dataset_build/config.json --out .artifacts/tiny-build --json
+uv run codelewm secret-scan .artifacts/tiny-build --json
 uv run codelewm dataset pack --manifest .artifacts/tiny-build/manifest.json --out .artifacts/tiny-pack --json
 uv run codelewm manifest verify --manifest .artifacts/tiny-pack/manifest.json --parent-manifest .artifacts/tiny-build/manifest.json --json
 uv run codelewm train --config tests/fixtures/tiny_train.json --out .artifacts/tiny-train --executor torch --device cpu --json
@@ -78,6 +79,8 @@ uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixt
 v0.1 gates:
 
 - dataset smoke build succeeds;
+- dataset build emits `codelewm.source_acquisition.v1` with source mix,
+  redacted private paths, and a passing embedded license gate;
 - tiny CPU training step succeeds;
 - collapse metrics are finite and above minimum variance;
 - deterministic synthetic retrieval beats random;
