@@ -54,6 +54,7 @@ glance.
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | | | |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` | | | |
 | Surprise report | `codelewm.eval.surprise_report.v1` | | | |
+| Scorer quality report | `codelewm.harness.scorer_quality_report.v1` | | | |
 | License gate | `codelewm.public_license_gate.v1` | | | |
 
 - [ ] **Every manifest above verifies cleanly.** Evidence:
@@ -89,6 +90,11 @@ glance.
       completed baseline rows and explicit `blocked` rows for
       missing abstract-action, retrieval-loss, collapse-setting, and
       patch-action diagnostic variants.
+- [ ] **Scorer/reranker quality report accounts for candidate
+      failures and calibration slices.** Evidence:
+      `codelewm.harness.scorer_quality_report.v1` includes ranking
+      metrics, score distributions, retrieval-prior settings,
+      parse/patch failure counts, and the non-execution policy.
 - [ ] **Patch-action results are tagged diagnostic.** Evidence:
       `action_view_policy=diagnostic_only` flag on any
       patch-action results.

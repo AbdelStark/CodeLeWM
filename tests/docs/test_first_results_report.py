@@ -18,6 +18,8 @@ class FirstResultsRunnerContractTest(unittest.TestCase):
         self.assertTrue(os.access(RUNNER, os.X_OK), "scripts/first-results must be executable")
         self.assertTrue((CONFIG_DIR / "dataset_build.json").is_file())
         self.assertTrue((CONFIG_DIR / "train_tiny.json").is_file())
+        self.assertTrue((CONFIG_DIR / "scorer_quality.json").is_file())
+        self.assertTrue((CONFIG_DIR / "scorer_quality_candidates").is_dir())
 
     def test_config_bundle_pins_fixture_and_tiny_torch_run(self) -> None:
         dataset_config = json.loads((CONFIG_DIR / "dataset_build.json").read_text(encoding="utf-8"))
@@ -49,6 +51,7 @@ class FirstResultsReportTest(unittest.TestCase):
             "## Retrieval Evaluation",
             "## Action-View Ablation",
             "## Patch-Surprise Evaluation",
+            "## Scorer And Reranker Quality",
             "## Security Evidence",
             "## Claim Checklist",
             "## Caveats",
@@ -66,6 +69,7 @@ class FirstResultsReportTest(unittest.TestCase):
             "uv run codelewm eval ablation",
             "uv run codelewm eval surprise",
             "uv run codelewm index",
+            "uv run codelewm eval scorer-quality",
             "uv run codelewm manifest verify",
             "uv run codelewm secret-scan",
             ".artifacts/first-results/manifest_inventory.json",
@@ -89,10 +93,12 @@ class FirstResultsReportTest(unittest.TestCase):
             "action_ablation",
             "surprise_eval",
             "transition_index",
+            "scorer_quality",
             "codelewm.first_results.v1",
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
+            "codelewm.harness.scorer_quality_report.v1",
             "codelewm.public_license_gate.v1",
         ):
             with self.subTest(marker=marker):

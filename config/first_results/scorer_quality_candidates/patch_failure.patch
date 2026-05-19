@@ -1,0 +1,5 @@
+--- before.py
++++ after.py
+@@ -1 +1 @@
+-missing = 1
++value = 3

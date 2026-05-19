@@ -31,6 +31,7 @@
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
+| Scorer quality report | `codelewm.harness.scorer_quality_report.v1` |
 
 ## Architecture
 
@@ -112,6 +113,13 @@ appear only as diagnostics. Link the
 `codelewm.eval.action_ablation_report.v1` artifact and account for
 blocked rows instead of omitting missing runs.
 
+### Scorer / Reranker Quality
+
+Link the `codelewm.harness.scorer_quality_report.v1` artifact. Summarize
+Recall@1, MRR, mean/median true rank, failure counts, retrieval-prior settings,
+and candidate-kind calibration slices. State explicitly that candidates were
+parsed and dry-run-applied as text and not executed.
+
 ## Limitations And Risks
 
 > Honest bullets: data biases inherited from the dataset, failure
@@ -127,6 +135,7 @@ blocked rows instead of omitting missing runs.
 | Evaluate retrieval | `codelewm eval retrieval --checkpoint <ckpt> --data <pack_dir> --out <retrieval_dir>` |
 | Evaluate surprise | `codelewm eval surprise --checkpoint <ckpt> --data <pack_dir> --out <surprise_dir>` |
 | Build index | `codelewm index --checkpoint <ckpt> --data <pack_dir> --out <index_dir>` |
+| Evaluate scorer quality | `codelewm eval scorer-quality --config <quality.json> --checkpoint <ckpt> --out <quality_dir> --index <index_dir>` |
 | Verify | `codelewm manifest verify --manifest <run_dir>/manifest.json` |
 | Score one candidate | `codelewm score --before <before.py> --instruction <text> --candidate <after.py> --checkpoint <ckpt> --index <index_dir>` |
 

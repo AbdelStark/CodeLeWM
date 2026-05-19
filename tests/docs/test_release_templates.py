@@ -55,6 +55,7 @@ class ReleaseChecklistContentTest(unittest.TestCase):
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
+            "codelewm.harness.scorer_quality_report.v1",
             "codelewm.public_license_gate.v1",
         ):
             with self.subTest(schema=schema):
@@ -155,6 +156,7 @@ class ModelCardTemplateTest(unittest.TestCase):
         self.assertIn("### Retrieval (headline)", self.text)
         self.assertIn("### Patch Surprise", self.text)
         self.assertIn("### Action-View Diagnostic", self.text)
+        self.assertIn("### Scorer / Reranker Quality", self.text)
 
     def test_model_card_pins_required_schema_versions(self) -> None:
         for schema in (
@@ -164,6 +166,7 @@ class ModelCardTemplateTest(unittest.TestCase):
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
+            "codelewm.harness.scorer_quality_report.v1",
         ):
             with self.subTest(schema=schema):
                 self.assertIn(schema, self.text)

@@ -77,6 +77,9 @@ Scaled mode additionally requires checked-in configs:
 CODELEWM_HF_PIPELINE_MODE=scaled
 CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml
+CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json
+CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0
+CODELEWM_HF_RETRIEVAL_PRIOR_K=10
 ```
 
 ## Scripts
@@ -90,7 +93,8 @@ to dry-run.
 - `smoke`: run `scripts/first-results` into `.artifacts/hf/<run-id>`;
 - `scaled`: build the dataset, pack it, train, run retrieval evaluation, build
   the action-view ablation report, run surprise evaluation, build the transition
-  index, verify manifests, and scan the run root for secrets.
+  index, run the scorer/reranker quality report with retrieval-prior settings,
+  verify manifests, and scan the run root for secrets.
 
 `scripts/hf-publish-codelewm-artifacts` publishes the resulting directories:
 
@@ -168,6 +172,8 @@ CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
+CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
+CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 uv run scripts/hf-launch-codelewm-job
 ```
 
@@ -179,6 +185,9 @@ Definition of done for the scaled run:
 - retrieval includes headline baselines and action-view ablations;
 - the ablation report records missing variants as explicit blocked rows;
 - surprise evaluation includes enough decoy coverage for a useful result;
+- scorer/reranker quality report records ranking metrics, calibration slices,
+  parse/patch failure counts, retrieval-prior settings, and non-execution
+  policy evidence;
 - `codelewm score` and `codelewm rerank` run from the downloaded checkpoint;
 - dataset and model cards are filled from the artifacts before any public flip.
 
@@ -220,6 +229,17 @@ uv run codelewm eval surprise \
   --checkpoint .artifacts/hf-download/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
   --data .artifacts/hf-download/results/runs/<run-id>/pack \
   --out .artifacts/hf-download/surprise \
+  --overwrite \
+  --json
+
+uv run codelewm eval scorer-quality \
+  --config config/first_results/scorer_quality.json \
+  --checkpoint .artifacts/hf-download/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
+  --out .artifacts/hf-download/scorer-quality \
+  --index .artifacts/hf-download/results/runs/<run-id>/index \
+  --retrieval-prior-weight 1.0 \
+  --parent-manifest .artifacts/hf-download/results/runs/<run-id>/train/manifest.json \
+  --parent-manifest .artifacts/hf-download/results/runs/<run-id>/index/manifest.json \
   --overwrite \
   --json
 ```

@@ -53,6 +53,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 
 Run `codelewm <command> --help` for the current flag set. JSON
@@ -502,6 +503,54 @@ The prior is a nearest-neighbor distance penalty averaged over
 default `--retrieval-prior-weight 0.0`, the prior is reported but does not alter
 ordering.
 
+### `codelewm eval scorer-quality`
+
+Build a score/rerank quality report over labeled candidate sets:
+
+```bash
+codelewm eval scorer-quality \
+  --config config/first_results/scorer_quality.json \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/tiny-scorer-quality \
+  --index .artifacts/tiny-index \
+  --retrieval-prior-weight 1.0 \
+  --retrieval-prior-k 10 \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --parent-manifest .artifacts/tiny-index/manifest.json \
+  --json
+```
+
+The config schema is `codelewm.harness.scorer_quality_config.v1`. Each example
+names a before-state, instruction, candidate directory, true after-state, and
+candidate kinds such as `true_after`, `hard_negative`, `syntax_failure`, and
+`patch_failure`.
+
+The command parses after-state files and dry-run-applies patch candidates as
+text. It never executes candidate code. The report writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  config.json                                normalized scorer quality config
+  reports/
+    scorer_quality_report.json               codelewm.harness.scorer_quality_report.v1
+```
+
+The JSON stdout summary uses `codelewm.harness.scorer_quality_run.v1`. The
+report includes ranking metrics, score distributions, calibration slices by
+candidate kind, failure counts, retrieval-prior settings, risk-penalty caveats,
+and the non-execution policy used by the harness.
+
+Verify lineage by passing the parent manifests recorded at report time:
+
+```bash
+codelewm manifest verify \
+  --manifest .artifacts/tiny-scorer-quality/manifest.json \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --parent-manifest .artifacts/tiny-index/manifest.json \
+  --json
+```
+
 ## Python API
 
 ### Train the package-native model
@@ -701,6 +750,9 @@ field list.
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
 | Action ablation run | `codelewm.eval.action_ablation_run.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
+| Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |
+| Scorer quality run | `codelewm.harness.scorer_quality_run.v1` |
+| Scorer quality report | `codelewm.harness.scorer_quality_report.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Candidate pool | `codelewm.eval.candidate_pool.v1` |

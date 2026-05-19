@@ -1,0 +1,18 @@
+{
+  "examples": [
+    {
+      "before": "../../tests/fixtures/codestate/class_method_before.py",
+      "candidate_kinds": {
+        "hard_negative.py": "hard_negative",
+        "patch_failure.patch": "patch_failure",
+        "syntax_failure.py": "syntax_failure",
+        "true_after.py": "true_after"
+      },
+      "candidates_dir": "scorer_quality_candidates",
+      "id": "class-method-fixture",
+      "instruction": "rewrite the accumulator update explicitly",
+      "true_candidate": "true_after.py"
+    }
+  ],
+  "schema_version": "codelewm.harness.scorer_quality_config.v1"
+}

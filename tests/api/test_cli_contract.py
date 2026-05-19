@@ -154,6 +154,26 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_scorer_quality_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "scorer-quality", "--help")
+
+        for flag in (
+            "--config",
+            "--checkpoint",
+            "--out",
+            "--device",
+            "--index",
+            "--retrieval-prior-weight",
+            "--retrieval-prior-k",
+            "--parent-manifest",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+            "--allow-unsafe-checkpoint",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_index_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("index", "--help")
 
@@ -181,12 +201,76 @@ class PublicCliContractTest(unittest.TestCase):
     def test_invalid_cli_combinations_exit_with_argparse_error(self) -> None:
         cases = (
             ("score", "--instruction", "change"),
-            ("score", "--before", "before.py", "--instruction", "change", "--candidate", "after.py", "--checkpoint", "ckpt", "--device", "tpu"),
-            ("rerank", "--before", "before.py", "--instruction", "change", "--checkpoint", "ckpt"),
+            (
+                "score",
+                "--before",
+                "before.py",
+                "--instruction",
+                "change",
+                "--candidate",
+                "after.py",
+                "--checkpoint",
+                "ckpt",
+                "--device",
+                "tpu",
+            ),
+            (
+                "rerank",
+                "--before",
+                "before.py",
+                "--instruction",
+                "change",
+                "--checkpoint",
+                "ckpt",
+            ),
             ("train", "--config", "missing.json", "--device", "tpu"),
-            ("eval", "retrieval", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
-            ("eval", "surprise", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
-            ("index", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
+            (
+                "eval",
+                "retrieval",
+                "--checkpoint",
+                "ckpt",
+                "--data",
+                "pack",
+                "--out",
+                "out",
+                "--device",
+                "tpu",
+            ),
+            (
+                "eval",
+                "surprise",
+                "--checkpoint",
+                "ckpt",
+                "--data",
+                "pack",
+                "--out",
+                "out",
+                "--device",
+                "tpu",
+            ),
+            (
+                "eval",
+                "scorer-quality",
+                "--config",
+                "quality.json",
+                "--checkpoint",
+                "ckpt",
+                "--out",
+                "out",
+                "--device",
+                "tpu",
+            ),
+            (
+                "index",
+                "--checkpoint",
+                "ckpt",
+                "--data",
+                "pack",
+                "--out",
+                "out",
+                "--device",
+                "tpu",
+            ),
         )
 
         for argv in cases:
@@ -205,10 +289,18 @@ class PublicCliContractTest(unittest.TestCase):
         }
 
         self.assertEqual(payloads["dataset"]["schema_version"], DATASET_SCHEMA_VERSION)
-        self.assertEqual(payloads["train"]["schema_version"], TRAINING_RUN_MANIFEST_SCHEMA_VERSION)
-        self.assertEqual(payloads["eval"]["schema_version"], RETRIEVAL_REPORT_SCHEMA_VERSION)
-        self.assertEqual(payloads["score"]["schema_version"], SCORE_RESULT_SCHEMA_VERSION)
-        self.assertEqual(payloads["rerank"]["schema_version"], RERANK_RESULT_SCHEMA_VERSION)
+        self.assertEqual(
+            payloads["train"]["schema_version"], TRAINING_RUN_MANIFEST_SCHEMA_VERSION
+        )
+        self.assertEqual(
+            payloads["eval"]["schema_version"], RETRIEVAL_REPORT_SCHEMA_VERSION
+        )
+        self.assertEqual(
+            payloads["score"]["schema_version"], SCORE_RESULT_SCHEMA_VERSION
+        )
+        self.assertEqual(
+            payloads["rerank"]["schema_version"], RERANK_RESULT_SCHEMA_VERSION
+        )
         json.dumps(payloads, sort_keys=True, allow_nan=False)
 
     def test_harness_json_schemas_pin_schema_version_fields(self) -> None:
@@ -218,10 +310,22 @@ class PublicCliContractTest(unittest.TestCase):
             "rerank": rerank_result_json_schema(),
         }
 
-        self.assertEqual(schemas["score"]["properties"]["schema_version"]["const"], SCORE_RESULT_SCHEMA_VERSION)
-        self.assertEqual(schemas["error"]["properties"]["schema_version"]["const"], ERROR_REPORT_SCHEMA_VERSION)
-        self.assertEqual(schemas["rerank"]["properties"]["schema_version"]["const"], RERANK_RESULT_SCHEMA_VERSION)
-        self.assertIn("evaluation_gate_error", schemas["error"]["properties"]["error_type"]["enum"])
+        self.assertEqual(
+            schemas["score"]["properties"]["schema_version"]["const"],
+            SCORE_RESULT_SCHEMA_VERSION,
+        )
+        self.assertEqual(
+            schemas["error"]["properties"]["schema_version"]["const"],
+            ERROR_REPORT_SCHEMA_VERSION,
+        )
+        self.assertEqual(
+            schemas["rerank"]["properties"]["schema_version"]["const"],
+            RERANK_RESULT_SCHEMA_VERSION,
+        )
+        self.assertIn(
+            "evaluation_gate_error",
+            schemas["error"]["properties"]["error_type"]["enum"],
+        )
         for name, schema in schemas.items():
             with self.subTest(schema=name):
                 self.assertIn("schema_version", schema["required"])
@@ -258,7 +362,9 @@ def _dataset_manifest_payload() -> dict[str, object]:
 
 
 def _training_manifest_payload() -> dict[str, object]:
-    manifest_file = ManifestFile(path="checkpoints/checkpoint.state", sha256="0" * 64, bytes=0)
+    manifest_file = ManifestFile(
+        path="checkpoints/checkpoint.state", sha256="0" * 64, bytes=0
+    )
     return TrainingRunManifest(
         run_id="run-1",
         config_sha256="1" * 64,
@@ -289,7 +395,9 @@ def _score_result_payload() -> dict[str, object]:
 
 
 def _rerank_result_payload() -> dict[str, object]:
-    return RerankResult(results=(ScoreResult.from_dict(_score_result_payload()),)).to_dict()
+    return RerankResult(
+        results=(ScoreResult.from_dict(_score_result_payload()),)
+    ).to_dict()
 
 
 if __name__ == "__main__":

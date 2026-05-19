@@ -32,6 +32,8 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_PIPELINE_MODE=smoke",
             "CODELEWM_DATASET_BUILD_CONFIG=",
             "CODELEWM_TRAIN_CONFIG=",
+            "CODELEWM_HF_SCORER_QUALITY_CONFIG=",
+            "CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

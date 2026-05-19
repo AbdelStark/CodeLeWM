@@ -26,6 +26,7 @@ ARTIFACTS: tuple[tuple[str, str, str], ...] = (
     ("action_ablation", "ablation", "manifest.json"),
     ("surprise_eval", "surprise", "manifest.json"),
     ("transition_index", "index", "manifest.json"),
+    ("scorer_quality", "scorer_quality", "manifest.json"),
 )
 
 
@@ -37,8 +38,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--config-dir", type=Path, default=DEFAULT_CONFIG_DIR)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT_PATH)
-    parser.add_argument("--overwrite", action="store_true", help="replace the owned first-results artifact root")
-    parser.add_argument("--json", action="store_true", help="emit the manifest inventory JSON")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace the owned first-results artifact root",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="emit the manifest inventory JSON"
+    )
     args = parser.parse_args(argv)
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -57,8 +64,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.json:
         print(json.dumps(inventory, indent=2, sort_keys=True))
     else:
-        print(f"first_results_dir: {_display_path(Path(inventory['output_root']), repo_root=repo_root)}")
-        print(f"report: {_display_path(Path(inventory['report_path']), repo_root=repo_root)}")
+        print(
+            f"first_results_dir: {_display_path(Path(inventory['output_root']), repo_root=repo_root)}"
+        )
+        print(
+            f"report: {_display_path(Path(inventory['report_path']), repo_root=repo_root)}"
+        )
         print(f"secret_scan_ok: {inventory['secret_scan']['ok']}")
     return 0
 
@@ -83,7 +94,9 @@ def run_first_results(
     report_path = _resolve_under_repo(report_path, repo_root=repo_root)
     if output_root.exists():
         if not overwrite:
-            raise FirstResultsError(f"output root already exists; pass --overwrite: {output_root}")
+            raise FirstResultsError(
+                f"output root already exists; pass --overwrite: {output_root}"
+            )
         _remove_owned_output_root(output_root, repo_root=repo_root)
 
     logs_dir = output_root / "logs"
@@ -95,9 +108,12 @@ def run_first_results(
 
     dataset_config = config_dir / "dataset_build.json"
     train_template = config_dir / "train_tiny.json"
+    scorer_quality_config = config_dir / "scorer_quality.json"
     runtime_train_config = runtime_config_dir / "train_tiny.json"
     _write_json(
-        _runtime_train_config(_read_json(train_template), output_root=output_root, repo_root=repo_root),
+        _runtime_train_config(
+            _read_json(train_template), output_root=output_root, repo_root=repo_root
+        ),
         runtime_train_config,
     )
 
@@ -108,6 +124,7 @@ def run_first_results(
     ablation_dir = output_root / "ablation"
     surprise_dir = output_root / "surprise"
     index_dir = output_root / "index"
+    scorer_quality_dir = output_root / "scorer_quality"
     checkpoint = train_dir / "checkpoints" / "checkpoint.pt"
 
     commands: list[dict[str, Any]] = []
@@ -115,13 +132,29 @@ def run_first_results(
         commands,
         repo_root=repo_root,
         label="dataset_build",
-        args=("dataset", "build", "--config", str(dataset_config), "--out", str(build_dir), "--json"),
+        args=(
+            "dataset",
+            "build",
+            "--config",
+            str(dataset_config),
+            "--out",
+            str(build_dir),
+            "--json",
+        ),
     )
     _run_cli(
         commands,
         repo_root=repo_root,
         label="dataset_pack",
-        args=("dataset", "pack", "--manifest", str(build_dir / "manifest.json"), "--out", str(pack_dir), "--json"),
+        args=(
+            "dataset",
+            "pack",
+            "--manifest",
+            str(build_dir / "manifest.json"),
+            "--out",
+            str(pack_dir),
+            "--json",
+        ),
     )
     _run_cli(
         commands,
@@ -226,8 +259,41 @@ def run_first_results(
             str(logs_dir / "index.jsonl"),
         ),
     )
+    _run_cli(
+        commands,
+        repo_root=repo_root,
+        label="scorer_quality",
+        args=(
+            "eval",
+            "scorer-quality",
+            "--config",
+            str(scorer_quality_config),
+            "--checkpoint",
+            str(checkpoint),
+            "--out",
+            str(scorer_quality_dir),
+            "--device",
+            "cpu",
+            "--index",
+            str(index_dir),
+            "--retrieval-prior-weight",
+            "1.0",
+            "--retrieval-prior-k",
+            "1",
+            "--parent-manifest",
+            str(train_dir / "manifest.json"),
+            "--parent-manifest",
+            str(index_dir / "manifest.json"),
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+            str(logs_dir / "scorer_quality.jsonl"),
+        ),
+    )
 
-    verify_reports = _verify_artifacts(commands, repo_root=repo_root, output_root=output_root)
+    verify_reports = _verify_artifacts(
+        commands, repo_root=repo_root, output_root=output_root
+    )
     inventory = _collect_inventory(
         repo_root=repo_root,
         output_root=output_root,
@@ -286,12 +352,17 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
     retrieval = inventory["reports"]["retrieval"]
     ablation = inventory["reports"]["ablation"]
     surprise = inventory["reports"]["surprise"]
+    scorer_quality = inventory["reports"]["scorer_quality"]
     training = inventory["reports"]["training"]
     license_gate = inventory["reports"]["license_gate"]
     index = inventory["reports"]["index"]
     dataset = inventory["reports"]["packed_dataset"]
     checkpoint = inventory["reports"]["checkpoint"]
-    secret_scan = inventory.get("secret_scan") or {"ok": False, "findings": [], "paths_scanned": []}
+    secret_scan = inventory.get("secret_scan") or {
+        "ok": False,
+        "findings": [],
+        "paths_scanned": [],
+    }
     retrieval_metrics = retrieval["metrics"]
     baselines = retrieval["baselines"]
     baseline_rows = []
@@ -329,6 +400,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "action_ablation",
         "surprise_eval",
         "transition_index",
+        "scorer_quality",
     ):
         artifact = inventory["artifacts"][key]
         artifact_rows.append(
@@ -358,13 +430,18 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         + " |"
         for report in inventory["manifest_verification"]
     ]
-    command_lines = "\n".join(f"{idx}. `{entry['command']}`" for idx, entry in enumerate(inventory["commands"], start=1))
+    command_lines = "\n".join(
+        f"{idx}. `{entry['command']}`"
+        for idx, entry in enumerate(inventory["commands"], start=1)
+    )
     surprise_category_rows = []
     for category in ("random", "same_file", "mutation", "action_cluster"):
         count = surprise["metrics"]["decoy_counts"].get(category, 0)
         auc = surprise["metrics"]["pairwise_auc_by_category"].get(category)
         caveat = surprise["metadata"]["category_caveats"].get(category, "")
-        surprise_category_rows.append(f"| `{category}` | {_fmt_optional(auc)} | {count} | {caveat or 'available'} |")
+        surprise_category_rows.append(
+            f"| `{category}` | {_fmt_optional(auc)} | {count} | {caveat or 'available'} |"
+        )
     ablation_rows = []
     for row in ablation["rows"]:
         metrics = row.get("metrics") or {}
@@ -373,7 +450,26 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         reason = row.get("block_reason") or "available"
         ablation_rows.append(
             "| "
-            + " | ".join((row["name"], row["family"], row["status"], recall, mrr, reason))
+            + " | ".join(
+                (row["name"], row["family"], row["status"], recall, mrr, reason)
+            )
+            + " |"
+        )
+    quality_summary = scorer_quality["summary"]
+    quality_slice_rows = []
+    for name, slice_report in scorer_quality["calibration_slices"].items():
+        quality_slice_rows.append(
+            "| "
+            + " | ".join(
+                (
+                    name,
+                    str(slice_report["candidate_count"]),
+                    str(slice_report["valid_count"]),
+                    str(slice_report["error_count"]),
+                    _fmt_optional(slice_report["mean_final_score"]),
+                    _fmt_optional(slice_report["mean_retrieval_prior"]),
+                )
+            )
             + " |"
         )
 
@@ -395,7 +491,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "",
         "The complete local path now runs from a clean checkout: dataset build, pack, torch",
         "training, retrieval evaluation, action-view ablation, surprise evaluation, transition-index build,",
-        "manifest verification, report rendering, and secret scanning.",
+        "scorer/reranker quality reporting, manifest verification, report rendering, and secret scanning.",
         "",
         f"{baseline_statement} The selected fixture has {retrieval_metrics['query_count']} held-out query and "
         f"{retrieval['candidate_pool']['entry_count']} retrieval candidate, so retrieval Recall@k is saturated.",
@@ -477,6 +573,19 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         f"- Count: `{index['count']}` train-split vectors; dimension `{index['dim']}`; distance `{index['distance']}`.",
         f"- Indexed splits: `{', '.join(index['metadata']['indexed_splits'])}`.",
         "",
+        "## Scorer And Reranker Quality",
+        "",
+        f"- Report schema: `{scorer_quality['schema_version']}`.",
+        f"- Examples: `{quality_summary['example_count']}`; candidates `{quality_summary['candidate_count']}`; valid `{quality_summary['valid_count']}`; errors `{quality_summary['error_count']}`.",
+        f"- Ranking: Recall@1 `{_fmt(quality_summary['recall_at_1'])}`, MRR `{_fmt(quality_summary['mrr'])}`, mean true rank `{_fmt_optional(quality_summary['mean_true_rank'])}`, median true rank `{_fmt_optional(quality_summary['median_true_rank'])}`.",
+        f"- Retrieval prior: weight `{scorer_quality['scoring_policy']['retrieval_prior_weight']}`, k `{scorer_quality['scoring_policy']['retrieval_prior_k']}`; risk penalty `{scorer_quality['scoring_policy']['risk_penalty']}`.",
+        f"- Failure counts: `{json.dumps(quality_summary['failure_counts'], sort_keys=True)}`.",
+        f"- Execution policy: `{scorer_quality['scoring_policy']['execution_policy']}`.",
+        "",
+        "| Slice | Candidates | Valid | Errors | Mean final score | Mean retrieval prior |",
+        "| ----- | ---------- | ----- | ------ | ---------------- | -------------------- |",
+        *quality_slice_rows,
+        "",
         "## Security Evidence",
         "",
         f"- Secret scan result: `{'pass' if secret_scan['ok'] else 'fail'}`.",
@@ -489,6 +598,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         f"- [{'x' if beats_all else ' '}] Text-action beats random, lexical, no-action, and shuffled-action baselines on Recall@1 and MRR.",
         "- [x] Headline retrieval uses `action_text`.",
         "- [x] Action-view ablation records missing variants as blocked rows.",
+        "- [x] Scorer/reranker quality report records ranking metrics, calibration slices, failures, and caveats.",
         "- [x] Hard-negative and candidate pools exclude `train` split rows.",
         "- [ ] Patch-surprise covers all four decoy categories with non-zero decoy counts.",
         "- [x] Every selected artifact manifest verifies with required parents.",
@@ -502,8 +612,9 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "  including trusted checkpoint loading and index-backed evaluation prerequisites.",
         "- Research evidence: this fixture is too small for a learning claim. It has one",
         "  held-out query, no random same-corpus retrieval competition beyond the true",
-        "  target, and only mutation surprise decoys. Baseline ties and failed surprise",
-        "  rankings must be read as blockers for any public model-quality claim.",
+        "  target, only mutation surprise decoys, and one scorer-quality example. Baseline ties,",
+        "  failed surprise rankings, and fixture-only reranker calibration must be read as",
+        "  blockers for any public model-quality claim.",
         "- Next required work is a bounded public-safe shard with enough held-out examples",
         "  to make random, lexical, no-action, shuffled-action, and surprise decoy",
         "  comparisons meaningful.",
@@ -536,6 +647,7 @@ def _verify_artifacts(
         "action_ablation": (manifests["retrieval_eval"], manifests["training_run"]),
         "surprise_eval": (manifests["training_run"], manifests["dataset_pack"]),
         "transition_index": (manifests["training_run"], manifests["dataset_pack"]),
+        "scorer_quality": (manifests["training_run"], manifests["transition_index"]),
     }
     verify_reports: list[dict[str, Any]] = []
     for key, manifest in manifests.items():
@@ -543,7 +655,9 @@ def _verify_artifacts(
         for parent in parents[key]:
             args.extend(("--parent-manifest", str(parent)))
         args.append("--json")
-        payload = _run_cli(commands, repo_root=repo_root, label=f"verify_{key}", args=tuple(args))
+        payload = _run_cli(
+            commands, repo_root=repo_root, label=f"verify_{key}", args=tuple(args)
+        )
         verify_reports.append(
             {
                 "label": key,
@@ -586,14 +700,19 @@ def _collect_inventory(
     packed_dataset = _read_json(output_root / "pack" / "dataset_manifest.json")
     return {
         "schema_version": FIRST_RESULTS_SCHEMA_VERSION,
-        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "generated_at_utc": datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
         "generated_date_utc": datetime.now(timezone.utc).date().isoformat(),
         "output_root": str(output_root),
         "report_path": str(report_path),
         "source_git_sha": _git_sha(repo_root),
         "config_dir": _display_path(config_dir, repo_root=repo_root),
-        "config_bundle_sha256": _hash_files((config_dir / "dataset_build.json", config_dir / "train_tiny.json")),
-        "runtime_train_config": _display_path(runtime_train_config, repo_root=repo_root),
+        "config_bundle_sha256": _hash_files(_config_bundle_files(config_dir)),
+        "runtime_train_config": _display_path(
+            runtime_train_config, repo_root=repo_root
+        ),
         "runtime_train_config_sha256": _sha256_file(runtime_train_config),
         "seeds": {
             "dataset": _read_json(config_dir / "dataset_build.json")["seed"],
@@ -602,7 +721,9 @@ def _collect_inventory(
         "commands": [dict(command) for command in commands],
         "artifacts": artifacts,
         "manifest_verification": [dict(report) for report in verify_reports],
-        "secret_scan": dict(secret_scan or {"ok": False, "paths_scanned": [], "findings": []}),
+        "secret_scan": dict(
+            secret_scan or {"ok": False, "paths_scanned": [], "findings": []}
+        ),
         "reports": {
             "packed_dataset": {
                 "row_count": packed_dataset["row_count"],
@@ -610,17 +731,38 @@ def _collect_inventory(
                 "source_counts": packed_dataset["source_counts"],
             },
             "training": _read_json(output_root / "train" / "training_manifest.json"),
-            "checkpoint": _read_json(output_root / "train" / "checkpoints" / "checkpoint.pt.manifest.json"),
-            "retrieval": _read_json(output_root / "retrieval" / "reports" / "retrieval_report.json"),
-            "ablation": _read_json(output_root / "ablation" / "reports" / "action_view_ablation_report.json"),
-            "surprise": _read_json(output_root / "surprise" / "reports" / "surprise_report.json"),
+            "checkpoint": _read_json(
+                output_root / "train" / "checkpoints" / "checkpoint.pt.manifest.json"
+            ),
+            "retrieval": _read_json(
+                output_root / "retrieval" / "reports" / "retrieval_report.json"
+            ),
+            "ablation": _read_json(
+                output_root
+                / "ablation"
+                / "reports"
+                / "action_view_ablation_report.json"
+            ),
+            "surprise": _read_json(
+                output_root / "surprise" / "reports" / "surprise_report.json"
+            ),
             "index": _read_json(output_root / "index" / "index.json"),
-            "license_gate": _read_json(output_root / "build" / "reports" / "license_gate_report.json"),
+            "scorer_quality": _read_json(
+                output_root
+                / "scorer_quality"
+                / "reports"
+                / "scorer_quality_report.json"
+            ),
+            "license_gate": _read_json(
+                output_root / "build" / "reports" / "license_gate_report.json"
+            ),
         },
     }
 
 
-def _runtime_train_config(payload: Mapping[str, Any], *, output_root: Path, repo_root: Path) -> dict[str, Any]:
+def _runtime_train_config(
+    payload: Mapping[str, Any], *, output_root: Path, repo_root: Path
+) -> dict[str, Any]:
     config = json.loads(json.dumps(payload))
     relative_root = _display_path(output_root, repo_root=repo_root)
     config["data"] = {
@@ -646,7 +788,9 @@ def _run_cli(
     record: bool = True,
 ) -> dict[str, Any]:
     argv = [sys.executable, "-m", "codelewm.harness.cli", *args]
-    display_command = "uv run codelewm " + " ".join(_display_arg(arg, repo_root=repo_root) for arg in args)
+    display_command = "uv run codelewm " + " ".join(
+        _display_arg(arg, repo_root=repo_root) for arg in args
+    )
     completed = subprocess.run(
         argv,
         cwd=repo_root,
@@ -683,22 +827,34 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 def _write_json(payload: Mapping[str, Any], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _resolve_under_repo(path: Path, *, repo_root: Path) -> Path:
-    resolved = (repo_root / path).resolve() if not path.is_absolute() else path.resolve()
+    resolved = (
+        (repo_root / path).resolve() if not path.is_absolute() else path.resolve()
+    )
     try:
         resolved.relative_to(repo_root)
     except ValueError as exc:
-        raise FirstResultsError(f"path must stay under repository root: {path}") from exc
+        raise FirstResultsError(
+            f"path must stay under repository root: {path}"
+        ) from exc
     return resolved
 
 
 def _remove_owned_output_root(output_root: Path, *, repo_root: Path) -> None:
     relative = output_root.relative_to(repo_root)
-    if relative == Path(".") or len(relative.parts) < 2 or relative.parts[0] != ".artifacts":
-        raise FirstResultsError(f"refusing to remove non-owned output root: {output_root}")
+    if (
+        relative == Path(".")
+        or len(relative.parts) < 2
+        or relative.parts[0] != ".artifacts"
+    ):
+        raise FirstResultsError(
+            f"refusing to remove non-owned output root: {output_root}"
+        )
     shutil.rmtree(output_root)
 
 
@@ -742,14 +898,28 @@ def _hash_files(paths: Sequence[Path]) -> str:
     return digest.hexdigest()
 
 
+def _config_bundle_files(config_dir: Path) -> tuple[Path, ...]:
+    files = [
+        config_dir / "dataset_build.json",
+        config_dir / "train_tiny.json",
+        config_dir / "scorer_quality.json",
+    ]
+    candidate_dir = config_dir / "scorer_quality_candidates"
+    if candidate_dir.is_dir():
+        files.extend(
+            sorted(path for path in candidate_dir.rglob("*") if path.is_file())
+        )
+    return tuple(files)
+
+
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _strictly_beats(metrics: Mapping[str, Any], baseline: Mapping[str, Any]) -> bool:
-    return float(metrics["recall_at_1"]) > float(baseline["recall_at_1"]) and float(metrics["mrr"]) > float(
-        baseline["mrr"]
-    )
+    return float(metrics["recall_at_1"]) > float(baseline["recall_at_1"]) and float(
+        metrics["mrr"]
+    ) > float(baseline["mrr"])
 
 
 def _baseline_label(name: str) -> str:
