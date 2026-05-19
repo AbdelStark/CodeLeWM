@@ -130,6 +130,13 @@ only when their decision is counted in the gate report. Dataset manifests includ
 an included-row license summary and can embed the full gate report under
 `metadata.license_gate_report`.
 
+Dataset build artifacts also write `codelewm.source_acquisition.v1` reports under
+`reports/source_acquisition_report.json`. The report records configured source
+adapters, card-fillable source mix, the public path policy, and the embedded
+license gate result. Relative checked-in paths may be recorded; absolute and
+home-relative source paths must be redacted with a SHA-256 digest before they
+appear in shareable configs, manifests, reports, or command metadata.
+
 ## Public Artifact Policy
 
 - Public dataset cards must state source mix, license policy, row counts, and

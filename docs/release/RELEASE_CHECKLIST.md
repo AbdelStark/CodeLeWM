@@ -109,8 +109,14 @@ glance.
       manifest.** Evidence: the dataset manifest's
       `metadata.license_gate_report` is present and
       `release_allowed=true`.
+- [ ] **Public source acquisition report is attached to the dataset
+      manifest.** Evidence: the dataset manifest's
+      `metadata.source_acquisition_report.schema_version` is
+      `codelewm.source_acquisition.v1` and
+      `public_path_policy.raw_private_paths_published=false`.
 - [ ] **Allowed source mix matches the dataset card.** Evidence:
-      `included_sources` from the license gate report matches the
+      `source_acquisition_report.dataset_card_fields.source_mix`
+      and `included_sources` from the license gate report match the
       dataset card's "Source Mix" table.
 - [ ] **Every non-allowlisted license is accounted for.** Evidence:
       `excluded_licenses` map in the license gate report covers

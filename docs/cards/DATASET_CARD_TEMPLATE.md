@@ -10,6 +10,7 @@
 - Dataset manifest path: `<docs-relative path>`
 - Schema version: `codelewm.dataset.v1`
 - Source git SHA: `<40-char SHA matching manifest.source_git_sha>`
+- Source acquisition report: `<path to codelewm.source_acquisition.v1 file>`
 - License gate report: `<path to codelewm.public_license_gate.v1 file>`
 - Author / curator: `<github-handle>`
 - Release tag: `<v0.x.y | v1.x.y>`
@@ -35,6 +36,7 @@ caveats section.
 | ------- | -------------- |
 | Dataset manifest | `codelewm.dataset.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
+| Source acquisition report | `codelewm.source_acquisition.v1` |
 | Public license gate | `codelewm.public_license_gate.v1` |
 | Transition record | `codelewm.transition.v1` |
 
@@ -79,7 +81,9 @@ card. Released datasets without `release_allowed=true` are blocked.
 > detection, edit-ratio limits, deduplication, split assignment.
 
 Each filter must cite the manifest field, drop record, or report
-that backs it.
+that backs it. The source acquisition report must identify the
+approved source adapter, configured source count, source mix, path
+redaction policy, and license-gate result used to fill this card.
 
 ## Synthetic Transforms
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -46,6 +47,7 @@ from codelewm.security.non_execution import NonExecutionPolicyError
 DATASET_BUILD_CONFIG_SCHEMA_VERSION = "codelewm.dataset_build_config.v1"
 DATASET_BUILD_REPORT_SCHEMA_VERSION = "codelewm.dataset_build_report.v1"
 ROW_COUNTS_REPORT_SCHEMA_VERSION = "codelewm.dataset_row_counts.v1"
+SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION = "codelewm.source_acquisition.v1"
 _SUPPORTED_SOURCES = {"fixture", "commitpackft"}
 _TOKEN_PATTERN = re.compile(r"\w+|[^\w\s]")
 
@@ -324,6 +326,7 @@ class DatasetBuildResult:
             "split_counts": dict(self.dataset_manifest.split_counts),
             "source_counts": dict(self.dataset_manifest.source_counts),
             "license_gate_report": self.dataset_manifest.metadata.get("license_gate_report"),
+            "source_acquisition_report": self.dataset_manifest.metadata.get("source_acquisition_report"),
         }
 
 
@@ -362,7 +365,7 @@ def build_dataset(
     """Build a schema-versioned dataset artifact directory."""
 
     _prepare_output_dir(output_dir)
-    records = _load_configured_sources(config, config_dir=config_dir)
+    records, source_summaries = _load_configured_sources(config, config_dir=config_dir)
     source_counts_before = _source_counts(records)
 
     filtered = filter_raw_edit_records(
@@ -402,10 +405,12 @@ def build_dataset(
     reports_dir = output_dir / "reports"
     filter_report_path = reports_dir / "filter_report.json"
     license_report_path = reports_dir / "license_gate_report.json"
+    source_acquisition_report_path = reports_dir / "source_acquisition_report.json"
     split_dedup_report_path = reports_dir / "split_dedup_report.json"
     row_counts_path = reports_dir / "row_counts.json"
+    shareable_config = _shareable_config_dict(config)
 
-    _write_json(config.to_dict(), config_path)
+    _write_json(shareable_config, config_path)
     _write_transitions_jsonl(transitions, transitions_path)
     _write_json(filtered.to_dict(), filter_report_path)
     _write_json(filtered.license_gate_report.to_dict(), license_report_path)
@@ -418,6 +423,14 @@ def build_dataset(
         kept_transitions=len(transitions),
     )
     _write_json(row_counts, row_counts_path)
+    source_acquisition_report = _source_acquisition_report(
+        config=config,
+        source_summaries=source_summaries,
+        source_counts_before=source_counts_before,
+        license_gate_report=filtered.license_gate_report.to_dict(),
+        filter_report=filtered.report.to_dict(),
+    )
+    _write_json(source_acquisition_report, source_acquisition_report_path)
 
     data_artifacts = (
         _artifact_info(transitions_path, root=output_dir, kind="transitions_jsonl", rows=len(transitions)),
@@ -427,6 +440,12 @@ def build_dataset(
             root=output_dir,
             kind="license_gate_report",
             rows=filtered.license_gate_report.included_rows,
+        ),
+        _artifact_info(
+            source_acquisition_report_path,
+            root=output_dir,
+            kind="source_acquisition_report",
+            rows=filtered.report.total_before,
         ),
         _artifact_info(
             split_dedup_report_path,
@@ -444,6 +463,7 @@ def build_dataset(
         "filter_report": filtered.report.to_dict(),
         "split_dedup_report": split_dedup.report.to_dict(),
         "row_counts": row_counts,
+        "source_acquisition_report": source_acquisition_report,
     }
     dataset_manifest = build_dataset_manifest(
         transitions,
@@ -461,6 +481,7 @@ def build_dataset(
         dataset_manifest_path.resolve(),
         filter_report_path.resolve(),
         license_report_path.resolve(),
+        source_acquisition_report_path.resolve(),
         split_dedup_report_path.resolve(),
         row_counts_path.resolve(),
     )
@@ -468,8 +489,8 @@ def build_dataset(
         artifact_kind="dataset",
         root=output_dir,
         files=manifest_files,
-        command=command,
-        config=config.to_dict(),
+        command=_shareable_command(command),
+        config=shareable_config,
         metadata={
             "dataset_manifest": "dataset_manifest.json",
             "dataset_schema_version": DATASET_SCHEMA_VERSION,
@@ -477,6 +498,7 @@ def build_dataset(
             "split_counts": dict(dataset_manifest.split_counts),
             "source_counts": dict(dataset_manifest.source_counts),
             "license_gate_report": dataset_manifest.metadata.get("license_gate_report"),
+            "source_acquisition_report": dataset_manifest.metadata.get("source_acquisition_report"),
         },
     )
     write_artifact_manifest(artifact_manifest, output_dir / "manifest.json")
@@ -488,17 +510,24 @@ def build_dataset(
     )
 
 
-def _load_configured_sources(config: DatasetBuildConfig, *, config_dir: Path) -> tuple[RawEditRecord, ...]:
+def _load_configured_sources(
+    config: DatasetBuildConfig,
+    *,
+    config_dir: Path,
+) -> tuple[tuple[RawEditRecord, ...], tuple[dict[str, Any], ...]]:
     records: list[RawEditRecord] = []
-    for source in config.sources:
+    summaries: list[dict[str, Any]] = []
+    for index, source in enumerate(config.sources):
         spec = source.to_source_spec(config_dir=config_dir)
         try:
-            records.extend(load_source(spec))
+            loaded = tuple(load_source(spec))
         except SourceRecordError:
             raise
         except SourceUnavailableError:
             raise
-    return tuple(records)
+        records.extend(loaded)
+        summaries.append(_configured_source_summary(index=index, source=source, loaded=loaded))
+    return tuple(records), tuple(summaries)
 
 
 def _assignment_to_transition(
@@ -634,6 +663,160 @@ def _source_counts(records: Sequence[RawEditRecord]) -> dict[str, int]:
     for record in records:
         counts[record.source] = counts.get(record.source, 0) + 1
     return counts
+
+
+def _configured_source_summary(
+    *,
+    index: int,
+    source: DatasetSourceConfig,
+    loaded: Sequence[RawEditRecord],
+) -> dict[str, Any]:
+    return {
+        "index": index,
+        "source": source.source,
+        "name": source.name,
+        "path": _source_path_descriptor(source.path),
+        "options": _public_options(source.options),
+        "raw_rows_loaded": len(loaded),
+        "record_source_counts": _source_counts(tuple(loaded)),
+    }
+
+
+def _source_acquisition_report(
+    *,
+    config: DatasetBuildConfig,
+    source_summaries: Sequence[Mapping[str, Any]],
+    source_counts_before: Mapping[str, int],
+    license_gate_report: Mapping[str, Any],
+    filter_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    included_sources = _count_mapping(license_gate_report.get("included_sources", {}))
+    excluded_sources = _count_mapping(license_gate_report.get("excluded_sources", {}))
+    source_mix: list[dict[str, Any]] = []
+    source_names = sorted(set(source_counts_before) | set(included_sources) | set(excluded_sources))
+    for source_name in source_names:
+        source_mix.append(
+            {
+                "source": source_name,
+                "rows_loaded": int(source_counts_before.get(source_name, 0)),
+                "rows_included": int(included_sources.get(source_name, 0)),
+                "rows_excluded": int(excluded_sources.get(source_name, 0)),
+            }
+        )
+
+    return {
+        "schema_version": SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION,
+        "build_name": config.name,
+        "supported_sources": sorted(_SUPPORTED_SOURCES),
+        "configured_sources": [dict(summary) for summary in source_summaries],
+        "source_counts_before_filter": dict(source_counts_before),
+        "source_mix": source_mix,
+        "filter_drop_reasons": dict(filter_report.get("drop_reasons", {})),
+        "license_policy": config.license.to_dict(),
+        "license_gate_report": dict(license_gate_report),
+        "release_allowed": bool(license_gate_report.get("release_allowed", False)),
+        "public_path_policy": {
+            "raw_private_paths_published": False,
+            "relative_paths_may_be_recorded": True,
+            "absolute_or_home_paths": "redacted_with_sha256_digest",
+        },
+        "dataset_card_fields": {
+            "source_mix": source_mix,
+            "license_gate_report": "reports/license_gate_report.json",
+            "source_acquisition_report": "reports/source_acquisition_report.json",
+        },
+    }
+
+
+def _shareable_config_dict(config: DatasetBuildConfig) -> dict[str, Any]:
+    payload = config.to_dict()
+    sources = []
+    for source in config.sources:
+        source_payload = source.to_dict()
+        if "path" in source_payload:
+            descriptor = _source_path_descriptor(source.path)
+            if descriptor["kind"] == "relative":
+                source_payload["path"] = descriptor["path"]
+            else:
+                source_payload["path"] = f"<redacted:{descriptor['kind']}:sha256={descriptor['path_sha256']}>"
+        source_payload["options"] = _public_options(source.options)
+        sources.append(source_payload)
+    payload["sources"] = sources
+    return payload
+
+
+def _public_options(options: Mapping[str, Any]) -> dict[str, Any]:
+    public: dict[str, Any] = {}
+    for key, value in options.items():
+        if isinstance(value, str) and _is_sensitive_path(value):
+            public[str(key)] = _redacted_path_token(value)
+        else:
+            public[str(key)] = value
+    return public
+
+
+def _source_path_descriptor(path: str | None) -> dict[str, Any]:
+    if path is None:
+        return {"configured": False, "kind": "unset"}
+    normalized = path.replace("\\", "/")
+    digest = _sha256_text(path)
+    if _is_sensitive_path(path):
+        return {
+            "configured": True,
+            "kind": _path_kind(path),
+            "path_sha256": digest,
+            "basename": Path(path).name,
+        }
+    return {
+        "configured": True,
+        "kind": "relative",
+        "path": normalized,
+        "path_sha256": digest,
+    }
+
+
+def _shareable_command(command: Sequence[str]) -> tuple[str, ...]:
+    return tuple(_public_command_part(part) for part in command)
+
+
+def _public_command_part(value: str) -> str:
+    if "=" in value and value.startswith("--"):
+        key, candidate = value.split("=", 1)
+        if _is_sensitive_path(candidate):
+            return f"{key}={_redacted_path_token(candidate)}"
+    if _is_sensitive_path(value):
+        return _redacted_path_token(value)
+    return value
+
+
+def _redacted_path_token(path: str) -> str:
+    return f"<redacted:{_path_kind(path)}:sha256={_sha256_text(path)}>"
+
+
+def _is_sensitive_path(path: str) -> bool:
+    stripped = path.strip()
+    return stripped.startswith("/") or stripped.startswith("~") or bool(re.match(r"^[A-Za-z]:[\\/]", stripped))
+
+
+def _path_kind(path: str) -> str:
+    stripped = path.strip()
+    if stripped.startswith("~"):
+        return "home_path"
+    if stripped.startswith("/"):
+        return "absolute_path"
+    if re.match(r"^[A-Za-z]:[\\/]", stripped):
+        return "absolute_path"
+    return "path"
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _count_mapping(value: Any) -> dict[str, int]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {str(key): int(count) for key, count in value.items()}
 
 
 def _prepare_output_dir(output_dir: Path) -> None:

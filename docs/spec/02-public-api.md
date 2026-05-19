@@ -41,10 +41,11 @@ The command emits:
   `codelewm manifest verify --manifest <out>/manifest.json --json`;
 - `dataset_manifest.json`: `codelewm.transition.v1` dataset manifest with row
   counts, split counts, source counts, feature flags, checksums, and
-  license-gate metadata;
+  source-acquisition and license-gate metadata;
 - `transitions.jsonl`: fixed-schema transition rows for the follow-on pack
   command;
 - `reports/filter_report.json`, `reports/license_gate_report.json`,
+  `reports/source_acquisition_report.json`,
   `reports/split_dedup_report.json`, and `reports/row_counts.json`.
 
 Invalid configs exit 2 with `error_type=config_error`; unavailable sources exit
