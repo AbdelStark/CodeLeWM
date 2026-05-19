@@ -35,6 +35,38 @@ require_file() {
   fi
 }
 
+hf_cli() {
+  if command -v hf >/dev/null 2>&1; then
+    hf "$@"
+    return
+  fi
+  uvx --from huggingface-hub hf "$@"
+}
+
+download_hf_source_if_configured() {
+  local repo_id="${CODELEWM_HF_SOURCE_DATASET_REPO_ID:-}"
+  local source_path="${CODELEWM_HF_SOURCE_DATASET_PATH:-}"
+  local repo_type="${CODELEWM_HF_SOURCE_DATASET_REPO_TYPE:-dataset}"
+  local revision="${CODELEWM_HF_SOURCE_DATASET_REVISION:-}"
+  local local_dir="${CODELEWM_HF_SOURCE_LOCAL_DIR:-}"
+
+  if [[ -z "$repo_id" && -z "$source_path" && -z "$local_dir" && -z "$revision" ]]; then
+    return 0
+  fi
+  if [[ -z "$repo_id" || -z "$source_path" || -z "$local_dir" ]]; then
+    echo "CODELEWM_HF_SOURCE_DATASET_REPO_ID, CODELEWM_HF_SOURCE_DATASET_PATH, and CODELEWM_HF_SOURCE_LOCAL_DIR must be set together" >&2
+    exit 2
+  fi
+  if [[ "$local_dir" != /* ]]; then
+    local_dir="$ROOT_DIR/$local_dir"
+  fi
+  mkdir -p "$local_dir"
+
+  download_args=(download "$repo_id" "$source_path" --repo-type "$repo_type" --local-dir "$local_dir")
+  [[ -z "$revision" ]] || download_args+=(--revision "$revision")
+  hf_cli "${download_args[@]}"
+}
+
 load_env_defaults ".env"
 
 RUN_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -68,6 +100,7 @@ elif [[ "$CODELEWM_HF_PIPELINE_MODE" == "scaled" ]]; then
   require_file "$CODELEWM_DATASET_BUILD_CONFIG" "CODELEWM_DATASET_BUILD_CONFIG"
   require_file "$CODELEWM_TRAIN_CONFIG" "CODELEWM_TRAIN_CONFIG"
   require_file "$CODELEWM_HF_SCORER_QUALITY_CONFIG" "CODELEWM_HF_SCORER_QUALITY_CONFIG"
+  download_hf_source_if_configured
 
   BUILD_DIR="$OUTPUT_ROOT/build"
   PACK_DIR="$OUTPUT_ROOT/pack"

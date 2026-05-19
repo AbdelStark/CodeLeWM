@@ -122,7 +122,11 @@ class StructuredLoggingTest(unittest.TestCase):
         schema = log_event_json_schema()
 
         self.assertEqual(schema["properties"]["schema_version"]["const"], LOG_EVENT_SCHEMA_VERSION)
-        self.assertEqual(redact_text("token sk-1234567890abcdef"), "token [REDACTED_SECRET]")
+        self.assertEqual(
+            redact_text("token sk-abcdefghijklmnopqrstuvwxyz123456"),
+            "token [REDACTED_SECRET]",
+        )
+        self.assertEqual(redact_text("repo flask-security-fork"), "repo flask-security-fork")
         self.assertEqual(redact_value({"github_token": "ghp_1234567890abcdef"})["github_token"], "[REDACTED_SECRET]")
 
 

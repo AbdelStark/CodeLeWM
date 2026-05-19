@@ -18,6 +18,7 @@ class ScaledTrainingRunbookTest(unittest.TestCase):
             "config/train/scaled/codelewm_scaled_cpu.yaml",
             "config/train/scaled/codelewm_scaled_mps.yaml",
             "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
+            "config/data/codelewm_public_shard_commitpackft_python.json",
             "seed",
             "240119",
             "a10g-small",
@@ -34,6 +35,8 @@ class ScaledTrainingRunbookTest(unittest.TestCase):
             "CODELEWM_HF_JOBS_TIMEOUT=24h",
             "hf jobs inspect <job-id>",
             "hf download",
+            "bigcode/commitpackft",
+            "data/python/data.jsonl",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.text)

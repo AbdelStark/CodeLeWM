@@ -26,7 +26,7 @@ class SecretScanTest(unittest.TestCase):
     def test_scan_text_flags_known_patterns_and_redacts_match(self) -> None:
         text = (
             "no secret here\n"
-            "openai = sk-abcdefghijklmnopqr\n"
+            "openai = sk-abcdefghijklmnopqrstuvwxyz123456\n"
             "GH=ghp_abcdefghijklmnopqrst\n"
             "AWS AKIAABCDEFGHIJKLMN\n"
             "password = SuperSecretValue_1234567890\n"
@@ -43,7 +43,7 @@ class SecretScanTest(unittest.TestCase):
             self.assertEqual(finding.path, "config.env")
             self.assertGreaterEqual(finding.line, 2)
             self.assertTrue(finding.redacted.startswith("[REDACTED_SECRET"))
-            self.assertNotIn("sk-abcdefghijklmnopqr", finding.redacted)
+            self.assertNotIn("sk-abcdefghijklmnopqrstuvwxyz123456", finding.redacted)
             self.assertNotIn("ghp_abcdefghijklmnopqrst", finding.redacted)
             self.assertNotIn("AKIAABCDEFGHIJKLMN", finding.redacted)
             self.assertNotIn("SuperSecretValue", finding.redacted)
@@ -70,8 +70,8 @@ class SecretScanTest(unittest.TestCase):
             ignored = root / "image.png"
             secret_log.parent.mkdir(parents=True)
             safe.write_text("ok\n", encoding="utf-8")
-            secret_log.write_text("token sk-abcdefghijklmnopqr\n", encoding="utf-8")
-            ignored.write_text("token sk-abcdefghijklmnopqr\n", encoding="utf-8")
+            secret_log.write_text("token sk-abcdefghijklmnopqrstuvwxyz123456\n", encoding="utf-8")
+            ignored.write_text("token sk-abcdefghijklmnopqrstuvwxyz123456\n", encoding="utf-8")
 
             report = scan_paths([root])
 
@@ -88,7 +88,7 @@ class SecretScanTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             custom = root / "credentials.creds"
-            custom.write_text("openai sk-abcdefghijklmnopqr\n", encoding="utf-8")
+            custom.write_text("openai sk-abcdefghijklmnopqrstuvwxyz123456\n", encoding="utf-8")
 
             default_report = scan_paths([root])
             with_extension = scan_paths([root], include_suffixes=(".creds",))
@@ -146,7 +146,7 @@ class SecretScanCliTest(unittest.TestCase):
     def test_secret_scan_cli_flags_secret_and_exits_nonzero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tainted = Path(tmp) / "events.jsonl"
-            tainted.write_text("token sk-abcdefghijklmnopqr\n", encoding="utf-8")
+            tainted.write_text("token sk-abcdefghijklmnopqrstuvwxyz123456\n", encoding="utf-8")
 
             completed = _run_secret_scan(tmp)
 
@@ -154,7 +154,23 @@ class SecretScanCliTest(unittest.TestCase):
         payload = json.loads(completed.stdout)
         self.assertFalse(payload["ok"])
         self.assertEqual(payload["findings"][0]["pattern"], "openai_api_key")
-        self.assertNotIn("sk-abcdefghijklmnopqr", json.dumps(payload, sort_keys=True))
+        self.assertNotIn("sk-abcdefghijklmnopqrstuvwxyz123456", json.dumps(payload, sort_keys=True))
+
+    def test_secret_scan_cli_ignores_public_repo_identifier_false_positives(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "artifact.jsonl"
+            report.write_text(
+                "repo=flask-security-fork\n"
+                "record_id=commitpackft:Pawamoy/django-zxcvbn-password:29600a6a8e8fa17e1c5b9f53dde57167450cbf4d:setup.py\n",
+                encoding="utf-8",
+            )
+
+            completed = _run_secret_scan(tmp)
+
+        self.assertEqual(completed.returncode, 0, completed.stdout)
+        payload = json.loads(completed.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["findings"], [])
 
 
 def _run_secret_scan(path: str | Path, *extra_args: str) -> subprocess.CompletedProcess[str]:

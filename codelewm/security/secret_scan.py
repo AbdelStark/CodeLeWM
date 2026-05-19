@@ -22,14 +22,14 @@ from typing import Any
 SECRET_SCAN_REPORT_SCHEMA_VERSION = "codelewm.secret_scan.v1"
 
 _SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("openai_api_key", re.compile(r"sk-[A-Za-z0-9_-]{12,}")),
+    ("openai_api_key", re.compile(r"(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}")),
     ("github_token", re.compile(r"gh[pousr]_[A-Za-z0-9_]{12,}")),
     ("slack_token", re.compile(r"xox[baprs]-[A-Za-z0-9-]{12,}")),
     ("aws_access_key_id", re.compile(r"AKIA[0-9A-Z]{12,}")),
     (
         "generic_assigned_secret",
         re.compile(
-            r"(?ix)\b"
+            r"(?ix)(?<![A-Za-z0-9_-])"
             r"(?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|"
             r"client[_-]?secret|private[_-]?key)\s*[:=]\s*"
             r"['\"]?"

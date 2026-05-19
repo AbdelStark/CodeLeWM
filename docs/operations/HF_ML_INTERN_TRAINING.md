@@ -75,11 +75,33 @@ Scaled mode additionally requires checked-in configs:
 
 ```bash
 CODELEWM_HF_PIPELINE_MODE=scaled
-CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json
+CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0
 CODELEWM_HF_RETRIEVAL_PRIOR_K=10
+```
+
+The first public shard candidate is the Python subset of
+`bigcode/commitpackft`. The HF job downloads it with the HF CLI before
+`codelewm dataset build`:
+
+```bash
+CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft
+CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset
+CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl
+CODELEWM_HF_SOURCE_DATASET_REVISION=main
+CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft
+```
+
+Preflight the source path without spending GPU compute:
+
+```bash
+hf download bigcode/commitpackft \
+  data/python/data.jsonl \
+  --repo-type dataset \
+  --local-dir .artifacts/hf-sources/commitpackft \
+  --dry-run
 ```
 
 ## Scripts
@@ -91,10 +113,11 @@ to dry-run.
 `scripts/hf-run-codelewm-pipeline` runs inside the job container. It supports:
 
 - `smoke`: run `scripts/first-results` into `.artifacts/hf/<run-id>`;
-- `scaled`: build the dataset, pack it, train, run retrieval evaluation, build
-  the action-view ablation report, run surprise evaluation, build the transition
-  index, run the scorer/reranker quality report with retrieval-prior settings,
-  verify manifests, and scan the run root for secrets.
+- `scaled`: optionally download the configured HF source shard with
+  `hf download`, build the dataset, pack it, train, run retrieval evaluation,
+  build the action-view ablation report, run surprise evaluation, build the
+  transition index, run the scorer/reranker quality report with retrieval-prior
+  settings, verify manifests, and scan the run root for secrets.
 
 `scripts/hf-publish-codelewm-artifacts` publishes the resulting directories:
 
@@ -170,16 +193,23 @@ CODELEWM_HF_JOBS_FLAVOR=a10g-small \
 CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
-CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json \
+CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
+CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft \
+CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset \
+CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl \
+CODELEWM_HF_SOURCE_DATASET_REVISION=main \
+CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 ```
 
 Definition of done for the scaled run:
 
 - the HF job exits successfully;
+- the source prefetch logs show the expected `hf download` path and the dataset
+  build source-acquisition report names `bigcode-commitpackft-python`;
 - dataset, model, and results repositories contain the expected `run-id`;
 - every published manifest verifies locally after download;
 - retrieval includes headline baselines and action-view ablations;
