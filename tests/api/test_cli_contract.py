@@ -33,6 +33,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("CodeLeWM command-line interface", help_text)
         self.assertIn("score", help_text)
         self.assertIn("rerank", help_text)
+        self.assertIn("dataset", help_text)
         self.assertIn("secret-scan", help_text)
 
     def test_score_help_snapshot_exposes_required_flags(self) -> None:
@@ -64,6 +65,13 @@ class PublicCliContractTest(unittest.TestCase):
             "--log-jsonl",
             "--allow-unsafe-checkpoint",
         ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_dataset_build_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("dataset", "build", "--help")
+
+        for flag in ("--config", "--out", "--json"):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 

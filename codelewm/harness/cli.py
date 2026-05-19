@@ -11,6 +11,13 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from codelewm import __version__
+from codelewm.data import (
+    DatasetBuildConfigError,
+    DatasetBuildError,
+    SourceRecordError,
+    SourceUnavailableError,
+    build_dataset_from_config_path,
+)
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.observability import (
     ArtifactManifestError,
@@ -72,6 +79,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
     rerank.set_defaults(func=_rerank_command)
+    dataset = subparsers.add_parser("dataset", help="dataset build and packing utilities")
+    dataset_subcommands = dataset.add_subparsers(dest="dataset_command")
+    build = dataset_subcommands.add_parser("build", help="build a transition dataset artifact")
+    build.add_argument("--config", type=Path, required=True, help="dataset build config JSON or YAML path")
+    build.add_argument("--out", type=Path, required=True, help="empty output artifact directory")
+    build.add_argument("--json", action="store_true", help="emit JSON output")
+    build.set_defaults(func=_dataset_build_command)
+    dataset.set_defaults(func=_dataset_help_command, dataset_parser=dataset)
     manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
     manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
     verify = manifest_subcommands.add_parser("verify", help="verify an artifact manifest")
@@ -134,6 +149,11 @@ def _manifest_help_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _dataset_help_command(args: argparse.Namespace) -> int:
+    args.dataset_parser.print_help()
+    return 0
+
+
 def _score_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     try:
@@ -186,6 +206,84 @@ def _score_command(args: argparse.Namespace) -> int:
         print(f"candidate: {result.candidate}")
         print(f"transition_energy: {result.transition_energy:.6g}")
         print(f"final_score: {result.final_score:.6g}")
+    return 0
+
+
+def _dataset_build_command(args: argparse.Namespace) -> int:
+    command = (
+        "codelewm",
+        "dataset",
+        "build",
+        "--config",
+        str(args.config),
+        "--out",
+        str(args.out),
+        *(("--json",) if args.json else ()),
+    )
+    try:
+        result = build_dataset_from_config_path(
+            config_path=args.config,
+            output_dir=args.out,
+            command=command,
+        )
+    except DatasetBuildConfigError as exc:
+        error = ScoreError(
+            f"dataset build config is invalid: {exc}",
+            error_type="config_error",
+            remediation="repair the dataset build config and retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except SourceUnavailableError as exc:
+        error = ScoreError(
+            f"dataset source is unavailable: {exc}",
+            error_type="source_unavailable",
+            remediation="check source paths and adapter options, then retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 3
+    except SourceRecordError as exc:
+        error = ScoreError(
+            f"dataset source row is invalid: {exc}",
+            error_type="dataset_build_error",
+            remediation="repair or filter the malformed source row and retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+    except DatasetBuildError as exc:
+        error_type = "empty_dataset" if "zero kept transitions" in str(exc) else "dataset_build_error"
+        error = ScoreError(
+            f"dataset build failed: {exc}",
+            error_type=error_type,
+            remediation="inspect the dataset reports, filters, and split policy, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+    except OSError as exc:
+        error = ScoreError(
+            f"dataset build failed while writing artifacts: {exc}",
+            error_type="dataset_build_error",
+            remediation="choose a writable output directory and retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+
+    if args.json:
+        print(json.dumps(result.to_report(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {result.output_dir / 'manifest.json'}")
+        print(f"dataset_manifest: {result.output_dir / 'dataset_manifest.json'}")
+        print(f"row_count: {result.dataset_manifest.row_count}")
     return 0
 
 
@@ -245,6 +343,13 @@ def _manifest_verify_command(args: argparse.Namespace) -> int:
         print(f"files_checked: {len(checked_files)}")
         print("ok: true")
     return 0
+
+
+def _emit_error(args: argparse.Namespace, exc: ScoreError, *, json_output: bool) -> None:
+    if json_output:
+        print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
+    else:
+        print(str(exc), file=sys.stderr)
 
 
 def _rerank_command(args: argparse.Namespace) -> int:
