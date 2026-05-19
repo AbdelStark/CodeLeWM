@@ -48,7 +48,59 @@ jobs:
           python-version: "3.13"
 
       - name: Compile codelewm and tests
-        run: python -m compileall -q codelewm tests
+        run: python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
+
+  artifact-gates:
+    name: Manifest and secret gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install lightweight dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy
+
+      - name: Build manifest fixture
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          from codelewm.observability import build_artifact_manifest, write_artifact_manifest
+
+          root = Path(".ci/manifest")
+          root.mkdir(parents=True, exist_ok=True)
+          artifact = root / "report.json"
+          artifact.write_text('{"ok": true}\n', encoding="utf-8")
+          manifest = build_artifact_manifest(
+              artifact_kind="eval_report",
+              root=root,
+              files=("report.json",),
+              command=("codelewm", "eval", "retrieval"),
+              config={"name": "ci-fixture"},
+              source_git_sha="0" * 40,
+              artifact_id="ci-eval-report",
+          )
+          write_artifact_manifest(manifest, root / "manifest.json")
+          PY
+
+      - name: Verify manifest fixture
+        env:
+          PYTHONPATH: .
+        run: python -m codelewm.harness.cli manifest verify --manifest .ci/manifest/manifest.json --json
+
+      - name: Run secret scan
+        env:
+          PYTHONPATH: .
+        run: python -m codelewm.harness.cli secret-scan README.md SPEC.md docs .ci/manifest --json
 
   docs-check:
     name: Docs sanity

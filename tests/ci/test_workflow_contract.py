@@ -36,6 +36,20 @@ class PullRequestWorkflowContractTest(unittest.TestCase):
         text = PR_WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn("python -m compileall", text)
+        self.assertIn("codelewm tests", text)
+
+    def test_workflow_excludes_intentional_invalid_parser_fixtures_from_compileall(self) -> None:
+        text = PR_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("invalid_(before|after)", text)
+
+    def test_workflow_runs_manifest_and_secret_release_gates(self) -> None:
+        text = PR_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("artifact-gates:", text)
+        self.assertIn("manifest verify", text)
+        self.assertIn("secret-scan", text)
+        self.assertIn(".ci/manifest/manifest.json", text)
 
     def test_workflow_pins_supported_python_versions(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
@@ -70,6 +84,7 @@ class TestingStrategyConsistencyTest(unittest.TestCase):
 
         self.assertIn("CI Policy", text)
         self.assertIn("unit tests", text)
+        self.assertIn("manifest", text)
         self.assertIn("security scan", text)
 
     def test_local_pytest_command_is_documented(self) -> None:

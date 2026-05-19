@@ -100,7 +100,9 @@ GPU tests are optional before v1.0, but CPU smoke tests are mandatory.
 The pull-request workflow lives at `.github/workflows/pr.yml`. The
 workflow contract is asserted by
 `tests/ci/test_workflow_contract.py`, which ensures the workflow
-keeps running `python -m pytest`, compiles all Python sources,
-verifies the spec-doc tree is present, and pins the GitHub Actions
-versions it depends on. Local `python -m pytest tests/` runs the same
-suite the workflow does.
+keeps running `python -m pytest`, compiles real Python sources while
+excluding intentionally invalid parser fixtures, verifies an artifact
+manifest with `codelewm manifest verify`, runs `codelewm secret-scan`
+over public docs and generated CI artifacts, verifies the spec-doc tree
+is present, and pins the GitHub Actions versions it depends on. Local
+`python -m pytest tests/` runs the same test suite the workflow does.
