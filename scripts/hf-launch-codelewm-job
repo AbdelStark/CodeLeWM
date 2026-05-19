@@ -116,7 +116,7 @@ cmd=(
 [[ -z "$CODELEWM_HF_JOBS_NAMESPACE" ]] || cmd+=(--namespace "$CODELEWM_HF_JOBS_NAMESPACE")
 [[ "$CODELEWM_HF_JOBS_DETACH" != "1" ]] || cmd+=(--detach)
 
-cmd+=("$CODELEWM_HF_JOB_IMAGE" bash -lc "$REMOTE_COMMAND")
+cmd+=(-- "$CODELEWM_HF_JOB_IMAGE" bash -lc "$REMOTE_COMMAND")
 
 if [[ "$CODELEWM_HF_JOBS_DRY_RUN" == "1" ]]; then
   echo "HF Jobs dry run. Set CODELEWM_HF_JOBS_DRY_RUN=0 to launch."
