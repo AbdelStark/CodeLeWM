@@ -12,7 +12,11 @@ from typing import Any, Literal, Protocol
 
 from codelewm.model.checkpoint import sha256_file
 from codelewm.model.transition import transition_energy
-from codelewm.security import parse_python_source_text
+from codelewm.security import (
+    CheckpointTrustError,
+    parse_python_source_text,
+    require_trusted_checkpoint,
+)
 
 
 SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
@@ -23,6 +27,7 @@ HarnessErrorType = Literal[
     "missing_file",
     "invalid_syntax",
     "patch_apply_failed",
+    "manifest_error",
     "checkpoint_error",
     "scoring_error",
 ]
@@ -76,6 +81,7 @@ class ErrorReport:
             "missing_file",
             "invalid_syntax",
             "patch_apply_failed",
+            "manifest_error",
             "checkpoint_error",
             "scoring_error",
         }:
@@ -323,8 +329,18 @@ def load_scorer(
     *,
     device: str = "auto",
     backend: TransitionScoringBackend | None = None,
+    allow_unsafe: bool = False,
+    checkpoint_manifest: Path | str | None = None,
 ) -> CodeLeWMScorer:
-    """Load a local scorer wrapper after verifying the checkpoint path exists."""
+    """Load a local scorer wrapper after verifying the checkpoint path exists.
+
+    When ``allow_unsafe`` is False (the default), the checkpoint must be
+    accompanied by a trusted manifest at ``<checkpoint>.manifest.json`` (or
+    the explicit ``checkpoint_manifest`` path). The manifest is validated
+    via :func:`codelewm.security.require_trusted_checkpoint`. Pass
+    ``allow_unsafe=True`` to load checkpoints without a manifest; this is
+    only safe for fixture checkpoints in a trusted local environment.
+    """
 
     checkpoint_path = Path(checkpoint)
     if not checkpoint_path.is_file():
@@ -334,6 +350,20 @@ def load_scorer(
             remediation="provide an existing checkpoint file",
             artifact=str(checkpoint_path),
         )
+    if not allow_unsafe:
+        try:
+            require_trusted_checkpoint(checkpoint_path, manifest_path=checkpoint_manifest)
+        except CheckpointTrustError as exc:
+            raise ScoreError(
+                f"checkpoint trust check failed: {exc}",
+                error_type="checkpoint_error",
+                remediation=(
+                    "provide a trusted checkpoint manifest at "
+                    "<checkpoint>.manifest.json or rerun with allow_unsafe=True"
+                ),
+                artifact=str(checkpoint_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
     return CodeLeWMScorer(
         checkpoint=checkpoint_path,
         checkpoint_sha256=sha256_file(checkpoint_path),
@@ -444,6 +474,7 @@ def error_report_json_schema() -> dict[str, Any]:
                     "missing_file",
                     "invalid_syntax",
                     "patch_apply_failed",
+                    "manifest_error",
                     "checkpoint_error",
                     "scoring_error",
                 ]
