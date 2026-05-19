@@ -6,7 +6,7 @@ issue is filed, closed, or superseded. See `CONTRIBUTING.md` and
 `docs/spec/09-release-and-versioning.md` for how this tracker fits
 into the release lifecycle.
 
-- Last updated: 2026-05-18
+- Last updated: 2026-05-19
 - Spec corpus: `docs/spec/00-overview.md` through
   `docs/spec/10-glossary.md`
 - RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0012-*.md`
@@ -64,14 +64,14 @@ governance docs.
 | #49 | harness: add JSON schemas and invalid candidate handling | harness | p0 | m | RFC-0008 | Closed |
 | #50 | observability: implement artifact manifest schemas | observability | p0 | m | RFC-0009 | Closed |
 | #51 | observability: add JSONL logging and redaction | observability | p0 | m | RFC-0009 | Closed |
-| #52 | observability: add manifest verifier command | observability | p1 | s | RFC-0009 | Open |
+| #52 | observability: add manifest verifier command | observability | p1 | s | RFC-0009 | Closed |
 | #53 | security: enforce non-execution parsing boundary | security | p0 | m | RFC-0010 | Closed |
 | #54 | security: implement license decisions and public gates | security | p0 | m | RFC-0010 | Closed |
-| #55 | security: add secret scan and unsafe checkpoint refusal | security | p1 | m | RFC-0010 | Open |
+| #55 | security: add secret scan and unsafe checkpoint refusal | security | p1 | m | RFC-0010 | Closed |
 | #56 | api: add CLI help and JSON schema tests | api | p0 | m | RFC-0011 | Closed |
-| #58 | ci: add pull request workflow for tests and docs | ci | p0 | m | RFC-0012 | Open |
-| #59 | docs: add contributing security changelog and PR template | docs | p1 | m | RFC-0012 | Open |
-| #61 | roadmap: maintain implementation tracker | docs | p0 | s | RFC-0012 | Open |
+| #58 | ci: add pull request workflow for tests and docs | ci | p0 | m | RFC-0012 | Closed |
+| #59 | docs: add contributing security changelog and PR template | docs | p1 | m | RFC-0012 | Closed |
+| #61 | roadmap: maintain implementation tracker | docs | p0 | s | RFC-0012 | Closed |
 
 ## Milestone: v1.0
 
@@ -81,12 +81,12 @@ gates.
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
 | #35 | model: add retrieval loss behind config gate | model | p1 | m | RFC-0005 | Closed |
-| #40 | train: implement checkpoint resume compatibility | model | p1 | m | RFC-0006 | Open |
-| #44 | eval: implement patch-surprise evaluation | evaluation | p1 | m | RFC-0007 | Open |
-| #45 | docs: add benchmark report template | docs | p1 | s | RFC-0007 | Open |
-| #48 | harness: implement local transition index | harness | p1 | m | RFC-0008 | Open |
-| #57 | docs: add public API usage docs | docs | p1 | s | RFC-0011 | Open |
-| #60 | release: add release checklist and card templates | release | p1 | m | RFC-0012 | Open |
+| #40 | train: implement checkpoint resume compatibility | model | p1 | m | RFC-0006 | Closed |
+| #44 | eval: implement patch-surprise evaluation | evaluation | p1 | m | RFC-0007 | Closed |
+| #45 | docs: add benchmark report template | docs | p1 | s | RFC-0007 | Closed |
+| #48 | harness: implement local transition index | harness | p1 | m | RFC-0008 | Closed |
+| #57 | docs: add public API usage docs | docs | p1 | s | RFC-0011 | Closed |
+| #60 | release: add release checklist and card templates | release | p1 | m | RFC-0012 | Closed |
 
 ## Tracking Issues
 
@@ -126,9 +126,9 @@ remain open until every child issue closes.
   and #52 build on.
 - #53 precedes #47 because reranking must preserve the non-execution
   boundary.
-- #39, #52, #55, and #56 precede #58 because CI must run the CPU
+- #39, #52, #55, and #56 preceded #58 because CI needed the CPU
   smoke path, manifest verifier, secret/checkpoint safety checks, and
-  CLI schema contract before it can stand alone.
+  CLI schema contract before it could stand alone.
 - #30, #39, #41, #42, and #43 are the minimum evidence chain for the
   v0.1 claim that text actions improve transition retrieval over
   no-action and shuffled baselines.
