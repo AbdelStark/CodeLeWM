@@ -30,13 +30,13 @@
 
 ## Tests
 
-- [ ] **Full test suite passes locally.** Evidence: `python -m
-      pytest tests/` output, no failures.
+- [ ] **Full test suite passes locally.** Evidence:
+      `uv run python -m pytest tests/` output, no failures.
 - [ ] **CPU smoke training path runs.** Evidence:
-      `python -m pytest tests/integration/test_cpu_train_smoke.py`
+      `uv run python -m pytest tests/integration/test_cpu_train_smoke.py`
       output.
 - [ ] **Public CLI contract tests pass.** Evidence:
-      `python -m pytest tests/api/test_cli_contract.py` output.
+      `uv run python -m pytest tests/api/test_cli_contract.py` output.
 
 ## Manifests
 

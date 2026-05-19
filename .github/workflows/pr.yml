@@ -25,15 +25,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
       - name: Install lightweight dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pytest numpy
+        run: uv sync --frozen --group dev
 
       - name: Run pytest
-        env:
-          PYTHONPATH: .
-        run: python -m pytest tests/
+        run: uv run python -m pytest tests/
 
   syntax-check:
     name: Compile Python sources
@@ -47,8 +48,19 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Check uv lockfile
+        run: uv lock --check
+
+      - name: Install lightweight dependencies
+        run: uv sync --frozen --group dev
+
       - name: Compile codelewm and tests
-        run: python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
+        run: uv run python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
 
   artifact-gates:
     name: Manifest and secret gates
@@ -62,16 +74,17 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
       - name: Install lightweight dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install numpy
+        run: uv sync --frozen --group dev
 
       - name: Build manifest fixture
-        env:
-          PYTHONPATH: .
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           from pathlib import Path
 
           from codelewm.observability import build_artifact_manifest, write_artifact_manifest
@@ -93,14 +106,10 @@ jobs:
           PY
 
       - name: Verify manifest fixture
-        env:
-          PYTHONPATH: .
-        run: python -m codelewm.harness.cli manifest verify --manifest .ci/manifest/manifest.json --json
+        run: uv run codelewm manifest verify --manifest .ci/manifest/manifest.json --json
 
       - name: Run secret scan
-        env:
-          PYTHONPATH: .
-        run: python -m codelewm.harness.cli secret-scan README.md SPEC.md docs .ci/manifest --json
+        run: uv run codelewm secret-scan README.md SPEC.md docs .ci/manifest --json
 
   docs-check:
     name: Docs sanity

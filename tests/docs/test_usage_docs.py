@@ -30,7 +30,8 @@ class UsageGuideContentTest(unittest.TestCase):
 
     def test_usage_doc_covers_install_path(self) -> None:
         self.assertRegex(self.text, r"##\s+Install")
-        self.assertIn("python -m pip install -e", self.text)
+        self.assertIn("uv sync --group dev", self.text)
+        self.assertIn("uv sync --group dev --group data", self.text)
 
     def test_usage_doc_documents_score_and_rerank_commands(self) -> None:
         for command in ("codelewm score", "codelewm rerank"):

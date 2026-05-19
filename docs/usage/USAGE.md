@@ -14,21 +14,24 @@ when the two disagree the spec wins.
 ## Install
 
 ```bash
-python -m pip install -e .
+uv sync --group dev
 ```
 
-Optional extras:
+Optional groups:
 
 ```bash
-python -m pip install -e ".[data]"   # h5py + pyarrow for dataset packing
-python -m pip install -e ".[dev]"    # pytest, build
+uv sync --group dev --group data      # h5py + pyarrow for dataset packing
+uv sync --group dev --group train     # torch, Lightning, and LeWM training adapters
+uv sync --group dev --group eval      # optional evaluation helpers
+uv sync --group dev --group docs      # documentation checks
+uv sync --group dev --group release   # package build and release gates
 ```
 
 Verify the install:
 
 ```bash
-codelewm --version
-python -m pytest tests/
+uv run codelewm --version
+uv run python -m pytest tests/
 ```
 
 Some tests skip when optional runtimes such as `torch`, `h5py`, or

@@ -23,19 +23,19 @@ class PullRequestWorkflowContractTest(unittest.TestCase):
     def test_workflow_runs_pytest_invocation(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("python -m pytest", text)
+        self.assertIn("uv run python -m pytest", text)
 
     def test_workflow_runs_test_directory_documented_in_strategy(self) -> None:
         strategy = TESTING_STRATEGY.read_text(encoding="utf-8")
         workflow = PR_WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("python -m pytest", strategy)
+        self.assertIn("uv run python -m pytest", strategy)
         self.assertIn("tests/", workflow)
 
     def test_workflow_compiles_python_sources(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("python -m compileall", text)
+        self.assertIn("uv run python -m compileall", text)
         self.assertIn("codelewm tests", text)
 
     def test_workflow_excludes_intentional_invalid_parser_fixtures_from_compileall(self) -> None:
@@ -65,6 +65,14 @@ class PullRequestWorkflowContractTest(unittest.TestCase):
 
         self.assertIn("actions/checkout@v4", text)
         self.assertIn("actions/setup-python@v5", text)
+        self.assertIn("astral-sh/setup-uv@v8.1.0", text)
+
+    def test_workflow_installs_with_uv(self) -> None:
+        text = PR_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("uv sync --frozen --group dev", text)
+        self.assertIn("uv lock --check", text)
+        self.assertNotIn("python -m pip install", text)
 
     def test_workflow_runs_docs_sanity_job(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
@@ -90,7 +98,7 @@ class TestingStrategyConsistencyTest(unittest.TestCase):
     def test_local_pytest_command_is_documented(self) -> None:
         text = TESTING_STRATEGY.read_text(encoding="utf-8")
 
-        self.assertIn("python -m pytest", text)
+        self.assertIn("uv run python -m pytest", text)
 
 
 if __name__ == "__main__":

@@ -67,15 +67,27 @@ Run the strongest validation that applies to your change before opening
 the PR:
 
 ```bash
-python -m pytest tests/                  # full unit + integration suite
-python -m pytest tests/<area>            # area-focused run
-python -m compileall codelewm tests      # syntactic regression check
+uv sync --group dev
+uv run python -m pytest tests/                  # full unit + integration suite
+uv run python -m pytest tests/<area>            # area-focused run
+uv run python -m compileall codelewm tests      # syntactic regression check
 ```
 
 Schema, observability, security, harness, and CLI tests live under
 `tests/<area>` and mirror the package layout. CI runs the same
 commands; differences between local and CI runs are bugs in the
 workflow file.
+
+Install optional runtime groups only when the touched surface needs
+them:
+
+```bash
+uv sync --group dev --group data      # dataset packing: h5py, pyarrow
+uv sync --group dev --group train     # torch/Lightning training runtime
+uv sync --group dev --group eval      # optional evaluation helpers
+uv sync --group dev --group docs      # documentation checks
+uv sync --group dev --group release   # package build and release gates
+```
 
 ## Deprecation Policy
 

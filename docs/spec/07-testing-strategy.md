@@ -46,18 +46,19 @@ ML regression tests:
 The release gate must expose:
 
 ```bash
-python -m pytest
-python -m pytest tests/data/test_codestate_fixtures.py
-python -m pytest tests/eval/test_baselines.py
-python -m pytest tests/eval/test_hard_negatives.py
-python -m pytest tests/eval/test_retrieval_metrics.py
-python -m pytest tests/integration/test_action_conditioning.py
-python -m pytest tests/integration/test_cpu_train_smoke.py
-python -m pytest tests/integration
-python -m codelewm dataset build --config tests/fixtures/tiny_dataset.yaml --out .artifacts/tiny
-python -m codelewm train --config tests/fixtures/tiny_train.yaml
-python -m codelewm eval retrieval --config tests/fixtures/tiny_retrieval.yaml
-python -m codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
+uv sync --group dev
+uv run python -m pytest
+uv run python -m pytest tests/data/test_codestate_fixtures.py
+uv run python -m pytest tests/eval/test_baselines.py
+uv run python -m pytest tests/eval/test_hard_negatives.py
+uv run python -m pytest tests/eval/test_retrieval_metrics.py
+uv run python -m pytest tests/integration/test_action_conditioning.py
+uv run python -m pytest tests/integration/test_cpu_train_smoke.py
+uv run python -m pytest tests/integration
+uv run codelewm dataset build --config tests/fixtures/tiny_dataset.yaml --out .artifacts/tiny
+uv run codelewm train --config tests/fixtures/tiny_train.yaml
+uv run codelewm eval retrieval --config tests/fixtures/tiny_retrieval.yaml
+uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
 ```
 
 ## Evaluation Gates
@@ -99,10 +100,11 @@ GPU tests are optional before v1.0, but CPU smoke tests are mandatory.
 
 The pull-request workflow lives at `.github/workflows/pr.yml`. The
 workflow contract is asserted by
-`tests/ci/test_workflow_contract.py`, which ensures the workflow
-keeps running `python -m pytest`, compiles real Python sources while
-excluding intentionally invalid parser fixtures, verifies an artifact
-manifest with `codelewm manifest verify`, runs `codelewm secret-scan`
-over public docs and generated CI artifacts, verifies the spec-doc tree
-is present, and pins the GitHub Actions versions it depends on. Local
-`python -m pytest tests/` runs the same test suite the workflow does.
+`tests/ci/test_workflow_contract.py`, which ensures the workflow installs
+through `uv sync --group dev`, keeps running
+`uv run python -m pytest`, compiles real Python sources while excluding
+intentionally invalid parser fixtures, verifies an artifact manifest with
+`codelewm manifest verify`, runs `codelewm secret-scan` over public docs
+and generated CI artifacts, verifies the spec-doc tree is present, and pins
+the GitHub Actions versions it depends on. Local
+`uv run python -m pytest tests/` runs the same test suite the workflow does.
