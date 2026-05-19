@@ -6,9 +6,10 @@ evaluation run. It is designed to be usable by a human operator or by
 `ml-intern` in headless mode.
 
 Current status: the smoke path is ready for dry-run validation. The scaled path
-is wired but must wait for #118 and #119 to land real public-source acquisition
-and scaled training configs before spending GPU compute or publishing a claim.
-The full remote execution and publication run is tracked by #138.
+uses the source-acquisition gate from #118 and the training config/runbook
+contract in `docs/training/SCALED_TRAINING_RUNBOOK.md`. It must still wait for
+the remaining ablation, quality-report, and card gates before publishing a
+public claim. The full remote execution and publication run is tracked by #138.
 
 ## Upstream Contract
 
@@ -75,7 +76,7 @@ Scaled mode additionally requires checked-in configs:
 ```bash
 CODELEWM_HF_PIPELINE_MODE=scaled
 CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json
-CODELEWM_TRAIN_CONFIG=config/<scaled-train>.json
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml
 ```
 
 ## Scripts
@@ -155,16 +156,18 @@ hf jobs stats <job-id>
 
 ## Remote Scaled Training And Publication
 
-Run this only after #118 and #119 have landed and the configs below exist on the
-published ref.
+Run this only after #118 and #119 have landed, the public shard config exists on
+the published ref, and the remaining issue gates allow spending GPU compute.
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
+CODELEWM_HF_JOBS_FLAVOR=a10g-small \
+CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/<public-shard-build>.json \
-CODELEWM_TRAIN_CONFIG=config/<scaled-train>.json \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 uv run scripts/hf-launch-codelewm-job
 ```
 

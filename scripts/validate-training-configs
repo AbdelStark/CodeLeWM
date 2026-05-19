@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Validate CodeLeWM training configs and print a JSON summary."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from codelewm.model import compute_config_hash
+from codelewm.training import (
+    TRAIN_CONFIG_SCHEMA_VERSION,
+    TrainConfigError,
+    load_train_config,
+    scaled_train_config_paths,
+)
+
+
+REPORT_SCHEMA_VERSION = "codelewm.train_config_validation.v1"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "configs",
+        nargs="*",
+        type=Path,
+        help="training config paths; defaults to all checked-in scaled configs",
+    )
+    args = parser.parse_args(argv)
+    paths = tuple(args.configs) or scaled_train_config_paths(Path.cwd())
+
+    configs = []
+    try:
+        for path in paths:
+            config = load_train_config(path)
+            payload = config.to_dict()
+            configs.append(
+                {
+                    "path": path.as_posix(),
+                    "schema_version": config.schema_version,
+                    "name": config.name,
+                    "seed": config.seed,
+                    "config_sha256": compute_config_hash(payload),
+                    "action_view": config.wm.action_view,
+                    "max_steps": config.trainer.max_steps,
+                    "accelerator": config.trainer.accelerator,
+                    "devices": config.trainer.devices,
+                    "precision": config.trainer.precision,
+                    "batch_size": config.loader.batch_size,
+                    "retrieval_loss_enabled": config.loss.enable_retrieval_loss,
+                }
+            )
+    except TrainConfigError as exc:
+        print(
+            json.dumps(
+                {
+                    "schema_version": REPORT_SCHEMA_VERSION,
+                    "ok": False,
+                    "error": str(exc),
+                },
+                sort_keys=True,
+            )
+        )
+        return 2
+
+    print(
+        json.dumps(
+            {
+                "schema_version": REPORT_SCHEMA_VERSION,
+                "ok": True,
+                "train_config_schema_version": TRAIN_CONFIG_SCHEMA_VERSION,
+                "configs": configs,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

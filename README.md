@@ -293,6 +293,7 @@ docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
 docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md HF Jobs/ml-intern scaled-run prompt
 docs/operations/HF_ML_INTERN_TRAINING.md HF Jobs training and publication runbook
 docs/data/PUBLIC_SOURCE_ACQUISITION.md public-safe data acquisition contract
+docs/training/SCALED_TRAINING_RUNBOOK.md scaled CPU/MPS/A10G training profiles
 docs/benchmark/FIRST_RESULTS.md first reproducible smoke results report
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
@@ -317,6 +318,7 @@ jepa.py, module.py, utils.py    compatibility wrappers
 - Read `SPEC.md` for the canonical index.
 - Read `docs/roadmap/FULL_COMPLETION.md` for the ordered remaining backlog.
 - Read `docs/data/PUBLIC_SOURCE_ACQUISITION.md` for the public data gate.
+- Read `docs/training/SCALED_TRAINING_RUNBOOK.md` for scaled train configs and budgets.
 - Read `docs/operations/HF_ML_INTERN_TRAINING.md` for the HF Jobs publication path.
 - Read `docs/spec/00-overview.md` for goals, non-goals, and pass gates.
 - Read `docs/spec/01-architecture.md` for subsystem boundaries.

@@ -14,7 +14,6 @@ from typing import Any
 import numpy as np
 
 from codelewm.data import DATASET_SCHEMA_VERSION, OptionalDependencyError
-from codelewm.eval import compute_collapse_report
 from codelewm.model import (
     CHECKPOINT_SCHEMA_VERSION,
     ABSTRACT_ACTION_SEQUENCE_LENGTH,
@@ -189,6 +188,8 @@ def torch_training_executor(
     final_metrics["train/examples_per_second"] = float(examples_seen / elapsed)
     if len(val_dataset) > 0:
         final_metrics.update(_evaluate_validation(model, val_dataset, context.config, selected_device, runtime))
+    from codelewm.eval import compute_collapse_report
+
     collapse_report = compute_collapse_report(last_embeddings)
     final_metrics.update(_collapse_metrics(collapse_report))
     _validate_no_collapse_smoke(final_metrics)

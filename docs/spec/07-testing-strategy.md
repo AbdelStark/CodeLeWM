@@ -69,6 +69,7 @@ uv run codelewm index --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.
 uv run codelewm manifest verify --manifest .artifacts/tiny-index/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
 uv run scripts/first-results --overwrite
 uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
+uv run scripts/validate-training-configs
 CODELEWM_HF_JOBS_DRY_RUN=1 uv run scripts/hf-launch-codelewm-job
 CODELEWM_HF_PIPELINE_MODE=smoke CODELEWM_HF_RUN_ID=local-smoke CODELEWM_HF_OUTPUT_ROOT=.artifacts/hf-local CODELEWM_HF_PUBLISH=1 CODELEWM_HF_PUBLISH_DRY_RUN=1 uv run scripts/hf-run-codelewm-pipeline
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
@@ -99,6 +100,9 @@ v0.1 gates:
 - Hugging Face Jobs launch scripts must pass dry-run locally before scaled
   remote compute is launched, and real publication requires an explicit
   `CODELEWM_HF_PUBLISH_DRY_RUN=0` override;
+- checked-in scaled training configs must validate through
+  `scripts/validate-training-configs`, keep `action_text` as the headline
+  training path, and preserve trusted checkpoint/resume compatibility;
 - JSON schemas validate for dataset, checkpoint, eval report, and score output.
 
 v1.0 gates:

@@ -24,6 +24,9 @@ earliest one minor release after the deprecation notice.
   `scripts/hf-publish-codelewm-artifacts`,
   `docs/operations/HF_ML_INTERN_TRAINING.md`, and
   `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
+- Scaled CPU, MPS, and HF A10G training configs under `config/train/scaled/`,
+  plus `scripts/validate-training-configs` and
+  `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -62,6 +65,7 @@ their workflow depends on.
 | Manifest verification report  | `codelewm.manifest_verify.v1`                   |
 | Checkpoint manifest           | `codelewm.checkpoint.v1`                        |
 | Training config               | `codelewm.train_config.v1`                      |
+| Training config validation    | `codelewm.train_config_validation.v1`           |
 | Training-run manifest         | `codelewm.training_run.v1`                      |
 | Training metrics              | `codelewm.training_metrics.v1`                  |
 | CPU smoke checkpoint          | `codelewm.cpu_smoke_checkpoint.v1`              |
