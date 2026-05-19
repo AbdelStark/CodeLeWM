@@ -25,6 +25,7 @@ class CliHelpTest(unittest.TestCase):
         self.assertIn("CodeLeWM command-line interface", completed.stdout)
         self.assertIn("score", completed.stdout)
         self.assertIn("rerank", completed.stdout)
+        self.assertIn("train", completed.stdout)
 
 
 if __name__ == "__main__":

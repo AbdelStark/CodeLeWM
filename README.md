@@ -52,19 +52,21 @@ The current package includes:
 - `codelewm.observability`: artifact manifests, structured JSONL log events,
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
-  `codelewm dataset pack`, `codelewm score`, and `codelewm rerank` commands, and structured
-  dataset/score/rerank/error schemas;
+  `codelewm dataset pack`, `codelewm train`, `codelewm score`, and
+  `codelewm rerank` commands, and structured dataset/train/score/rerank/error
+  schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, the package-native torch training executor,
+`codelewm train`,
 retrieval reports, hard-negative sampling, baseline validation, local scoring,
 safe candidate reranking, manifest verification, secret scanning, `uv`
 dependency management, and pull-request CI are
 implemented. A meaningful first training result is still pending: the remaining
-work is the train/eval/index CLI workflow and reproducible first-results report tracked in
+work is the eval/index CLI workflow and reproducible first-results report tracked in
 `docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
 logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
 existing Hydra configs are inherited from the original LeWorldModel seed and are

@@ -30,6 +30,15 @@ from codelewm.observability import (
     write_log_event_jsonl,
 )
 from codelewm.security import scan_paths
+from codelewm.training import (
+    TrainConfigError,
+    TrainingRunError,
+    cpu_smoke_training_executor,
+    load_train_config,
+    make_torch_training_executor,
+    train,
+    validate_train_config,
+)
 
 
 MANIFEST_VERIFY_REPORT_SCHEMA_VERSION = "codelewm.manifest_verify.v1"
@@ -82,6 +91,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
     rerank.set_defaults(func=_rerank_command)
+    train_parser = subparsers.add_parser("train", help="run manifest-backed CodeLeWM training")
+    train_parser.add_argument("--config", type=Path, required=True, help="training config JSON or YAML path")
+    train_parser.add_argument("--out", type=Path, help="override output.run_dir and write run artifacts here")
+    train_parser.add_argument(
+        "--device",
+        choices=("cpu", "cuda", "mps", "auto"),
+        help="override trainer.accelerator for this run",
+    )
+    train_parser.add_argument(
+        "--executor",
+        default="torch",
+        choices=("torch", "cpu-smoke"),
+        help="training executor to run",
+    )
+    train_parser.add_argument(
+        "--resume-from",
+        type=Path,
+        help="parent training_manifest.json to resume from after compatibility checks",
+    )
+    train_parser.add_argument("--overwrite", action="store_true", help="overwrite an existing CodeLeWM run output")
+    train_parser.add_argument("--json", action="store_true", help="emit JSON output")
+    train_parser.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    train_parser.set_defaults(func=_train_command)
     dataset = subparsers.add_parser("dataset", help="dataset build and packing utilities")
     dataset_subcommands = dataset.add_subparsers(dest="dataset_command")
     build = dataset_subcommands.add_parser("build", help="build a transition dataset artifact")
@@ -295,6 +327,133 @@ def _dataset_build_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _train_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _train_command_tuple(args)
+    try:
+        config = _load_cli_train_config(args)
+        _validate_train_cli_executor(args)
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="training.start",
+                level="info",
+                run_id=run_id,
+                step="train",
+                message="train command started",
+                fields={
+                    "config": str(args.config),
+                    "out": None if args.out is None else str(args.out),
+                    "executor": args.executor,
+                    "device": args.device or "config",
+                    "resume_from": None if args.resume_from is None else str(args.resume_from),
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        executor = (
+            make_torch_training_executor(device=args.device)
+            if args.executor == "torch"
+            else cpu_smoke_training_executor
+        )
+        manifest = train(
+            config,
+            root=Path.cwd(),
+            executor=executor,
+            command=command,
+            overwrite=args.overwrite,
+            resume_from=args.resume_from,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="training.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=manifest.artifact_manifest_id,
+                step="train",
+                message="train command completed",
+                fields={
+                    "run_id": manifest.run_id,
+                    "step_count": manifest.step_count,
+                    "final_metrics": dict(manifest.final_metrics),
+                    "artifact_manifest_path": manifest.artifact_manifest_path,
+                },
+            ),
+        )
+    except TrainConfigError as exc:
+        error = ScoreError(
+            f"training config is invalid: {exc}",
+            error_type="config_error",
+            remediation="repair the training config and retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"training optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except SourceUnavailableError as exc:
+        error = ScoreError(
+            f"training source artifact is unavailable: {exc}",
+            error_type="source_unavailable",
+            remediation="check data.train, data.val, and data.manifest, then retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 3
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"training manifest or artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the dataset or parent training manifest and retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except TrainingRunError as exc:
+        error, exit_code = _training_run_error(args, exc)
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"training failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the training logs and retry with a corrected config",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="train", event="training.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(manifest.to_dict(), indent=2, sort_keys=True))
+    else:
+        run_dir = Path(config.output.run_dir)
+        print(f"run_id: {manifest.run_id}")
+        print(f"artifact_manifest: {run_dir / manifest.artifact_manifest_path}")
+        print(f"training_manifest: {config.output.manifest_path}")
+        print(f"metrics: {config.output.metrics_path}")
+        print(f"step_count: {manifest.step_count}")
+    return 0
+
+
 def _dataset_pack_command(args: argparse.Namespace) -> int:
     command = (
         "codelewm",
@@ -405,6 +564,87 @@ def _emit_error(args: argparse.Namespace, exc: ScoreError, *, json_output: bool)
         print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
     else:
         print(str(exc), file=sys.stderr)
+
+
+def _load_cli_train_config(args: argparse.Namespace):
+    config = load_train_config(args.config)
+    if args.out is None:
+        return config
+    output_dir = args.out
+    payload = config.to_dict()
+    payload["output"] = {
+        "run_dir": str(output_dir),
+        "checkpoint_dir": str(output_dir / "checkpoints"),
+        "metrics_path": str(output_dir / "metrics.jsonl"),
+        "manifest_path": str(output_dir / "training_manifest.json"),
+    }
+    return validate_train_config(payload)
+
+
+def _validate_train_cli_executor(args: argparse.Namespace) -> None:
+    if args.executor == "cpu-smoke" and args.device is not None and args.device not in {"cpu", "auto"}:
+        raise TrainConfigError("cpu-smoke executor only supports --device cpu or --device auto")
+
+
+def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "train",
+        "--config",
+        str(args.config),
+        "--executor",
+        str(args.executor),
+    ]
+    if args.device is not None:
+        command.extend(("--device", str(args.device)))
+    if args.out is not None:
+        command.extend(("--out", str(args.out)))
+    if args.resume_from is not None:
+        command.extend(("--resume-from", str(args.resume_from)))
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _training_run_error(args: argparse.Namespace, exc: TrainingRunError) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if "checkpoint" in normalized or "resume" in normalized or "parent training" in normalized:
+        return (
+            ScoreError(
+                f"training checkpoint compatibility failed: {exc}",
+                error_type="checkpoint_error",
+                remediation="choose a compatible resume checkpoint or start a fresh run",
+                artifact=None if args.resume_from is None else str(args.resume_from),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            5,
+        )
+    if "output" in normalized or "device" in normalized or "config" in normalized or "patch action" in normalized:
+        return (
+            ScoreError(
+                f"training request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or training config and retry",
+                artifact=str(args.config),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"training failed: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the training reports and retry with a corrected config",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        70,
+    )
 
 
 def _rerank_command(args: argparse.Namespace) -> int:

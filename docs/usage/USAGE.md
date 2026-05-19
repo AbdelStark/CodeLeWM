@@ -52,7 +52,7 @@ either as a Python API only or as a placeholder.
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
-| `codelewm train` | planned CLI; Python torch executor landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1` |
+| `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | planned | `codelewm.eval.retrieval_report.v1` |
 | `codelewm eval surprise` | planned | `codelewm.eval.surprise_report.v1` |
 | `codelewm index` | planned | `codelewm.transition_index.v1` |
@@ -226,16 +226,61 @@ codelewm manifest verify \
 If `h5py` or `pyarrow` is unavailable, the command exits with
 `codelewm.error.v1` and `error_type=optional_dependency_missing`.
 
+### `codelewm train`
+
+Run manifest-backed training over a packed dataset artifact:
+
+```bash
+codelewm train \
+  --config tests/fixtures/tiny_train.json \
+  --out .artifacts/tiny-train \
+  --executor torch \
+  --device cpu \
+  --json
+```
+
+The default executor is `torch`, which trains the package-native CodeLeWM
+state/action/predictor stack and writes:
+
+```
+<out>/
+  manifest.json                         codelewm.artifact_manifest.v1
+  training_manifest.json                codelewm.training_run.v1
+  config.json                           normalized train config
+  metrics.jsonl                         codelewm.training_metrics.v1
+  checkpoints/
+    checkpoint.pt
+    checkpoint.pt.manifest.json         codelewm.checkpoint.v1
+  reports/
+    metrics_report.json
+    torch_training_report.json          codelewm.torch_training_report.v1
+```
+
+The command verifies `data.manifest`, records the packed dataset artifact as the
+parent, and refuses incompatible resumes before any new output is written:
+
+```bash
+codelewm train \
+  --config tests/fixtures/tiny_train.json \
+  --out runs/resumed \
+  --resume-from runs/previous/training_manifest.json \
+  --json
+```
+
+Use `--executor cpu-smoke` only for the dependency-light NumPy smoke path; it
+keeps validating runner contracts but is not a model-quality claim and does not
+replace the torch executor for first-results training. Missing train/data
+runtime packages return `error_type=optional_dependency_missing`; incompatible
+resume checkpoints return `error_type=checkpoint_error`.
+
 ### Planned commands (spec contract)
 
 The following commands appear in the spec and have manifests
 defined but are not yet wired up as full CLI subcommands. The
-package-native torch training executor is available today through
-`codelewm.training.train_torch`; evaluation and index workflows are
-still Python/API surfaces until their CLI issues land.
+evaluation and index workflows are still Python/API surfaces until their CLI
+issues land.
 
 ```bash
-codelewm train         --config <yaml>
 codelewm eval retrieval --checkpoint <ckpt> --data <hdf5>
 codelewm eval surprise --checkpoint <ckpt> --data <hdf5>
 codelewm index --checkpoint <ckpt> --data <hdf5> --out <dir>

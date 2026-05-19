@@ -86,6 +86,37 @@ Missing `h5py` or `pyarrow` exits 2 with
 `error_type=optional_dependency_missing`. Input manifest, checksum, and row-count
 mismatches exit 4 with `error_type=dataset_build_error`.
 
+`codelewm train` is the public packed-dataset to training-run path:
+
+```bash
+codelewm train \
+  --config tests/fixtures/tiny_train.json \
+  --out .artifacts/tiny-train \
+  --executor torch \
+  --device cpu \
+  --json
+```
+
+It loads `codelewm.train_config.v1`, optionally overrides `output.run_dir` with
+`--out`, verifies the packed dataset artifact manifest, selects `torch` or
+`cpu-smoke` with `--executor`, and writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` for the training run;
+- `training_manifest.json`: `codelewm.training_run.v1`;
+- `metrics.jsonl`: `codelewm.training_metrics.v1`;
+- `reports/metrics_report.json`;
+- `reports/torch_training_report.json` when `--executor torch` is used;
+- `checkpoints/checkpoint.pt` and
+  `checkpoints/checkpoint.pt.manifest.json` for torch runs.
+
+`--resume-from <training_manifest.json>` validates the parent training run,
+artifact manifest, and paired checkpoint manifest before loading the checkpoint.
+Resume incompatibility exits 5 with `error_type=checkpoint_error`. Missing
+train/data runtime dependencies exit 2 with
+`error_type=optional_dependency_missing`. `--log-jsonl` appends
+`codelewm.log_event.v1` start, completion, and error events without replacing
+JSON stdout.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
@@ -149,8 +180,7 @@ package-native torch executor consumes packed HDF5 transition artifacts, trains
 the CodeLeWM state/action/predictor stack, writes
 `reports/torch_training_report.json`, and emits a paired
 `codelewm.checkpoint.v1` manifest beside `checkpoints/checkpoint.pt`. The public
-`codelewm train` command is the CLI wrapper tracked separately from this Python
-executor.
+`codelewm train` command calls the same runner and executor contracts.
 
 Retrieval evaluation exposes the metric and report contract independently of the
 model runtime:
