@@ -24,7 +24,7 @@ class ScoreApiTest(unittest.TestCase):
             candidate.write_text("def add(a, b):\n    return a + b + 1\n")
             checkpoint.write_bytes(b"fixture checkpoint")
 
-            scorer = load_scorer(checkpoint)
+            scorer = load_scorer(checkpoint, allow_unsafe=True)
             result = scorer.score_files(
                 before=before,
                 instruction="add one to the returned value",
@@ -69,6 +69,7 @@ class ScoreApiTest(unittest.TestCase):
                     "--checkpoint",
                     str(checkpoint),
                     "--json",
+                    "--allow-unsafe-checkpoint",
                 ],
                 cwd=ROOT,
                 check=False,
