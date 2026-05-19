@@ -68,7 +68,7 @@ class NonExecutionBoundaryTest(unittest.TestCase):
                 "value = 2\n"
             )
 
-            result = load_scorer(checkpoint).score_files(
+            result = load_scorer(checkpoint, allow_unsafe=True).score_files(
                 before=before,
                 instruction="change the value",
                 candidate=candidate,

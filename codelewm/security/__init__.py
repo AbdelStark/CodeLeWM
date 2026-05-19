@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from .checkpoint_trust import (
+    CheckpointTrustError,
+    default_checkpoint_manifest_path,
+    require_trusted_checkpoint,
+)
 from .license_policy import (
     DEFAULT_PUBLIC_LICENSE_POLICY,
     LicenseDecision,
@@ -21,8 +26,20 @@ from .non_execution import (
     parse_python_source_text,
     reject_code_execution_config,
 )
+from .secret_scan import (
+    SECRET_SCAN_REPORT_SCHEMA_VERSION,
+    SecretFinding,
+    SecretScanError,
+    SecretScanReport,
+    scan_file,
+    scan_paths,
+    scan_text,
+    secret_scan_report_json_schema,
+    validate_secret_scan_report_payload,
+)
 
 __all__ = [
+    "CheckpointTrustError",
     "DEFAULT_PUBLIC_LICENSE_POLICY",
     "FORBIDDEN_EXECUTION_CONFIG_KEYS",
     "LicenseDecision",
@@ -30,12 +47,23 @@ __all__ = [
     "NonExecutionPolicyError",
     "PUBLIC_LICENSE_GATE_SCHEMA_VERSION",
     "PublicLicenseGateReport",
+    "SECRET_SCAN_REPORT_SCHEMA_VERSION",
+    "SecretFinding",
+    "SecretScanError",
+    "SecretScanReport",
     "SourceLicensePolicy",
     "build_public_license_gate_report",
     "decide_license",
+    "default_checkpoint_manifest_path",
     "enforce_public_license_gate",
     "normalize_license",
     "parse_python_source_text",
     "reject_code_execution_config",
+    "require_trusted_checkpoint",
+    "scan_file",
+    "scan_paths",
+    "scan_text",
+    "secret_scan_report_json_schema",
     "validate_public_license_gate_report",
+    "validate_secret_scan_report_payload",
 ]

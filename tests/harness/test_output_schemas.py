@@ -74,6 +74,7 @@ class HarnessOutputSchemaTest(unittest.TestCase):
                     "--checkpoint",
                     str(checkpoint),
                     "--json",
+                    "--allow-unsafe-checkpoint",
                 ],
                 cwd=ROOT,
                 check=False,
