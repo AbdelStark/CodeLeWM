@@ -837,16 +837,16 @@ codelewm eval retrieval \
 
 codelewm eval surprise \
   --checkpoint runs/v0_1/checkpoints/checkpoint.pt \
-  --data       runs/v0_1_pack/hdf5/test.hdf5 \
+  --data       runs/v0_1_pack \
   --out        reports/v0_1/surprise
 ```
 
-Both write artifact-manifest-backed reports that include:
+Both commands write artifact-manifest-backed reports that include:
 
 - the metric numbers
-- the candidate pool definition + hard-negative sampler report
-- every required baseline
-- the action-view policy decision (proof patch was not used as headline)
+- the relevant candidate or decoy policy
+- required retrieval baselines or surprise category caveats
+- action-view metadata for the checkpoint being evaluated
 - input checksums, model id, checkpoint sha256, dataset manifest id
 
 ---

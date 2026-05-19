@@ -121,8 +121,8 @@ appear only as diagnostics.
 | Step | Command |
 | ---- | ------- |
 | Train | `codelewm train --config <yaml>` |
-| Evaluate retrieval | `codelewm eval retrieval --checkpoint <ckpt> --data <hdf5>` |
-| Evaluate surprise | `codelewm eval surprise --checkpoint <ckpt> --data <hdf5>` |
+| Evaluate retrieval | `codelewm eval retrieval --checkpoint <ckpt> --data <pack_dir> --out <retrieval_dir>` |
+| Evaluate surprise | `codelewm eval surprise --checkpoint <ckpt> --data <pack_dir> --out <surprise_dir>` |
 | Verify | `codelewm manifest verify --manifest <run_dir>/manifest.json` |
 | Score one candidate | `codelewm score --before <before.py> --instruction <text> --candidate <after.py> --checkpoint <ckpt>` |
 

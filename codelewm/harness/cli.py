@@ -24,7 +24,9 @@ from codelewm.data import (
 from codelewm.eval import (
     ActionViewPolicyError,
     RetrievalEvalError,
+    SurpriseEvalError,
     run_retrieval_evaluation,
+    run_surprise_evaluation,
 )
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.observability import (
@@ -139,6 +141,21 @@ def build_parser() -> argparse.ArgumentParser:
     retrieval.add_argument("--json", action="store_true", help="emit JSON output")
     retrieval.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     retrieval.set_defaults(func=_eval_retrieval_command)
+    surprise = eval_subcommands.add_parser("surprise", help="run patch-surprise evaluation")
+    surprise.add_argument("--checkpoint", type=Path, required=True, help="trusted training checkpoint path")
+    surprise.add_argument("--data", type=Path, required=True, help="packed dataset directory or manifest.json")
+    surprise.add_argument("--out", type=Path, required=True, help="surprise report artifact directory")
+    surprise.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps", "auto"))
+    surprise.add_argument("--max-examples", type=int, default=1000, help="maximum held-out examples to score")
+    surprise.add_argument("--random-decoys", type=int, default=1, help="random decoys per example")
+    surprise.add_argument("--same-file-decoys", type=int, default=1, help="same-file decoys per example")
+    surprise.add_argument("--mutation-decoys", type=int, default=1, help="mutation decoys per example")
+    surprise.add_argument("--action-cluster-decoys", type=int, default=1, help="action-cluster decoys per example")
+    surprise.add_argument("--seed", type=int, default=0, help="deterministic evaluation seed")
+    surprise.add_argument("--overwrite", action="store_true", help="overwrite existing surprise output files")
+    surprise.add_argument("--json", action="store_true", help="emit JSON output")
+    surprise.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    surprise.set_defaults(func=_eval_surprise_command)
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     dataset = subparsers.add_parser("dataset", help="dataset build and packing utilities")
     dataset_subcommands = dataset.add_subparsers(dest="dataset_command")
@@ -601,6 +618,126 @@ def _eval_retrieval_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_surprise_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_surprise_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.surprise.start",
+                level="info",
+                run_id=run_id,
+                step="eval.surprise",
+                message="surprise evaluation started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "data": str(args.data),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "max_examples": args.max_examples,
+                    "random_decoys": args.random_decoys,
+                    "same_file_decoys": args.same_file_decoys,
+                    "mutation_decoys": args.mutation_decoys,
+                    "action_cluster_decoys": args.action_cluster_decoys,
+                    "seed": args.seed,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_surprise_evaluation(
+            checkpoint=args.checkpoint,
+            data=args.data,
+            out=args.out,
+            device=args.device,
+            max_examples=args.max_examples,
+            random_decoys=args.random_decoys,
+            same_file_decoys=args.same_file_decoys,
+            mutation_decoys=args.mutation_decoys,
+            action_cluster_decoys=args.action_cluster_decoys,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.surprise.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.surprise",
+                message="surprise evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "metrics": result.metrics.to_dict(),
+                    "parent_artifacts": list(result.parent_artifacts),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"surprise evaluation optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.data),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.surprise", event="evaluation.surprise.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"surprise checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.surprise", event="evaluation.surprise.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"surprise artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training run, and dataset manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.surprise", event="evaluation.surprise.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (SurpriseEvalError, RetrievalEvalError) as exc:
+        error, exit_code = _surprise_eval_error(args, exc)
+        _emit_error_log(args, run_id=run_id, step="eval.surprise", event="evaluation.surprise.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"surprise evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the surprise inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.surprise", event="evaluation.surprise.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"surprise_report: {args.out / result.report_path}")
+        print(f"example_count: {result.metrics.example_count}")
+        print(f"pairwise_auc_overall: {result.metrics.pairwise_auc_overall:.6g}")
+        print(f"mean_true_rank: {result.metrics.mean_true_rank:.6g}")
+        print(f"recall_at_1: {result.metrics.recall_at_1:.6g}")
+    return 0
+
+
 def _dataset_pack_command(args: argparse.Namespace) -> int:
     command = (
         "codelewm",
@@ -788,6 +925,41 @@ def _eval_retrieval_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     return tuple(command)
 
 
+def _eval_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "surprise",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--data",
+        str(args.data),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples",
+        str(args.max_examples),
+        "--random-decoys",
+        str(args.random_decoys),
+        "--same-file-decoys",
+        str(args.same_file_decoys),
+        "--mutation-decoys",
+        str(args.mutation_decoys),
+        "--action-cluster-decoys",
+        str(args.action_cluster_decoys),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
 def _retrieval_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, int]:
     message = str(exc)
     normalized = message.lower()
@@ -813,6 +985,39 @@ def _retrieval_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[Sco
             f"retrieval evaluation gate failed: {exc}",
             error_type="evaluation_gate_error",
             remediation="inspect the retrieval report inputs, baselines, and action-view policy",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        6,
+    )
+
+
+def _surprise_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if (
+        "output already exists" in normalized
+        or "must be a positive integer" in normalized
+        or "must be a non-negative integer" in normalized
+        or "at least one decoy" in normalized
+        or "--data" in normalized
+        or "device" in normalized
+    ):
+        return (
+            ScoreError(
+                f"surprise evaluation request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or choose a clean output directory",
+                artifact=str(args.out),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"surprise evaluation gate failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect the surprise report inputs, decoys, and scores",
             artifact=str(args.out),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         ),

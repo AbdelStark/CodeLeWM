@@ -16,7 +16,7 @@ codelewm dataset build --config config/data/commitpackft.yaml --out data/codelew
 codelewm dataset pack --manifest data/codelewm_v0_1/manifest.json --out data/codelewm_v0_1/hdf5
 codelewm train --config config/train/codelewm_tiny.yaml
 codelewm eval retrieval --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/retrieval
-codelewm eval surprise --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/test.hdf5
+codelewm eval surprise --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/surprise
 codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/train.hdf5 --out indexes/v0_1
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
 codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
@@ -145,6 +145,32 @@ hard-negative slices, and action-view policy metadata. Headline reports require
 the text action view; patch actions remain diagnostic upper bounds and are
 rejected for headline reports. Evaluation gate failures exit 6 with
 `error_type=evaluation_gate_error`.
+
+`codelewm eval surprise` is the public training-run plus packed-dataset to
+patch-surprise-report path:
+
+```bash
+codelewm eval surprise \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-surprise \
+  --json
+```
+
+It verifies the packed dataset artifact, infers and verifies the parent
+training-run artifact manifest from the checkpoint directory, validates the
+paired checkpoint manifest before loading torch weights, and writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` for the eval report;
+- `config.json`: normalized surprise evaluation config;
+- `reports/surprise_report.json`: `codelewm.eval.surprise_report.v1`.
+
+The command emits `codelewm.eval.surprise_run.v1` on JSON stdout. Reports score
+the true after-state against random, same-file, mutation, and action-cluster
+decoys where the held-out data supports them. The report includes pairwise AUC,
+true ranks, per-category AUC/count slices, and explicit caveats for unavailable
+decoy categories. Scores are squared transition energies, so lower is better.
+Evaluation gate failures exit 6 with `error_type=evaluation_gate_error`.
 
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent

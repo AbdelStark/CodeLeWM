@@ -57,11 +57,13 @@ their workflow depends on.
 | Training metrics              | `codelewm.training_metrics.v1`                  |
 | CPU smoke checkpoint          | `codelewm.cpu_smoke_checkpoint.v1`              |
 | CPU smoke report              | `codelewm.cpu_smoke_report.v1`                  |
+| Retrieval eval run            | `codelewm.eval.retrieval_run.v1`                |
 | Retrieval metrics             | `codelewm.eval.retrieval_metrics.v1`            |
 | Retrieval report              | `codelewm.eval.retrieval_report.v1`             |
 | Candidate pool                | `codelewm.eval.candidate_pool.v1`               |
 | Hard-negative sample          | `codelewm.eval.hard_negative_sample.v1`         |
 | Hard-negative sampler report  | `codelewm.eval.hard_negative_sampler_report.v1` |
+| Patch-surprise eval run       | `codelewm.eval.surprise_run.v1`                 |
 | Patch-surprise report         | `codelewm.eval.surprise_report.v1`              |
 | Action-view policy            | `codelewm.eval.action_view_policy.v1`           |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |

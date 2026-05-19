@@ -93,6 +93,13 @@ selection.
 Headline retrieval reports are invalid unless the `baselines` mapping includes
 `random`, `lexical`, `no_action`, and `shuffled_action` metrics.
 
+Patch-surprise reports use
+`schema_version=codelewm.eval.surprise_report.v1`. They store transition-energy
+scores for the true after-state and decoys, aggregate pairwise AUC overall and
+by category, record per-example true ranks, and include category caveats in
+metadata when the held-out data cannot support random, same-file, mutation, or
+action-cluster decoys.
+
 ## Artifact Lineage
 
 Every dataset, checkpoint, index, and report includes:

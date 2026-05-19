@@ -112,6 +112,27 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_surprise_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "surprise", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--data",
+            "--out",
+            "--device",
+            "--max-examples",
+            "--random-decoys",
+            "--same-file-decoys",
+            "--mutation-decoys",
+            "--action-cluster-decoys",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_dataset_pack_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("dataset", "pack", "--help")
 
@@ -126,6 +147,7 @@ class PublicCliContractTest(unittest.TestCase):
             ("rerank", "--before", "before.py", "--instruction", "change", "--checkpoint", "ckpt"),
             ("train", "--config", "missing.json", "--device", "tpu"),
             ("eval", "retrieval", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
+            ("eval", "surprise", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
         )
 
         for argv in cases:

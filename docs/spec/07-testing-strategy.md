@@ -62,6 +62,8 @@ uv run codelewm manifest verify --manifest .artifacts/tiny-pack/manifest.json --
 uv run codelewm train --config tests/fixtures/tiny_train.json --out .artifacts/tiny-train --executor torch --device cpu --json
 uv run codelewm eval retrieval --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt --data .artifacts/tiny-pack --out .artifacts/tiny-retrieval --json
 uv run codelewm manifest verify --manifest .artifacts/tiny-retrieval/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
+uv run codelewm eval surprise --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt --data .artifacts/tiny-pack --out .artifacts/tiny-surprise --json
+uv run codelewm manifest verify --manifest .artifacts/tiny-surprise/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
 ```
 
@@ -79,6 +81,8 @@ v0.1 gates:
 - headline retrieval reports include random, lexical, no-action, and
   shuffled-action baselines;
 - headline retrieval reports use `action_text`, not `action_patch`;
+- patch-surprise reports include pairwise AUC, true ranks, per-category counts,
+  and explicit caveats for unavailable decoy categories;
 - JSON schemas validate for dataset, checkpoint, eval report, and score output.
 
 v1.0 gates:

@@ -23,14 +23,15 @@ Implemented foundations:
 - `codelewm.eval`: retrieval metrics, hard-negative pools, required baselines,
   action-view policy, collapse diagnostics, and patch-surprise reports.
 - `codelewm.harness`: package CLI entry point with landed `score`, `rerank`,
-  `train`, `eval retrieval`, `manifest verify`, and `secret-scan` commands.
+  `train`, `eval retrieval`, `eval surprise`, `manifest verify`, and
+  `secret-scan` commands.
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
 
 Missing for first meaningful results:
 
-- `codelewm eval surprise` and `codelewm index` CLI flows.
+- `codelewm index` CLI flow and retrieval-prior scorer/reranker integration.
 - A reproducible first-results report with dataset, training, checkpoint,
   retrieval, surprise, index, license, and secret-scan evidence.
 - Release and publishing automation that can build, verify, and publish package
