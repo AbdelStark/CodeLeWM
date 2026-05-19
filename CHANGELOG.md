@@ -27,6 +27,8 @@ earliest one minor release after the deprecation notice.
 - Scaled CPU, MPS, and HF A10G training configs under `config/train/scaled/`,
   plus `scripts/validate-training-configs` and
   `docs/training/SCALED_TRAINING_RUNBOOK.md`.
+- Action-view ablation reports through `codelewm eval ablation` and
+  `codelewm.eval.action_ablation_report.v1`.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -81,6 +83,8 @@ their workflow depends on.
 | Patch-surprise eval run       | `codelewm.eval.surprise_run.v1`                 |
 | Patch-surprise report         | `codelewm.eval.surprise_report.v1`              |
 | Action-view policy            | `codelewm.eval.action_view_policy.v1`           |
+| Action ablation report        | `codelewm.eval.action_ablation_report.v1`       |
+| Action ablation run           | `codelewm.eval.action_ablation_run.v1`          |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |
 | Kill-switch report            | `codelewm.eval.kill_report.v1`                  |
 | Public license gate           | `codelewm.public_license_gate.v1`               |

@@ -140,6 +140,20 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_ablation_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "ablation", "--help")
+
+        for flag in (
+            "--retrieval-artifact",
+            "--training-artifact",
+            "--out",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_index_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("index", "--help")
 

@@ -173,6 +173,30 @@ true ranks, per-category AUC/count slices, and explicit caveats for unavailable
 decoy categories. Scores are squared transition energies, so lower is better.
 Evaluation gate failures exit 6 with `error_type=evaluation_gate_error`.
 
+`codelewm eval ablation` consolidates a retrieval artifact and training artifact
+into an action-view ablation report:
+
+```bash
+codelewm eval ablation \
+  --retrieval-artifact .artifacts/tiny-retrieval/manifest.json \
+  --training-artifact .artifacts/tiny-train/manifest.json \
+  --out .artifacts/tiny-ablation \
+  --json
+```
+
+It verifies both parent artifacts and writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` for the ablation artifact;
+- `reports/action_view_ablation_report.json`:
+  `codelewm.eval.action_ablation_report.v1`.
+
+The command emits `codelewm.eval.action_ablation_run.v1` on JSON stdout. The
+report records completed text-action and required-baseline rows, completed
+collapse/retrieval-loss rows when artifact evidence exists, and explicit
+`blocked` rows for missing abstract-action, retrieval-loss, alternate SIGReg,
+or patch-action diagnostic reports. Patch-action rows must use diagnostic scope
+and `diagnostic_upper_bound=true`.
+
 `codelewm index` is the public training-run plus packed-dataset to transition
 index path:
 

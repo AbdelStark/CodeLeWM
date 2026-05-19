@@ -4,6 +4,8 @@ import unittest
 
 from codelewm.eval import (
     REQUIRED_HEADLINE_BASELINES,
+    CandidatePool,
+    CandidatePoolEntry,
     RetrievalEvalError,
     build_baseline_metrics,
     build_retrieval_report,
@@ -80,6 +82,27 @@ class RetrievalBaselineTest(unittest.TestCase):
 
         with self.assertRaisesRegex(RetrievalEvalError, "missing required baselines"):
             validate_required_headline_baselines(report)
+
+    def test_candidate_pool_round_trips_seed_zero(self) -> None:
+        pool = CandidatePool(
+            name="fixture",
+            seed=0,
+            max_size=10,
+            entries=(
+                CandidatePoolEntry(
+                    transition_id="held-out-1",
+                    split="val",
+                    source="fixture",
+                    repo="example/repo",
+                    path="pkg/example.py",
+                ),
+            ),
+        )
+
+        round_tripped = CandidatePool.from_dict(pool.to_dict())
+
+        self.assertEqual(round_tripped.seed, 0)
+        self.assertEqual(round_tripped.to_dict(), pool.to_dict())
 
 
 if __name__ == "__main__":

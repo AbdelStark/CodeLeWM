@@ -23,6 +23,7 @@ ARTIFACTS: tuple[tuple[str, str, str], ...] = (
     ("dataset_pack", "pack", "manifest.json"),
     ("training_run", "train", "manifest.json"),
     ("retrieval_eval", "retrieval", "manifest.json"),
+    ("action_ablation", "ablation", "manifest.json"),
     ("surprise_eval", "surprise", "manifest.json"),
     ("transition_index", "index", "manifest.json"),
 )
@@ -104,6 +105,7 @@ def run_first_results(
     pack_dir = output_root / "pack"
     train_dir = output_root / "train"
     retrieval_dir = output_root / "retrieval"
+    ablation_dir = output_root / "ablation"
     surprise_dir = output_root / "surprise"
     index_dir = output_root / "index"
     checkpoint = train_dir / "checkpoints" / "checkpoint.pt"
@@ -160,6 +162,25 @@ def run_first_results(
             "--json",
             "--log-jsonl",
             str(logs_dir / "retrieval.jsonl"),
+        ),
+    )
+    _run_cli(
+        commands,
+        repo_root=repo_root,
+        label="action_ablation",
+        args=(
+            "eval",
+            "ablation",
+            "--retrieval-artifact",
+            str(retrieval_dir / "manifest.json"),
+            "--training-artifact",
+            str(train_dir / "manifest.json"),
+            "--out",
+            str(ablation_dir),
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+            str(logs_dir / "ablation.jsonl"),
         ),
     )
     _run_cli(
@@ -263,6 +284,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
     """Render the checked-in first-results benchmark report."""
 
     retrieval = inventory["reports"]["retrieval"]
+    ablation = inventory["reports"]["ablation"]
     surprise = inventory["reports"]["surprise"]
     training = inventory["reports"]["training"]
     license_gate = inventory["reports"]["license_gate"]
@@ -299,7 +321,15 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
     )
 
     artifact_rows = []
-    for key in ("dataset_build", "dataset_pack", "training_run", "retrieval_eval", "surprise_eval", "transition_index"):
+    for key in (
+        "dataset_build",
+        "dataset_pack",
+        "training_run",
+        "retrieval_eval",
+        "action_ablation",
+        "surprise_eval",
+        "transition_index",
+    ):
         artifact = inventory["artifacts"][key]
         artifact_rows.append(
             "| "
@@ -335,6 +365,17 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         auc = surprise["metrics"]["pairwise_auc_by_category"].get(category)
         caveat = surprise["metadata"]["category_caveats"].get(category, "")
         surprise_category_rows.append(f"| `{category}` | {_fmt_optional(auc)} | {count} | {caveat or 'available'} |")
+    ablation_rows = []
+    for row in ablation["rows"]:
+        metrics = row.get("metrics") or {}
+        recall = _fmt_optional(metrics.get("recall_at_1"))
+        mrr = _fmt_optional(metrics.get("mrr"))
+        reason = row.get("block_reason") or "available"
+        ablation_rows.append(
+            "| "
+            + " | ".join((row["name"], row["family"], row["status"], recall, mrr, reason))
+            + " |"
+        )
 
     final_metrics = training["final_metrics"]
     source_sha = inventory["source_git_sha"]
@@ -348,12 +389,12 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         f"- Config bundle SHA-256: `{inventory['config_bundle_sha256']}`",
         f"- Runtime train config SHA-256: `{inventory['runtime_train_config_sha256']}`",
         f"- Seed: dataset `{inventory['seeds']['dataset']}`, training `{inventory['seeds']['training']}`, evaluation `0`",
-        f"- Reproduction command: `uv run scripts/first-results --overwrite`",
+        "- Reproduction command: `uv run scripts/first-results --overwrite`",
         "",
         "## Verdict",
         "",
         "The complete local path now runs from a clean checkout: dataset build, pack, torch",
-        "training, retrieval evaluation, surprise evaluation, transition-index build,",
+        "training, retrieval evaluation, action-view ablation, surprise evaluation, transition-index build,",
         "manifest verification, report rendering, and secret scanning.",
         "",
         f"{baseline_statement} The selected fixture has {retrieval_metrics['query_count']} held-out query and "
@@ -409,6 +450,16 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         *baseline_rows,
         "| Patch-action diagnostic | n/a | n/a | n/a | n/a | not run for this headline smoke report |",
         "",
+        "## Action-View Ablation",
+        "",
+        f"- Report schema: `{ablation['schema_version']}`.",
+        f"- Completed rows: `{ablation['summary']['completed']}`; blocked rows: `{ablation['summary']['blocked']}`; failed rows: `{ablation['summary']['failed']}`.",
+        "- Missing abstract-action, retrieval-loss, patch-action diagnostic, and alternate SIGReg runs are explicit blocked rows rather than dropped rows.",
+        "",
+        "| Row | Family | Status | Recall@1 | MRR | Reason |",
+        "| --- | ------ | ------ | -------- | --- | ------ |",
+        *ablation_rows,
+        "",
         "## Patch-Surprise Evaluation",
         "",
         f"- Report schema: `{surprise['schema_version']}`.",
@@ -437,6 +488,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "",
         f"- [{'x' if beats_all else ' '}] Text-action beats random, lexical, no-action, and shuffled-action baselines on Recall@1 and MRR.",
         "- [x] Headline retrieval uses `action_text`.",
+        "- [x] Action-view ablation records missing variants as blocked rows.",
         "- [x] Hard-negative and candidate pools exclude `train` split rows.",
         "- [ ] Patch-surprise covers all four decoy categories with non-zero decoy counts.",
         "- [x] Every selected artifact manifest verifies with required parents.",
@@ -481,6 +533,7 @@ def _verify_artifacts(
         "dataset_pack": (manifests["dataset_build"],),
         "training_run": (manifests["dataset_pack"],),
         "retrieval_eval": (manifests["training_run"], manifests["dataset_pack"]),
+        "action_ablation": (manifests["retrieval_eval"], manifests["training_run"]),
         "surprise_eval": (manifests["training_run"], manifests["dataset_pack"]),
         "transition_index": (manifests["training_run"], manifests["dataset_pack"]),
     }
@@ -559,6 +612,7 @@ def _collect_inventory(
             "training": _read_json(output_root / "train" / "training_manifest.json"),
             "checkpoint": _read_json(output_root / "train" / "checkpoints" / "checkpoint.pt.manifest.json"),
             "retrieval": _read_json(output_root / "retrieval" / "reports" / "retrieval_report.json"),
+            "ablation": _read_json(output_root / "ablation" / "reports" / "action_view_ablation_report.json"),
             "surprise": _read_json(output_root / "surprise" / "reports" / "surprise_report.json"),
             "index": _read_json(output_root / "index" / "index.json"),
             "license_gate": _read_json(output_root / "build" / "reports" / "license_gate_report.json"),

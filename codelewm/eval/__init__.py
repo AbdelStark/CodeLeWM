@@ -9,6 +9,17 @@ from .action_policy import (
     build_action_view_report_policy,
     validate_action_view_report_policy,
 )
+from .ablation import (
+    ACTION_ABLATION_REPORT_SCHEMA_VERSION,
+    ACTION_ABLATION_RUN_SCHEMA_VERSION,
+    ActionAblationError,
+    ActionAblationReport,
+    ActionAblationRow,
+    ActionAblationRunResult,
+    build_action_ablation_report,
+    read_action_ablation_report,
+    run_action_ablation_suite,
+)
 from .collapse import (
     COLLAPSE_REPORT_SCHEMA_VERSION,
     KILL_REPORT_SCHEMA_VERSION,
@@ -89,6 +100,8 @@ from .surprise_runner import (
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
+    "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
+    "ACTION_ABLATION_RUN_SCHEMA_VERSION",
     "CANDIDATE_POOL_SCHEMA_VERSION",
     "COLLAPSE_REPORT_SCHEMA_VERSION",
     "HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION",
@@ -103,6 +116,10 @@ __all__ = [
     "SURPRISE_REPORT_SCHEMA_VERSION",
     "ActionViewPolicyError",
     "ActionViewReportPolicy",
+    "ActionAblationError",
+    "ActionAblationReport",
+    "ActionAblationRow",
+    "ActionAblationRunResult",
     "CandidatePool",
     "CandidatePoolEntry",
     "CollapseFailure",
@@ -124,6 +141,7 @@ __all__ = [
     "SurpriseExampleResult",
     "SurpriseMetrics",
     "SurpriseReport",
+    "build_action_ablation_report",
     "build_baseline_metrics",
     "build_decoys",
     "build_easy_candidate_pool",
@@ -142,7 +160,9 @@ __all__ = [
     "no_action_baseline_ranks",
     "rank_targets",
     "random_baseline_ranks",
+    "read_action_ablation_report",
     "read_retrieval_report",
+    "run_action_ablation_suite",
     "run_retrieval_evaluation",
     "run_surprise_evaluation",
     "read_surprise_report",

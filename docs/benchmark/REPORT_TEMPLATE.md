@@ -6,7 +6,8 @@
 
 - Report ID: `codelewm-benchmark-<release>-<date>`
 - Schema version: `codelewm.eval.retrieval_report.v1` for retrieval
-  tables; `codelewm.eval.surprise_report.v1` for surprise tables;
+  tables; `codelewm.eval.action_ablation_report.v1` for action-view
+  ablations; `codelewm.eval.surprise_report.v1` for surprise tables;
   `codelewm.public_license_gate.v1` for license claims.
 - Release: `<v0.1 | v1.0 | other>`
 - Date (UTC): `<YYYY-MM-DD>`
@@ -26,6 +27,7 @@
 | Checkpoint | `codelewm.checkpoint.v1` | `<path>` | `<id>` |
 | Index | `codelewm.transition_index.v1` | `<path>` | `<id>` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | `<path>` | `<id>` |
+| Action ablation report | `codelewm.eval.action_ablation_report.v1` | `<path>` | `<id>` |
 | Surprise report | `codelewm.eval.surprise_report.v1` | `<path>` | `<id>` |
 | License gate | `codelewm.public_license_gate.v1` | `<path>` | `<id>` |
 
@@ -92,6 +94,24 @@ release gate refuses to publish this report.
 | Sampler config (hash) | `<sha256 prefix>` |
 | Excluded splits | `train` |
 | Hardness metric | `<weak action cluster | edit-size bucket | ...>` |
+
+## Action-View Ablation
+
+Every expected variant must appear as `completed`, `blocked`, or
+`failed`. Do not drop missing runs from the table.
+
+| Row | Family | Status | Recall@1 | MRR | Artifact / reason |
+| --- | ------ | ------ | -------- | --- | ----------------- |
+| text_action | action_view | | | | |
+| abstract_action | action_view | | | | |
+| patch_action_diagnostic | action_view | | | | diagnostic upper bound only |
+| no_action | baseline | | | | |
+| shuffled_action | baseline | | | | |
+| retrieval_loss_enabled | retrieval_loss | | | | |
+| retrieval_loss_disabled | retrieval_loss | | | | |
+| collapse_sigreg_0.05 | collapse | | | | |
+| collapse_sigreg_0.09 | collapse | | | | |
+| collapse_sigreg_0.15 | collapse | | | | |
 
 ## Patch-Surprise Evaluation
 

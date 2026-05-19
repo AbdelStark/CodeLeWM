@@ -52,6 +52,7 @@ glance.
 | Checkpoint | `codelewm.checkpoint.v1` | | | |
 | Index | `codelewm.transition_index.v1` | | | |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | | | |
+| Action ablation report | `codelewm.eval.action_ablation_report.v1` | | | |
 | Surprise report | `codelewm.eval.surprise_report.v1` | | | |
 | License gate | `codelewm.public_license_gate.v1` | | | |
 
@@ -83,6 +84,11 @@ glance.
       benchmark report's "Action view" slice or
       `action_view_policy=headline_text_only` in the retrieval
       report.
+- [ ] **Action-view ablation report accounts for missing runs.**
+      Evidence: `codelewm.eval.action_ablation_report.v1` includes
+      completed baseline rows and explicit `blocked` rows for
+      missing abstract-action, retrieval-loss, collapse-setting, and
+      patch-action diagnostic variants.
 - [ ] **Patch-action results are tagged diagnostic.** Evidence:
       `action_view_policy=diagnostic_only` flag on any
       patch-action results.

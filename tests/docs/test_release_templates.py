@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import unittest
 from pathlib import Path
 
@@ -54,6 +53,7 @@ class ReleaseChecklistContentTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.checkpoint.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.public_license_gate.v1",
         ):
@@ -162,6 +162,7 @@ class ModelCardTemplateTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.artifact_manifest.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
         ):
             with self.subTest(schema=schema):
