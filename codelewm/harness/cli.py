@@ -21,6 +21,11 @@ from codelewm.data import (
     build_dataset_from_config_path,
     pack_dataset_from_manifest,
 )
+from codelewm.eval import (
+    ActionViewPolicyError,
+    RetrievalEvalError,
+    run_retrieval_evaluation,
+)
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.observability import (
     ArtifactManifestError,
@@ -29,7 +34,7 @@ from codelewm.observability import (
     validate_artifact_checksums,
     write_log_event_jsonl,
 )
-from codelewm.security import scan_paths
+from codelewm.security import CheckpointTrustError, scan_paths
 from codelewm.training import (
     TrainConfigError,
     TrainingRunError,
@@ -114,6 +119,27 @@ def build_parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--json", action="store_true", help="emit JSON output")
     train_parser.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     train_parser.set_defaults(func=_train_command)
+    eval_parser = subparsers.add_parser("eval", help="evaluation report utilities")
+    eval_subcommands = eval_parser.add_subparsers(dest="eval_command")
+    retrieval = eval_subcommands.add_parser("retrieval", help="run retrieval evaluation")
+    retrieval.add_argument("--checkpoint", type=Path, required=True, help="trusted training checkpoint path")
+    retrieval.add_argument("--data", type=Path, required=True, help="packed dataset directory or manifest.json")
+    retrieval.add_argument("--out", type=Path, required=True, help="retrieval report artifact directory")
+    retrieval.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps", "auto"))
+    retrieval.add_argument("--max-candidates", type=int, default=1000, help="maximum easy held-out candidates")
+    retrieval.add_argument("--hard-negatives", type=int, default=1000, help="maximum hard negatives per query")
+    retrieval.add_argument("--seed", type=int, default=0, help="deterministic evaluation seed")
+    retrieval.add_argument(
+        "--report-scope",
+        default="headline",
+        choices=("headline", "ablation", "diagnostic"),
+        help="action-view policy scope for this report",
+    )
+    retrieval.add_argument("--overwrite", action="store_true", help="overwrite existing retrieval output files")
+    retrieval.add_argument("--json", action="store_true", help="emit JSON output")
+    retrieval.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    retrieval.set_defaults(func=_eval_retrieval_command)
+    eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     dataset = subparsers.add_parser("dataset", help="dataset build and packing utilities")
     dataset_subcommands = dataset.add_subparsers(dest="dataset_command")
     build = dataset_subcommands.add_parser("build", help="build a transition dataset artifact")
@@ -191,6 +217,11 @@ def _manifest_help_command(args: argparse.Namespace) -> int:
 
 def _dataset_help_command(args: argparse.Namespace) -> int:
     args.dataset_parser.print_help()
+    return 0
+
+
+def _eval_help_command(args: argparse.Namespace) -> int:
+    args.eval_parser.print_help()
     return 0
 
 
@@ -454,6 +485,122 @@ def _train_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_retrieval_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_retrieval_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.retrieval.start",
+                level="info",
+                run_id=run_id,
+                step="eval.retrieval",
+                message="retrieval evaluation started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "data": str(args.data),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "max_candidates": args.max_candidates,
+                    "hard_negatives": args.hard_negatives,
+                    "seed": args.seed,
+                    "report_scope": args.report_scope,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_retrieval_evaluation(
+            checkpoint=args.checkpoint,
+            data=args.data,
+            out=args.out,
+            device=args.device,
+            max_candidates=args.max_candidates,
+            hard_negatives=args.hard_negatives,
+            seed=args.seed,
+            report_scope=args.report_scope,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.retrieval.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.retrieval",
+                message="retrieval evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "metrics": result.metrics.to_dict(),
+                    "parent_artifacts": list(result.parent_artifacts),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"retrieval evaluation optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.data),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.retrieval", event="evaluation.retrieval.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"retrieval checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.retrieval", event="evaluation.retrieval.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"retrieval artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training run, and dataset manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.retrieval", event="evaluation.retrieval.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (RetrievalEvalError, ActionViewPolicyError) as exc:
+        error, exit_code = _retrieval_eval_error(args, exc)
+        _emit_error_log(args, run_id=run_id, step="eval.retrieval", event="evaluation.retrieval.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"retrieval evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the retrieval inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.retrieval", event="evaluation.retrieval.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"retrieval_report: {args.out / result.report_path}")
+        print(f"query_count: {result.metrics.query_count}")
+        print(f"recall_at_1: {result.metrics.recall_at_1:.6g}")
+        print(f"recall_at_5: {result.metrics.recall_at_5:.6g}")
+        print(f"mrr: {result.metrics.mrr:.6g}")
+    return 0
+
+
 def _dataset_pack_command(args: argparse.Namespace) -> int:
     command = (
         "codelewm",
@@ -608,6 +755,69 @@ def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     if args.log_jsonl is not None:
         command.extend(("--log-jsonl", str(args.log_jsonl)))
     return tuple(command)
+
+
+def _eval_retrieval_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "retrieval",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--data",
+        str(args.data),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-candidates",
+        str(args.max_candidates),
+        "--hard-negatives",
+        str(args.hard_negatives),
+        "--seed",
+        str(args.seed),
+        "--report-scope",
+        str(args.report_scope),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _retrieval_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if (
+        "output already exists" in normalized
+        or "must be a positive integer" in normalized
+        or "--data" in normalized
+        or "device" in normalized
+        or "report_scope" in normalized
+    ):
+        return (
+            ScoreError(
+                f"retrieval evaluation request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or choose a clean output directory",
+                artifact=str(args.out),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"retrieval evaluation gate failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect the retrieval report inputs, baselines, and action-view policy",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        6,
+    )
 
 
 def _training_run_error(args: argparse.Namespace, exc: TrainingRunError) -> tuple[ScoreError, int]:

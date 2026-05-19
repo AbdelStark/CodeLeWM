@@ -34,6 +34,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("score", help_text)
         self.assertIn("rerank", help_text)
         self.assertIn("train", help_text)
+        self.assertIn("eval", help_text)
         self.assertIn("dataset", help_text)
         self.assertIn("secret-scan", help_text)
 
@@ -92,6 +93,25 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_retrieval_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "retrieval", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--data",
+            "--out",
+            "--device",
+            "--max-candidates",
+            "--hard-negatives",
+            "--seed",
+            "--report-scope",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_dataset_pack_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("dataset", "pack", "--help")
 
@@ -105,6 +125,7 @@ class PublicCliContractTest(unittest.TestCase):
             ("score", "--before", "before.py", "--instruction", "change", "--candidate", "after.py", "--checkpoint", "ckpt", "--device", "tpu"),
             ("rerank", "--before", "before.py", "--instruction", "change", "--checkpoint", "ckpt"),
             ("train", "--config", "missing.json", "--device", "tpu"),
+            ("eval", "retrieval", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
         )
 
         for argv in cases:
@@ -139,6 +160,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertEqual(schemas["score"]["properties"]["schema_version"]["const"], SCORE_RESULT_SCHEMA_VERSION)
         self.assertEqual(schemas["error"]["properties"]["schema_version"]["const"], ERROR_REPORT_SCHEMA_VERSION)
         self.assertEqual(schemas["rerank"]["properties"]["schema_version"]["const"], RERANK_RESULT_SCHEMA_VERSION)
+        self.assertIn("evaluation_gate_error", schemas["error"]["properties"]["error_type"]["enum"])
         for name, schema in schemas.items():
             with self.subTest(schema=name):
                 self.assertIn("schema_version", schema["required"])

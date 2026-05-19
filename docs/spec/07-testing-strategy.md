@@ -60,7 +60,8 @@ uv run codelewm dataset build --config tests/fixtures/dataset_build/config.json 
 uv run codelewm dataset pack --manifest .artifacts/tiny-build/manifest.json --out .artifacts/tiny-pack --json
 uv run codelewm manifest verify --manifest .artifacts/tiny-pack/manifest.json --parent-manifest .artifacts/tiny-build/manifest.json --json
 uv run codelewm train --config tests/fixtures/tiny_train.json --out .artifacts/tiny-train --executor torch --device cpu --json
-uv run codelewm eval retrieval --config tests/fixtures/tiny_retrieval.yaml
+uv run codelewm eval retrieval --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt --data .artifacts/tiny-pack --out .artifacts/tiny-retrieval --json
+uv run codelewm manifest verify --manifest .artifacts/tiny-retrieval/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
 ```
 
