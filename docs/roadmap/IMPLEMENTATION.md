@@ -10,6 +10,7 @@ into the release lifecycle.
 - Spec corpus: `docs/spec/00-overview.md` through
   `docs/spec/10-glossary.md`
 - RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0012-*.md`
+- Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
 
 ## How This Tracker Is Maintained
 
@@ -144,3 +145,9 @@ Each implementation issue links to:
 The reverse links are documented in the RFC References sections.
 When a new spec section or RFC is accepted, file the tracking issue
 first, then derive the child issues, then update this file.
+
+The closed v0.1 and v1.0 rows above capture completed foundation work. The
+active full-completion queue is maintained in
+`docs/roadmap/FULL_COMPLETION.md`; open tracking issues #3 and #7 through #13
+now point at the first-results, scaled-artifact, publishing, and release child
+issues.

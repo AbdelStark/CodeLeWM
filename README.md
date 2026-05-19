@@ -58,11 +58,15 @@ The current package includes:
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
-validation, local scoring, and safe candidate reranking are implemented; release
-CI still needs to land. Core harness commands can write local JSONL logs with
-redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the existing Hydra
-configs are inherited from the original LeWorldModel seed and are kept for
-compatibility while the package runtime continues to replace them.
+validation, local scoring, safe candidate reranking, manifest verification,
+secret scanning, and pull-request CI are implemented. A meaningful first
+training result is still pending: the remaining work is the `uv` dependency
+migration, dataset/train/eval/index CLI workflow, package-native training
+executor, and reproducible first-results report tracked in
+`docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
+logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
+existing Hydra configs are inherited from the original LeWorldModel seed and are
+kept for compatibility while the package runtime continues to replace them.
 
 ## Core Concepts
 
@@ -256,9 +260,12 @@ not installed.
 
 ```text
 SPEC.md                         top-level specification index
+AGENTS.md                       agent/contributor context and current gaps
 docs/spec/                      canonical system specification
 docs/rfcs/                      accepted design decisions
 docs/roadmap/IMPLEMENTATION.md  implementation tracker
+docs/roadmap/FULL_COMPLETION.md remaining first-results and release roadmap
+docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
 codelewm/eval/                  action policy, collapse gates, kill reports
@@ -274,7 +281,9 @@ jepa.py, module.py, utils.py    compatibility wrappers
 ## Start Here
 
 - Read `docs/usage/USAGE.md` for the install path and concrete CLI / Python examples.
+- Read `AGENTS.md` for current implementation context and work rules.
 - Read `SPEC.md` for the canonical index.
+- Read `docs/roadmap/FULL_COMPLETION.md` for the ordered remaining backlog.
 - Read `docs/spec/00-overview.md` for goals, non-goals, and pass gates.
 - Read `docs/spec/01-architecture.md` for subsystem boundaries.
 - Read `docs/spec/02-public-api.md` for the public CLI and Python contract.

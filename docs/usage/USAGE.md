@@ -45,6 +45,8 @@ either as a Python API only or as a placeholder.
 | ------- | ------ | ---------------------- |
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
+| `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
+| `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | planned | `codelewm.dataset.v1` |
 | `codelewm dataset pack` | planned | `codelewm.dataset.v1` |
 | `codelewm train` | planned | `codelewm.training_run.v1` |
@@ -256,8 +258,11 @@ manifest = read_artifact_manifest("runs/v0_1/manifest.json")
 validate_artifact_checksums(manifest, root="runs/v0_1")
 ```
 
-The CLI surface for `codelewm manifest verify` is tracked separately
-(issue #52). The same library function backs both.
+The same verifier is exposed through the landed CLI:
+
+```bash
+codelewm manifest verify --manifest runs/v0_1/manifest.json --json
+```
 
 ### Scan for secrets in local reports
 
@@ -312,6 +317,7 @@ field list.
 | ------- | -------------- |
 | Dataset manifest | `codelewm.dataset.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
+| Manifest verifier report | `codelewm.manifest_verify.v1` |
 | Checkpoint manifest | `codelewm.checkpoint.v1` |
 | Training run manifest | `codelewm.training_run.v1` |
 | Training metrics | `codelewm.training_metrics.v1` |
