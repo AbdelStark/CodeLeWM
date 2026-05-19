@@ -53,7 +53,7 @@ The current package includes:
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
   `codelewm dataset pack`, `codelewm train`, `codelewm eval retrieval`,
-  `codelewm score`, and `codelewm rerank` commands, and structured
+  `codelewm eval surprise`, `codelewm score`, and `codelewm rerank` commands, and structured
   dataset/train/eval/score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
@@ -62,10 +62,11 @@ The current package includes:
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, the package-native torch training executor,
 `codelewm train`, model-backed `codelewm eval retrieval`, hard-negative
-sampling, baseline validation, local scoring, safe candidate reranking, manifest
-verification, secret scanning, `uv` dependency management, and pull-request CI
-are implemented. A meaningful first training result is still pending: the
-remaining work is the surprise/index CLI workflow and reproducible first-results report tracked in
+sampling, baseline validation, model-backed `codelewm eval surprise`, local
+scoring, safe candidate reranking, manifest verification, secret scanning, `uv`
+dependency management, and pull-request CI are implemented. A meaningful first
+training result is still pending: the remaining work is the transition-index CLI
+workflow and reproducible first-results report tracked in
 `docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
 logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
 existing Hydra configs are inherited from the original LeWorldModel seed and are
@@ -223,7 +224,11 @@ checkpoint plus a packed dataset artifact and writes a manifest-backed retrieval
 report with the headline text-action baselines.
 
 The secondary evaluation is patch surprise: true or passing after-states should
-have lower transition energy than decoys.
+have lower transition energy than decoys. The landed `codelewm eval surprise`
+command consumes the same trusted checkpoint and packed dataset lineage, scores
+random, same-file, mutation, and action-cluster decoys when available, and writes
+a manifest-backed `codelewm.eval.surprise_report.v1` report with explicit
+caveats for missing decoy categories.
 
 ## Install
 
@@ -285,7 +290,7 @@ docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
 codelewm/training/              configs, manifest runner, CPU smoke, torch executor
-codelewm/eval/                  retrieval, action policy, collapse gates, kill reports
+codelewm/eval/                  retrieval, surprise, action policy, collapse gates, kill reports
 codelewm/observability/         manifests, JSONL log events, redaction
 codelewm/harness/               CLI, scorer, reranker, and output schemas
 codelewm/security/              license policy and non-execution helpers

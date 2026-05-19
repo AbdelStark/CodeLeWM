@@ -220,6 +220,18 @@ class SurpriseScoringTest(unittest.TestCase):
                 score_direction="unsupported",
             )
 
+    def test_score_surprise_example_rejects_non_finite_scores(self) -> None:
+        corpus = _corpus()
+        example = corpus[0]
+        decoys = build_decoys(example, corpus=corpus, seed=1)
+
+        with self.assertRaises(SurpriseEvalError):
+            score_surprise_example(
+                example,
+                decoys=decoys,
+                score_fn=lambda ex, candidate: math.inf,
+            )
+
 
 class SurpriseMetricsTest(unittest.TestCase):
     def test_metrics_reports_perfect_auc_when_true_always_wins(self) -> None:

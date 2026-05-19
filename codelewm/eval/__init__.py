@@ -81,6 +81,11 @@ from .retrieval_runner import (
     RetrievalEvalResult,
     run_retrieval_evaluation,
 )
+from .surprise_runner import (
+    SURPRISE_EVAL_RUN_SCHEMA_VERSION,
+    SurpriseEvalResult,
+    run_surprise_evaluation,
+)
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
@@ -94,6 +99,7 @@ __all__ = [
     "RETRIEVAL_REPORT_SCHEMA_VERSION",
     "REQUIRED_HEADLINE_BASELINES",
     "SURPRISE_DECOY_CATEGORIES",
+    "SURPRISE_EVAL_RUN_SCHEMA_VERSION",
     "SURPRISE_REPORT_SCHEMA_VERSION",
     "ActionViewPolicyError",
     "ActionViewReportPolicy",
@@ -112,6 +118,7 @@ __all__ = [
     "RetrievalMetrics",
     "RetrievalReport",
     "SurpriseDecoy",
+    "SurpriseEvalResult",
     "SurpriseEvalError",
     "SurpriseExampleInput",
     "SurpriseExampleResult",
@@ -137,6 +144,7 @@ __all__ = [
     "random_baseline_ranks",
     "read_retrieval_report",
     "run_retrieval_evaluation",
+    "run_surprise_evaluation",
     "read_surprise_report",
     "sample_hard_negatives",
     "score_surprise_example",

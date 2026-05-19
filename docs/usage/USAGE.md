@@ -54,7 +54,7 @@ either as a Python API only or as a placeholder.
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
-| `codelewm eval surprise` | planned | `codelewm.eval.surprise_report.v1` |
+| `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm index` | planned | `codelewm.transition_index.v1` |
 
 Run `codelewm <command> --help` for the current flag set. JSON
@@ -319,19 +319,58 @@ Retrieval gate failures return `error_type=evaluation_gate_error`. Missing
 runtime packages return `error_type=optional_dependency_missing`; missing or
 tampered checkpoint manifests return `error_type=checkpoint_error`.
 
-### Planned commands (spec contract)
+### `codelewm eval surprise`
 
-The following commands appear in the spec and have manifests defined but are not
-yet wired up as full CLI subcommands.
+Run model-backed patch-surprise evaluation over a packed dataset artifact:
 
 ```bash
-codelewm eval surprise --checkpoint <ckpt> --data <hdf5>
-codelewm index --checkpoint <ckpt> --data <hdf5> --out <dir>
+codelewm eval surprise \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-surprise \
+  --json
 ```
 
-Each will emit the artifact manifest documented in
-`docs/spec/02-public-api.md#artifact-contracts` plus the
-schema-versioned report listed in the table above.
+The command requires the data and train dependency groups. It verifies the
+packed dataset artifact, infers and verifies the parent training-run artifact
+from the checkpoint location, validates the paired checkpoint manifest before
+loading torch weights, and writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  config.json                                normalized surprise config
+  reports/
+    surprise_report.json                     codelewm.eval.surprise_report.v1
+```
+
+The JSON stdout summary uses `codelewm.eval.surprise_run.v1`. The report
+includes pairwise AUC, per-example true ranks, per-category AUC/count slices,
+and explicit caveats for missing random, same-file, mutation, or action-cluster
+decoy categories. Scores are squared transition energies, so lower is better.
+
+Verify lineage by passing both parent manifests:
+
+```bash
+codelewm manifest verify \
+  --manifest .artifacts/tiny-surprise/manifest.json \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --parent-manifest .artifacts/tiny-pack/manifest.json \
+  --json
+```
+
+Surprise gate failures return `error_type=evaluation_gate_error`. Missing
+runtime packages return `error_type=optional_dependency_missing`; missing or
+tampered checkpoint manifests return `error_type=checkpoint_error`.
+
+### Planned commands (spec contract)
+
+The following command appears in the spec and has manifests defined but is not
+yet wired up as a full CLI subcommand.
+
+```bash
+codelewm index --checkpoint <ckpt> --data <hdf5> --out <dir>
+```
 
 ## Python API
 
@@ -529,6 +568,7 @@ field list.
 | Training metrics | `codelewm.training_metrics.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
+| Surprise eval run | `codelewm.eval.surprise_run.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Candidate pool | `codelewm.eval.candidate_pool.v1` |
 | Public license gate | `codelewm.public_license_gate.v1` |
