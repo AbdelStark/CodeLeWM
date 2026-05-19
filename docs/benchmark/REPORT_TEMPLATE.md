@@ -8,6 +8,7 @@
 - Schema version: `codelewm.eval.retrieval_report.v1` for retrieval
   tables; `codelewm.eval.action_ablation_report.v1` for action-view
   ablations; `codelewm.eval.surprise_report.v1` for surprise tables;
+  `codelewm.harness.scorer_quality_report.v1` for scorer/reranker quality;
   `codelewm.public_license_gate.v1` for license claims.
 - Release: `<v0.1 | v1.0 | other>`
 - Date (UTC): `<YYYY-MM-DD>`
@@ -29,6 +30,7 @@
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | `<path>` | `<id>` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` | `<path>` | `<id>` |
 | Surprise report | `codelewm.eval.surprise_report.v1` | `<path>` | `<id>` |
+| Scorer quality report | `codelewm.harness.scorer_quality_report.v1` | `<path>` | `<id>` |
 | License gate | `codelewm.public_license_gate.v1` | `<path>` | `<id>` |
 
 Every manifest above must pass `codelewm manifest verify
@@ -139,6 +141,31 @@ Every expected variant must appear as `completed`, `blocked`, or
 A category row may be omitted only when the corpus produced zero
 decoys for that category. State the reason in the comments section.
 
+## Scorer And Reranker Quality
+
+The quality report must include true after-states, hard negatives, syntax
+failures, and patch failures. The harness must parse and dry-run-apply
+candidates as text without executing candidate code.
+
+| Metric | Value | Report field |
+| ------ | ----- | ------------ |
+| Recall@1 | `<float>` | `summary.recall_at_1` |
+| MRR | `<float>` | `summary.mrr` |
+| Mean true rank | `<float>` | `summary.mean_true_rank` |
+| Median true rank | `<float>` | `summary.median_true_rank` |
+| Valid candidates | `<int>` | `summary.valid_count` |
+| Error candidates | `<int>` | `summary.error_count` |
+| Failure counts | `<error_type -> count>` | `summary.failure_counts` |
+| Retrieval prior weight | `<float>` | `scoring_policy.retrieval_prior_weight` |
+| Retrieval prior k | `<int>` | `scoring_policy.retrieval_prior_k` |
+
+| Slice | Candidates | Valid | Errors | Mean final score | Mean retrieval prior |
+| ----- | ---------- | ----- | ------ | ---------------- | -------------------- |
+| true_after | | | | | |
+| hard_negative | | | | | |
+| syntax_failure | | | | | |
+| patch_failure | | | | | |
+
 ## License And Source Policy
 
 | Field | Value |
@@ -179,6 +206,12 @@ README, or external communication.
 - [ ] **Every manifest referenced verifies cleanly.** Evidence:
       `codelewm manifest verify --manifest <path>` returns exit 0 for
       every artifact above.
+- [ ] **Scorer/reranker quality report includes failure and
+      calibration evidence.** Evidence:
+      `codelewm.harness.scorer_quality_report.v1` records ranking
+      metrics, calibration slices, parse/patch failure counts, and
+      `candidate code is parsed and diff-applied as text but never
+      executed`.
 - [ ] **No secret-pattern leakage in published artifacts.** Evidence:
       `codelewm secret-scan <reports_dir>` returns exit 0.
 - [ ] **License gate passed before publication.** Evidence: license

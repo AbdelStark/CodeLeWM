@@ -106,6 +106,16 @@ by category, record per-example true ranks, and include category caveats in
 metadata when the held-out data cannot support random, same-file, mutation, or
 action-cluster decoys.
 
+Scorer/reranker quality reports use
+`schema_version=codelewm.harness.scorer_quality_report.v1` and
+`artifact_kind=score_report`. They store the labeled candidate rows used for
+reranking, aggregate Recall@1/MRR/true-rank summaries, transition-energy,
+retrieval-prior, and final-score distributions, calibration slices by candidate
+kind, parse/patch failure counts, scoring-policy parameters, and the
+non-execution policy. Any training or index manifests passed through
+`--parent-manifest` are verified before the report is written and recorded in
+the artifact manifest's `parent_artifacts`.
+
 Transition indexes use `schema_version=codelewm.transition_index.v1` in
 `index.json`, store train-split `state_after` vectors in `vectors.npy`, and
 store one JSONL metadata record per vector in `entries.jsonl`. The index artifact

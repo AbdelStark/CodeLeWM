@@ -85,6 +85,9 @@ their workflow depends on.
 | Action-view policy            | `codelewm.eval.action_view_policy.v1`           |
 | Action ablation report        | `codelewm.eval.action_ablation_report.v1`       |
 | Action ablation run           | `codelewm.eval.action_ablation_run.v1`          |
+| Scorer quality config         | `codelewm.harness.scorer_quality_config.v1`     |
+| Scorer quality report         | `codelewm.harness.scorer_quality_report.v1`     |
+| Scorer quality run            | `codelewm.harness.scorer_quality_run.v1`        |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |
 | Kill-switch report            | `codelewm.eval.kill_report.v1`                  |
 | Public license gate           | `codelewm.public_license_gate.v1`               |

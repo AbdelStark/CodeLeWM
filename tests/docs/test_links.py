@@ -64,6 +64,7 @@ class BenchmarkTemplateContentTest(unittest.TestCase):
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
+            "codelewm.harness.scorer_quality_report.v1",
             "codelewm.public_license_gate.v1",
         ):
             with self.subTest(schema=schema):

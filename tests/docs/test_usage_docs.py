@@ -46,6 +46,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm eval retrieval",
             "codelewm eval ablation",
             "codelewm eval surprise",
+            "codelewm eval scorer-quality",
             "codelewm index",
         ):
             with self.subTest(planned=planned):
@@ -77,6 +78,9 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.action_ablation_run.v1",
             "codelewm.eval.surprise_report.v1",
+            "codelewm.harness.scorer_quality_config.v1",
+            "codelewm.harness.scorer_quality_report.v1",
+            "codelewm.harness.scorer_quality_run.v1",
             "codelewm.transition_index.v1",
             "codelewm.secret_scan.v1",
         ):

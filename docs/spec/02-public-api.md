@@ -223,6 +223,38 @@ held-out evaluation rows. Index validation failures exit 6 with
 `error_type=evaluation_gate_error`; malformed requests exit 2 with
 `error_type=config_error`.
 
+`codelewm eval scorer-quality` builds the release-facing score/rerank quality
+artifact:
+
+```bash
+codelewm eval scorer-quality \
+  --config config/first_results/scorer_quality.json \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/tiny-scorer-quality \
+  --index .artifacts/tiny-index \
+  --retrieval-prior-weight 1.0 \
+  --retrieval-prior-k 10 \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --parent-manifest .artifacts/tiny-index/manifest.json \
+  --json
+```
+
+The config schema is `codelewm.harness.scorer_quality_config.v1`. The command
+validates the checkpoint trust gate, verifies any repeated `--parent-manifest`
+arguments, parses after-state candidates, dry-run-applies patch candidates as
+text, and never executes candidate code. It writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` with
+  `artifact_kind=score_report`;
+- `config.json`: normalized scorer quality config;
+- `reports/scorer_quality_report.json`:
+  `codelewm.harness.scorer_quality_report.v1`.
+
+The command emits `codelewm.harness.scorer_quality_run.v1` on JSON stdout. The
+report includes ranking metrics, score distributions, calibration slices by
+candidate kind, parse/patch failure counts, retrieval-prior settings, and the
+current risk-penalty caveat. Lower `final_score` remains better.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2

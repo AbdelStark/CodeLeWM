@@ -149,6 +149,8 @@ CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=<checked-in-public-shard-build-config> \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
+CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
+CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 uv run scripts/hf-launch-codelewm-job
 ```
 

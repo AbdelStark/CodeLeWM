@@ -53,8 +53,9 @@ The current package includes:
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
   `codelewm dataset pack`, `codelewm train`, `codelewm eval retrieval`,
-  `codelewm eval ablation`, `codelewm eval surprise`, `codelewm index`,
-  `codelewm score`, and `codelewm rerank` commands, and structured
+  `codelewm eval ablation`, `codelewm eval surprise`,
+  `codelewm eval scorer-quality`, `codelewm index`, `codelewm score`, and
+  `codelewm rerank` commands, and structured
   dataset/train/eval/score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
@@ -66,7 +67,7 @@ the CPU smoke training path, the package-native torch training executor,
 sampling, baseline validation, `codelewm eval ablation`, model-backed
 `codelewm eval surprise`, a
 train-split `codelewm index` artifact path, index-backed retrieval priors for
-scoring/reranking, manifest verification, secret scanning, `uv` dependency
+scoring/reranking, scorer/reranker quality reports, manifest verification, secret scanning, `uv` dependency
 management, and pull-request CI are implemented. The reproducible first-results
 runner now writes `docs/benchmark/FIRST_RESULTS.md` from actual local artifacts.
 That report is smoke evidence only: on the tiny fixture, text-action ties the
@@ -233,6 +234,12 @@ command consumes the same trusted checkpoint and packed dataset lineage, scores
 random, same-file, mutation, and action-cluster decoys when available, and writes
 a manifest-backed `codelewm.eval.surprise_report.v1` report with explicit
 caveats for missing decoy categories.
+
+The release-facing scorer/reranker quality path is
+`codelewm eval scorer-quality`: it scores labeled candidate sets with true
+after-states, hard negatives, syntax failures, and patch failures, records
+ranking/calibration slices, and keeps candidate code on the parse/dry-run path
+without executing it.
 
 ## Install
 
