@@ -16,6 +16,9 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Reproducible first-results workflow through `scripts/first-results`, the
+  `config/first_results/` bundle, `codelewm.results`, and
+  `docs/benchmark/FIRST_RESULTS.md`.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -57,6 +60,7 @@ their workflow depends on.
 | Training metrics              | `codelewm.training_metrics.v1`                  |
 | CPU smoke checkpoint          | `codelewm.cpu_smoke_checkpoint.v1`              |
 | CPU smoke report              | `codelewm.cpu_smoke_report.v1`                  |
+| First-results inventory       | `codelewm.first_results.v1`                     |
 | Index build report            | `codelewm.index_build.v1`                       |
 | Retrieval eval run            | `codelewm.eval.retrieval_run.v1`                |
 | Retrieval metrics             | `codelewm.eval.retrieval_metrics.v1`            |

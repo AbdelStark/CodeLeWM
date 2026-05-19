@@ -66,12 +66,14 @@ the CPU smoke training path, the package-native torch training executor,
 sampling, baseline validation, model-backed `codelewm eval surprise`, a
 train-split `codelewm index` artifact path, index-backed retrieval priors for
 scoring/reranking, manifest verification, secret scanning, `uv` dependency
-management, and pull-request CI are implemented. A meaningful first training
-result is still pending: the remaining work is the reproducible first-results report tracked in
-`docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
-logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
-existing Hydra configs are inherited from the original LeWorldModel seed and are
-kept for compatibility while the package runtime continues to replace them.
+management, and pull-request CI are implemented. The reproducible first-results
+runner now writes `docs/benchmark/FIRST_RESULTS.md` from actual local artifacts.
+That report is smoke evidence only: on the tiny fixture, text-action ties the
+required baselines and surprise evaluation lacks enough decoy coverage for a
+research-quality claim. Core harness commands can write local JSONL logs with
+redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the existing Hydra
+configs are inherited from the original LeWorldModel seed and are kept for
+compatibility while the package runtime continues to replace them.
 
 ## Core Concepts
 
@@ -286,8 +288,9 @@ AGENTS.md                       agent/contributor context and current gaps
 docs/spec/                      canonical system specification
 docs/rfcs/                      accepted design decisions
 docs/roadmap/IMPLEMENTATION.md  implementation tracker
-docs/roadmap/FULL_COMPLETION.md remaining first-results and release roadmap
+docs/roadmap/FULL_COMPLETION.md remaining scaled-artifact and release roadmap
 docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
+docs/benchmark/FIRST_RESULTS.md first reproducible smoke results report
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
 codelewm/training/              configs, manifest runner, CPU smoke, torch executor
@@ -295,6 +298,8 @@ codelewm/eval/                  retrieval, surprise, action policy, collapse gat
 codelewm/observability/         manifests, JSONL log events, redaction
 codelewm/harness/               CLI, scorer, reranker, and output schemas
 codelewm/security/              license policy and non-execution helpers
+codelewm/results/               first-results orchestration and report rendering
+scripts/first-results           reproducible first-results runner
 tests/                          unit and integration coverage
 config/                         inherited LeWorldModel Hydra configs
 train.py, eval.py               inherited LeWorldModel entry points
