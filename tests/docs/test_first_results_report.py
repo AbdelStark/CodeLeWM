@@ -45,6 +45,7 @@ class FirstResultsReportTest(unittest.TestCase):
             "# CodeLeWM First Results",
             "## Verdict",
             "## Reproduce",
+            "## Artifact Cards",
             "## Exact Commands",
             "## Reproducibility Chain",
             "## Manifest Verification",
@@ -73,6 +74,8 @@ class FirstResultsReportTest(unittest.TestCase):
             "uv run codelewm manifest verify",
             "uv run codelewm secret-scan",
             ".artifacts/first-results/manifest_inventory.json",
+            "docs/cards/codelewm-first-results-dataset-2026-05-19.md",
+            "docs/cards/codelewm-first-results-model-2026-05-19.md",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.text)
