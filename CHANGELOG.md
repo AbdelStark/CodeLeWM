@@ -19,6 +19,11 @@ earliest one minor release after the deprecation notice.
 - Reproducible first-results workflow through `scripts/first-results`, the
   `config/first_results/` bundle, `codelewm.results`, and
   `docs/benchmark/FIRST_RESULTS.md`.
+- Hugging Face Jobs/ml-intern training automation through `.env.example`,
+  `scripts/hf-launch-codelewm-job`, `scripts/hf-run-codelewm-pipeline`,
+  `scripts/hf-publish-codelewm-artifacts`,
+  `docs/operations/HF_ML_INTERN_TRAINING.md`, and
+  `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.

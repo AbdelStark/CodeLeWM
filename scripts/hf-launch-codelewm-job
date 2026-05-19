@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+load_env_defaults() {
+  local env_file="${1:-.env}"
+  [[ -f "$env_file" ]] || return 0
+  while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
+    local line key value
+    line="${raw_line#"${raw_line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "$line" || "${line:0:1}" == "#" || "$line" != *"="* ]] && continue
+    line="${line#export }"
+    key="${line%%=*}"
+    value="${line#*=}"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    if [[ -z "${!key+x}" ]]; then
+      export "$key=$value"
+    fi
+  done < "$env_file"
+}
+
+shell_quote() {
+  printf "%q" "$1"
+}
+
+print_command() {
+  local item
+  for item in "$@"; do
+    shell_quote "$item"
+    printf " "
+  done
+  printf "\n"
+}
+
+load_env_defaults ".env"
+
+CODELEWM_HF_JOBS_DRY_RUN="${CODELEWM_HF_JOBS_DRY_RUN:-${HF_JOBS_DRY_RUN:-1}}"
+CODELEWM_HF_JOBS_FLAVOR="${CODELEWM_HF_JOBS_FLAVOR:-${HF_JOBS_FLAVOR:-a10g-small}}"
+CODELEWM_HF_JOBS_TIMEOUT="${CODELEWM_HF_JOBS_TIMEOUT:-${HF_JOBS_TIMEOUT:-6h}}"
+CODELEWM_HF_JOBS_DETACH="${CODELEWM_HF_JOBS_DETACH:-${HF_JOBS_DETACH:-1}}"
+CODELEWM_HF_JOBS_NAMESPACE="${CODELEWM_HF_JOBS_NAMESPACE:-${HF_JOBS_NAMESPACE:-}}"
+CODELEWM_HF_JOB_IMAGE="${CODELEWM_HF_JOB_IMAGE:-python:3.13-bookworm}"
+CODELEWM_HF_GITHUB_REPO="${CODELEWM_HF_GITHUB_REPO:-https://github.com/AbdelStark/CodeLeWM.git}"
+CODELEWM_HF_REF="${CODELEWM_HF_REF:-main}"
+CODELEWM_HF_PIPELINE_MODE="${CODELEWM_HF_PIPELINE_MODE:-smoke}"
+CODELEWM_HF_OUTPUT_ROOT="${CODELEWM_HF_OUTPUT_ROOT:-.artifacts/hf}"
+CODELEWM_HF_PUBLISH="${CODELEWM_HF_PUBLISH:-1}"
+CODELEWM_HF_PUBLISH_DRY_RUN="${CODELEWM_HF_PUBLISH_DRY_RUN:-1}"
+CODELEWM_HF_RUN_ID="${CODELEWM_HF_RUN_ID:-}"
+CODELEWM_HF_TRAIN_EXECUTOR="${CODELEWM_HF_TRAIN_EXECUTOR:-torch}"
+CODELEWM_HF_DEVICE="${CODELEWM_HF_DEVICE:-auto}"
+CODELEWM_HF_EVAL_SEED="${CODELEWM_HF_EVAL_SEED:-0}"
+
+if [[ "$CODELEWM_HF_JOBS_DRY_RUN" != "1" && -z "${HF_TOKEN:-}" ]]; then
+  echo "HF_TOKEN is required when CODELEWM_HF_JOBS_DRY_RUN=0" >&2
+  exit 2
+fi
+
+REMOTE_COMMAND='set -euo pipefail
+python -m pip install --quiet uv
+if ! command -v git >/dev/null 2>&1; then
+  apt-get update >/dev/null
+  apt-get install -y git >/dev/null
+fi
+git clone --filter=blob:none "$CODELEWM_HF_GITHUB_REPO" CodeLeWM
+cd CodeLeWM
+git fetch --depth 1 origin "$CODELEWM_HF_REF" || true
+git checkout "$CODELEWM_HF_REF"
+uv sync --group dev --group data --group train --group eval
+uv run scripts/hf-run-codelewm-pipeline'
+
+cmd=(
+  hf jobs run
+  --flavor "$CODELEWM_HF_JOBS_FLAVOR"
+  --timeout "$CODELEWM_HF_JOBS_TIMEOUT"
+  --secrets HF_TOKEN
+  --env "CODELEWM_HF_GITHUB_REPO=$CODELEWM_HF_GITHUB_REPO"
+  --env "CODELEWM_HF_REF=$CODELEWM_HF_REF"
+  --env "CODELEWM_HF_PIPELINE_MODE=$CODELEWM_HF_PIPELINE_MODE"
+  --env "CODELEWM_HF_OUTPUT_ROOT=$CODELEWM_HF_OUTPUT_ROOT"
+  --env "CODELEWM_HF_PUBLISH=$CODELEWM_HF_PUBLISH"
+  --env "CODELEWM_HF_PUBLISH_DRY_RUN=$CODELEWM_HF_PUBLISH_DRY_RUN"
+  --env "CODELEWM_HF_TRAIN_EXECUTOR=$CODELEWM_HF_TRAIN_EXECUTOR"
+  --env "CODELEWM_HF_DEVICE=$CODELEWM_HF_DEVICE"
+  --env "CODELEWM_HF_EVAL_SEED=$CODELEWM_HF_EVAL_SEED"
+  --label project=codelewm
+  --label pipeline=training
+)
+
+[[ -z "$CODELEWM_HF_RUN_ID" ]] || cmd+=(--env "CODELEWM_HF_RUN_ID=$CODELEWM_HF_RUN_ID")
+[[ -z "${CODELEWM_HF_DATASET_REPO_ID:-}" ]] || cmd+=(--env "CODELEWM_HF_DATASET_REPO_ID=$CODELEWM_HF_DATASET_REPO_ID")
+[[ -z "${CODELEWM_HF_MODEL_REPO_ID:-}" ]] || cmd+=(--env "CODELEWM_HF_MODEL_REPO_ID=$CODELEWM_HF_MODEL_REPO_ID")
+[[ -z "${CODELEWM_HF_RESULTS_REPO_ID:-}" ]] || cmd+=(--env "CODELEWM_HF_RESULTS_REPO_ID=$CODELEWM_HF_RESULTS_REPO_ID")
+[[ -z "${CODELEWM_DATASET_BUILD_CONFIG:-}" ]] || cmd+=(--env "CODELEWM_DATASET_BUILD_CONFIG=$CODELEWM_DATASET_BUILD_CONFIG")
+[[ -z "${CODELEWM_TRAIN_CONFIG:-}" ]] || cmd+=(--env "CODELEWM_TRAIN_CONFIG=$CODELEWM_TRAIN_CONFIG")
+[[ -z "$CODELEWM_HF_JOBS_NAMESPACE" ]] || cmd+=(--namespace "$CODELEWM_HF_JOBS_NAMESPACE")
+[[ "$CODELEWM_HF_JOBS_DETACH" != "1" ]] || cmd+=(--detach)
+
+cmd+=("$CODELEWM_HF_JOB_IMAGE" bash -lc "$REMOTE_COMMAND")
+
+if [[ "$CODELEWM_HF_JOBS_DRY_RUN" == "1" ]]; then
+  echo "HF Jobs dry run. Set CODELEWM_HF_JOBS_DRY_RUN=0 to launch."
+  print_command "${cmd[@]}"
+  exit 0
+fi
+
+exec "${cmd[@]}"
