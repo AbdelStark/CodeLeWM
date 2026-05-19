@@ -29,6 +29,7 @@
 | Training run manifest | `codelewm.training_run.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
+| Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 
 ## Architecture
@@ -107,7 +108,9 @@ card may summarize one or two highlights.
 
 State explicitly which action view the headline used (`action_text`
 is the only allowed value for headline claims) and which views
-appear only as diagnostics.
+appear only as diagnostics. Link the
+`codelewm.eval.action_ablation_report.v1` artifact and account for
+blocked rows instead of omitting missing runs.
 
 ## Limitations And Risks
 

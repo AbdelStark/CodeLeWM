@@ -160,7 +160,7 @@ class CandidatePool:
         return cls(
             schema_version=str(payload["schema_version"]),
             name=str(payload["name"]),
-            seed=_optional_int(payload.get("seed"), "seed"),
+            seed=_optional_non_negative_int(payload.get("seed"), "seed"),
             max_size=_optional_int(payload.get("max_size"), "max_size"),
             excluded_splits=tuple(_split_name(split) for split in payload.get("excluded_splits", ("train",))),
             entries=entries,
@@ -772,6 +772,8 @@ def validate_candidate_pool(pool: CandidatePool) -> CandidatePool:
         raise RetrievalEvalError("candidate pool name must not be empty")
     if not pool.entries:
         raise RetrievalEvalError("candidate pool must contain at least one entry")
+    if pool.seed is not None:
+        _non_negative_int(pool.seed, "candidate pool seed")
     if pool.max_size is not None and pool.max_size <= 0:
         raise RetrievalEvalError("candidate pool max_size must be positive when set")
 
@@ -1062,6 +1064,12 @@ def _optional_int(value: Any, name: str) -> int | None:
     if value is None:
         return None
     return _positive_int(value, name)
+
+
+def _optional_non_negative_int(value: Any, name: str) -> int | None:
+    if value is None:
+        return None
+    return _non_negative_int(value, name)
 
 
 def _non_negative_int(value: Any, name: str) -> int:

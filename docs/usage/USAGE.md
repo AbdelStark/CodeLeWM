@@ -405,6 +405,45 @@ Surprise gate failures return `error_type=evaluation_gate_error`. Missing
 runtime packages return `error_type=optional_dependency_missing`; missing or
 tampered checkpoint manifests return `error_type=checkpoint_error`.
 
+### `codelewm eval ablation`
+
+Build a consolidated action-view ablation artifact from a retrieval artifact and
+its parent training artifact:
+
+```bash
+codelewm eval ablation \
+  --retrieval-artifact .artifacts/tiny-retrieval/manifest.json \
+  --training-artifact .artifacts/tiny-train/manifest.json \
+  --out .artifacts/tiny-ablation \
+  --json
+```
+
+The command verifies both parent artifacts and writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  reports/
+    action_view_ablation_report.json         codelewm.eval.action_ablation_report.v1
+```
+
+The JSON stdout summary uses `codelewm.eval.action_ablation_run.v1`. The report
+contains completed text-action and required-baseline rows, completed
+retrieval-loss/collapse rows when backed by the training artifact, and explicit
+`blocked` rows for missing abstract-action, patch-action diagnostic,
+retrieval-loss, and alternate SIGReg runs. Patch-action rows must remain
+diagnostic upper bounds.
+
+Verify lineage by passing both parent manifests:
+
+```bash
+codelewm manifest verify \
+  --manifest .artifacts/tiny-ablation/manifest.json \
+  --parent-manifest .artifacts/tiny-retrieval/manifest.json \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --json
+```
+
 ### `codelewm index`
 
 Build a train-split transition index from a trusted checkpoint and packed
@@ -660,6 +699,8 @@ field list.
 | Index build report | `codelewm.index_build.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
+| Action ablation run | `codelewm.eval.action_ablation_run.v1` |
+| Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Candidate pool | `codelewm.eval.candidate_pool.v1` |

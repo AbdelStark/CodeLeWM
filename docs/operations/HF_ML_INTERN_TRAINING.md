@@ -88,9 +88,9 @@ to dry-run.
 `scripts/hf-run-codelewm-pipeline` runs inside the job container. It supports:
 
 - `smoke`: run `scripts/first-results` into `.artifacts/hf/<run-id>`;
-- `scaled`: build the dataset, pack it, train, run retrieval evaluation, run
-  surprise evaluation, build the transition index, verify manifests, and scan
-  the run root for secrets.
+- `scaled`: build the dataset, pack it, train, run retrieval evaluation, build
+  the action-view ablation report, run surprise evaluation, build the transition
+  index, verify manifests, and scan the run root for secrets.
 
 `scripts/hf-publish-codelewm-artifacts` publishes the resulting directories:
 
@@ -177,6 +177,7 @@ Definition of done for the scaled run:
 - dataset, model, and results repositories contain the expected `run-id`;
 - every published manifest verifies locally after download;
 - retrieval includes headline baselines and action-view ablations;
+- the ablation report records missing variants as explicit blocked rows;
 - surprise evaluation includes enough decoy coverage for a useful result;
 - `codelewm score` and `codelewm rerank` run from the downloaded checkpoint;
 - dataset and model cards are filled from the artifacts before any public flip.

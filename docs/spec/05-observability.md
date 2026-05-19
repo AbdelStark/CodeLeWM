@@ -93,6 +93,12 @@ selection.
 Headline retrieval reports are invalid unless the `baselines` mapping includes
 `random`, `lexical`, `no_action`, and `shuffled_action` metrics.
 
+Action-view ablation reports use
+`schema_version=codelewm.eval.action_ablation_report.v1`. They store one row per
+expected action-view, baseline, retrieval-loss, or collapse-setting variant.
+Rows are never silently dropped: unavailable variants are recorded as `blocked`
+with a reason, and patch-action rows must be tagged as diagnostic upper bounds.
+
 Patch-surprise reports use
 `schema_version=codelewm.eval.surprise_report.v1`. They store transition-energy
 scores for the true after-state and decoys, aggregate pairwise AUC overall and

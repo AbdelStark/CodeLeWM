@@ -44,6 +44,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm dataset pack",
             "codelewm train",
             "codelewm eval retrieval",
+            "codelewm eval ablation",
             "codelewm eval surprise",
             "codelewm index",
         ):
@@ -73,6 +74,8 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.index_build.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.action_ablation_report.v1",
+            "codelewm.eval.action_ablation_run.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.transition_index.v1",
             "codelewm.secret_scan.v1",

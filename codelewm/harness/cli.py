@@ -22,9 +22,11 @@ from codelewm.data import (
     pack_dataset_from_manifest,
 )
 from codelewm.eval import (
+    ActionAblationError,
     ActionViewPolicyError,
     RetrievalEvalError,
     SurpriseEvalError,
+    run_action_ablation_suite,
     run_retrieval_evaluation,
     run_surprise_evaluation,
 )
@@ -174,6 +176,14 @@ def build_parser() -> argparse.ArgumentParser:
     surprise.add_argument("--json", action="store_true", help="emit JSON output")
     surprise.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     surprise.set_defaults(func=_eval_surprise_command)
+    ablation = eval_subcommands.add_parser("ablation", help="build an action-view ablation report")
+    ablation.add_argument("--retrieval-artifact", type=Path, required=True, help="retrieval artifact manifest.json")
+    ablation.add_argument("--training-artifact", type=Path, required=True, help="training artifact manifest.json")
+    ablation.add_argument("--out", type=Path, required=True, help="ablation report artifact directory")
+    ablation.add_argument("--overwrite", action="store_true", help="overwrite existing ablation output files")
+    ablation.add_argument("--json", action="store_true", help="emit JSON output")
+    ablation.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    ablation.set_defaults(func=_eval_ablation_command)
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     index = subparsers.add_parser("index", help="build a transition index artifact")
     index.add_argument("--checkpoint", type=Path, required=True, help="trusted training checkpoint path")
@@ -777,6 +787,83 @@ def _eval_surprise_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_ablation_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_ablation_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.ablation.start",
+                level="info",
+                run_id=run_id,
+                step="eval.ablation",
+                message="action-view ablation report started",
+                fields={
+                    "retrieval_artifact": str(args.retrieval_artifact),
+                    "training_artifact": str(args.training_artifact),
+                    "out": str(args.out),
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_action_ablation_suite(
+            retrieval_artifact=args.retrieval_artifact,
+            training_artifact=args.training_artifact,
+            out=args.out,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.ablation.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.ablation",
+                message="action-view ablation report completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "row_count": len(result.rows),
+                },
+            ),
+        )
+    except (ArtifactManifestError, json.JSONDecodeError, OSError, ActionAblationError) as exc:
+        error = ScoreError(
+            f"action-view ablation report failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify retrieval/training artifacts and rerun with a clean output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.ablation", event="evaluation.ablation.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"action-view ablation report failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the ablation inputs and retry with corrected artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="eval.ablation", event="evaluation.ablation.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"ablation_report: {args.out / result.report_path}")
+        print(f"completed: {result.to_dict()['completed']}")
+        print(f"blocked: {result.to_dict()['blocked']}")
+    return 0
+
+
 def _index_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _index_command_tuple(args)
@@ -1103,6 +1190,27 @@ def _eval_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         str(args.action_cluster_decoys),
         "--seed",
         str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_ablation_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "ablation",
+        "--retrieval-artifact",
+        str(args.retrieval_artifact),
+        "--training-artifact",
+        str(args.training_artifact),
+        "--out",
+        str(args.out),
     ]
     if args.overwrite:
         command.append("--overwrite")

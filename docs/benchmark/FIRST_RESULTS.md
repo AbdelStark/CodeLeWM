@@ -3,7 +3,7 @@
 - Report ID: `codelewm-first-results-2026-05-19`
 - Schema version: `codelewm.first_results.v1`
 - Evidence tier: smoke fixture, not scaled research evidence
-- Source git SHA: `7ba35afb93b6bd8988501a193ea025cd6ac5b128`
+- Source git SHA: `f82020a1328697e72098ec5b142d2eeec6dfc68e`
 - Config bundle SHA-256: `f2f2e36f531f883ecc701f0d1903c8b73e9034305837a5c6e9edc612221e5f5c`
 - Runtime train config SHA-256: `a824192ddb13147219478695b6b4d8f24b069a007bcf715962aee459af03c8b0`
 - Seed: dataset `7`, training `1337`, evaluation `0`
@@ -12,7 +12,7 @@
 ## Verdict
 
 The complete local path now runs from a clean checkout: dataset build, pack, torch
-training, retrieval evaluation, surprise evaluation, transition-index build,
+training, retrieval evaluation, action-view ablation, surprise evaluation, transition-index build,
 manifest verification, report rendering, and secret scanning.
 
 Text-action does not beat all required baselines on this fixture. The selected fixture has 1 held-out query and 1 retrieval candidate, so retrieval Recall@k is saturated.
@@ -36,39 +36,43 @@ machine-readable command outputs and artifact IDs used by this report.
 2. `uv run codelewm dataset pack --manifest .artifacts/first-results/build/manifest.json --out .artifacts/first-results/pack --json`
 3. `uv run codelewm train --config .artifacts/first-results/configs/train_tiny.json --executor torch --device cpu --overwrite --json --log-jsonl .artifacts/first-results/logs/train.jsonl`
 4. `uv run codelewm eval retrieval --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/retrieval --device cpu --seed 0 --overwrite --json --log-jsonl .artifacts/first-results/logs/retrieval.jsonl`
-5. `uv run codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --seed 0 --overwrite --json --log-jsonl .artifacts/first-results/logs/surprise.jsonl`
-6. `uv run codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --overwrite --json --log-jsonl .artifacts/first-results/logs/index.jsonl`
-7. `uv run codelewm manifest verify --manifest .artifacts/first-results/build/manifest.json --json`
-8. `uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json`
-9. `uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
-10. `uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
-11. `uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
-12. `uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
-13. `uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json`
+5. `uv run codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/manifest.json --training-artifact .artifacts/first-results/train/manifest.json --out .artifacts/first-results/ablation --overwrite --json --log-jsonl .artifacts/first-results/logs/ablation.jsonl`
+6. `uv run codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --seed 0 --overwrite --json --log-jsonl .artifacts/first-results/logs/surprise.jsonl`
+7. `uv run codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --overwrite --json --log-jsonl .artifacts/first-results/logs/index.jsonl`
+8. `uv run codelewm manifest verify --manifest .artifacts/first-results/build/manifest.json --json`
+9. `uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json`
+10. `uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
+11. `uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
+12. `uv run codelewm manifest verify --manifest .artifacts/first-results/ablation/manifest.json --parent-manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --json`
+13. `uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
+14. `uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json`
+15. `uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json`
 
 ## Reproducibility Chain
 
 | Artifact | Schema version | Manifest path | Artifact ID | Config SHA prefix |
 | -------- | -------------- | ------------- | ----------- | ----------------- |
-| dataset_build | codelewm.artifact_manifest.v1 | .artifacts/first-results/build/manifest.json | dataset-8a9eb207e80916a0 | a87cc5fbfcfe |
-| dataset_pack | codelewm.artifact_manifest.v1 | .artifacts/first-results/pack/manifest.json | dataset-83212742cc9ccba8 | 6ae8bed29201 |
-| training_run | codelewm.artifact_manifest.v1 | .artifacts/first-results/train/manifest.json | training_run-a37db3267f583c5e | a908d8aa3dc8 |
-| retrieval_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/retrieval/manifest.json | eval_report-7763e41366bcd1ca | 94dab553d9a3 |
-| surprise_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/surprise/manifest.json | eval_report-d28fe293b10d8385 | b02bfb81e70c |
-| transition_index | codelewm.artifact_manifest.v1 | .artifacts/first-results/index/manifest.json | index-3ea18bd8cdb42854 | dd2d5d163954 |
-| Checkpoint | `codelewm.checkpoint.v1` | `checkpoint.pt` | `89519896a6d378a3` | `72822cb45ab8` |
+| dataset_build | codelewm.artifact_manifest.v1 | .artifacts/first-results/build/manifest.json | dataset-c8374f80eea567d4 | a87cc5fbfcfe |
+| dataset_pack | codelewm.artifact_manifest.v1 | .artifacts/first-results/pack/manifest.json | dataset-0ad1e4978e25eda8 | 6ae8bed29201 |
+| training_run | codelewm.artifact_manifest.v1 | .artifacts/first-results/train/manifest.json | training_run-9bf87f3b38c60d61 | a908d8aa3dc8 |
+| retrieval_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/retrieval/manifest.json | eval_report-233835da0162659f | 94dab553d9a3 |
+| action_ablation | codelewm.artifact_manifest.v1 | .artifacts/first-results/ablation/manifest.json | eval_report-48a8e6405118af00 | 4afab675f686 |
+| surprise_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/surprise/manifest.json | eval_report-5d206e7c85043df2 | b02bfb81e70c |
+| transition_index | codelewm.artifact_manifest.v1 | .artifacts/first-results/index/manifest.json | index-0d5ab73168d9846b | dd2d5d163954 |
+| Checkpoint | `codelewm.checkpoint.v1` | `checkpoint.pt` | `fb8508c848ca8b76` | `72822cb45ab8` |
 | License gate | `codelewm.public_license_gate.v1` | `.artifacts/first-results/build/reports/license_gate_report.json` | `release_allowed=true` | n/a |
 
 ## Manifest Verification
 
 | Artifact | Result | Files checked | Required parents | Command |
 | -------- | ------ | ------------- | ---------------- | ------- |
-| dataset_build | pass | 7 | none | uv run codelewm manifest verify --manifest .artifacts/first-results/build/manifest.json --json |
-| dataset_pack | pass | 9 | dataset-8a9eb207e80916a0 | uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json |
-| training_run | pass | 6 | dataset-83212742cc9ccba8 | uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| retrieval_eval | pass | 3 | training_run-a37db3267f583c5e, dataset-83212742cc9ccba8 | uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| surprise_eval | pass | 2 | training_run-a37db3267f583c5e, dataset-83212742cc9ccba8 | uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| transition_index | pass | 3 | training_run-a37db3267f583c5e, dataset-83212742cc9ccba8 | uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| dataset_build | pass | 8 | none | uv run codelewm manifest verify --manifest .artifacts/first-results/build/manifest.json --json |
+| dataset_pack | pass | 9 | dataset-c8374f80eea567d4 | uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json |
+| training_run | pass | 6 | dataset-0ad1e4978e25eda8 | uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| retrieval_eval | pass | 3 | training_run-9bf87f3b38c60d61, dataset-0ad1e4978e25eda8 | uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| action_ablation | pass | 1 | eval_report-233835da0162659f, training_run-9bf87f3b38c60d61 | uv run codelewm manifest verify --manifest .artifacts/first-results/ablation/manifest.json --parent-manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --json |
+| surprise_eval | pass | 2 | training_run-9bf87f3b38c60d61, dataset-0ad1e4978e25eda8 | uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| transition_index | pass | 3 | training_run-9bf87f3b38c60d61, dataset-0ad1e4978e25eda8 | uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
 
 ## Dataset And Training
 
@@ -91,6 +95,27 @@ machine-readable command outputs and artifact IDs used by this report.
 | No-action | 1 | 1 | 1 | 1 | no |
 | Shuffled-action | 1 | 1 | 1 | 1 | no |
 | Patch-action diagnostic | n/a | n/a | n/a | n/a | not run for this headline smoke report |
+
+## Action-View Ablation
+
+- Report schema: `codelewm.eval.action_ablation_report.v1`.
+- Completed rows: `7`; blocked rows: `5`; failed rows: `0`.
+- Missing abstract-action, retrieval-loss, patch-action diagnostic, and alternate SIGReg runs are explicit blocked rows rather than dropped rows.
+
+| Row | Family | Status | Recall@1 | MRR | Reason |
+| --- | ------ | ------ | -------- | --- | ------ |
+| text_action | action_view | completed | 1 | 1 | available |
+| abstract_action | action_view | blocked | n/a | n/a | no abstract-action checkpoint and retrieval report were supplied |
+| patch_action_diagnostic | action_view | blocked | n/a | n/a | patch-action diagnostic upper-bound report was not supplied |
+| random | baseline | completed | 1 | 1 | available |
+| lexical | baseline | completed | 1 | 1 | available |
+| no_action | baseline | completed | 1 | 1 | available |
+| shuffled_action | baseline | completed | 1 | 1 | available |
+| retrieval_loss_disabled | retrieval_loss | completed | 1 | 1 | available |
+| retrieval_loss_enabled | retrieval_loss | blocked | n/a | n/a | paired retrieval-loss variant report was not supplied |
+| collapse_sigreg_0.09 | collapse | completed | n/a | n/a | available |
+| collapse_sigreg_0.05 | collapse | blocked | n/a | n/a | paired SIGReg/collapse setting report was not supplied |
+| collapse_sigreg_0.15 | collapse | blocked | n/a | n/a | paired SIGReg/collapse setting report was not supplied |
 
 ## Patch-Surprise Evaluation
 
@@ -115,7 +140,7 @@ machine-readable command outputs and artifact IDs used by this report.
 ## Security Evidence
 
 - Secret scan result: `pass`.
-- Paths scanned: `36`.
+- Paths scanned: `40`.
 - Findings: `0`.
 - Published artifact policy: local fixture artifacts are full-text and pass the configured permissive-license gate.
 
@@ -123,6 +148,7 @@ machine-readable command outputs and artifact IDs used by this report.
 
 - [ ] Text-action beats random, lexical, no-action, and shuffled-action baselines on Recall@1 and MRR.
 - [x] Headline retrieval uses `action_text`.
+- [x] Action-view ablation records missing variants as blocked rows.
 - [x] Hard-negative and candidate pools exclude `train` split rows.
 - [ ] Patch-surprise covers all four decoy categories with non-zero decoy counts.
 - [x] Every selected artifact manifest verifies with required parents.

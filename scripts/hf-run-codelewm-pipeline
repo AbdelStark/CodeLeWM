@@ -66,6 +66,7 @@ elif [[ "$CODELEWM_HF_PIPELINE_MODE" == "scaled" ]]; then
   PACK_DIR="$OUTPUT_ROOT/pack"
   TRAIN_DIR="$OUTPUT_ROOT/train"
   RETRIEVAL_DIR="$OUTPUT_ROOT/retrieval"
+  ABLATION_DIR="$OUTPUT_ROOT/ablation"
   SURPRISE_DIR="$OUTPUT_ROOT/surprise"
   INDEX_DIR="$OUTPUT_ROOT/index"
   LOG_DIR="$OUTPUT_ROOT/logs"
@@ -114,6 +115,13 @@ PY
     --overwrite \
     --json \
     --log-jsonl "$LOG_DIR/retrieval.jsonl"
+  uv run codelewm eval ablation \
+    --retrieval-artifact "$RETRIEVAL_DIR/manifest.json" \
+    --training-artifact "$TRAIN_DIR/manifest.json" \
+    --out "$ABLATION_DIR" \
+    --overwrite \
+    --json \
+    --log-jsonl "$LOG_DIR/ablation.jsonl"
   uv run codelewm eval surprise \
     --checkpoint "$TRAIN_DIR/checkpoints/checkpoint.pt" \
     --data "$PACK_DIR" \
@@ -136,6 +144,7 @@ PY
   uv run codelewm manifest verify --manifest "$PACK_DIR/manifest.json" --parent-manifest "$BUILD_DIR/manifest.json" --json
   uv run codelewm manifest verify --manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
   uv run codelewm manifest verify --manifest "$RETRIEVAL_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$ABLATION_DIR/manifest.json" --parent-manifest "$RETRIEVAL_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --json
   uv run codelewm manifest verify --manifest "$SURPRISE_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
   uv run codelewm manifest verify --manifest "$INDEX_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
   uv run codelewm secret-scan "$OUTPUT_ROOT" --json

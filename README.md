@@ -53,8 +53,8 @@ The current package includes:
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
   `codelewm dataset pack`, `codelewm train`, `codelewm eval retrieval`,
-  `codelewm eval surprise`, `codelewm index`, `codelewm score`, and
-  `codelewm rerank` commands, and structured
+  `codelewm eval ablation`, `codelewm eval surprise`, `codelewm index`,
+  `codelewm score`, and `codelewm rerank` commands, and structured
   dataset/train/eval/score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
@@ -63,7 +63,8 @@ The current package includes:
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, the package-native torch training executor,
 `codelewm train`, model-backed `codelewm eval retrieval`, hard-negative
-sampling, baseline validation, model-backed `codelewm eval surprise`, a
+sampling, baseline validation, `codelewm eval ablation`, model-backed
+`codelewm eval surprise`, a
 train-split `codelewm index` artifact path, index-backed retrieval priors for
 scoring/reranking, manifest verification, secret scanning, `uv` dependency
 management, and pull-request CI are implemented. The reproducible first-results
