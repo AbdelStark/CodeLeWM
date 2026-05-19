@@ -273,9 +273,11 @@ jepa.py, module.py, utils.py    compatibility wrappers
 
 ## Start Here
 
+- Read `docs/usage/USAGE.md` for the install path and concrete CLI / Python examples.
 - Read `SPEC.md` for the canonical index.
 - Read `docs/spec/00-overview.md` for goals, non-goals, and pass gates.
 - Read `docs/spec/01-architecture.md` for subsystem boundaries.
+- Read `docs/spec/02-public-api.md` for the public CLI and Python contract.
 - Read `docs/spec/03-data-model.md` for transition and artifact contracts.
 - Read `docs/spec/07-testing-strategy.md` for validation expectations.
 
