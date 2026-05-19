@@ -20,7 +20,14 @@ codelewm eval surprise --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm
 codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/train.hdf5 --out indexes/v0_1
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
 codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
+codelewm manifest verify --manifest runs/v0_1/manifest.json
 ```
+
+`manifest verify` validates that every file declared in an artifact manifest
+exists, matches its recorded byte size and SHA-256, and that any required parent
+artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
+on any mismatch and emits a `codelewm.manifest_verify.v1` JSON report with
+`--json`. Release gates call this verifier.
 
 All commands support:
 
