@@ -21,7 +21,7 @@ Optional groups:
 
 ```bash
 uv sync --group dev --group data      # h5py + pyarrow for dataset packing
-uv sync --group dev --group train     # torch, Lightning, and LeWM training adapters
+uv sync --group dev --group train     # torch and training runtime adapters
 uv sync --group dev --group eval      # optional evaluation helpers
 uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
@@ -52,7 +52,7 @@ either as a Python API only or as a placeholder.
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
-| `codelewm train` | planned | `codelewm.training_run.v1` |
+| `codelewm train` | planned CLI; Python torch executor landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1` |
 | `codelewm eval retrieval` | planned | `codelewm.eval.retrieval_report.v1` |
 | `codelewm eval surprise` | planned | `codelewm.eval.surprise_report.v1` |
 | `codelewm index` | planned | `codelewm.transition_index.v1` |
@@ -229,9 +229,10 @@ If `h5py` or `pyarrow` is unavailable, the command exits with
 ### Planned commands (spec contract)
 
 The following commands appear in the spec and have manifests
-defined but are not yet wired up as full CLI subcommands. Their
-Python contracts are available today via `codelewm.training`,
-`codelewm.eval`, and `codelewm.harness`:
+defined but are not yet wired up as full CLI subcommands. The
+package-native torch training executor is available today through
+`codelewm.training.train_torch`; evaluation and index workflows are
+still Python/API surfaces until their CLI issues land.
 
 ```bash
 codelewm train         --config <yaml>
@@ -245,6 +246,26 @@ Each will emit the artifact manifest documented in
 schema-versioned report listed in the table above.
 
 ## Python API
+
+### Train the package-native model
+
+```python
+from codelewm.training import load_train_config, train_torch
+
+cfg = load_train_config("config/train/codelewm_tiny.yaml")
+manifest = train_torch(cfg, device="cpu")
+print(manifest.final_metrics["loss/total"])
+```
+
+`train_torch` consumes split HDF5 files produced by `codelewm dataset pack`,
+uses `action_text` by default, refuses patch-action training configs, writes
+`training_manifest.json`, `metrics.jsonl`, `reports/torch_training_report.json`,
+`checkpoints/checkpoint.pt`, and `checkpoints/checkpoint.pt.manifest.json`, and
+records the packed dataset artifact as the parent manifest. Install it with:
+
+```bash
+uv sync --group dev --group data --group train
+```
 
 ### Score one candidate
 

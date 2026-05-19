@@ -18,7 +18,8 @@ Implemented foundations:
   transition energy, objective helpers, retrieval-loss gate, and checkpoint
   compatibility manifests.
 - `codelewm.training`: manifest-backed training runner, resume compatibility,
-  default configs, and a CPU smoke executor.
+  default configs, a CPU smoke executor, and a package-native torch executor
+  over packed CodeLeWM transition batches.
 - `codelewm.eval`: retrieval metrics, hard-negative pools, required baselines,
   action-view policy, collapse diagnostics, and patch-surprise reports.
 - `codelewm.harness`: package CLI entry point with landed `score`, `rerank`,
@@ -33,8 +34,6 @@ Missing for first meaningful results:
   docs, and release workflows.
 - Dataset CLI commands that turn local raw edit shards into verified dataset
   artifacts.
-- A concrete CodeLeWM training executor wired to the manifest runner and package
-  model code.
 - `codelewm train`, `codelewm eval retrieval`, `codelewm eval surprise`, and
   `codelewm index` CLI flows.
 - A reproducible first-results report with dataset, training, checkpoint,

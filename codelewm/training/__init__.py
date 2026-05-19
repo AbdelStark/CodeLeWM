@@ -42,6 +42,15 @@ from .runner import (
     read_training_run_manifest,
     train,
 )
+from .torch_executor import (
+    DEFAULT_TRAINING_VOCAB_SIZE,
+    TORCH_CHECKPOINT_SCHEMA_VERSION,
+    TORCH_TRAINING_REPORT_SCHEMA_VERSION,
+    PackedTransitionHdf5Dataset,
+    make_torch_training_executor,
+    torch_training_executor,
+    train_torch,
+)
 
 __all__ = [
     "CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION",
@@ -49,12 +58,16 @@ __all__ = [
     "CheckpointResumePlan",
     "DEFAULT_SMALL_TRAIN_CONFIG",
     "DEFAULT_TINY_TRAIN_CONFIG",
+    "DEFAULT_TRAINING_VOCAB_SIZE",
     "LoaderConfig",
     "OptimizerConfig",
     "OutputConfig",
     "TRAINING_METRICS_SCHEMA_VERSION",
     "TRAINING_RUN_MANIFEST_SCHEMA_VERSION",
     "TRAIN_CONFIG_SCHEMA_VERSION",
+    "TORCH_CHECKPOINT_SCHEMA_VERSION",
+    "TORCH_TRAINING_REPORT_SCHEMA_VERSION",
+    "PackedTransitionHdf5Dataset",
     "TrainConfig",
     "TrainConfigError",
     "TrainDataConfig",
@@ -71,9 +84,12 @@ __all__ = [
     "default_train_config_paths",
     "load_default_train_configs",
     "load_train_config",
+    "make_torch_training_executor",
     "prepare_checkpoint_resume",
     "read_training_run_manifest",
     "train",
     "train_cpu_smoke",
+    "train_torch",
+    "torch_training_executor",
     "validate_train_config",
 ]

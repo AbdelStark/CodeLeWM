@@ -43,7 +43,8 @@ The current package includes:
   extraction, normalization, masks, action extraction, dataset build artifacts,
   split HDF5/Parquet packing, and dataset manifests;
 - `codelewm.model`: tensor contracts, text and abstract action tokenizers and
-  encoders, pooled code-latent predictor adapter, transition energy, checkpoint
+  encoders, a packed CodeState encoder, a torch transition model wrapper,
+  pooled code-latent predictor adapter, transition energy, checkpoint
   compatibility manifests, MSE plus SIGReg objective, and gated retrieval loss;
 - `codelewm.eval`: action-view report policy, retrieval metrics, required
   baseline reports, easy and hard candidate-pool reports, collapse diagnostics,
@@ -58,12 +59,12 @@ The current package includes:
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
-the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
-validation, local scoring, safe candidate reranking, manifest verification,
-secret scanning, `uv` dependency management, and pull-request CI are
+the CPU smoke training path, the package-native torch training executor,
+retrieval reports, hard-negative sampling, baseline validation, local scoring,
+safe candidate reranking, manifest verification, secret scanning, `uv`
+dependency management, and pull-request CI are
 implemented. A meaningful first training result is still pending: the remaining
-work is the train/eval/index CLI workflow, package-native training executor,
-and reproducible first-results report tracked in
+work is the train/eval/index CLI workflow and reproducible first-results report tracked in
 `docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
 logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
 existing Hydra configs are inherited from the original LeWorldModel seed and are
@@ -232,7 +233,7 @@ Optional dependency groups:
 
 ```bash
 uv sync --group dev --group data      # h5py + pyarrow for dataset packing
-uv sync --group dev --group train     # torch, Lightning, and inherited LeWM training adapters
+uv sync --group dev --group train     # torch and training runtime adapters
 uv sync --group dev --group eval      # optional evaluation helpers
 uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
@@ -279,6 +280,7 @@ docs/roadmap/FULL_COMPLETION.md remaining first-results and release roadmap
 docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
+codelewm/training/              configs, manifest runner, CPU smoke, torch executor
 codelewm/eval/                  action policy, collapse gates, kill reports
 codelewm/observability/         manifests, JSONL log events, redaction
 codelewm/harness/               CLI, scorer, reranker, and output schemas
