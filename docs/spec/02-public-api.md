@@ -17,7 +17,7 @@ codelewm dataset pack --manifest data/codelewm_v0_1/manifest.json --out data/cod
 codelewm train --config config/train/codelewm_tiny.yaml
 codelewm eval retrieval --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/retrieval
 codelewm eval surprise --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/surprise
-codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/train.hdf5 --out indexes/v0_1
+codelewm index --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out indexes/v0_1
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
 codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
 codelewm secret-scan runs/v0_1/ logs/
@@ -172,6 +172,32 @@ true ranks, per-category AUC/count slices, and explicit caveats for unavailable
 decoy categories. Scores are squared transition energies, so lower is better.
 Evaluation gate failures exit 6 with `error_type=evaluation_gate_error`.
 
+`codelewm index` is the public training-run plus packed-dataset to transition
+index path:
+
+```bash
+codelewm index \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-index \
+  --json
+```
+
+It verifies the packed dataset artifact, infers and verifies the parent
+training-run artifact manifest from the checkpoint directory, validates the
+paired checkpoint manifest before loading torch weights, and writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` for the index artifact;
+- `index.json`: `codelewm.transition_index.v1`;
+- `entries.jsonl`: train-split transition metadata rows;
+- `vectors.npy`: train-split `state_after` latent vectors.
+
+The command emits `codelewm.index_build.v1` on JSON stdout. Index artifacts use
+only the `train` split, so scorer/reranker retrieval priors do not retrieve
+held-out evaluation rows. Index validation failures exit 6 with
+`error_type=evaluation_gate_error`; malformed requests exit 2 with
+`error_type=config_error`.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
@@ -187,7 +213,12 @@ set or `--no-recursive` to scan only the top level. See
 
 `score` and `rerank` refuse to load a checkpoint without a paired manifest by
 default; pass `--allow-unsafe-checkpoint` to opt out in a trusted local
-environment. See `docs/spec/06-security.md#checkpoint-trust`.
+environment. Both commands accept `--index <dir>` plus
+`--retrieval-prior-weight <float>` and `--retrieval-prior-k <int>`. The prior is
+a nearest-neighbor distance penalty over the local transition index. Lower
+`final_score` remains better. With the default weight of `0.0`, the prior is
+reported but does not alter ordering. See
+`docs/spec/06-security.md#checkpoint-trust`.
 
 All commands support:
 
@@ -305,9 +336,11 @@ class ScoreResult:
 ```
 
 `load_scorer` verifies the checkpoint path and records its SHA-256 before
-scoring. The initial runtime-light backend is deterministic and intended for API
-and fixture validation; model-backed checkpoint execution can replace the backend
-without changing `ScoreResult`.
+scoring. It can also load a local `codelewm.transition_index.v1` directory and
+populate `retrieval_prior` without changing the score schema. The initial
+runtime-light backend is deterministic and intended for API and fixture
+validation; model-backed checkpoint execution can replace the backend without
+changing `ScoreResult`.
 
 `codelewm rerank` accepts either one candidate path or a directory of candidates.
 Candidate files are interpreted as complete after-state Python files unless the

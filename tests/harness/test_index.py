@@ -206,6 +206,19 @@ class TransitionIndexManifestTest(unittest.TestCase):
             with self.assertRaisesRegex(TransitionIndexError, "validation"):
                 read_transition_index(root)
 
+    def test_read_fails_when_header_schema_version_is_unsupported(self) -> None:
+        index = _fixture_index()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_transition_index(index, root)
+            header_path = root / "index.json"
+            header = json.loads(header_path.read_text(encoding="utf-8"))
+            header["schema_version"] = "codelewm.transition_index.v0"
+            header_path.write_text(json.dumps(header), encoding="utf-8")
+
+            with self.assertRaisesRegex(TransitionIndexError, "unsupported index schema_version"):
+                read_transition_index(root, verify_manifest=False)
+
     def test_header_json_schema_pins_required_fields(self) -> None:
         schema = transition_index_header_json_schema()
 

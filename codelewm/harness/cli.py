@@ -28,7 +28,9 @@ from codelewm.eval import (
     run_retrieval_evaluation,
     run_surprise_evaluation,
 )
+from codelewm.harness.index_runner import build_transition_index_artifact
 from codelewm.harness.scorer import ScoreError, load_scorer
+from codelewm.harness.transition_index import TransitionIndexError
 from codelewm.observability import (
     ArtifactManifestError,
     LogEvent,
@@ -71,6 +73,14 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--candidate", type=Path, required=True, help="candidate after-state Python file")
     score.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
     score.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
+    score.add_argument("--index", type=Path, help="transition index directory for retrieval-prior scoring")
+    score.add_argument(
+        "--retrieval-prior-weight",
+        type=float,
+        default=0.0,
+        help="non-negative weight applied to the retrieval prior",
+    )
+    score.add_argument("--retrieval-prior-k", type=int, default=10, help="nearest index hits used for the prior")
     score.add_argument("--json", action="store_true", help="emit JSON output")
     score.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     score.add_argument(
@@ -90,6 +100,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rerank.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
     rerank.add_argument("--device", default="auto", choices=("cpu", "cuda", "mps", "auto"))
+    rerank.add_argument("--index", type=Path, help="transition index directory for retrieval-prior scoring")
+    rerank.add_argument(
+        "--retrieval-prior-weight",
+        type=float,
+        default=0.0,
+        help="non-negative weight applied to the retrieval prior",
+    )
+    rerank.add_argument("--retrieval-prior-k", type=int, default=10, help="nearest index hits used for the prior")
     rerank.add_argument("--json", action="store_true", help="emit JSON output")
     rerank.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     rerank.add_argument(
@@ -157,6 +175,17 @@ def build_parser() -> argparse.ArgumentParser:
     surprise.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
     surprise.set_defaults(func=_eval_surprise_command)
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
+    index = subparsers.add_parser("index", help="build a transition index artifact")
+    index.add_argument("--checkpoint", type=Path, required=True, help="trusted training checkpoint path")
+    index.add_argument("--data", type=Path, required=True, help="packed dataset directory or manifest.json")
+    index.add_argument("--out", type=Path, required=True, help="transition index artifact directory")
+    index.add_argument("--device", default="cpu", choices=("cpu", "cuda", "mps", "auto"))
+    index.add_argument("--distance", default="l2", choices=("l2", "cosine"), help="index distance metric")
+    index.add_argument("--name", default="codelewm-train-index", help="index name recorded in index.json")
+    index.add_argument("--overwrite", action="store_true", help="overwrite existing index output files")
+    index.add_argument("--json", action="store_true", help="emit JSON output")
+    index.add_argument("--log-jsonl", type=Path, help="append structured JSONL logs to this local file")
+    index.set_defaults(func=_index_command)
     dataset = subparsers.add_parser("dataset", help="dataset build and packing utilities")
     dataset_subcommands = dataset.add_subparsers(dest="dataset_command")
     build = dataset_subcommands.add_parser("build", help="build a transition dataset artifact")
@@ -259,11 +288,21 @@ def _score_command(args: argparse.Namespace) -> int:
                     "candidate": str(args.candidate),
                     "checkpoint": str(args.checkpoint),
                     "device": args.device,
+                    "index": None if args.index is None else str(args.index),
+                    "retrieval_prior_weight": args.retrieval_prior_weight,
+                    "retrieval_prior_k": args.retrieval_prior_k,
                     "instruction_sha256": _sha256_text(instruction),
                 },
             ),
         )
-        scorer = load_scorer(args.checkpoint, device=args.device, allow_unsafe=args.allow_unsafe_checkpoint)
+        scorer = load_scorer(
+            args.checkpoint,
+            device=args.device,
+            allow_unsafe=args.allow_unsafe_checkpoint,
+            index=args.index,
+            retrieval_prior_weight=args.retrieval_prior_weight,
+            retrieval_prior_k=args.retrieval_prior_k,
+        )
         result = scorer.score_files(
             before=args.before,
             instruction=instruction,
@@ -738,6 +777,120 @@ def _eval_surprise_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _index_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _index_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="index.start",
+                level="info",
+                run_id=run_id,
+                step="index",
+                message="index command started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "data": str(args.data),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "distance": args.distance,
+                    "name": args.name,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = build_transition_index_artifact(
+            checkpoint=args.checkpoint,
+            data=args.data,
+            out=args.out,
+            device=args.device,
+            distance=args.distance,
+            name=args.name,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="index.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="index",
+                message="index command completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "index_path": result.index_path,
+                    "count": result.count,
+                    "dim": result.dim,
+                    "parent_artifacts": list(result.parent_artifacts),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"index optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.data),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="index", event="index.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"index checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="index", event="index.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"index artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training run, and dataset manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="index", event="index.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (TransitionIndexError, RetrievalEvalError) as exc:
+        error, exit_code = _index_error(args, exc)
+        _emit_error_log(args, run_id=run_id, step="index", event="index.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"index build failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the index inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step="index", event="index.error", exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"index: {args.out / result.index_path}")
+        print(f"vectors: {args.out / result.vectors_path}")
+        print(f"entries: {args.out / result.entries_path}")
+        print(f"count: {result.count}")
+        print(f"dim: {result.dim}")
+        print(f"distance: {result.distance}")
+    return 0
+
+
 def _dataset_pack_command(args: argparse.Namespace) -> int:
     command = (
         "codelewm",
@@ -960,6 +1113,32 @@ def _eval_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     return tuple(command)
 
 
+def _index_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "index",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--data",
+        str(args.data),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--distance",
+        str(args.distance),
+        "--name",
+        str(args.name),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
 def _retrieval_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, int]:
     message = str(exc)
     normalized = message.lower()
@@ -985,6 +1164,38 @@ def _retrieval_eval_error(args: argparse.Namespace, exc: Exception) -> tuple[Sco
             f"retrieval evaluation gate failed: {exc}",
             error_type="evaluation_gate_error",
             remediation="inspect the retrieval report inputs, baselines, and action-view policy",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        6,
+    )
+
+
+def _index_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if (
+        "output already exists" in normalized
+        or "--data" in normalized
+        or "device" in normalized
+        or "distance" in normalized
+        or "name must not be empty" in normalized
+    ):
+        return (
+            ScoreError(
+                f"index request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or choose a clean output directory",
+                artifact=str(args.out),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"index build gate failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect the index inputs, training split, and scores",
             artifact=str(args.out),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         ),
@@ -1079,11 +1290,21 @@ def _rerank_command(args: argparse.Namespace) -> int:
                     "candidates": str(args.candidates),
                     "checkpoint": str(args.checkpoint),
                     "device": args.device,
+                    "index": None if args.index is None else str(args.index),
+                    "retrieval_prior_weight": args.retrieval_prior_weight,
+                    "retrieval_prior_k": args.retrieval_prior_k,
                     "instruction_sha256": _sha256_text(instruction),
                 },
             ),
         )
-        scorer = load_scorer(args.checkpoint, device=args.device, allow_unsafe=args.allow_unsafe_checkpoint)
+        scorer = load_scorer(
+            args.checkpoint,
+            device=args.device,
+            allow_unsafe=args.allow_unsafe_checkpoint,
+            index=args.index,
+            retrieval_prior_weight=args.retrieval_prior_weight,
+            retrieval_prior_k=args.retrieval_prior_k,
+        )
         result = scorer.rerank_files(
             before=args.before,
             instruction=instruction,

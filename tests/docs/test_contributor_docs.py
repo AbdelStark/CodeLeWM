@@ -84,6 +84,7 @@ class ChangelogContentTest(unittest.TestCase):
             "codelewm.training_metrics.v1",
             "codelewm.cpu_smoke_checkpoint.v1",
             "codelewm.cpu_smoke_report.v1",
+            "codelewm.index_build.v1",
             "codelewm.eval.retrieval_metrics.v1",
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.candidate_pool.v1",

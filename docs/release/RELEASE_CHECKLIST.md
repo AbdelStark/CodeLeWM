@@ -50,7 +50,7 @@ glance.
 | Dataset | `codelewm.dataset.v1` | | | |
 | Training run | `codelewm.training_run.v1` | | | |
 | Checkpoint | `codelewm.checkpoint.v1` | | | |
-| Index (optional) | `codelewm.transition_index.v1` | | | |
+| Index | `codelewm.transition_index.v1` | | | |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | | | |
 | Surprise report | `codelewm.eval.surprise_report.v1` | | | |
 | License gate | `codelewm.public_license_gate.v1` | | | |

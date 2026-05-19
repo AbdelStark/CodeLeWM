@@ -35,6 +35,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("rerank", help_text)
         self.assertIn("train", help_text)
         self.assertIn("eval", help_text)
+        self.assertIn("index", help_text)
         self.assertIn("dataset", help_text)
         self.assertIn("secret-scan", help_text)
 
@@ -47,6 +48,9 @@ class PublicCliContractTest(unittest.TestCase):
             "--candidate",
             "--checkpoint",
             "--device",
+            "--index",
+            "--retrieval-prior-weight",
+            "--retrieval-prior-k",
             "--json",
             "--log-jsonl",
             "--allow-unsafe-checkpoint",
@@ -63,6 +67,9 @@ class PublicCliContractTest(unittest.TestCase):
             "--candidates",
             "--checkpoint",
             "--device",
+            "--index",
+            "--retrieval-prior-weight",
+            "--retrieval-prior-k",
             "--json",
             "--log-jsonl",
             "--allow-unsafe-checkpoint",
@@ -133,6 +140,23 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_index_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("index", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--data",
+            "--out",
+            "--device",
+            "--distance",
+            "--name",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_dataset_pack_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("dataset", "pack", "--help")
 
@@ -148,6 +172,7 @@ class PublicCliContractTest(unittest.TestCase):
             ("train", "--config", "missing.json", "--device", "tpu"),
             ("eval", "retrieval", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
             ("eval", "surprise", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
+            ("index", "--checkpoint", "ckpt", "--data", "pack", "--out", "out", "--device", "tpu"),
         )
 
         for argv in cases:

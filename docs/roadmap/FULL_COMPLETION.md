@@ -19,7 +19,7 @@ CI, and release templates.
 
 The repository still has no meaningful CodeLeWM training result. The landed
 tiny path can build, pack, train the package-native torch model, and emit a
-retrieval report plus a surprise report, but it still needs indexing and a
+retrieval report, surprise report, and transition index, but it still needs a
 reproducible first-results report before any research claim is warranted.
 
 Current landed CLI commands:
@@ -33,10 +33,10 @@ Current landed CLI commands:
 - `codelewm train`
 - `codelewm eval retrieval`
 - `codelewm eval surprise`
-
-CLI commands still required for the first useful workflow:
-
 - `codelewm index`
+
+No additional first-results CLI command is currently missing. The remaining
+v0.2 work is to orchestrate the landed commands into a reproducible report.
 
 ## Meaningful First Training Result
 
@@ -217,9 +217,8 @@ and the release checklist no longer lists a blocker for that subsystem.
   work expands CI.
 - The CPU smoke path validates runner contracts but does not prove the model can
   learn the CodeLeWM task.
-- Existing retrieval and surprise CLI workflows are artifact-backed, but the
-  transition-index CLI still needs artifact
-  lineage, manifest verification, and report writing.
+- The full tiny workflow is now artifact-backed, but the first-results report
+  still needs to run it from a clean checkout and preserve exact evidence.
 - Root legacy scripts can confuse contributors; public docs must keep the
   package-native path clearly marked as authoritative.
 - First-result claims must stay narrow until scaled ablations show reliable
