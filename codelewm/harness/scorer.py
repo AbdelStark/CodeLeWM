@@ -10,12 +10,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+import numpy as np
+
 from codelewm.model.checkpoint import sha256_file
 from codelewm.model.transition import transition_energy
 from codelewm.security import (
     CheckpointTrustError,
     parse_python_source_text,
     require_trusted_checkpoint,
+)
+
+from .transition_index import (
+    TransitionIndex,
+    TransitionIndexError,
+    read_transition_index,
 )
 
 
@@ -159,6 +167,10 @@ class ScoreResult:
             raise ScoreError("transition_energy must be finite")
         if not math.isfinite(self.final_score):
             raise ScoreError("final_score must be finite")
+        if self.retrieval_prior is not None and not math.isfinite(self.retrieval_prior):
+            raise ScoreError("retrieval_prior must be finite")
+        if self.risk_penalty is not None and not math.isfinite(self.risk_penalty):
+            raise ScoreError("risk_penalty must be finite")
         if not self.model_id:
             raise ScoreError("model_id must not be empty")
         if len(self.checkpoint_sha256) != 64:
@@ -266,6 +278,9 @@ class CodeLeWMScorer:
     checkpoint_sha256: str
     backend: TransitionScoringBackend
     device: str = "auto"
+    transition_index: TransitionIndex | None = None
+    retrieval_prior_weight: float = 0.0
+    retrieval_prior_k: int = 10
 
     @property
     def model_id(self) -> str:
@@ -309,7 +324,7 @@ class CodeLeWMScorer:
         ordered_scores = tuple(sorted(score_results, key=lambda result: (result.final_score, result.candidate)))
         return RerankResult(
             results=(*ordered_scores, *error_reports),
-            warnings=self.backend.warnings,
+            warnings=self._warnings(),
         )
 
     def score_texts(
@@ -323,17 +338,54 @@ class CodeLeWMScorer:
         if not instruction.strip():
             raise ScoreError("instruction must not be empty")
         energy = self.backend.transition_energy(before, instruction, candidate)
+        retrieval_prior = self._retrieval_prior(candidate)
+        final_score = energy
+        if retrieval_prior is not None:
+            final_score = energy + self.retrieval_prior_weight * retrieval_prior
         return ScoreResult(
             candidate=candidate_name,
             transition_energy=energy,
-            retrieval_prior=None,
+            retrieval_prior=retrieval_prior,
             risk_penalty=None,
-            final_score=energy,
+            final_score=final_score,
             model_id=self.model_id,
             checkpoint_sha256=self.checkpoint_sha256,
             input_digest=score_input_digest(before, instruction, candidate),
-            warnings=self.backend.warnings,
+            warnings=self._warnings(),
         )
+
+    def _retrieval_prior(self, candidate: str) -> float | None:
+        if self.transition_index is None:
+            return None
+        if self.transition_index.count == 0:
+            raise ScoreError(
+                "transition index is empty",
+                error_type="manifest_error",
+                remediation="rebuild the transition index from a non-empty train split",
+            )
+        query = np.asarray(_hashed_vector(candidate, dim=self.transition_index.dim), dtype=np.float32)
+        hits = self.transition_index.search(query, k=min(self.retrieval_prior_k, self.transition_index.count))
+        if not hits:
+            raise ScoreError(
+                "transition index returned no hits",
+                error_type="scoring_error",
+                remediation="inspect the transition index and retry",
+            )
+        prior = float(sum(hit.distance for hit in hits) / len(hits))
+        if not math.isfinite(prior):
+            raise ScoreError("retrieval_prior must be finite")
+        return prior
+
+    def _warnings(self) -> tuple[str, ...]:
+        warnings = list(self.backend.warnings)
+        if self.transition_index is not None:
+            warnings.append(
+                "retrieval prior computed from local transition index "
+                f"(k={self.retrieval_prior_k}, weight={self.retrieval_prior_weight:g})"
+            )
+            if self.retrieval_prior_weight == 0.0:
+                warnings.append("retrieval prior weight is 0; final_score is unchanged")
+        return tuple(warnings)
 
 
 def load_scorer(
@@ -343,6 +395,9 @@ def load_scorer(
     backend: TransitionScoringBackend | None = None,
     allow_unsafe: bool = False,
     checkpoint_manifest: Path | str | None = None,
+    index: Path | str | None = None,
+    retrieval_prior_weight: float = 0.0,
+    retrieval_prior_k: int = 10,
 ) -> CodeLeWMScorer:
     """Load a local scorer wrapper after verifying the checkpoint path exists.
 
@@ -376,11 +431,26 @@ def load_scorer(
                 artifact=str(checkpoint_path),
                 caused_by=f"{exc.__class__.__name__}: {exc}",
             ) from exc
+    retrieval_weight = _non_negative_float(
+        retrieval_prior_weight,
+        "retrieval_prior_weight",
+    )
+    retrieval_k = _positive_int(retrieval_prior_k, "retrieval_prior_k")
+    if index is None and retrieval_weight != 0.0:
+        raise ScoreError(
+            "retrieval_prior_weight requires an index",
+            error_type="config_error",
+            remediation="pass --index or set retrieval_prior_weight to 0",
+        )
+    transition_index = _load_transition_index(index)
     return CodeLeWMScorer(
         checkpoint=checkpoint_path,
         checkpoint_sha256=sha256_file(checkpoint_path),
         backend=HashingTransitionScoringBackend() if backend is None else backend,
         device=device,
+        transition_index=transition_index,
+        retrieval_prior_weight=retrieval_weight,
+        retrieval_prior_k=retrieval_k,
     )
 
 
@@ -430,6 +500,22 @@ def validate_rerank_result_payload(payload: dict[str, Any]) -> RerankResult:
     """Return a validated rerank result payload."""
 
     return RerankResult.from_dict(payload)
+
+
+def _load_transition_index(index: Path | str | None) -> TransitionIndex | None:
+    if index is None:
+        return None
+    index_path = Path(index)
+    try:
+        return read_transition_index(index_path)
+    except (TransitionIndexError, OSError, json.JSONDecodeError) as exc:
+        raise ScoreError(
+            f"transition index could not be loaded: {exc}",
+            error_type="manifest_error",
+            remediation="provide a valid transition index directory built by `codelewm index`",
+            artifact=str(index_path),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ) from exc
 
 
 def score_result_json_schema() -> dict[str, Any]:
@@ -682,6 +768,54 @@ def _patch_error(message: str, artifact: str) -> ScoreError:
         remediation="provide a single-file unified diff that applies cleanly to the before file",
         artifact=artifact,
     )
+
+
+def _positive_int(value: Any, name: str) -> int:
+    if isinstance(value, bool):
+        raise ScoreError(
+            f"{name} must be a positive integer",
+            error_type="config_error",
+            remediation="provide a positive integer",
+        )
+    try:
+        result = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ScoreError(
+            f"{name} must be a positive integer",
+            error_type="config_error",
+            remediation="provide a positive integer",
+        ) from exc
+    if result <= 0 or result != value:
+        raise ScoreError(
+            f"{name} must be a positive integer",
+            error_type="config_error",
+            remediation="provide a positive integer",
+        )
+    return result
+
+
+def _non_negative_float(value: Any, name: str) -> float:
+    if isinstance(value, bool):
+        raise ScoreError(
+            f"{name} must be a non-negative finite number",
+            error_type="config_error",
+            remediation="provide a non-negative finite number",
+        )
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ScoreError(
+            f"{name} must be a non-negative finite number",
+            error_type="config_error",
+            remediation="provide a non-negative finite number",
+        ) from exc
+    if result < 0.0 or not math.isfinite(result):
+        raise ScoreError(
+            f"{name} must be a non-negative finite number",
+            error_type="config_error",
+            remediation="provide a non-negative finite number",
+        )
+    return result
 
 
 def _hashed_vector(text: str, *, dim: int) -> list[float]:

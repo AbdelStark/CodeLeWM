@@ -889,14 +889,14 @@ score(before, instruction, candidate):
 
    transition_energy = || z_p − z_c ||²
    final_score       = transition_energy
-                     + α · retrieval_prior        # v0.1: α = 0
+                     + α · retrieval_prior        # default α = 0
                      + β · risk_penalty           # v0.1: β = 0
    return ScoreResult{...}
 ```
 
-`α` and `β` are present but zero in v0.1 — they will be activated only after
-the retrieval index (`codelewm index`) and risk metrics are themselves
-validated. Until then, scoring is *purely* transition energy.
+`α` defaults to zero, so scoring remains pure transition energy unless the user
+explicitly passes `--index` and `--retrieval-prior-weight`. `β` remains zero in
+v0.1 until risk metrics are validated.
 
 ### 9.3 ScoreResult
 
@@ -1010,20 +1010,20 @@ Non-execution invariants the harness must uphold:
 The agent / tool generates; CodeLeWM **scores**. The split is the entire
 product thesis.
 
-### 9.6 Future: index-backed retrieval prior
+### 9.6 Index-backed retrieval prior
 
-`codelewm index` (in progress) builds an ANN index over `z_after` for all
-training transitions. At score time, the harness can:
+`codelewm index` builds a local index over `z_after` for train-split
+transitions. At score time, the harness can:
 
 ```text
-neighbors        = index.knn(z_p, k=K)
-retrieval_prior  = -mean_distance(z_p, neighbors)    # or learned mapping
+neighbors        = index.knn(candidate_after_proxy, k=K)
+retrieval_prior  = mean_distance(candidate_after_proxy, neighbors)
 final_score      = transition_energy + α · retrieval_prior
 ```
 
-This gives the harness a "have I seen edits like this before?" signal. It is
-gated behind α=0 until the index and its retrieval prior are validated end to
-end on `eval retrieval`.
+This gives the harness a "have I seen after-states like this before?" signal.
+Lower `final_score` remains better. The default α is `0.0`, which reports the
+prior without changing ordering; non-zero weights are explicit CLI choices.
 
 ---
 
@@ -1066,7 +1066,7 @@ end on `eval retrieval`.
                                   │
                                   ▼ (only after gates pass)
    ┌─────────────────────────────────────────────────────┐
-   │ codelewm index (future)                             │
+   │ codelewm index                                      │
    │   → ANN over training z_after                       │
    └─────────────────────────────────────────────────────┘
                                   │
@@ -1104,7 +1104,7 @@ end on `eval retrieval`.
                                  ▼
                        transition_energy
                                  │
-                  (+ α · retrieval_prior, v0.1: α=0)
+                  (+ α · retrieval_prior, default α=0)
                   (+ β · risk_penalty,    v0.1: β=0)
                                  │
                                  ▼

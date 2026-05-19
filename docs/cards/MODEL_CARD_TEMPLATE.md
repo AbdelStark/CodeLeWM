@@ -123,8 +123,9 @@ appear only as diagnostics.
 | Train | `codelewm train --config <yaml>` |
 | Evaluate retrieval | `codelewm eval retrieval --checkpoint <ckpt> --data <pack_dir> --out <retrieval_dir>` |
 | Evaluate surprise | `codelewm eval surprise --checkpoint <ckpt> --data <pack_dir> --out <surprise_dir>` |
+| Build index | `codelewm index --checkpoint <ckpt> --data <pack_dir> --out <index_dir>` |
 | Verify | `codelewm manifest verify --manifest <run_dir>/manifest.json` |
-| Score one candidate | `codelewm score --before <before.py> --instruction <text> --candidate <after.py> --checkpoint <ckpt>` |
+| Score one candidate | `codelewm score --before <before.py> --instruction <text> --candidate <after.py> --checkpoint <ckpt> --index <index_dir>` |
 
 The trust gate refuses to load the checkpoint without its
 `<checkpoint>.manifest.json`. Releases must verify the trust gate

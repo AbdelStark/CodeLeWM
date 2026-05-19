@@ -6,16 +6,15 @@ Use this prompt for the next implementation run.
 Continue CodeLeWM from the current main branch and execute the full-completion
 roadmap one issue at a time.
 
-Start with #109: build: migrate dependency management and CI to uv.
+Start with #117: results: add reproducible first-results runner and report.
 
 Before editing, read AGENTS.md, SPEC.md, docs/roadmap/FULL_COMPLETION.md,
 docs/roadmap/IMPLEMENTATION.md, CONTRIBUTING.md, the relevant docs/spec file,
 and the relevant docs/rfcs file.
 
-Work sequentially: one issue, one branch, one PR. Do not skip #109, because the
-uv dependency and CI contract is the foundation for the dataset, training,
-evaluation, index, publishing, and release issues. Keep public docs direct and
-evidence-backed. Do not add unsupported claims.
+Work sequentially: one issue, one branch, one PR. The dependency, dataset,
+training, evaluation, and index CLI foundations are now landed; do not add
+unsupported claims while wiring them into the first-results evidence path.
 
 For each issue:
 1. Re-read the issue body and linked spec/RFC.

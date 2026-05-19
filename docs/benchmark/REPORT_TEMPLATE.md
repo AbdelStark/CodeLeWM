@@ -12,7 +12,7 @@
 - Date (UTC): `<YYYY-MM-DD>`
 - Checkpoint manifest: `<artifact_id from codelewm.checkpoint.v1>`
 - Dataset manifest: `<artifact_id from codelewm.dataset.v1>`
-- Index manifest (if used): `<artifact_id from codelewm.transition_index.v1>`
+- Index manifest: `<artifact_id from codelewm.transition_index.v1>`
 - Source git SHA: `<40-char SHA from manifest.source_git_sha>`
 - Run reproduction command: `<exact CLI line that produced the run>`
 - Author / on-call: `<github-handle>`
@@ -24,7 +24,7 @@
 | Dataset  | `codelewm.dataset.v1` | `<path>` | `<id>` |
 | Training run | `codelewm.training_run.v1` | `<path>` | `<id>` |
 | Checkpoint | `codelewm.checkpoint.v1` | `<path>` | `<id>` |
-| Index (optional) | `codelewm.transition_index.v1` | `<path>` | `<id>` |
+| Index | `codelewm.transition_index.v1` | `<path>` | `<id>` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | `<path>` | `<id>` |
 | Surprise report | `codelewm.eval.surprise_report.v1` | `<path>` | `<id>` |
 | License gate | `codelewm.public_license_gate.v1` | `<path>` | `<id>` |

@@ -40,9 +40,7 @@ Some tests skip when optional runtimes such as `torch`, `h5py`, or
 ## Command Surface
 
 The console script exposes one entry point, `codelewm`, with the
-following subcommands. Commands marked **landed** are runnable
-today; commands marked **planned** are part of the spec and exist
-either as a Python API only or as a placeholder.
+following subcommands. Commands marked **landed** are runnable today.
 
 | Command | Status | Public schema produced |
 | ------- | ------ | ---------------------- |
@@ -55,7 +53,7 @@ either as a Python API only or as a placeholder.
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
-| `codelewm index` | planned | `codelewm.transition_index.v1` |
+| `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 
 Run `codelewm <command> --help` for the current flag set. JSON
 output is opt-in via `--json` on every landed command.
@@ -103,6 +101,13 @@ recommended for automation):
 Optional flags:
 
 - `--device {cpu,cuda,mps,auto}` (default `auto`);
+- `--index <dir>` loads a local `codelewm.transition_index.v1` artifact and
+  emits a non-null `retrieval_prior`;
+- `--retrieval-prior-weight <float>` applies a non-negative weight to the
+  retrieval prior. The default is `0.0`, so `final_score` is unchanged even when
+  the prior is reported;
+- `--retrieval-prior-k <int>` controls how many nearest index hits are averaged
+  into the prior;
 - `--log-jsonl <path>` appends structured `codelewm.log_event.v1`
   events to a local JSONL file. The redactor in
   `codelewm.observability.logging` removes secret patterns, home
@@ -363,14 +368,63 @@ Surprise gate failures return `error_type=evaluation_gate_error`. Missing
 runtime packages return `error_type=optional_dependency_missing`; missing or
 tampered checkpoint manifests return `error_type=checkpoint_error`.
 
-### Planned commands (spec contract)
+### `codelewm index`
 
-The following command appears in the spec and has manifests defined but is not
-yet wired up as a full CLI subcommand.
+Build a train-split transition index from a trusted checkpoint and packed
+dataset:
 
 ```bash
-codelewm index --checkpoint <ckpt> --data <hdf5> --out <dir>
+codelewm index \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-index \
+  --json
 ```
+
+The command requires the data and train dependency groups. It verifies the
+packed dataset artifact, infers and verifies the parent training-run artifact
+from the checkpoint location, validates the paired checkpoint manifest before
+loading torch weights, and writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  index.json                                 codelewm.transition_index.v1
+  entries.jsonl                              indexed train transitions
+  vectors.npy                                train after-state latents
+```
+
+The JSON stdout summary uses `codelewm.index_build.v1`. The index stores only
+`train` split transitions so downstream scoring does not retrieve held-out
+evaluation rows.
+
+Verify lineage by passing both parent manifests:
+
+```bash
+codelewm manifest verify \
+  --manifest .artifacts/tiny-index/manifest.json \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --parent-manifest .artifacts/tiny-pack/manifest.json \
+  --json
+```
+
+Use the index as an explicit retrieval-prior input to scoring or reranking:
+
+```bash
+codelewm rerank \
+  --before before.py \
+  --instruction "increment value" \
+  --candidates candidates/ \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --index .artifacts/tiny-index \
+  --retrieval-prior-weight 0.1 \
+  --json
+```
+
+The prior is a nearest-neighbor distance penalty averaged over
+`--retrieval-prior-k` index hits. Lower `final_score` remains better. With the
+default `--retrieval-prior-weight 0.0`, the prior is reported but does not alter
+ordering.
 
 ## Python API
 
@@ -566,6 +620,7 @@ field list.
 | Checkpoint manifest | `codelewm.checkpoint.v1` |
 | Training run manifest | `codelewm.training_run.v1` |
 | Training metrics | `codelewm.training_metrics.v1` |
+| Index build report | `codelewm.index_build.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |

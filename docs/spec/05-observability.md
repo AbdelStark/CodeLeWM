@@ -100,6 +100,12 @@ by category, record per-example true ranks, and include category caveats in
 metadata when the held-out data cannot support random, same-file, mutation, or
 action-cluster decoys.
 
+Transition indexes use `schema_version=codelewm.transition_index.v1` in
+`index.json`, store train-split `state_after` vectors in `vectors.npy`, and
+store one JSONL metadata record per vector in `entries.jsonl`. The index artifact
+manifest records both the training-run artifact and packed-dataset artifact as
+parents.
+
 ## Artifact Lineage
 
 Every dataset, checkpoint, index, and report includes:

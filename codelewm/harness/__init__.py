@@ -15,6 +15,11 @@ from .transition_index import (
     transition_index_header_json_schema,
     write_transition_index,
 )
+from .index_runner import (
+    INDEX_BUILD_RESULT_SCHEMA_VERSION,
+    IndexBuildResult,
+    build_transition_index_artifact,
+)
 from .scorer import (
     ERROR_REPORT_SCHEMA_VERSION,
     RERANK_RESULT_SCHEMA_VERSION,
@@ -50,12 +55,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 __all__ = [
     "ERROR_REPORT_SCHEMA_VERSION",
+    "INDEX_BUILD_RESULT_SCHEMA_VERSION",
     "RERANK_RESULT_SCHEMA_VERSION",
     "SCORE_RESULT_SCHEMA_VERSION",
     "TRANSITION_INDEX_SCHEMA_VERSION",
     "CodeLeWMScorer",
     "ErrorReport",
     "HashingTransitionScoringBackend",
+    "IndexBuildResult",
     "RerankResult",
     "ScoreError",
     "ScoreResult",
@@ -65,6 +72,7 @@ __all__ = [
     "TransitionIndexSearchHit",
     "TransitionScoringBackend",
     "build_transition_index",
+    "build_transition_index_artifact",
     "error_report_json_schema",
     "error_report_to_json",
     "load_scorer",

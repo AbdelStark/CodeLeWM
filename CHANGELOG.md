@@ -57,6 +57,7 @@ their workflow depends on.
 | Training metrics              | `codelewm.training_metrics.v1`                  |
 | CPU smoke checkpoint          | `codelewm.cpu_smoke_checkpoint.v1`              |
 | CPU smoke report              | `codelewm.cpu_smoke_report.v1`                  |
+| Index build report            | `codelewm.index_build.v1`                       |
 | Retrieval eval run            | `codelewm.eval.retrieval_run.v1`                |
 | Retrieval metrics             | `codelewm.eval.retrieval_metrics.v1`            |
 | Retrieval report              | `codelewm.eval.retrieval_report.v1`             |

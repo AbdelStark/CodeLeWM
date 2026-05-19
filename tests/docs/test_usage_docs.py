@@ -71,6 +71,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.error.v1",
             "codelewm.artifact_manifest.v1",
             "codelewm.training_run.v1",
+            "codelewm.index_build.v1",
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.transition_index.v1",
