@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+load_env_defaults() {
+  local env_file="${1:-.env}"
+  [[ -f "$env_file" ]] || return 0
+  while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
+    local line key value
+    line="${raw_line#"${raw_line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "$line" || "${line:0:1}" == "#" || "$line" != *"="* ]] && continue
+    line="${line#export }"
+    key="${line%%=*}"
+    value="${line#*=}"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    if [[ -z "${!key+x}" ]]; then
+      export "$key=$value"
+    fi
+  done < "$env_file"
+}
+
+require_file() {
+  local path="$1" name="$2"
+  if [[ ! -f "$path" ]]; then
+    echo "$name does not exist: $path" >&2
+    exit 2
+  fi
+}
+
+load_env_defaults ".env"
+
+RUN_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+CODELEWM_HF_PIPELINE_MODE="${CODELEWM_HF_PIPELINE_MODE:-smoke}"
+CODELEWM_HF_RUN_ID="${CODELEWM_HF_RUN_ID:-${JOB_ID:-codelewm-$RUN_STAMP}}"
+CODELEWM_HF_OUTPUT_ROOT="${CODELEWM_HF_OUTPUT_ROOT:-.artifacts/hf}"
+CODELEWM_HF_PUBLISH="${CODELEWM_HF_PUBLISH:-0}"
+CODELEWM_HF_PUBLISH_DRY_RUN="${CODELEWM_HF_PUBLISH_DRY_RUN:-${CODELEWM_HF_JOBS_DRY_RUN:-1}}"
+CODELEWM_HF_TRAIN_EXECUTOR="${CODELEWM_HF_TRAIN_EXECUTOR:-torch}"
+CODELEWM_HF_DEVICE="${CODELEWM_HF_DEVICE:-auto}"
+CODELEWM_HF_EVAL_SEED="${CODELEWM_HF_EVAL_SEED:-0}"
+
+OUTPUT_ROOT="$CODELEWM_HF_OUTPUT_ROOT/$CODELEWM_HF_RUN_ID"
+REPORT_PATH="$OUTPUT_ROOT/reports/FIRST_RESULTS.md"
+mkdir -p "$OUTPUT_ROOT"
+
+if [[ "$CODELEWM_HF_PIPELINE_MODE" == "smoke" ]]; then
+  uv run scripts/first-results \
+    --output-root "$OUTPUT_ROOT" \
+    --report "$REPORT_PATH" \
+    --overwrite
+elif [[ "$CODELEWM_HF_PIPELINE_MODE" == "scaled" ]]; then
+  : "${CODELEWM_DATASET_BUILD_CONFIG:?CODELEWM_DATASET_BUILD_CONFIG is required for scaled mode}"
+  : "${CODELEWM_TRAIN_CONFIG:?CODELEWM_TRAIN_CONFIG is required for scaled mode}"
+  require_file "$CODELEWM_DATASET_BUILD_CONFIG" "CODELEWM_DATASET_BUILD_CONFIG"
+  require_file "$CODELEWM_TRAIN_CONFIG" "CODELEWM_TRAIN_CONFIG"
+
+  BUILD_DIR="$OUTPUT_ROOT/build"
+  PACK_DIR="$OUTPUT_ROOT/pack"
+  TRAIN_DIR="$OUTPUT_ROOT/train"
+  RETRIEVAL_DIR="$OUTPUT_ROOT/retrieval"
+  SURPRISE_DIR="$OUTPUT_ROOT/surprise"
+  INDEX_DIR="$OUTPUT_ROOT/index"
+  LOG_DIR="$OUTPUT_ROOT/logs"
+  RUNTIME_CONFIG_DIR="$OUTPUT_ROOT/configs"
+  RUNTIME_TRAIN_CONFIG="$RUNTIME_CONFIG_DIR/train.json"
+  mkdir -p "$LOG_DIR" "$RUNTIME_CONFIG_DIR"
+
+  uv run codelewm dataset build --config "$CODELEWM_DATASET_BUILD_CONFIG" --out "$BUILD_DIR" --json
+  uv run codelewm dataset pack --manifest "$BUILD_DIR/manifest.json" --out "$PACK_DIR" --json
+
+  uv run python - "$CODELEWM_TRAIN_CONFIG" "$RUNTIME_TRAIN_CONFIG" "$PACK_DIR" "$TRAIN_DIR" <<'PY'
+import json
+import sys
+from pathlib import Path
+from codelewm.training import load_train_config
+
+source, target, pack_dir, train_dir = map(Path, sys.argv[1:])
+payload = load_train_config(source).to_dict()
+payload["data"] = {
+    "manifest": str(pack_dir / "manifest.json"),
+    "train": str(pack_dir / "hdf5" / "train.hdf5"),
+    "val": str(pack_dir / "hdf5" / "val.hdf5"),
+}
+payload["output"] = {
+    "run_dir": str(train_dir),
+    "checkpoint_dir": str(train_dir / "checkpoints"),
+    "metrics_path": str(train_dir / "metrics.jsonl"),
+    "manifest_path": str(train_dir / "training_manifest.json"),
+}
+target.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+
+  uv run codelewm train \
+    --config "$RUNTIME_TRAIN_CONFIG" \
+    --executor "$CODELEWM_HF_TRAIN_EXECUTOR" \
+    --device "$CODELEWM_HF_DEVICE" \
+    --overwrite \
+    --json \
+    --log-jsonl "$LOG_DIR/train.jsonl"
+  uv run codelewm eval retrieval \
+    --checkpoint "$TRAIN_DIR/checkpoints/checkpoint.pt" \
+    --data "$PACK_DIR" \
+    --out "$RETRIEVAL_DIR" \
+    --device "$CODELEWM_HF_DEVICE" \
+    --seed "$CODELEWM_HF_EVAL_SEED" \
+    --overwrite \
+    --json \
+    --log-jsonl "$LOG_DIR/retrieval.jsonl"
+  uv run codelewm eval surprise \
+    --checkpoint "$TRAIN_DIR/checkpoints/checkpoint.pt" \
+    --data "$PACK_DIR" \
+    --out "$SURPRISE_DIR" \
+    --device "$CODELEWM_HF_DEVICE" \
+    --seed "$CODELEWM_HF_EVAL_SEED" \
+    --overwrite \
+    --json \
+    --log-jsonl "$LOG_DIR/surprise.jsonl"
+  uv run codelewm index \
+    --checkpoint "$TRAIN_DIR/checkpoints/checkpoint.pt" \
+    --data "$PACK_DIR" \
+    --out "$INDEX_DIR" \
+    --device "$CODELEWM_HF_DEVICE" \
+    --overwrite \
+    --json \
+    --log-jsonl "$LOG_DIR/index.jsonl"
+
+  uv run codelewm manifest verify --manifest "$BUILD_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$PACK_DIR/manifest.json" --parent-manifest "$BUILD_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$RETRIEVAL_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$SURPRISE_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
+  uv run codelewm manifest verify --manifest "$INDEX_DIR/manifest.json" --parent-manifest "$TRAIN_DIR/manifest.json" --parent-manifest "$PACK_DIR/manifest.json" --json
+  uv run codelewm secret-scan "$OUTPUT_ROOT" --json
+else
+  echo "CODELEWM_HF_PIPELINE_MODE must be smoke or scaled; got: $CODELEWM_HF_PIPELINE_MODE" >&2
+  exit 2
+fi
+
+if [[ "$CODELEWM_HF_PUBLISH" == "1" ]]; then
+  publish_args=(
+    --artifact-root "$OUTPUT_ROOT"
+    --run-id "$CODELEWM_HF_RUN_ID"
+  )
+  [[ -z "${CODELEWM_HF_DATASET_REPO_ID:-}" ]] || publish_args+=(--dataset-repo-id "$CODELEWM_HF_DATASET_REPO_ID")
+  [[ -z "${CODELEWM_HF_MODEL_REPO_ID:-}" ]] || publish_args+=(--model-repo-id "$CODELEWM_HF_MODEL_REPO_ID")
+  [[ -z "${CODELEWM_HF_RESULTS_REPO_ID:-}" ]] || publish_args+=(--results-repo-id "$CODELEWM_HF_RESULTS_REPO_ID")
+  [[ "${CODELEWM_HF_PRIVATE:-1}" != "0" ]] && publish_args+=(--private)
+  [[ "$CODELEWM_HF_PUBLISH_DRY_RUN" != "0" ]] && publish_args+=(--dry-run)
+  uv run scripts/hf-publish-codelewm-artifacts "${publish_args[@]}" --json
+fi

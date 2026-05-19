@@ -290,6 +290,8 @@ docs/rfcs/                      accepted design decisions
 docs/roadmap/IMPLEMENTATION.md  implementation tracker
 docs/roadmap/FULL_COMPLETION.md remaining scaled-artifact and release roadmap
 docs/roadmap/NEXT_GOAL_PROMPT.md next autonomous implementation prompt
+docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md HF Jobs/ml-intern scaled-run prompt
+docs/operations/HF_ML_INTERN_TRAINING.md HF Jobs training and publication runbook
 docs/benchmark/FIRST_RESULTS.md first reproducible smoke results report
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
@@ -300,6 +302,7 @@ codelewm/harness/               CLI, scorer, reranker, and output schemas
 codelewm/security/              license policy and non-execution helpers
 codelewm/results/               first-results orchestration and report rendering
 scripts/first-results           reproducible first-results runner
+scripts/hf-*                    Hugging Face Jobs launch, pipeline, and publish helpers
 tests/                          unit and integration coverage
 config/                         inherited LeWorldModel Hydra configs
 train.py, eval.py               inherited LeWorldModel entry points
@@ -312,6 +315,7 @@ jepa.py, module.py, utils.py    compatibility wrappers
 - Read `AGENTS.md` for current implementation context and work rules.
 - Read `SPEC.md` for the canonical index.
 - Read `docs/roadmap/FULL_COMPLETION.md` for the ordered remaining backlog.
+- Read `docs/operations/HF_ML_INTERN_TRAINING.md` for the HF Jobs publication path.
 - Read `docs/spec/00-overview.md` for goals, non-goals, and pass gates.
 - Read `docs/spec/01-architecture.md` for subsystem boundaries.
 - Read `docs/spec/02-public-api.md` for the public CLI and Python contract.

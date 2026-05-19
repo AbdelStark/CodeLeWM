@@ -1,0 +1,194 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["huggingface_hub>=1.0"]
+# ///
+"""Publish CodeLeWM run artifacts to Hugging Face repositories."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+SCHEMA_VERSION = "codelewm.hf_publish_plan.v1"
+
+
+def main() -> int:
+    _load_env_defaults(Path(".env"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--artifact-root", type=Path, required=True)
+    parser.add_argument("--run-id", default=os.getenv("CODELEWM_HF_RUN_ID") or _utc_run_id())
+    parser.add_argument("--dataset-repo-id", default=os.getenv("CODELEWM_HF_DATASET_REPO_ID"))
+    parser.add_argument("--model-repo-id", default=os.getenv("CODELEWM_HF_MODEL_REPO_ID"))
+    parser.add_argument("--results-repo-id", default=os.getenv("CODELEWM_HF_RESULTS_REPO_ID"))
+    parser.add_argument("--private", action="store_true", default=_truthy(os.getenv("CODELEWM_HF_PRIVATE", "1")))
+    parser.add_argument("--public", dest="private", action="store_false")
+    parser.add_argument("--dry-run", action="store_true", default=_truthy(os.getenv("CODELEWM_HF_PUBLISH_DRY_RUN", "1")))
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+
+    plan = _build_plan(args)
+    if args.dry_run:
+        return _emit(plan, json_output=args.json)
+
+    missing = [
+        name
+        for name, value in (
+            ("HF_TOKEN", os.getenv("HF_TOKEN")),
+            ("CODELEWM_HF_DATASET_REPO_ID", args.dataset_repo_id),
+            ("CODELEWM_HF_MODEL_REPO_ID", args.model_repo_id),
+            ("CODELEWM_HF_RESULTS_REPO_ID", args.results_repo_id),
+        )
+        if not value
+    ]
+    if missing:
+        print(f"missing required publish setting(s): {', '.join(missing)}", file=sys.stderr)
+        return 2
+
+    from huggingface_hub import HfApi
+
+    api = HfApi(token=os.environ["HF_TOKEN"])
+    for repo in plan["repositories"]:
+        api.create_repo(
+            repo_id=repo["repo_id"],
+            repo_type=repo["repo_type"],
+            private=args.private,
+            exist_ok=True,
+        )
+    for upload in plan["uploads"]:
+        api.upload_folder(
+            folder_path=upload["folder_path"],
+            repo_id=upload["repo_id"],
+            repo_type=upload["repo_type"],
+            path_in_repo=upload["path_in_repo"],
+            commit_message=upload["commit_message"],
+            ignore_patterns=upload["ignore_patterns"],
+        )
+    plan["published"] = True
+    return _emit(plan, json_output=args.json)
+
+
+def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
+    artifact_root = args.artifact_root
+    if not artifact_root.is_dir():
+        raise SystemExit(f"artifact root does not exist: {artifact_root}")
+    required_dirs = {
+        "dataset": artifact_root / "pack",
+        "model": artifact_root / "train",
+        "results": artifact_root,
+    }
+    for name, path in required_dirs.items():
+        if not path.is_dir():
+            raise SystemExit(f"{name} artifact directory is missing: {path}")
+
+    repositories = []
+    uploads = []
+    if args.dataset_repo_id:
+        repositories.append({"repo_id": args.dataset_repo_id, "repo_type": "dataset"})
+        uploads.append(
+            _upload(
+                repo_id=args.dataset_repo_id,
+                repo_type="dataset",
+                folder_path=artifact_root / "pack",
+                path_in_repo=f"runs/{args.run_id}/pack",
+                commit_message=f"Add CodeLeWM packed dataset artifact {args.run_id}",
+                ignore_patterns=("**/__pycache__/**",),
+            )
+        )
+    if args.model_repo_id:
+        repositories.append({"repo_id": args.model_repo_id, "repo_type": "model"})
+        uploads.append(
+            _upload(
+                repo_id=args.model_repo_id,
+                repo_type="model",
+                folder_path=artifact_root / "train",
+                path_in_repo=f"checkpoints/{args.run_id}",
+                commit_message=f"Add CodeLeWM checkpoint artifact {args.run_id}",
+                ignore_patterns=("**/__pycache__/**",),
+            )
+        )
+    if args.results_repo_id:
+        repositories.append({"repo_id": args.results_repo_id, "repo_type": "dataset"})
+        uploads.append(
+            _upload(
+                repo_id=args.results_repo_id,
+                repo_type="dataset",
+                folder_path=artifact_root,
+                path_in_repo=f"runs/{args.run_id}",
+                commit_message=f"Add CodeLeWM run evidence {args.run_id}",
+                ignore_patterns=("**/__pycache__/**", "**/checkpoint.pt"),
+            )
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "artifact_root": str(artifact_root),
+        "run_id": args.run_id,
+        "private": bool(args.private),
+        "dry_run": bool(args.dry_run),
+        "published": False,
+        "repositories": repositories,
+        "uploads": uploads,
+    }
+
+
+def _upload(
+    *,
+    repo_id: str,
+    repo_type: str,
+    folder_path: Path,
+    path_in_repo: str,
+    commit_message: str,
+    ignore_patterns: tuple[str, ...],
+) -> dict[str, Any]:
+    return {
+        "repo_id": repo_id,
+        "repo_type": repo_type,
+        "folder_path": str(folder_path),
+        "path_in_repo": path_in_repo,
+        "commit_message": commit_message,
+        "ignore_patterns": list(ignore_patterns),
+    }
+
+
+def _emit(plan: dict[str, Any], *, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(plan, indent=2, sort_keys=True))
+    else:
+        print(f"dry_run: {plan['dry_run']}")
+        for upload in plan["uploads"]:
+            print(f"{upload['folder_path']} -> {upload['repo_type']}:{upload['repo_id']}/{upload['path_in_repo']}")
+    return 0
+
+
+def _load_env_defaults(path: Path) -> None:
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :]
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value.strip().strip("\"'")
+
+
+def _truthy(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _utc_run_id() -> str:
+    return "codelewm-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

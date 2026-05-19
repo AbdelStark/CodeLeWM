@@ -31,4 +31,8 @@ For each issue:
 The next milestone is scaled research evidence: a bounded, documented,
 public-safe dataset path whose manifests, license gates, and source acquisition
 reports can support non-trivial retrieval baselines and surprise decoys.
+
+For the Hugging Face Jobs and ml-intern execution path, use
+docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md after this repository's HF automation
+branch has landed on the ref used by CODELEWM_HF_REF.
 ```
