@@ -37,7 +37,8 @@ same suite; differences are bugs in the workflow.
 -->
 
 ```bash
-python -m pytest tests/
+uv sync --group dev
+uv run python -m pytest tests/
 ```
 
 ## Artifact Impact

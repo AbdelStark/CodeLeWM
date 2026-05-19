@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import unittest
@@ -14,6 +15,15 @@ except ModuleNotFoundError:  # pragma: no cover - exercised on Python 3.10.
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _dependency_names(requirements: list[str]) -> set[str]:
+    names: set[str] = set()
+    for requirement in requirements:
+        match = re.match(r"([A-Za-z0-9_.-]+)", requirement)
+        if match:
+            names.add(match.group(1).lower().replace("_", "-"))
+    return names
+
+
 class PackageMetadataTest(unittest.TestCase):
     def test_console_script_entrypoint_is_registered(self) -> None:
         metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
@@ -22,6 +32,46 @@ class PackageMetadataTest(unittest.TestCase):
             metadata["project"]["scripts"]["codelewm"],
             "codelewm.harness.cli:main",
         )
+
+    def test_base_dependencies_stay_lightweight(self) -> None:
+        metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
+        base_dependencies = _dependency_names(metadata["project"]["dependencies"])
+
+        self.assertIn("numpy", base_dependencies)
+        for heavy_dependency in (
+            "torch",
+            "torchvision",
+            "lightning",
+            "hydra-core",
+            "omegaconf",
+            "stable-pretraining",
+            "stable-worldmodel",
+            "h5py",
+            "pyarrow",
+            "scikit-learn",
+        ):
+            with self.subTest(dependency=heavy_dependency):
+                self.assertNotIn(heavy_dependency, base_dependencies)
+
+    def test_dependency_groups_cover_optional_runtime_boundaries(self) -> None:
+        metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
+        groups = metadata["dependency-groups"]
+        extras = metadata["project"]["optional-dependencies"]
+
+        for group_name in ("dev", "data", "train", "eval", "docs", "release"):
+            with self.subTest(group=group_name):
+                self.assertIn(group_name, groups)
+
+        self.assertIn("pytest", _dependency_names(groups["dev"]))
+        self.assertEqual({"h5py", "pyarrow"}, _dependency_names(groups["data"]))
+        self.assertIn("torch", _dependency_names(groups["train"]))
+        self.assertIn("stable-worldmodel", _dependency_names(groups["train"]))
+        self.assertIn("scikit-learn", _dependency_names(groups["eval"]))
+        self.assertIn("build", _dependency_names(groups["release"]))
+
+        for extra_name in ("data", "train", "eval", "docs", "release"):
+            with self.subTest(extra=extra_name):
+                self.assertEqual(extras[extra_name], groups[extra_name])
 
     def test_cli_module_help_runs(self) -> None:
         completed = subprocess.run(

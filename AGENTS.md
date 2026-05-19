@@ -92,15 +92,7 @@ Use GitHub issues as the authoritative queue. The intended order starts with:
 
 ## Validation
 
-Current lightweight validation:
-
-```bash
-python -m pytest tests/
-python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
-python -m codelewm.harness.cli --help
-```
-
-After the `uv` migration lands, prefer:
+Current lightweight validation after the `uv` migration:
 
 ```bash
 uv sync --group dev

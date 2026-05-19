@@ -220,19 +220,25 @@ have lower transition energy than decoys.
 From a clean checkout:
 
 ```bash
-python -m pip install -e .
+uv sync --group dev
 ```
 
-Optional data-packing dependencies:
+Optional dependency groups:
 
 ```bash
-python -m pip install -e ".[data]"
+uv sync --group dev --group data      # h5py + pyarrow for dataset packing
+uv sync --group dev --group train     # torch, Lightning, and inherited LeWM training adapters
+uv sync --group dev --group eval      # optional evaluation helpers
+uv sync --group dev --group docs      # documentation checks
+uv sync --group dev --group release   # package build and release gates
 ```
 
-Development dependencies:
+The package extras mirror the same runtime boundaries for wheel consumers:
 
 ```bash
-python -m pip install -e ".[dev]"
+uv sync --extra data
+uv sync --extra train
+uv sync --extra eval
 ```
 
 The package exposes a `codelewm` console script. Most command families are still
@@ -244,13 +250,13 @@ entry point rather than the final user workflow.
 Lightweight validation:
 
 ```bash
-python -m unittest discover -s tests
+uv run python -m unittest discover -s tests
 ```
 
 With `pytest` installed:
 
 ```bash
-python -m pytest tests
+uv run python -m pytest tests
 ```
 
 Some tests skip when optional runtimes such as `torch`, `h5py`, or `pyarrow` are
