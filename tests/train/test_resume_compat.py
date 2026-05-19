@@ -68,6 +68,22 @@ def _training_config(root: Path, *, dataset_manifest_path: Path, run_name: str =
     return validate_train_config(payload)
 
 
+def _scaled_cpu_config(root: Path, *, dataset_manifest_path: Path, run_name: str):
+    payload = load_train_config(ROOT / "config/train/scaled/codelewm_scaled_cpu.yaml").to_dict()
+    payload["name"] = run_name
+    payload["data"]["train"] = str(root / "data" / "train.hdf5")
+    payload["data"]["val"] = str(root / "data" / "val.hdf5")
+    payload["data"]["manifest"] = str(dataset_manifest_path)
+    payload["trainer"]["max_steps"] = 1
+    payload["loader"]["batch_size"] = 1
+    payload["loader"]["shuffle"] = False
+    payload["output"]["run_dir"] = str(root / "runs" / run_name)
+    payload["output"]["checkpoint_dir"] = str(root / "runs" / run_name / "checkpoints")
+    payload["output"]["metrics_path"] = str(root / "runs" / run_name / "metrics.jsonl")
+    payload["output"]["manifest_path"] = str(root / "runs" / run_name / "training_manifest.json")
+    return validate_train_config(payload)
+
+
 def _make_resume_capable_executor(
     *,
     metadata_config_dict: dict | None = None,
@@ -182,6 +198,46 @@ class CompatibleResumeTest(unittest.TestCase):
             self.assertEqual(plan.parent_training_manifest_path, parent_manifest_path)
             self.assertTrue(plan.parent_checkpoint_path.is_file())
             self.assertTrue(plan.parent_checkpoint_manifest_path.is_file())
+
+    def test_scaled_cpu_config_preserves_resume_compatible_lineage(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_dataset_parent(root)
+            parent_config = _scaled_cpu_config(
+                root,
+                dataset_manifest_path=root / "data" / "manifest.json",
+                run_name="scaled_parent",
+            )
+            parent_manifest = train(
+                parent_config,
+                root=root,
+                executor=_make_resume_capable_executor(),
+                source_git_sha=SOURCE_SHA,
+                created_at=PARENT_CREATED_AT,
+            )
+            child_config = _scaled_cpu_config(
+                root,
+                dataset_manifest_path=root / "data" / "manifest.json",
+                run_name="scaled_child",
+            )
+
+            child_manifest = train(
+                child_config,
+                root=root,
+                executor=_make_resume_capable_executor(),
+                source_git_sha=SOURCE_SHA,
+                created_at=CREATED_AT,
+                resume_from=root / "runs" / "scaled_parent" / "training_manifest.json",
+            )
+
+        self.assertEqual(parent_manifest.seed, 240119)
+        self.assertEqual(child_manifest.seed, 240119)
+        self.assertRegex(child_manifest.config_sha256, r"^[0-9a-f]{64}$")
+        self.assertIn(parent_manifest.artifact_manifest_id, child_manifest.parent_artifacts)
+        self.assertEqual(
+            child_manifest.metadata["resume"]["parent_training_artifact_id"],
+            parent_manifest.artifact_manifest_id,
+        )
 
 
 class IncompatibleResumeTest(unittest.TestCase):

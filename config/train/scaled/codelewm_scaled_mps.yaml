@@ -1,0 +1,53 @@
+# Apple Silicon MPS scaled development profile.
+# Budget: 10k steps, batch 32, float32 for backend stability, expected 4-12h
+# on M2/M3 Max class machines; memory target 16-32 GiB unified memory; artifact
+# target 1-4 GiB.
+schema_version: codelewm.train_config.v1
+name: codelewm_scaled_mps
+seed: 240119
+
+data:
+  train: data/codelewm_public_shard_v0_3/hdf5/train.hdf5
+  val: data/codelewm_public_shard_v0_3/hdf5/val.hdf5
+  manifest: data/codelewm_public_shard_v0_3/manifest.json
+
+wm:
+  history_size: 1
+  num_preds: 1
+  embed_dim: 256
+  action_view: text
+  state_sequence_length: 1024
+  action_sequence_length: 256
+
+trainer:
+  max_steps: 10000
+  accelerator: mps
+  devices: 1
+  precision: float32
+  gradient_clip_val: 1.0
+
+loader:
+  batch_size: 32
+  num_workers: 0
+  shuffle: true
+  pin_memory: false
+  persistent_workers: false
+
+optimizer:
+  type: AdamW
+  lr: 0.0001
+  weight_decay: 0.001
+
+loss:
+  sigreg_weight: 0.09
+  enable_retrieval_loss: false
+  retrieval_weight: 0.0
+  retrieval_temperature: 0.1
+  sigreg_knots: 17
+  sigreg_num_proj: 1024
+
+output:
+  run_dir: runs/codelewm_scaled_mps
+  checkpoint_dir: runs/codelewm_scaled_mps/checkpoints
+  metrics_path: runs/codelewm_scaled_mps/metrics.jsonl
+  manifest_path: runs/codelewm_scaled_mps/training_manifest.json

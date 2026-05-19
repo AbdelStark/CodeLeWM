@@ -22,6 +22,11 @@ from codelewm.security import NonExecutionPolicyError, reject_code_execution_con
 TRAIN_CONFIG_SCHEMA_VERSION = "codelewm.train_config.v1"
 DEFAULT_TINY_TRAIN_CONFIG = Path("config/train/codelewm_tiny.yaml")
 DEFAULT_SMALL_TRAIN_CONFIG = Path("config/train/codelewm_small.yaml")
+SCALED_TRAIN_CONFIGS = (
+    Path("config/train/scaled/codelewm_scaled_cpu.yaml"),
+    Path("config/train/scaled/codelewm_scaled_mps.yaml"),
+    Path("config/train/scaled/codelewm_scaled_gpu_a10g.yaml"),
+)
 
 _ACTION_VIEWS = frozenset({"text", "abstract"})
 _PRECISIONS = frozenset({"float32", "32-true", "bf16-mixed", "16-mixed", "fp16-mixed"})
@@ -447,6 +452,13 @@ def default_train_config_paths(root: Path | str = ".") -> tuple[Path, Path]:
     return base / DEFAULT_TINY_TRAIN_CONFIG, base / DEFAULT_SMALL_TRAIN_CONFIG
 
 
+def scaled_train_config_paths(root: Path | str = ".") -> tuple[Path, ...]:
+    """Return repository-relative paths for the scaled CodeLeWM train configs."""
+
+    base = Path(root)
+    return tuple(base / path for path in SCALED_TRAIN_CONFIGS)
+
+
 def load_train_config(path: Path | str) -> TrainConfig:
     """Load and validate a CodeLeWM train config from JSON or YAML."""
 
@@ -460,6 +472,12 @@ def load_default_train_configs(root: Path | str = ".") -> tuple[TrainConfig, Tra
 
     tiny_path, small_path = default_train_config_paths(root)
     return load_train_config(tiny_path), load_train_config(small_path)
+
+
+def load_scaled_train_configs(root: Path | str = ".") -> tuple[TrainConfig, ...]:
+    """Load the checked-in scaled CodeLeWM train configs."""
+
+    return tuple(load_train_config(path) for path in scaled_train_config_paths(root))
 
 
 def validate_train_config(config: TrainConfig | Mapping[str, Any]) -> TrainConfig:

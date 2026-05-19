@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+RUNBOOK = ROOT / "docs" / "training" / "SCALED_TRAINING_RUNBOOK.md"
+
+
+class ScaledTrainingRunbookTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.text = RUNBOOK.read_text(encoding="utf-8")
+
+    def test_runbook_exists_and_lists_scaled_configs(self) -> None:
+        self.assertTrue(RUNBOOK.is_file(), f"missing: {RUNBOOK}")
+        for marker in (
+            "config/train/scaled/codelewm_scaled_cpu.yaml",
+            "config/train/scaled/codelewm_scaled_mps.yaml",
+            "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
+            "seed",
+            "240119",
+            "a10g-small",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
+
+    def test_runbook_documents_validation_resume_and_hf_cli_path(self) -> None:
+        for marker in (
+            "uv run scripts/validate-training-configs",
+            "codelewm.train_config_validation.v1",
+            "--resume-from",
+            "codelewm manifest verify",
+            "CODELEWM_HF_JOBS_TIMEOUT=24h",
+            "hf jobs inspect <job-id>",
+            "hf download",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
+
+    def test_runbook_keeps_patch_action_diagnostic_only(self) -> None:
+        self.assertIn("Patch-action remains diagnostic-only", self.text)
+        self.assertIn("action_view=text", self.text)
+
+
+if __name__ == "__main__":
+    unittest.main()

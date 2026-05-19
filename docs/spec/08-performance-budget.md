@@ -62,6 +62,21 @@ It uses:
 Neither default config may reference the inherited image-control datasets or
 pixel/proprioception loader keys.
 
+Scaled research profiles live under `config/train/scaled/`:
+
+- `codelewm_scaled_cpu.yaml`: CPU rehearsal profile, seed `240119`, batch size
+  `8`, `2048` steps, `float32`, expected 6-18h on 8-12 CPU cores, 8-12 GiB RAM,
+  1-3 GiB artifacts.
+- `codelewm_scaled_mps.yaml`: Apple Silicon development profile, seed `240119`,
+  batch size `32`, `10000` steps, `float32`, expected 4-12h on M2/M3 Max class
+  hardware, 16-32 GiB unified memory, 1-4 GiB artifacts.
+- `codelewm_scaled_gpu_a10g.yaml`: Hugging Face Jobs headline profile, seed
+  `240119`, batch size `64`, `60000` steps, `bf16-mixed`, expected 12-24h on
+  `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts.
+
+All scaled configs keep `action_view=text` as the headline path. Patch-action
+remains diagnostic-only and cannot be used by training configs.
+
 ## Indexing And Scoring
 
 Index targets:

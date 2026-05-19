@@ -303,6 +303,18 @@ replace the torch executor for first-results training. Missing train/data
 runtime packages return `error_type=optional_dependency_missing`; incompatible
 resume checkpoints return `error_type=checkpoint_error`.
 
+Scaled training profiles live under `config/train/scaled/`. Validate them before
+launching a long run:
+
+```bash
+uv run scripts/validate-training-configs
+```
+
+The scaled runbook in `docs/training/SCALED_TRAINING_RUNBOOK.md` documents the
+CPU, MPS, and HF A10G profiles, expected runtime/memory/artifact budgets, resume
+policy, and HF Jobs launch command. The A10G profile is the candidate for the
+first remote headline run; CPU and MPS profiles are rehearsal/debug paths.
+
 ### `codelewm eval retrieval`
 
 Run model-backed retrieval evaluation over a packed dataset artifact:

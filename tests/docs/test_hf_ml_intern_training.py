@@ -56,6 +56,8 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "CODELEWM_HF_PIPELINE_MODE=scaled",
+            "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
+            "docs/training/SCALED_TRAINING_RUNBOOK.md",
             "codelewm.hf_publish_plan.v1",
             "#118",
             "#119",

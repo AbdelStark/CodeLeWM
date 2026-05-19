@@ -2,16 +2,20 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
-from codelewm.model import LATENT_DIM
+from codelewm.model import LATENT_DIM, compute_config_hash
 from codelewm.training import (
     TRAIN_CONFIG_SCHEMA_VERSION,
     TrainConfigError,
     default_train_config_paths,
     load_default_train_configs,
+    load_scaled_train_configs,
     load_train_config,
+    scaled_train_config_paths,
     validate_train_config,
 )
 
@@ -78,6 +82,98 @@ class TrainConfigLoadTest(unittest.TestCase):
                 text = path.read_text(encoding="utf-8").lower()
                 for token in forbidden:
                     self.assertNotIn(token, text)
+
+
+class ScaledTrainConfigLoadTest(unittest.TestCase):
+    def test_scaled_train_configs_load_with_text_action_headline(self) -> None:
+        configs = {config.name: config for config in load_scaled_train_configs(ROOT)}
+
+        self.assertEqual(
+            set(configs),
+            {
+                "codelewm_scaled_cpu",
+                "codelewm_scaled_mps",
+                "codelewm_scaled_gpu_a10g",
+            },
+        )
+        for config in configs.values():
+            with self.subTest(config=config.name):
+                self.assertEqual(config.schema_version, TRAIN_CONFIG_SCHEMA_VERSION)
+                self.assertEqual(config.seed, 240119)
+                self.assertEqual(config.wm.history_size, 1)
+                self.assertEqual(config.wm.num_preds, 1)
+                self.assertEqual(config.wm.embed_dim, LATENT_DIM)
+                self.assertEqual(config.wm.action_view, "text")
+                self.assertEqual(config.wm.action_sequence_length, 256)
+                self.assertFalse(config.loss.enable_retrieval_loss)
+                self.assertEqual(config.loss.retrieval_weight, 0.0)
+
+    def test_scaled_config_budgets_match_hardware_profiles(self) -> None:
+        configs = {config.name: config for config in load_scaled_train_configs(ROOT)}
+
+        cpu = configs["codelewm_scaled_cpu"]
+        self.assertEqual(cpu.trainer.accelerator, "cpu")
+        self.assertEqual(cpu.trainer.precision, "float32")
+        self.assertEqual(cpu.loader.batch_size, 8)
+        self.assertEqual(cpu.trainer.max_steps, 2048)
+
+        mps = configs["codelewm_scaled_mps"]
+        self.assertEqual(mps.trainer.accelerator, "mps")
+        self.assertEqual(mps.trainer.precision, "float32")
+        self.assertEqual(mps.loader.batch_size, 32)
+        self.assertEqual(mps.trainer.max_steps, 10000)
+
+        gpu = configs["codelewm_scaled_gpu_a10g"]
+        self.assertEqual(gpu.trainer.accelerator, "gpu")
+        self.assertEqual(gpu.trainer.precision, "bf16-mixed")
+        self.assertEqual(gpu.loader.batch_size, 64)
+        self.assertGreaterEqual(gpu.trainer.max_steps, 60000)
+        self.assertLessEqual(gpu.trainer.max_steps, 100000)
+
+    def test_scaled_paths_helper_points_to_checked_in_configs(self) -> None:
+        paths = scaled_train_config_paths(ROOT)
+
+        self.assertEqual(
+            tuple(path.name for path in paths),
+            (
+                "codelewm_scaled_cpu.yaml",
+                "codelewm_scaled_mps.yaml",
+                "codelewm_scaled_gpu_a10g.yaml",
+            ),
+        )
+        for path in paths:
+            with self.subTest(path=path.name):
+                self.assertTrue(path.is_file())
+
+    def test_scaled_train_configs_are_json_native_and_hashable(self) -> None:
+        for config in load_scaled_train_configs(ROOT):
+            with self.subTest(config=config.name):
+                payload = config.to_dict()
+                json.dumps(payload, sort_keys=True, allow_nan=False)
+                digest = compute_config_hash(payload)
+                self.assertRegex(digest, r"^[0-9a-f]{64}$")
+
+    def test_scaled_config_validation_script_reports_hashes_and_seeds(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "scripts/validate-training-configs"],
+            cwd=ROOT,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["schema_version"], "codelewm.train_config_validation.v1")
+        self.assertEqual(payload["train_config_schema_version"], TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(len(payload["configs"]), 3)
+        for item in payload["configs"]:
+            with self.subTest(config=item["name"]):
+                self.assertEqual(item["seed"], 240119)
+                self.assertEqual(item["action_view"], "text")
+                self.assertRegex(item["config_sha256"], r"^[0-9a-f]{64}$")
 
 
 class TrainConfigValidationTest(unittest.TestCase):

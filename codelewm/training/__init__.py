@@ -5,6 +5,7 @@ from __future__ import annotations
 from .config import (
     DEFAULT_SMALL_TRAIN_CONFIG,
     DEFAULT_TINY_TRAIN_CONFIG,
+    SCALED_TRAIN_CONFIGS,
     TRAIN_CONFIG_SCHEMA_VERSION,
     LoaderConfig,
     OptimizerConfig,
@@ -17,7 +18,9 @@ from .config import (
     WorldModelTrainConfig,
     default_train_config_paths,
     load_default_train_configs,
+    load_scaled_train_configs,
     load_train_config,
+    scaled_train_config_paths,
     validate_train_config,
 )
 from .cpu_smoke import (
@@ -68,6 +71,7 @@ __all__ = [
     "TORCH_CHECKPOINT_SCHEMA_VERSION",
     "TORCH_TRAINING_REPORT_SCHEMA_VERSION",
     "PackedTransitionHdf5Dataset",
+    "SCALED_TRAIN_CONFIGS",
     "TrainConfig",
     "TrainConfigError",
     "TrainDataConfig",
@@ -83,10 +87,12 @@ __all__ = [
     "cpu_smoke_training_executor",
     "default_train_config_paths",
     "load_default_train_configs",
+    "load_scaled_train_configs",
     "load_train_config",
     "make_torch_training_executor",
     "prepare_checkpoint_resume",
     "read_training_run_manifest",
+    "scaled_train_config_paths",
     "train",
     "train_cpu_smoke",
     "train_torch",
