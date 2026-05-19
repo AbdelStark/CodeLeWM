@@ -1,0 +1,51 @@
+{
+  "data": {
+    "manifest": ".artifacts/first-results/pack/manifest.json",
+    "train": ".artifacts/first-results/pack/hdf5/train.hdf5",
+    "val": ".artifacts/first-results/pack/hdf5/val.hdf5"
+  },
+  "loader": {
+    "batch_size": 2,
+    "num_workers": 0,
+    "persistent_workers": false,
+    "pin_memory": false,
+    "shuffle": false
+  },
+  "loss": {
+    "enable_retrieval_loss": false,
+    "retrieval_temperature": 0.1,
+    "retrieval_weight": 0.0,
+    "sigreg_knots": 17,
+    "sigreg_num_proj": 1024,
+    "sigreg_weight": 0.09
+  },
+  "name": "first_results_tiny_train",
+  "optimizer": {
+    "lr": 0.0001,
+    "type": "AdamW",
+    "weight_decay": 0.001
+  },
+  "output": {
+    "checkpoint_dir": ".artifacts/first-results/train/checkpoints",
+    "manifest_path": ".artifacts/first-results/train/training_manifest.json",
+    "metrics_path": ".artifacts/first-results/train/metrics.jsonl",
+    "run_dir": ".artifacts/first-results/train"
+  },
+  "schema_version": "codelewm.train_config.v1",
+  "seed": 1337,
+  "trainer": {
+    "accelerator": "cpu",
+    "devices": 1,
+    "gradient_clip_val": 1.0,
+    "max_steps": 4,
+    "precision": "float32"
+  },
+  "wm": {
+    "action_sequence_length": 256,
+    "action_view": "text",
+    "embed_dim": 256,
+    "history_size": 1,
+    "num_preds": 1,
+    "state_sequence_length": 1024
+  }
+}

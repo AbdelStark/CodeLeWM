@@ -58,6 +58,23 @@ following subcommands. Commands marked **landed** are runnable today.
 Run `codelewm <command> --help` for the current flag set. JSON
 output is opt-in via `--json` on every landed command.
 
+## First-Results Runner
+
+The checked-in first-results runner orchestrates the landed CLI commands into
+one reproducible smoke workflow:
+
+```bash
+uv sync --group dev --group data --group train
+uv run scripts/first-results --overwrite
+uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
+```
+
+It writes `.artifacts/first-results/manifest_inventory.json` and regenerates
+`docs/benchmark/FIRST_RESULTS.md` from actual artifacts. The report is explicit
+about its boundary: it validates the local artifact path, but the tiny fixture is
+too small to support a research claim about learned action-conditioned
+structure.
+
 ### `codelewm score`
 
 Score a single candidate after-state against a before-state and

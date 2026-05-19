@@ -29,10 +29,21 @@ Implemented foundations:
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
 
-Missing for first meaningful results:
+Current first-results evidence:
 
-- A reproducible first-results report with dataset, training, checkpoint,
-  retrieval, surprise, index, license, and secret-scan evidence.
+- `scripts/first-results` runs the local dataset build, pack, torch train,
+  retrieval eval, surprise eval, index build, manifest verification, report
+  rendering, and secret scan loop.
+- `docs/benchmark/FIRST_RESULTS.md` records the resulting smoke evidence. It
+  does not make a research-quality learning claim: text-action ties the required
+  retrieval baselines on the one-query fixture, and surprise decoy coverage is
+  intentionally called out as insufficient.
+
+Missing for scaled meaningful results:
+
+- A bounded public-safe shard with enough held-out examples to support
+  non-trivial random, lexical, no-action, shuffled-action, and surprise-decoy
+  comparisons.
 - Release and publishing automation that can build, verify, and publish package
   artifacts without weakening optional-runtime boundaries.
 
@@ -95,6 +106,8 @@ uv run python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|afte
 uv run codelewm --help
 ```
 
-First-results work is not complete until artifact verification, secret scanning,
-retrieval baselines, surprise metrics, and the benchmark report all pass from a
-clean checkout.
+First-results smoke work is complete when `uv run scripts/first-results
+--overwrite`, artifact verification, secret scanning, retrieval baselines,
+surprise metrics, and the benchmark report all pass from a clean checkout.
+Scaled research work remains separate until a larger public-safe shard supports
+non-trivial baseline and decoy comparisons.

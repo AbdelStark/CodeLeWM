@@ -17,10 +17,17 @@ model components, training-run manifests, CPU smoke training, evaluation
 contracts, scoring/reranking harness commands, observability, security gates,
 CI, and release templates.
 
-The repository still has no meaningful CodeLeWM training result. The landed
-tiny path can build, pack, train the package-native torch model, and emit a
-retrieval report, surprise report, and transition index, but it still needs a
-reproducible first-results report before any research claim is warranted.
+The repository now has a reproducible first-results smoke report. The landed
+tiny path can build, pack, train the package-native torch model, emit retrieval
+and surprise reports, build a transition index, verify manifests, run a secret
+scan, and regenerate `docs/benchmark/FIRST_RESULTS.md` through
+`scripts/first-results`.
+
+The first report does not establish a research-quality learning result. On the
+tiny fixture, text-action ties the required retrieval baselines and surprise
+evaluation has only mutation decoy coverage. The remaining research work is to
+scale to a bounded public-safe shard with enough held-out examples for meaningful
+baseline and decoy comparisons.
 
 Current landed CLI commands:
 
@@ -36,7 +43,8 @@ Current landed CLI commands:
 - `codelewm index`
 
 No additional first-results CLI command is currently missing. The remaining
-v0.2 work is to orchestrate the landed commands into a reproducible report.
+work is scaled data acquisition, ablations, report/card population, and release
+automation.
 
 ## Meaningful First Training Result
 
@@ -139,6 +147,9 @@ Deliverables:
 - `docs/benchmark/FIRST_RESULTS.md`
 - caveat section that separates smoke evidence from research evidence
 
+Status: complete for smoke evidence through `scripts/first-results` and
+`docs/benchmark/FIRST_RESULTS.md`; not complete for scaled research evidence.
+
 ### Phase 6: Scaled Research Artifact
 
 Move beyond the tiny first-results fixture to a bounded, documented, public-safe
@@ -217,8 +228,8 @@ and the release checklist no longer lists a blocker for that subsystem.
   work expands CI.
 - The CPU smoke path validates runner contracts but does not prove the model can
   learn the CodeLeWM task.
-- The full tiny workflow is now artifact-backed, but the first-results report
-  still needs to run it from a clean checkout and preserve exact evidence.
+- The first-results report is now artifact-backed, but it intentionally records
+  a tiny-fixture baseline tie rather than a learning claim.
 - Root legacy scripts can confuse contributors; public docs must keep the
   package-native path clearly marked as authoritative.
 - First-result claims must stay narrow until scaled ablations show reliable

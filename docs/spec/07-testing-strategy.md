@@ -66,6 +66,8 @@ uv run codelewm eval surprise --checkpoint .artifacts/tiny-train/checkpoints/che
 uv run codelewm manifest verify --manifest .artifacts/tiny-surprise/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
 uv run codelewm index --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt --data .artifacts/tiny-pack --out .artifacts/tiny-index --json
 uv run codelewm manifest verify --manifest .artifacts/tiny-index/manifest.json --parent-manifest .artifacts/tiny-train/manifest.json --parent-manifest .artifacts/tiny-pack/manifest.json --json
+uv run scripts/first-results --overwrite
+uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
 ```
 
@@ -87,6 +89,8 @@ v0.1 gates:
   and explicit caveats for unavailable decoy categories;
 - transition indexes include only train-split entries and verify both training
   and dataset parent manifests;
+- `scripts/first-results` regenerates `docs/benchmark/FIRST_RESULTS.md` from
+  local artifacts and keeps smoke evidence separate from research claims;
 - JSON schemas validate for dataset, checkpoint, eval report, and score output.
 
 v1.0 gates:

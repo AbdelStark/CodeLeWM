@@ -1,0 +1,25 @@
+{
+  "schema_version": "codelewm.dataset_build_config.v1",
+  "name": "first-results-fixture-build",
+  "seed": 7,
+  "sources": [
+    {
+      "source": "fixture",
+      "path": "../../tests/fixtures/dataset_build/records.jsonl",
+      "name": "first-results-fixture",
+      "options": {
+        "record_source": "local_repo"
+      }
+    }
+  ],
+  "split": {
+    "split_overrides": {
+      "example/train": "train",
+      "example/train2": "train",
+      "example/val": "val"
+    }
+  },
+  "dedup": {
+    "near_duplicate_hamming_threshold": 0
+  }
+}
