@@ -45,6 +45,13 @@ class TrainingRunContext:
     config_path: Path
     dataset_manifest_path: Path
     parent_dataset_manifest: ArtifactManifest
+    resume: "CheckpointResumePlan | None" = None
+    """Optional validated resume plan, set when ``train(resume_from=...)`` is used.
+
+    Executors that support warm-start should load the parent checkpoint from
+    ``resume.parent_checkpoint_path`` and continue from the parent's recorded
+    step count. The plan is None when starting from scratch.
+    """
 
 
 @dataclass(frozen=True)
@@ -202,12 +209,20 @@ def train(
     source_git_sha: str | None = None,
     created_at: str | None = None,
     overwrite: bool = False,
+    resume_from: Path | str | None = None,
 ) -> TrainingRunManifest:
     """Run a manifest-backed training job and return its run manifest.
 
     The concrete model step is supplied by ``executor``. This keeps the artifact
     and lineage contract independent from the CPU/GPU training implementation
     that lands in a separate issue.
+
+    Pass ``resume_from`` to warm-start from a previous training run. The
+    parent training run manifest is validated for schema, config, and latent
+    dimension agreement (see :func:`codelewm.training.prepare_checkpoint_resume`).
+    The parent's artifact id is recorded in the new run's ``parent_artifacts``
+    so the lineage chain is preserved. Incompatible resumes raise
+    ``TrainingRunError`` before any new output is written.
     """
 
     root_path = Path(root).resolve()
@@ -221,6 +236,14 @@ def train(
     _resolve_required_file(cfg.data.val, root=root_path, field="data.val")
     parent_dataset_manifest = read_artifact_manifest(dataset_manifest_path)
     validate_artifact_checksums(parent_dataset_manifest, root=dataset_manifest_path.parent)
+
+    resume_plan = None
+    if resume_from is not None:
+        from .resume import prepare_checkpoint_resume
+
+        resume_plan = prepare_checkpoint_resume(
+            resume_from, config=cfg, root=root_path
+        )
 
     paths.run_dir.mkdir(parents=True, exist_ok=True)
     paths.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -238,6 +261,7 @@ def train(
         config_path=paths.config_path,
         dataset_manifest_path=dataset_manifest_path,
         parent_dataset_manifest=parent_dataset_manifest,
+        resume=resume_plan,
     )
     result = executor(context)
     if not isinstance(result, TrainingExecutorResult):
@@ -258,6 +282,33 @@ def train(
 
     checkpoint_files = tuple(build_manifest_file(path, root=paths.run_dir) for path in result.checkpoint_paths)
     report_files = tuple(build_manifest_file(path, root=paths.run_dir) for path in result.report_paths)
+    parent_artifact_ids: tuple[str, ...] = (parent_dataset_manifest.artifact_id,)
+    resume_metadata: dict[str, Any] = {}
+    if resume_plan is not None:
+        parent_artifact_ids = (
+            parent_dataset_manifest.artifact_id,
+            resume_plan.parent_artifact_id,
+        )
+        resume_metadata = {
+            "parent_training_run_id": resume_plan.parent_training_manifest.run_id,
+            "parent_training_artifact_id": resume_plan.parent_artifact_id,
+            "parent_training_manifest_path": str(resume_plan.parent_training_manifest_path),
+            "parent_checkpoint_sha256": resume_plan.parent_checkpoint_manifest.checkpoint_sha256,
+            "parent_step_count": resume_plan.parent_training_manifest.step_count,
+        }
+
+    artifact_metadata: dict[str, Any] = {
+        "schema_version": TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
+        "run_id": cfg.name,
+        "seed": cfg.seed,
+        "step_count": result.step_count,
+        "final_metrics": dict(result.metrics),
+        "dataset_manifest_path": _relative_to_root(dataset_manifest_path, root_path),
+        "executor": dict(result.metadata),
+    }
+    if resume_metadata:
+        artifact_metadata["resume"] = resume_metadata
+
     artifact_manifest = build_artifact_manifest(
         artifact_kind="training_run",
         root=paths.run_dir,
@@ -270,28 +321,24 @@ def train(
         ),
         command=command,
         config=cfg.to_dict(),
-        parent_artifacts=(parent_dataset_manifest.artifact_id,),
+        parent_artifacts=parent_artifact_ids,
         source_git_sha=source_git_sha,
         created_at=created_at,
-        metadata={
-            "schema_version": TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
-            "run_id": cfg.name,
-            "seed": cfg.seed,
-            "step_count": result.step_count,
-            "final_metrics": dict(result.metrics),
-            "dataset_manifest_path": _relative_to_root(dataset_manifest_path, root_path),
-            "executor": dict(result.metadata),
-        },
+        metadata=artifact_metadata,
     )
     artifact_manifest_path = paths.run_dir / "manifest.json"
     write_artifact_manifest(artifact_manifest, artifact_manifest_path)
+
+    manifest_metadata: dict[str, Any] = {"executor": dict(result.metadata)}
+    if resume_metadata:
+        manifest_metadata["resume"] = resume_metadata
 
     manifest = TrainingRunManifest(
         run_id=cfg.name,
         config_sha256=artifact_manifest.config_sha256,
         artifact_manifest_id=artifact_manifest.artifact_id,
         artifact_manifest_path=_relative_to_root(artifact_manifest_path, paths.run_dir),
-        parent_artifacts=(parent_dataset_manifest.artifact_id,),
+        parent_artifacts=parent_artifact_ids,
         dataset_manifest_path=_relative_to_root(dataset_manifest_path, root_path),
         config_path=_relative_to_root(paths.config_path, paths.run_dir),
         metrics_path=_relative_to_root(paths.metrics_path, paths.run_dir),
@@ -301,7 +348,7 @@ def train(
         final_metrics=dict(result.metrics),
         step_count=result.step_count,
         seed=cfg.seed,
-        metadata={"executor": dict(result.metadata)},
+        metadata=manifest_metadata,
     )
     _write_json(manifest.to_dict(), paths.training_manifest_path)
     return manifest

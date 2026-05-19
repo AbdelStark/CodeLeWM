@@ -47,7 +47,7 @@ class RerankHarnessTest(unittest.TestCase):
             patch_file.write_text(_unified_diff(before_text, patch_after))
             invalid_file.write_text("def broken(:\n    return 4\n")
 
-            result = load_scorer(checkpoint).rerank_files(
+            result = load_scorer(checkpoint, allow_unsafe=True).rerank_files(
                 before=before,
                 instruction="change return value",
                 candidates=candidates,
@@ -88,7 +88,7 @@ class RerankHarnessTest(unittest.TestCase):
                 "+value = 3\n"
             )
 
-            result = load_scorer(checkpoint).rerank_files(
+            result = load_scorer(checkpoint, allow_unsafe=True).rerank_files(
                 before=before,
                 instruction="change value",
                 candidates=candidates,
@@ -128,6 +128,7 @@ class RerankHarnessTest(unittest.TestCase):
                     "--checkpoint",
                     str(checkpoint),
                     "--json",
+                    "--allow-unsafe-checkpoint",
                 ],
                 cwd=ROOT,
                 check=False,
