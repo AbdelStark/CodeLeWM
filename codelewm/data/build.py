@@ -456,13 +456,13 @@ def build_dataset(
     write_dataset_manifest(dataset_manifest, dataset_manifest_path)
 
     manifest_files = (
-        config_path,
-        transitions_path,
-        dataset_manifest_path,
-        filter_report_path,
-        license_report_path,
-        split_dedup_report_path,
-        row_counts_path,
+        config_path.resolve(),
+        transitions_path.resolve(),
+        dataset_manifest_path.resolve(),
+        filter_report_path.resolve(),
+        license_report_path.resolve(),
+        split_dedup_report_path.resolve(),
+        row_counts_path.resolve(),
     )
     artifact_manifest = build_artifact_manifest(
         artifact_kind="dataset",

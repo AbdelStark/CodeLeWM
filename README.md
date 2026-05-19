@@ -41,7 +41,7 @@ The current package includes:
 - `codelewm.data`: source adapters, parse/license filters, split and
   deduplication policy, deterministic synthetic transforms, `CodeState`
   extraction, normalization, masks, action extraction, dataset build artifacts,
-  Parquet staging, HDF5 packing, and dataset manifests;
+  split HDF5/Parquet packing, and dataset manifests;
 - `codelewm.model`: tensor contracts, text and abstract action tokenizers and
   encoders, pooled code-latent predictor adapter, transition energy, checkpoint
   compatibility manifests, MSE plus SIGReg objective, and gated retrieval loss;
@@ -51,7 +51,7 @@ The current package includes:
 - `codelewm.observability`: artifact manifests, structured JSONL log events,
   and redaction helpers for secrets, home paths, and long text snippets;
 - `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
-  `codelewm score`, and `codelewm rerank` commands, and structured
+  `codelewm dataset pack`, `codelewm score`, and `codelewm rerank` commands, and structured
   dataset/score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
@@ -62,8 +62,8 @@ the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
 validation, local scoring, safe candidate reranking, manifest verification,
 secret scanning, `uv` dependency management, and pull-request CI are
 implemented. A meaningful first training result is still pending: the remaining
-work is the dataset pack CLI, train/eval/index CLI workflow, package-native
-training executor, and reproducible first-results report tracked in
+work is the train/eval/index CLI workflow, package-native training executor,
+and reproducible first-results report tracked in
 `docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
 logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
 existing Hydra configs are inherited from the original LeWorldModel seed and are
@@ -164,8 +164,8 @@ raw edit sources
   -> action extractor
   -> split and deduplication
   -> transition JSONL artifact
-  -> Parquet staging shards
-  -> HDF5 transition packs
+  -> split Parquet staging shards
+  -> split HDF5 transition packs
   -> manifest-backed training
   -> CodeLeWM checkpoint
   -> retrieval and surprise evaluation
@@ -184,8 +184,9 @@ message length, generated-file indicators, and edit-ratio limits.
 Kept rows are converted into `CodeState` pairs, normalized, tokenized into stable
 state/action arrays, assigned deterministic repository-level splits, deduplicated
 to reduce leakage, and written by `codelewm dataset build` as a manifest-backed
-transition JSONL artifact. The follow-on pack stage stages Parquet when
-`pyarrow` is available and packs HDF5 when `h5py` is available. Dataset manifests
+transition JSONL artifact. `codelewm dataset pack` verifies the build manifest,
+records lineage, stages split Parquet shards, and packs split HDF5 files for the
+training runner when the data dependency group is installed. Dataset manifests
 record artifact paths, row counts, split/source counts, feature flags, byte
 sizes, license-gate metadata, and SHA-256 checksums.
 

@@ -51,7 +51,7 @@ either as a Python API only or as a placeholder.
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
-| `codelewm dataset pack` | planned | `codelewm.dataset.v1` |
+| `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm train` | planned | `codelewm.training_run.v1` |
 | `codelewm eval retrieval` | planned | `codelewm.eval.retrieval_report.v1` |
 | `codelewm eval surprise` | planned | `codelewm.eval.surprise_report.v1` |
@@ -176,6 +176,56 @@ policies before writing transitions. Rejected rows are recorded in
 the filter and split/dedup reports; zero kept transitions fail with
 `codelewm.error.v1`.
 
+### `codelewm dataset pack`
+
+Pack a built transition artifact into split HDF5 files and Parquet staging
+shards for training:
+
+```bash
+codelewm dataset pack \
+  --manifest data/codelewm_fixture/manifest.json \
+  --out data/codelewm_fixture_packed \
+  --json
+```
+
+This command requires the data dependency group:
+
+```bash
+uv sync --group dev --group data
+```
+
+The pack command verifies the input artifact manifest and the input dataset
+manifest before writing output. The packed output includes:
+
+```
+<out>/
+  manifest.json              codelewm.artifact_manifest.v1
+  dataset_manifest.json      codelewm.transition.v1
+  config.json                normalized pack config
+  hdf5/
+    train.hdf5
+    val.hdf5
+    test.hdf5
+  parquet/
+    train/
+    val/
+    test/
+  reports/
+    pack_report.json
+```
+
+Verify lineage by passing the build manifest as the parent:
+
+```bash
+codelewm manifest verify \
+  --manifest data/codelewm_fixture_packed/manifest.json \
+  --parent-manifest data/codelewm_fixture/manifest.json \
+  --json
+```
+
+If `h5py` or `pyarrow` is unavailable, the command exits with
+`codelewm.error.v1` and `error_type=optional_dependency_missing`.
+
 ### Planned commands (spec contract)
 
 The following commands appear in the spec and have manifests
@@ -184,7 +234,6 @@ Python contracts are available today via `codelewm.training`,
 `codelewm.eval`, and `codelewm.harness`:
 
 ```bash
-codelewm dataset pack  --manifest <dir>/manifest.json --out <dir>/hdf5
 codelewm train         --config <yaml>
 codelewm eval retrieval --checkpoint <ckpt> --data <hdf5>
 codelewm eval surprise --checkpoint <ckpt> --data <hdf5>
@@ -362,6 +411,7 @@ field list.
 | Surface | Schema version |
 | ------- | -------------- |
 | Dataset build report | `codelewm.dataset_build_report.v1` |
+| Dataset pack report | `codelewm.dataset_pack_report.v1` |
 | Dataset manifest | `codelewm.transition.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Manifest verifier report | `codelewm.manifest_verify.v1` |

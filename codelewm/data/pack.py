@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -81,12 +81,23 @@ class PackedTransition:
             "path": self.path,
             "split": self.split,
             "state_before_input_ids": list(self.state_before.input_ids),
+            "state_before_attention_mask": _optional_bool_list(self.state_before.attention_mask),
+            "state_before_segment_ids": _optional_int_list(self.state_before.segment_ids),
+            "state_before_changed_hunk_mask": _optional_bool_list(self.state_before.changed_hunk_mask),
             "state_after_input_ids": list(self.state_after.input_ids),
+            "state_after_attention_mask": _optional_bool_list(self.state_after.attention_mask),
+            "state_after_segment_ids": _optional_int_list(self.state_after.segment_ids),
+            "state_after_changed_hunk_mask": _optional_bool_list(self.state_after.changed_hunk_mask),
             "action_text_input_ids": list(self.action_text.input_ids),
+            "action_text_attention_mask": _optional_bool_list(self.action_text.attention_mask),
             "action_abs_input_ids": list(self.action_abs.input_ids),
+            "action_abs_attention_mask": _optional_bool_list(self.action_abs.attention_mask),
             "action_patch_input_ids": None
             if self.action_patch is None
             else list(self.action_patch.input_ids),
+            "action_patch_attention_mask": None
+            if self.action_patch is None
+            else _optional_bool_list(self.action_patch.attention_mask),
             "edit_size": self.edit_size,
             "token_count_before": self.token_count_before,
             "token_count_after": self.token_count_after,
@@ -94,6 +105,51 @@ class PackedTransition:
             "filter_flags": list(self.filter_flags),
             "dedup_keys": list(self.dedup_keys),
         }
+
+    @classmethod
+    def from_parquet_row(cls, payload: Mapping[str, Any]) -> "PackedTransition":
+        """Rebuild a transition from a JSONL/Parquet staging row."""
+
+        schema_version = _require_string(payload, "schema_version", "transition row")
+        if schema_version != DATASET_SCHEMA_VERSION:
+            raise PackError(
+                f"transition row schema_version must be {DATASET_SCHEMA_VERSION!r}; got {schema_version!r}"
+            )
+        source = _require_string(payload, "source", "transition row")
+        if source not in SOURCE_CODES:
+            raise PackError(f"transition row source is unsupported: {source}")
+        split = _require_string(payload, "split", "transition row")
+        if split not in SPLIT_CODES:
+            raise PackError(f"transition row split is unsupported: {split}")
+        action_patch_ids = _optional_int_sequence(payload, "action_patch_input_ids", "transition row")
+        return cls(
+            transition_id=_require_string(payload, "transition_id", "transition row"),
+            source=source,  # type: ignore[arg-type]
+            repo=_require_string(payload, "repo", "transition row"),
+            commit=_require_string(payload, "commit", "transition row"),
+            path=_require_string(payload, "path", "transition row"),
+            split=split,  # type: ignore[arg-type]
+            state_before=_token_sequence_from_payload(payload, "state_before", state=True),
+            state_after=_token_sequence_from_payload(payload, "state_after", state=True),
+            action_text=_token_sequence_from_payload(payload, "action_text", state=False),
+            action_abs=_token_sequence_from_payload(payload, "action_abs", state=False),
+            action_patch=None
+            if action_patch_ids is None
+            else TokenSequence(
+                input_ids=action_patch_ids,
+                attention_mask=_optional_bool_sequence(
+                    payload,
+                    "action_patch_attention_mask",
+                    "transition row",
+                ),
+            ),
+            edit_size=_optional_int(payload, "edit_size", "transition row", default=0),
+            token_count_before=_optional_nullable_int(payload, "token_count_before", "transition row"),
+            token_count_after=_optional_nullable_int(payload, "token_count_after", "transition row"),
+            license=_optional_string(payload, "license", "transition row"),
+            filter_flags=_optional_string_tuple(payload, "filter_flags", "transition row"),
+            dedup_keys=_optional_string_tuple(payload, "dedup_keys", "transition row"),
+        )
 
 
 @dataclass(frozen=True)
@@ -328,6 +384,28 @@ def read_dataset_manifest(path: Path) -> DatasetManifest:
     return DatasetManifest.from_dict(payload)
 
 
+def read_packed_transitions_jsonl(path: Path) -> tuple[PackedTransition, ...]:
+    """Read packed transition rows from a JSONL staging artifact."""
+
+    rows: list[PackedTransition] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                payload = json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                raise PackError(f"transition row {path}:{line_number} is not valid JSON: {exc.msg}") from exc
+            if not isinstance(payload, Mapping):
+                raise PackError(f"transition row {path}:{line_number} must be a JSON object")
+            try:
+                rows.append(PackedTransition.from_parquet_row(payload))
+            except PackError as exc:
+                raise PackError(f"transition row {path}:{line_number} is invalid: {exc}") from exc
+    return tuple(rows)
+
+
 def validate_manifest_checksums(manifest: DatasetManifest, *, root: Path) -> None:
     for artifact in manifest.artifacts:
         artifact_path = root / artifact.path
@@ -496,3 +574,117 @@ def _relative_artifact(artifact: ArtifactInfo, root: Path) -> ArtifactInfo:
         sha256=artifact.sha256,
         bytes=artifact.bytes,
     )
+
+
+def _token_sequence_from_payload(payload: Mapping[str, Any], prefix: str, *, state: bool) -> TokenSequence:
+    return TokenSequence(
+        input_ids=_require_int_sequence(payload, f"{prefix}_input_ids", "transition row"),
+        attention_mask=_optional_bool_sequence(payload, f"{prefix}_attention_mask", "transition row"),
+        segment_ids=None
+        if not state
+        else _optional_int_sequence(payload, f"{prefix}_segment_ids", "transition row"),
+        changed_hunk_mask=None
+        if not state
+        else _optional_bool_sequence(payload, f"{prefix}_changed_hunk_mask", "transition row"),
+    )
+
+
+def _optional_int_list(values: Sequence[int] | None) -> list[int] | None:
+    return None if values is None else [int(value) for value in values]
+
+
+def _optional_bool_list(values: Sequence[bool] | None) -> list[bool] | None:
+    return None if values is None else [bool(value) for value in values]
+
+
+def _require_string(payload: Mapping[str, Any], key: str, section: str) -> str:
+    if key not in payload:
+        raise PackError(f"{section}.{key} is required")
+    value = payload[key]
+    if not isinstance(value, str):
+        raise PackError(f"{section}.{key} must be a string")
+    return value
+
+
+def _optional_string(payload: Mapping[str, Any], key: str, section: str) -> str | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise PackError(f"{section}.{key} must be a string or null")
+    return value
+
+
+def _optional_int(payload: Mapping[str, Any], key: str, section: str, *, default: int) -> int:
+    if key not in payload:
+        return default
+    value = payload[key]
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise PackError(f"{section}.{key} must be an integer")
+    return value
+
+
+def _optional_nullable_int(payload: Mapping[str, Any], key: str, section: str) -> int | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise PackError(f"{section}.{key} must be an integer or null")
+    return value
+
+
+def _require_int_sequence(payload: Mapping[str, Any], key: str, section: str) -> tuple[int, ...]:
+    if key not in payload:
+        raise PackError(f"{section}.{key} is required")
+    value = payload[key]
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise PackError(f"{section}.{key} must be an integer array")
+    output: list[int] = []
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, int):
+            raise PackError(f"{section}.{key} must contain only integers")
+        output.append(item)
+    return tuple(output)
+
+
+def _optional_int_sequence(payload: Mapping[str, Any], key: str, section: str) -> tuple[int, ...] | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    return _require_int_sequence(payload, key, section)
+
+
+def _optional_bool_sequence(payload: Mapping[str, Any], key: str, section: str) -> tuple[bool, ...] | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise PackError(f"{section}.{key} must be a boolean array")
+    output: list[bool] = []
+    for item in value:
+        if not isinstance(item, bool):
+            raise PackError(f"{section}.{key} must contain only booleans")
+        output.append(item)
+    return tuple(output)
+
+
+def _optional_string_tuple(payload: Mapping[str, Any], key: str, section: str) -> tuple[str, ...]:
+    if key not in payload:
+        return ()
+    value = payload[key]
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise PackError(f"{section}.{key} must be a string array")
+    output: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise PackError(f"{section}.{key} must contain only strings")
+        output.append(item)
+    return tuple(output)

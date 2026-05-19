@@ -75,6 +75,13 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_dataset_pack_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("dataset", "pack", "--help")
+
+        for flag in ("--manifest", "--out", "--json"):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_invalid_cli_combinations_exit_with_argparse_error(self) -> None:
         cases = (
             ("score", "--instruction", "change"),

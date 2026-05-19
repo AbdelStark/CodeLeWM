@@ -38,6 +38,7 @@ Harness CLI error records use `schema_version=codelewm.error.v1`. Current
 - `patch_apply_failed`;
 - `config_error`;
 - `source_unavailable`;
+- `optional_dependency_missing`;
 - `dataset_build_error`;
 - `empty_dataset`;
 - `manifest_error`;

@@ -51,6 +51,15 @@ class PullRequestWorkflowContractTest(unittest.TestCase):
         self.assertIn("secret-scan", text)
         self.assertIn(".ci/manifest/manifest.json", text)
 
+    def test_workflow_runs_dataset_fixture_build_and_pack_gate(self) -> None:
+        text = PR_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("dataset-fixture:", text)
+        self.assertIn("uv sync --frozen --group dev --group data", text)
+        self.assertIn("codelewm dataset build", text)
+        self.assertIn("codelewm dataset pack", text)
+        self.assertIn("--parent-manifest .ci/dataset-build/manifest.json", text)
+
     def test_workflow_pins_supported_python_versions(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
 
