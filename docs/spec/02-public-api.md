@@ -21,7 +21,14 @@ codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hd
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
 codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
 codelewm secret-scan runs/v0_1/ logs/
+codelewm manifest verify --manifest runs/v0_1/manifest.json
 ```
+
+`manifest verify` validates that every file declared in an artifact manifest
+exists, matches its recorded byte size and SHA-256, and that any required parent
+artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
+on any mismatch and emits a `codelewm.manifest_verify.v1` JSON report with
+`--json`. Release gates call this verifier.
 
 `codelewm secret-scan` accepts one or more files or directories and emits a
 `codelewm.secret_scan.v1` JSON report listing every secret-pattern match by

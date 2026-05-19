@@ -12,8 +12,17 @@ from pathlib import Path
 
 from codelewm import __version__
 from codelewm.harness.scorer import ScoreError, load_scorer
-from codelewm.observability import LogEvent, write_log_event_jsonl
+from codelewm.observability import (
+    ArtifactManifestError,
+    LogEvent,
+    read_artifact_manifest,
+    validate_artifact_checksums,
+    write_log_event_jsonl,
+)
 from codelewm.security import scan_paths
+
+
+MANIFEST_VERIFY_REPORT_SCHEMA_VERSION = "codelewm.manifest_verify.v1"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +72,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
     rerank.set_defaults(func=_rerank_command)
+    manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
+    manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
+    verify = manifest_subcommands.add_parser("verify", help="verify an artifact manifest")
+    verify.add_argument("--manifest", type=Path, required=True, help="artifact manifest JSON path")
+    verify.add_argument(
+        "--root",
+        type=Path,
+        help="artifact root directory; defaults to the manifest parent",
+    )
+    verify.add_argument(
+        "--parent-manifest",
+        type=Path,
+        action="append",
+        default=None,
+        help="parent artifact manifest required by this artifact; repeatable",
+    )
+    verify.add_argument("--json", action="store_true", help="emit JSON output")
+    verify.set_defaults(func=_manifest_verify_command)
+    manifest.set_defaults(func=_manifest_help_command, manifest_parser=manifest)
     secret_scan = subparsers.add_parser(
         "secret-scan",
         help="scan files for secret patterns and emit a redacted JSON report",
@@ -98,6 +126,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _print_help(args: argparse.Namespace) -> int:
     args.parser.print_help()
+    return 0
+
+
+def _manifest_help_command(args: argparse.Namespace) -> int:
+    args.manifest_parser.print_help()
     return 0
 
 
@@ -153,6 +186,64 @@ def _score_command(args: argparse.Namespace) -> int:
         print(f"candidate: {result.candidate}")
         print(f"transition_energy: {result.transition_energy:.6g}")
         print(f"final_score: {result.final_score:.6g}")
+    return 0
+
+
+def _manifest_verify_command(args: argparse.Namespace) -> int:
+    parent_manifest_paths: tuple[Path, ...] = tuple(args.parent_manifest or ())
+    try:
+        manifest = read_artifact_manifest(args.manifest)
+        root = args.root or args.manifest.parent
+        checked_files = validate_artifact_checksums(manifest, root=root)
+        parent_ids: list[str] = []
+        for parent_manifest_path in parent_manifest_paths:
+            parent_manifest = read_artifact_manifest(parent_manifest_path)
+            validate_artifact_checksums(parent_manifest, root=parent_manifest_path.parent)
+            parent_ids.append(parent_manifest.artifact_id)
+        missing_parents = sorted(set(manifest.parent_artifacts) - set(parent_ids))
+        if missing_parents:
+            raise ScoreError(
+                "manifest parent artifact(s) were not provided: " + ", ".join(missing_parents),
+                error_type="manifest_error",
+                remediation="pass each required parent with --parent-manifest",
+                artifact=str(args.manifest),
+            )
+    except (ArtifactManifestError, OSError, json.JSONDecodeError) as exc:
+        error = ScoreError(
+            f"manifest verification failed: {exc}",
+            error_type="manifest_error",
+            remediation="repair the artifact or regenerate its manifest",
+            artifact=str(args.manifest),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        if args.json:
+            print(json.dumps(error.to_error_report().to_dict(), indent=2, sort_keys=True))
+        else:
+            print(str(error), file=sys.stderr)
+        return 2
+    except ScoreError as exc:
+        if args.json:
+            print(json.dumps(exc.to_error_report().to_dict(), indent=2, sort_keys=True))
+        else:
+            print(str(exc), file=sys.stderr)
+        return 2
+
+    report = {
+        "schema_version": MANIFEST_VERIFY_REPORT_SCHEMA_VERSION,
+        "ok": True,
+        "manifest": str(args.manifest),
+        "artifact_id": manifest.artifact_id,
+        "artifact_kind": manifest.artifact_kind,
+        "files_checked": len(checked_files),
+        "parent_artifacts": list(manifest.parent_artifacts),
+        "parents_checked": parent_ids,
+    }
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(f"manifest: {manifest.artifact_id}")
+        print(f"files_checked: {len(checked_files)}")
+        print("ok: true")
     return 0
 
 
