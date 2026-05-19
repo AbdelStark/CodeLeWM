@@ -34,6 +34,7 @@ HarnessErrorType = Literal[
     "empty_dataset",
     "manifest_error",
     "checkpoint_error",
+    "evaluation_gate_error",
     "scoring_error",
 ]
 
@@ -93,6 +94,7 @@ class ErrorReport:
             "empty_dataset",
             "manifest_error",
             "checkpoint_error",
+            "evaluation_gate_error",
             "scoring_error",
         }:
             raise ScoreError(f"unsupported error_type: {self.error_type}")
@@ -491,6 +493,7 @@ def error_report_json_schema() -> dict[str, Any]:
                     "empty_dataset",
                     "manifest_error",
                     "checkpoint_error",
+                    "evaluation_gate_error",
                     "scoring_error",
                 ]
             },

@@ -76,6 +76,11 @@ from .retrieval import (
     validate_retrieval_report_payload,
     write_retrieval_report,
 )
+from .retrieval_runner import (
+    RETRIEVAL_EVAL_RUN_SCHEMA_VERSION,
+    RetrievalEvalResult,
+    run_retrieval_evaluation,
+)
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
@@ -85,6 +90,7 @@ __all__ = [
     "HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION",
     "KILL_REPORT_SCHEMA_VERSION",
     "RETRIEVAL_METRICS_SCHEMA_VERSION",
+    "RETRIEVAL_EVAL_RUN_SCHEMA_VERSION",
     "RETRIEVAL_REPORT_SCHEMA_VERSION",
     "REQUIRED_HEADLINE_BASELINES",
     "SURPRISE_DECOY_CATEGORIES",
@@ -102,6 +108,7 @@ __all__ = [
     "HardNegativeSamplerReport",
     "KillReport",
     "RetrievalEvalError",
+    "RetrievalEvalResult",
     "RetrievalMetrics",
     "RetrievalReport",
     "SurpriseDecoy",
@@ -129,6 +136,7 @@ __all__ = [
     "rank_targets",
     "random_baseline_ranks",
     "read_retrieval_report",
+    "run_retrieval_evaluation",
     "read_surprise_report",
     "sample_hard_negatives",
     "score_surprise_example",

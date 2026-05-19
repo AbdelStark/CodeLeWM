@@ -26,6 +26,7 @@ class CliHelpTest(unittest.TestCase):
         self.assertIn("score", completed.stdout)
         self.assertIn("rerank", completed.stdout)
         self.assertIn("train", completed.stdout)
+        self.assertIn("eval", completed.stdout)
 
 
 if __name__ == "__main__":

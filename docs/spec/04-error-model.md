@@ -43,6 +43,7 @@ Harness CLI error records use `schema_version=codelewm.error.v1`. Current
 - `empty_dataset`;
 - `manifest_error`;
 - `checkpoint_error`;
+- `evaluation_gate_error`;
 - `scoring_error`.
 
 `codelewm score --json` writes an `ErrorReport` JSON object and exits with code
@@ -81,6 +82,13 @@ per-dimension variance, or nearest-neighbor entropy crosses kill thresholds.
 
 Response: refuse to load with `CheckpointCompatibilityError` unless an explicit
 migration command exists and writes a new manifest.
+
+### Evaluation gate failure
+
+Response: fail the evaluation command with `EvaluationGateError` or a typed
+evaluation error when required baselines, finite metrics, split-leakage checks,
+or action-view policy gates fail. Headline reports must not be written as
+successful artifacts when these gates fail.
 
 ### User code execution
 

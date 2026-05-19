@@ -15,7 +15,7 @@ Commands:
 codelewm dataset build --config config/data/commitpackft.yaml --out data/codelewm_v0_1
 codelewm dataset pack --manifest data/codelewm_v0_1/manifest.json --out data/codelewm_v0_1/hdf5
 codelewm train --config config/train/codelewm_tiny.yaml
-codelewm eval retrieval --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/test.hdf5
+codelewm eval retrieval --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/retrieval
 codelewm eval surprise --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/test.hdf5
 codelewm index --checkpoint runs/v0_1/checkpoint.pt --data data/codelewm_v0_1/hdf5/train.hdf5 --out indexes/v0_1
 codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
@@ -116,6 +116,35 @@ train/data runtime dependencies exit 2 with
 `error_type=optional_dependency_missing`. `--log-jsonl` appends
 `codelewm.log_event.v1` start, completion, and error events without replacing
 JSON stdout.
+
+`codelewm eval retrieval` is the public training-run plus packed-dataset to
+retrieval-report path:
+
+```bash
+codelewm eval retrieval \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-retrieval \
+  --json
+```
+
+It verifies the packed dataset artifact, infers and verifies the parent
+training-run artifact manifest from the checkpoint directory, validates the
+paired checkpoint manifest before loading torch weights, and writes:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1` for the eval report;
+- `config.json`: normalized retrieval evaluation config;
+- `reports/retrieval_report.json`: `codelewm.eval.retrieval_report.v1`;
+- `reports/hard_negative_sampler_report.json`:
+  `codelewm.eval.hard_negative_sampler_report.v1`.
+
+The command emits `codelewm.eval.retrieval_run.v1` on JSON stdout. Reports
+include `Recall@1`, `Recall@5`, `Recall@10`, MRR, median rank, candidate
+counts, required random/lexical/no-action/shuffled-action baselines,
+hard-negative slices, and action-view policy metadata. Headline reports require
+the text action view; patch actions remain diagnostic upper bounds and are
+rejected for headline reports. Evaluation gate failures exit 6 with
+`error_type=evaluation_gate_error`.
 
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
@@ -219,6 +248,18 @@ report = validate_required_headline_baselines(
 Reports use `schema_version=codelewm.eval.retrieval_report.v1`; candidate pools
 use `schema_version=codelewm.eval.candidate_pool.v1` and must exclude `train`
 split rows.
+
+The package-native model-backed runner is also exposed for local automation:
+
+```python
+from codelewm.eval import run_retrieval_evaluation
+
+result = run_retrieval_evaluation(
+    checkpoint=".artifacts/tiny-train/checkpoints/checkpoint.pt",
+    data=".artifacts/tiny-pack",
+    out=".artifacts/tiny-retrieval",
+)
+```
 
 `ScoreResult` schema:
 

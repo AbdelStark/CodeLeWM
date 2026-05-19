@@ -18,9 +18,9 @@ contracts, scoring/reranking harness commands, observability, security gates,
 CI, and release templates.
 
 The repository still has no meaningful CodeLeWM training result. The landed
-training path proves the manifest and CPU-smoke contracts, but it does not yet
-train the package-native transition model on a real edit-transition dataset and
-does not emit the retrieval/surprise evidence needed for a first result.
+tiny path can build, pack, train the package-native torch model, and emit a
+retrieval report, but it still needs surprise evaluation, indexing, and a
+reproducible first-results report before any research claim is warranted.
 
 Current landed CLI commands:
 
@@ -28,13 +28,13 @@ Current landed CLI commands:
 - `codelewm rerank`
 - `codelewm manifest verify`
 - `codelewm secret-scan`
-
-CLI commands still required for the first useful workflow:
-
 - `codelewm dataset build`
 - `codelewm dataset pack`
 - `codelewm train`
 - `codelewm eval retrieval`
+
+CLI commands still required for the first useful workflow:
+
 - `codelewm eval surprise`
 - `codelewm index`
 
