@@ -121,7 +121,18 @@ issue bodies explicitly allow the run to proceed with known blockers recorded.
 
 For the real scaled HF Jobs run, use a merged SHA or `main` for
 `CODELEWM_HF_REF`, checked-in dataset and training configs, private publishing,
-and a detached job. Start the run through the launcher:
+HF CLI source prefetch, and a detached job. The first public shard candidate is
+`config/data/codelewm_public_shard_commitpackft_python.json`, which expects
+`bigcode/commitpackft:data/python/data.jsonl` under
+`.artifacts/hf-sources/commitpackft`. Preflight the source path first:
+
+hf download bigcode/commitpackft \
+  data/python/data.jsonl \
+  --repo-type dataset \
+  --local-dir .artifacts/hf-sources/commitpackft \
+  --dry-run
+
+Start the run through the launcher:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -130,10 +141,15 @@ CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH=1 \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
-CODELEWM_DATASET_BUILD_CONFIG=<checked-in-public-shard-build-config> \
+CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
+CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft \
+CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset \
+CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl \
+CODELEWM_HF_SOURCE_DATASET_REVISION=main \
+CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 
 Capture the job ID from the detached launch. Monitor and triage only with HF

@@ -13,6 +13,20 @@ The current public-safe inputs are:
 - `commitpackft`: local CommitPackFT-style `.jsonl` or `.jsonl.gz` shards with
   Python rows and per-row license metadata.
 
+The first scaled public shard candidate uses the HF-hosted Python subset of
+`bigcode/commitpackft`:
+
+```bash
+hf download bigcode/commitpackft \
+  data/python/data.jsonl \
+  --repo-type dataset \
+  --local-dir .artifacts/hf-sources/commitpackft \
+  --dry-run
+```
+
+The corresponding checked-in build config is
+`config/data/codelewm_public_shard_commitpackft_python.json`.
+
 Other source kinds remain unsupported for public artifacts until an adapter,
 license policy, and card wording are added.
 

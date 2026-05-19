@@ -37,7 +37,30 @@ config SHA-256. A non-zero exit means the config must be fixed before launch.
 
 ## Public Shard Preconditions
 
-The scaled configs expect a packed public-safe dataset under:
+The first checked-in public shard build config is:
+
+```text
+config/data/codelewm_public_shard_commitpackft_python.json
+```
+
+It consumes the Python shard from `bigcode/commitpackft` after the HF CLI
+downloads it to:
+
+```text
+.artifacts/hf-sources/commitpackft/data/python/data.jsonl
+```
+
+Preflight the source path:
+
+```bash
+hf download bigcode/commitpackft \
+  data/python/data.jsonl \
+  --repo-type dataset \
+  --local-dir .artifacts/hf-sources/commitpackft \
+  --dry-run
+```
+
+The scaled configs expect the packed public-safe dataset under:
 
 ```text
 data/codelewm_public_shard_v0_3/
@@ -147,10 +170,15 @@ CODELEWM_HF_JOBS_FLAVOR=a10g-small \
 CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
-CODELEWM_DATASET_BUILD_CONFIG=<checked-in-public-shard-build-config> \
+CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
+CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft \
+CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset \
+CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl \
+CODELEWM_HF_SOURCE_DATASET_REVISION=main \
+CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 ```
 

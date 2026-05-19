@@ -1,0 +1,62 @@
+{
+  "schema_version": "codelewm.dataset_build_config.v1",
+  "name": "codelewm-public-shard-commitpackft-python-v0-3",
+  "seed": 240119,
+  "sources": [
+    {
+      "source": "commitpackft",
+      "path": "../../.artifacts/hf-sources/commitpackft/data/python/data.jsonl",
+      "name": "bigcode-commitpackft-python",
+      "options": {
+        "language": "Python"
+      }
+    }
+  ],
+  "filter": {
+    "min_changed_lines": 1,
+    "max_changed_lines": 150,
+    "min_edit_ratio": 0.02,
+    "max_edit_ratio": 0.6,
+    "min_message_chars": 8,
+    "max_message_chars": 512
+  },
+  "split": {
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "test_ratio": 0.1,
+    "seed": "codelewm.public_shard.commitpackft_python.v0.3"
+  },
+  "dedup": {
+    "near_duplicate_hamming_threshold": 3
+  },
+  "codestate": {
+    "max_small_file_lines": 40,
+    "region_context_lines": 8
+  },
+  "normalize": {
+    "token_budget": 1024,
+    "large_string_chars": 96,
+    "large_number_digits": 12,
+    "changed_context_lines": 2,
+    "include_docstrings": false
+  },
+  "action": {
+    "max_text_chars": 256,
+    "include_patch": false,
+    "max_abstract_ops": 32
+  },
+  "license": {
+    "allowed_licenses": [
+      "apache-2.0",
+      "bsd-2-clause",
+      "bsd-3-clause",
+      "cc0-1.0",
+      "isc",
+      "mit",
+      "unlicense"
+    ],
+    "require_license_field": true,
+    "redistribution_allowed": true,
+    "artifact_policy": "full_text"
+  }
+}

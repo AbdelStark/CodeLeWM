@@ -18,7 +18,7 @@ LOG_LEVELS: tuple[str, ...] = ("debug", "info", "warning", "error")
 _SECRET_KEY_RE = re.compile(r"(token|api[_-]?key|password|passwd|credential|secret)", re.IGNORECASE)
 _SECRET_VALUE_RE = re.compile(
     r"(?i)("
-    r"sk-[A-Za-z0-9_-]{12,}|"
+    r"(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}|"
     r"gh[pousr]_[A-Za-z0-9_]{12,}|"
     r"xox[baprs]-[A-Za-z0-9-]{12,}|"
     r"AKIA[0-9A-Z]{12,}"

@@ -34,6 +34,9 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_TRAIN_CONFIG=",
             "CODELEWM_HF_SCORER_QUALITY_CONFIG=",
             "CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=",
+            "CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft",
+            "CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl",
+            "CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -58,7 +61,10 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "CODELEWM_HF_PIPELINE_MODE=scaled",
+            "config/data/codelewm_public_shard_commitpackft_python.json",
             "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
+            "hf download bigcode/commitpackft",
+            "data/python/data.jsonl",
             "docs/training/SCALED_TRAINING_RUNBOOK.md",
             "action-view ablation",
             "codelewm.hf_publish_plan.v1",
@@ -80,6 +86,8 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "Do not print, commit, paste, or summarize token values.",
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
+            "config/data/codelewm_public_shard_commitpackft_python.json",
+            "bigcode/commitpackft:data/python/data.jsonl",
             "hf jobs logs <job-id>",
             "ml-intern --max-iterations -1",
             "downloaded checkpoint",
