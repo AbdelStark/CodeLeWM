@@ -40,6 +40,35 @@ contract.
 - Debug logs redact values matching token, key, password, credential, and secret
   patterns.
 
+`codelewm.security.scan_paths` walks one or more files or directories and
+returns a `codelewm.secret_scan.v1` report listing every match by path, line,
+pattern name, and SHA-256-truncated digest. The scanner intentionally never
+echoes a raw secret value into its output: every match is reported only as
+`[REDACTED_SECRET sha256=... length=...]`. Release gates and CI run the scanner
+over generated reports, log directories, and any other shareable artifact. The
+scanner's pattern set is kept aligned with the redactor in
+`codelewm.observability.logging` so that anything the scanner can detect is
+also stripped from structured logs by default.
+
+## Checkpoint Trust
+
+Checkpoints are loaded only behind the trust boundary:
+
+- Every checkpoint must ship with a `codelewm.checkpoint.v1` manifest at
+  `<checkpoint>.manifest.json` (the default path) or at an explicitly passed
+  manifest location.
+- The manifest is validated for schema, file existence, and SHA-256 match
+  before any code attempts to deserialize the checkpoint.
+- `codelewm.security.require_trusted_checkpoint` is the single function any
+  loader must call before reading a checkpoint file.
+- `codelewm.harness.load_scorer` calls the gate by default. Callers can pass
+  `allow_unsafe=True` (Python API) or `--allow-unsafe-checkpoint` (CLI) to
+  bypass the gate in a trusted local environment; the override exists for
+  fixture-only workflows and is the only documented escape hatch.
+- Tampered or missing-manifest loads are refused with a structured
+  `checkpoint_error` report; no partial state is created on the loader's
+  behalf.
+
 ## Dataset Licensing
 
 Each source adapter declares:
