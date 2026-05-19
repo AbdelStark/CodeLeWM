@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -99,6 +100,28 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         text = NEXT_GOAL.read_text(encoding="utf-8")
 
         self.assertIn("docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md", text)
+
+    def test_launcher_dry_run_preserves_bash_login_command_boundary(self) -> None:
+        completed = subprocess.run(
+            ["uv", "run", "scripts/hf-launch-codelewm-job"],
+            cwd=ROOT,
+            check=False,
+            env={
+                **os.environ,
+                "CODELEWM_HF_JOBS_DRY_RUN": "1",
+                "CODELEWM_HF_PIPELINE_MODE": "scaled",
+                "CODELEWM_HF_JOBS_TIMEOUT": "24h",
+                "CODELEWM_HF_PUBLISH_DRY_RUN": "0",
+                "CODELEWM_HF_REF": "main",
+            },
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn(" -- python:3.13-bookworm bash -lc ", completed.stdout)
+        self.assertNotIn(" --label c ", completed.stdout)
 
 
 if __name__ == "__main__":
