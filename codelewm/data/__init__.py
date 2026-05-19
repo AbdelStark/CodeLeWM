@@ -43,6 +43,7 @@ from .pack import (
     TokenSequence,
     build_dataset_manifest,
     read_dataset_manifest,
+    read_packed_transitions_jsonl,
     sha256_file,
     validate_manifest_checksums,
     write_dataset_artifacts,
@@ -111,6 +112,12 @@ from .build import (
     build_dataset_from_config_path,
     load_dataset_build_config,
 )
+from .dataset_pack import (
+    DATASET_PACK_CONFIG_SCHEMA_VERSION,
+    DATASET_PACK_REPORT_SCHEMA_VERSION,
+    DatasetPackResult,
+    pack_dataset_from_manifest,
+)
 
 __all__ = [
     "AdapterKind",
@@ -128,6 +135,8 @@ __all__ = [
     "DATASET_SCHEMA_VERSION",
     "DATASET_BUILD_CONFIG_SCHEMA_VERSION",
     "DATASET_BUILD_REPORT_SCHEMA_VERSION",
+    "DATASET_PACK_CONFIG_SCHEMA_VERSION",
+    "DATASET_PACK_REPORT_SCHEMA_VERSION",
     "DEFAULT_SYNTHETIC_TRANSFORMS",
     "DedupDroppedRecord",
     "DedupKeys",
@@ -138,6 +147,7 @@ __all__ = [
     "DatasetBuildResult",
     "DatasetLicenseConfig",
     "DatasetManifest",
+    "DatasetPackResult",
     "DatasetSourceConfig",
     "DropReason",
     "DroppedRecord",
@@ -191,7 +201,9 @@ __all__ = [
     "load_dataset_build_config",
     "module_name_from_path",
     "normalize_codestate",
+    "pack_dataset_from_manifest",
     "read_dataset_manifest",
+    "read_packed_transitions_jsonl",
     "sha256_file",
     "split_and_deduplicate",
     "split_key",

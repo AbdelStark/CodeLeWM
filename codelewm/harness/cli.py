@@ -14,9 +14,12 @@ from codelewm import __version__
 from codelewm.data import (
     DatasetBuildConfigError,
     DatasetBuildError,
+    OptionalDependencyError,
+    PackError,
     SourceRecordError,
     SourceUnavailableError,
     build_dataset_from_config_path,
+    pack_dataset_from_manifest,
 )
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.observability import (
@@ -86,6 +89,11 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--out", type=Path, required=True, help="empty output artifact directory")
     build.add_argument("--json", action="store_true", help="emit JSON output")
     build.set_defaults(func=_dataset_build_command)
+    pack = dataset_subcommands.add_parser("pack", help="pack built transition rows for training")
+    pack.add_argument("--manifest", type=Path, required=True, help="dataset build artifact manifest path")
+    pack.add_argument("--out", type=Path, required=True, help="empty packed dataset output directory")
+    pack.add_argument("--json", action="store_true", help="emit JSON output")
+    pack.set_defaults(func=_dataset_pack_command)
     dataset.set_defaults(func=_dataset_help_command, dataset_parser=dataset)
     manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
     manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
@@ -273,6 +281,53 @@ def _dataset_build_command(args: argparse.Namespace) -> int:
             error_type="dataset_build_error",
             remediation="choose a writable output directory and retry",
             artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+
+    if args.json:
+        print(json.dumps(result.to_report(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {result.output_dir / 'manifest.json'}")
+        print(f"dataset_manifest: {result.output_dir / 'dataset_manifest.json'}")
+        print(f"row_count: {result.dataset_manifest.row_count}")
+    return 0
+
+
+def _dataset_pack_command(args: argparse.Namespace) -> int:
+    command = (
+        "codelewm",
+        "dataset",
+        "pack",
+        "--manifest",
+        str(args.manifest),
+        "--out",
+        str(args.out),
+        *(("--json",) if args.json else ()),
+    )
+    try:
+        result = pack_dataset_from_manifest(
+            manifest_path=args.manifest,
+            output_dir=args.out,
+            command=command,
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"dataset pack optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the data dependency group with `uv sync --group data --group dev`",
+            artifact=str(args.manifest),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (ArtifactManifestError, PackError, OSError, json.JSONDecodeError) as exc:
+        error = ScoreError(
+            f"dataset pack failed: {exc}",
+            error_type="dataset_build_error",
+            remediation="verify the input manifest, checksums, and output path, then retry",
+            artifact=str(args.manifest),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         )
         _emit_error(args, error, json_output=args.json)

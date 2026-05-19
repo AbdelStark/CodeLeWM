@@ -111,6 +111,35 @@ jobs:
       - name: Run secret scan
         run: uv run codelewm secret-scan README.md SPEC.md docs .ci/manifest --json
 
+  dataset-fixture:
+    name: Dataset fixture build and pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install data dependencies
+        run: uv sync --frozen --group dev --group data
+
+      - name: Build tiny dataset fixture
+        run: uv run codelewm dataset build --config tests/fixtures/dataset_build/config.json --out .ci/dataset-build --json
+
+      - name: Pack tiny dataset fixture
+        run: uv run codelewm dataset pack --manifest .ci/dataset-build/manifest.json --out .ci/dataset-pack --json
+
+      - name: Verify packed dataset lineage
+        run: uv run codelewm manifest verify --manifest .ci/dataset-pack/manifest.json --parent-manifest .ci/dataset-build/manifest.json --json
+
   docs-check:
     name: Docs sanity
     runs-on: ubuntu-latest

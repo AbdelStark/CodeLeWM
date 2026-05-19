@@ -47,6 +47,7 @@ The release gate must expose:
 
 ```bash
 uv sync --group dev
+uv sync --group dev --group data
 uv run python -m pytest
 uv run python -m pytest tests/data/test_codestate_fixtures.py
 uv run python -m pytest tests/eval/test_baselines.py
@@ -55,7 +56,9 @@ uv run python -m pytest tests/eval/test_retrieval_metrics.py
 uv run python -m pytest tests/integration/test_action_conditioning.py
 uv run python -m pytest tests/integration/test_cpu_train_smoke.py
 uv run python -m pytest tests/integration
-uv run codelewm dataset build --config tests/fixtures/tiny_dataset.yaml --out .artifacts/tiny
+uv run codelewm dataset build --config tests/fixtures/dataset_build/config.json --out .artifacts/tiny-build --json
+uv run codelewm dataset pack --manifest .artifacts/tiny-build/manifest.json --out .artifacts/tiny-pack --json
+uv run codelewm manifest verify --manifest .artifacts/tiny-pack/manifest.json --parent-manifest .artifacts/tiny-build/manifest.json --json
 uv run codelewm train --config tests/fixtures/tiny_train.yaml
 uv run codelewm eval retrieval --config tests/fixtures/tiny_retrieval.yaml
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
@@ -105,6 +108,9 @@ through `uv sync --group dev`, keeps running
 `uv run python -m pytest`, compiles real Python sources while excluding
 intentionally invalid parser fixtures, verifies an artifact manifest with
 `codelewm manifest verify`, runs `codelewm secret-scan` over public docs
-and generated CI artifacts, verifies the spec-doc tree is present, and pins
+and generated CI artifacts, builds and packs the committed tiny dataset fixture
+with the data dependency group, verifies the spec-doc tree is present, and pins
 the GitHub Actions versions it depends on. Local
-`uv run python -m pytest tests/` runs the same test suite the workflow does.
+`uv run python -m pytest tests/` runs the same lightweight test suite; the
+dataset pack fixture additionally requires
+`uv sync --group dev --group data`.

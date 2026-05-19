@@ -15,6 +15,7 @@
   "split": {
     "split_overrides": {
       "example/train": "train",
+      "example/train2": "train",
       "example/val": "val"
     }
   },

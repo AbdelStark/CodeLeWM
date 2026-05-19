@@ -51,6 +51,41 @@ Invalid configs exit 2 with `error_type=config_error`; unavailable sources exit
 3 with `error_type=source_unavailable`; malformed rows or empty kept outputs
 exit 4 with `error_type=dataset_build_error` or `empty_dataset`.
 
+`codelewm dataset pack` is the public transition-artifact to training-artifact
+path:
+
+```bash
+codelewm dataset pack \
+  --manifest data/codelewm_fixture/manifest.json \
+  --out data/codelewm_fixture_packed \
+  --json
+```
+
+It requires the data dependency group (`h5py` and `pyarrow`), verifies the input
+artifact and dataset manifests, records the build artifact as the parent, and
+writes:
+
+- split HDF5 files at `hdf5/train.hdf5`, `hdf5/val.hdf5`, and
+  `hdf5/test.hdf5`;
+- split Parquet staging shards under `parquet/{train,val,test}/`;
+- `dataset_manifest.json` with pack artifact checksums and inherited
+  license-gate metadata;
+- `reports/pack_report.json`;
+- `manifest.json` with `parent_artifacts=[<build artifact id>]`.
+
+Verify lineage with:
+
+```bash
+codelewm manifest verify \
+  --manifest data/codelewm_fixture_packed/manifest.json \
+  --parent-manifest data/codelewm_fixture/manifest.json \
+  --json
+```
+
+Missing `h5py` or `pyarrow` exits 2 with
+`error_type=optional_dependency_missing`. Input manifest, checksum, and row-count
+mismatches exit 4 with `error_type=dataset_build_error`.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
