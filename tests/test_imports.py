@@ -34,6 +34,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("validate_rerank_result_payload", codelewm.harness.__all__)
         self.assertIn("load_scorer", codelewm.harness.__all__)
         self.assertIn("CodeTransitionModel", codelewm.model.__all__)
+        self.assertIn("CodeStateEncoder", codelewm.model.__all__)
+        self.assertIn("TorchCodeTransitionModel", codelewm.model.__all__)
         self.assertIn("transition_energy", codelewm.model.__all__)
         self.assertIn("ArtifactManifest", codelewm.observability.__all__)
         self.assertIn("LogEvent", codelewm.observability.__all__)
@@ -46,6 +48,7 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("load_train_config", codelewm.training.__all__)
         self.assertIn("train", codelewm.training.__all__)
         self.assertIn("train_cpu_smoke", codelewm.training.__all__)
+        self.assertIn("train_torch", codelewm.training.__all__)
 
     def test_moved_seed_modules_have_package_specs(self) -> None:
         expected = [

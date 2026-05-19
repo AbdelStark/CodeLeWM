@@ -56,6 +56,15 @@ from .predictor import (
     CodeLatentPredictor,
     CodeLatentPredictorConfig,
 )
+from .state import (
+    CodeStateEncoder,
+    CodeStateEncoderConfig,
+)
+from .torch_transition import (
+    TorchCodeTransitionModel,
+    TorchCodeTransitionModelConfig,
+    build_torch_transition_model,
+)
 
 __all__ = [
     "ABSTRACT_ACTION_SEQUENCE_LENGTH",
@@ -69,6 +78,8 @@ __all__ = [
     "CheckpointCompatibilitySpec",
     "CheckpointManifest",
     "CheckpointMetadata",
+    "CodeStateEncoder",
+    "CodeStateEncoderConfig",
     "CodeLatentPredictor",
     "CodeLatentPredictorConfig",
     "LATENT_DIM",
@@ -83,9 +94,12 @@ __all__ = [
     "TensorContract",
     "TextActionEncoder",
     "TextActionEncoderConfig",
+    "TorchCodeTransitionModel",
+    "TorchCodeTransitionModelConfig",
     "TextActionTokenizer",
     "TransitionBatch",
     "build_checkpoint_metadata",
+    "build_torch_transition_model",
     "compute_config_hash",
     "compute_in_batch_retrieval_loss",
     "compute_prediction_mse",

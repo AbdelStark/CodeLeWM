@@ -135,15 +135,22 @@ ablation runs. Both project action encodings to the v0.1 latent dimension.
 Training is exposed through the package runner:
 
 ```python
-from codelewm.training import load_train_config, train
+from codelewm.training import load_train_config, train, train_torch
 
 cfg = load_train_config("config/train/codelewm_tiny.yaml")
 manifest = train(cfg, executor=executor)
+torch_manifest = train_torch(cfg, device="cpu")
 ```
 
 The runner owns config validation, parent dataset manifest validation, output
 layout, metrics files, checkpoint hashes, and training-run manifests. Concrete
-CPU/GPU model execution is supplied by an executor implementation.
+CPU/GPU model execution is supplied by an executor implementation. The
+package-native torch executor consumes packed HDF5 transition artifacts, trains
+the CodeLeWM state/action/predictor stack, writes
+`reports/torch_training_report.json`, and emits a paired
+`codelewm.checkpoint.v1` manifest beside `checkpoints/checkpoint.pt`. The public
+`codelewm train` command is the CLI wrapper tracked separately from this Python
+executor.
 
 Retrieval evaluation exposes the metric and report contract independently of the
 model runtime:
