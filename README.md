@@ -40,8 +40,8 @@ The current package includes:
 
 - `codelewm.data`: source adapters, parse/license filters, split and
   deduplication policy, deterministic synthetic transforms, `CodeState`
-  extraction, normalization, masks, action extraction, Parquet staging, HDF5
-  packing, and dataset manifests;
+  extraction, normalization, masks, action extraction, dataset build artifacts,
+  Parquet staging, HDF5 packing, and dataset manifests;
 - `codelewm.model`: tensor contracts, text and abstract action tokenizers and
   encoders, pooled code-latent predictor adapter, transition energy, checkpoint
   compatibility manifests, MSE plus SIGReg objective, and gated retrieval loss;
@@ -50,8 +50,9 @@ The current package includes:
   evaluation gates, and kill-report artifacts;
 - `codelewm.observability`: artifact manifests, structured JSONL log events,
   and redaction helpers for secrets, home paths, and long text snippets;
-- `codelewm.harness`: package CLI entry point, local `codelewm score` and
-  `codelewm rerank` commands, and structured score/rerank/error schemas;
+- `codelewm.harness`: package CLI entry point, local `codelewm dataset build`,
+  `codelewm score`, and `codelewm rerank` commands, and structured
+  dataset/score/rerank/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
@@ -59,10 +60,10 @@ The current package includes:
 The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
 the CPU smoke training path, retrieval reports, hard-negative sampling, baseline
 validation, local scoring, safe candidate reranking, manifest verification,
-secret scanning, and pull-request CI are implemented. A meaningful first
-training result is still pending: the remaining work is the `uv` dependency
-migration, dataset/train/eval/index CLI workflow, package-native training
-executor, and reproducible first-results report tracked in
+secret scanning, `uv` dependency management, and pull-request CI are
+implemented. A meaningful first training result is still pending: the remaining
+work is the dataset pack CLI, train/eval/index CLI workflow, package-native
+training executor, and reproducible first-results report tracked in
 `docs/roadmap/FULL_COMPLETION.md`. Core harness commands can write local JSONL
 logs with redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the
 existing Hydra configs are inherited from the original LeWorldModel seed and are
@@ -162,6 +163,7 @@ raw edit sources
   -> CodeState builder
   -> action extractor
   -> split and deduplication
+  -> transition JSONL artifact
   -> Parquet staging shards
   -> HDF5 transition packs
   -> manifest-backed training
@@ -181,9 +183,11 @@ message length, generated-file indicators, and edit-ratio limits.
 
 Kept rows are converted into `CodeState` pairs, normalized, tokenized into stable
 state/action arrays, assigned deterministic repository-level splits, deduplicated
-to reduce leakage, staged as Parquet when `pyarrow` is available, and packed to
-HDF5 when `h5py` is available. Dataset manifests record artifact paths, row
-counts, split/source counts, feature flags, byte sizes, and SHA-256 checksums.
+to reduce leakage, and written by `codelewm dataset build` as a manifest-backed
+transition JSONL artifact. The follow-on pack stage stages Parquet when
+`pyarrow` is available and packs HDF5 when `h5py` is available. Dataset manifests
+record artifact paths, row counts, split/source counts, feature flags, byte
+sizes, license-gate metadata, and SHA-256 checksums.
 
 ### Model Pipeline
 

@@ -50,7 +50,7 @@ either as a Python API only or as a placeholder.
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
-| `codelewm dataset build` | planned | `codelewm.dataset.v1` |
+| `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | planned | `codelewm.dataset.v1` |
 | `codelewm train` | planned | `codelewm.training_run.v1` |
 | `codelewm eval retrieval` | planned | `codelewm.eval.retrieval_report.v1` |
@@ -132,6 +132,50 @@ that fail syntax validation or dry-run patch application are
 emitted as `codelewm.error.v1` records after every valid
 `codelewm.score.v1` record.
 
+### `codelewm dataset build`
+
+Build a local transition dataset artifact from fixture records or
+CommitPackFT-style JSONL shards:
+
+```bash
+codelewm dataset build \
+  --config tests/fixtures/dataset_build/config.json \
+  --out data/codelewm_fixture \
+  --json
+```
+
+The config schema is `codelewm.dataset_build_config.v1`. JSON
+configs work with the base development environment; YAML configs
+are accepted when `omegaconf` is installed, for example through the
+training dependency group.
+
+The command writes:
+
+```
+<out>/
+  manifest.json              codelewm.artifact_manifest.v1
+  dataset_manifest.json      codelewm.transition.v1
+  config.json                normalized build config
+  transitions.jsonl          packed transition rows
+  reports/
+    filter_report.json
+    license_gate_report.json
+    split_dedup_report.json
+    row_counts.json
+```
+
+`manifest.json` is the verifier target:
+
+```bash
+codelewm manifest verify --manifest data/codelewm_fixture/manifest.json --json
+```
+
+The build applies parse, Python-path, generated-file, size,
+message, edit-ratio, license, deterministic split, and dedup
+policies before writing transitions. Rejected rows are recorded in
+the filter and split/dedup reports; zero kept transitions fail with
+`codelewm.error.v1`.
+
 ### Planned commands (spec contract)
 
 The following commands appear in the spec and have manifests
@@ -140,7 +184,6 @@ Python contracts are available today via `codelewm.training`,
 `codelewm.eval`, and `codelewm.harness`:
 
 ```bash
-codelewm dataset build --config <yaml> --out <dir>
 codelewm dataset pack  --manifest <dir>/manifest.json --out <dir>/hdf5
 codelewm train         --config <yaml>
 codelewm eval retrieval --checkpoint <ckpt> --data <hdf5>
@@ -318,7 +361,8 @@ field list.
 
 | Surface | Schema version |
 | ------- | -------------- |
-| Dataset manifest | `codelewm.dataset.v1` |
+| Dataset build report | `codelewm.dataset_build_report.v1` |
+| Dataset manifest | `codelewm.transition.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Manifest verifier report | `codelewm.manifest_verify.v1` |
 | Checkpoint manifest | `codelewm.checkpoint.v1` |

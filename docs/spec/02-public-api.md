@@ -24,6 +24,33 @@ codelewm secret-scan runs/v0_1/ logs/
 codelewm manifest verify --manifest runs/v0_1/manifest.json
 ```
 
+`codelewm dataset build` is the public raw-shard to transition-artifact
+path. It accepts JSON configs in the base environment and YAML configs when
+`omegaconf` is installed:
+
+```bash
+codelewm dataset build \
+  --config tests/fixtures/dataset_build/config.json \
+  --out data/codelewm_fixture \
+  --json
+```
+
+The command emits:
+
+- `manifest.json`: `codelewm.artifact_manifest.v1`, verified with
+  `codelewm manifest verify --manifest <out>/manifest.json --json`;
+- `dataset_manifest.json`: `codelewm.transition.v1` dataset manifest with row
+  counts, split counts, source counts, feature flags, checksums, and
+  license-gate metadata;
+- `transitions.jsonl`: fixed-schema transition rows for the follow-on pack
+  command;
+- `reports/filter_report.json`, `reports/license_gate_report.json`,
+  `reports/split_dedup_report.json`, and `reports/row_counts.json`.
+
+Invalid configs exit 2 with `error_type=config_error`; unavailable sources exit
+3 with `error_type=source_unavailable`; malformed rows or empty kept outputs
+exit 4 with `error_type=dataset_build_error` or `empty_dataset`.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
