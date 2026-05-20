@@ -9,13 +9,13 @@
 - Dataset artifact id: `dataset-ef8ad3f4f48dea9e`
 - Source git SHA: `9699b5309e43a3278f272663ef60cda23040d92a`
 - Benchmark report: `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
-- Release status: private scaled evidence, not public positive quality release
+- Release status: public scaled diagnostic evidence, not public positive quality release
 - Card date: `2026-05-20`
 
 ## Summary
 
 This card describes the first scaled CodeLeWM checkpoint trained on Hugging Face
-Jobs with the A10G profile. The checkpoint was published privately, downloaded
+Jobs with the A10G profile. The checkpoint was published to Hugging Face, downloaded
 with `hf download`, verified locally with its parent dataset artifact, and used
 for downloaded-artifact retrieval, ablation, surprise, scorer-quality, score,
 and rerank checks.
@@ -155,7 +155,8 @@ zero findings.
   quality gate, not a broad calibration benchmark.
 - Same-file and action-cluster surprise decoy counts are lower than random and
   mutation decoys because of source-shard availability.
-- Repositories remain private pending release and claim review.
+- Repositories are public diagnostic artifact repositories; positive
+  model-quality claims remain blocked by the no-action baseline result.
 
 ## Sign-off
 

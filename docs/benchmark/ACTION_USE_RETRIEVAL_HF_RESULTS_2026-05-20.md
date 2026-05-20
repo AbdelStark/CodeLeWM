@@ -5,7 +5,7 @@
 - Job ID: `6a0da3a08229e585f969c3f7`
 - Job URL: `https://huggingface.co/jobs/abdelstark/6a0da3a08229e585f969c3f7`
 - Source git SHA: `7895d185e165a917af0956a313d8948c04b33638`
-- Evidence tier: scaled HF Jobs artifact evidence, private repositories
+- Evidence tier: scaled HF Jobs artifact evidence, public diagnostic repositories
 - Hardware: HF Jobs `a10g-small`, timeout `24h`
 - Dataset card: `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`
 - Model card: `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`
@@ -13,7 +13,7 @@
 ## Verdict
 
 The #159 margin+retrieval remediation run completed on Hugging Face Jobs,
-published private dataset/model/results artifacts, downloaded them with
+published dataset/model/results artifacts, downloaded them with
 `hf download`, and verified the downloaded artifacts locally.
 
 This is a valid negative/diagnostic action-use result. Adding the retrieval loss
@@ -21,7 +21,7 @@ improved text-action retrieval substantially over #154, but it still did not
 beat the no-action baseline on the agreed headline metrics. Public positive
 action-conditioning claims remain blocked.
 
-## Published Private Artifacts
+## Published Public Artifacts
 
 | Surface | Repository | Path |
 | --- | --- | --- |
@@ -217,7 +217,7 @@ status, logs, download, and artifact verification supplied the usable evidence.
 ## Claim Checklist
 
 - [x] Second-stage scaled HF Jobs action-use run completed on the recorded source SHA.
-- [x] Private dataset, model, and result artifacts were published to HF.
+- [x] Dataset, model, and result artifacts were published to HF.
 - [x] Published artifacts were downloaded with `hf download`.
 - [x] Retrieval, ablation, surprise, scorer-quality, score, and rerank checks ran from downloaded artifacts.
 - [x] License gate, checkpoint trust, manifest verification, and secret scan passed for the authoritative artifacts.

@@ -5,7 +5,7 @@
 - Job ID: `6a0d7a763aba298b21d147a9`
 - Job URL: `https://huggingface.co/jobs/abdelstark/6a0d7a763aba298b21d147a9`
 - Source git SHA: `6650183`
-- Evidence tier: scaled HF Jobs artifact evidence, private repositories
+- Evidence tier: scaled HF Jobs artifact evidence, public diagnostic repositories
 - Hardware: HF Jobs `a10g-small`, timeout `24h`
 - Dataset card: `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
 - Model card: `docs/cards/codelewm-action-use-model-2026-05-20.md`
@@ -13,7 +13,7 @@
 ## Verdict
 
 The #154 action-use follow-up run completed on Hugging Face Jobs, published
-private dataset/model/results artifacts, downloaded them with `hf download`, and
+dataset/model/results artifacts, downloaded them with `hf download`, and
 verified the downloaded artifacts locally.
 
 This is a valid negative action-use result. The #153 no-action margin objective
@@ -22,7 +22,7 @@ random, lexical, and shuffled-action baselines, but no-action remains stronger
 on the agreed headline metrics. Public positive action-conditioning claims
 remain blocked.
 
-## Published Private Artifacts
+## Published Public Artifacts
 
 | Surface | Repository | Path |
 | --- | --- | --- |
@@ -216,7 +216,7 @@ uv run codelewm secret-scan .artifacts/hf-download/codelewm-action-use-20260520-
 ## Claim Checklist
 
 - [x] Follow-up scaled HF Jobs action-use run completed on the merged source SHA.
-- [x] Private dataset, model, and result artifacts were published to HF.
+- [x] Dataset, model, and result artifacts were published to HF.
 - [x] Published artifacts were downloaded with `hf download`.
 - [x] Retrieval, ablation, surprise, scorer-quality, score, and rerank checks ran from downloaded artifacts.
 - [x] License gate, checkpoint trust, manifest verification, and secret scan passed for the authoritative artifacts.

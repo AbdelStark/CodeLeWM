@@ -9,7 +9,8 @@ complete, what claim is blocked, and what a future positive-claim research
 iteration would need.
 
 The next executable `/goal` prompt lives in
-`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
+`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`. The v0.2 research intervention
+spec lives in `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
 
 ## Project Status
 
@@ -27,9 +28,9 @@ Completed evidence:
   `6a0d43c92dc5b1243da50bba`.
 - Follow-up HF Jobs run `codelewm-action-use-20260520-6650183` completed on job
   `6a0d7a763aba298b21d147a9` with the no-action margin objective.
-- Private HF repositories contain the dataset pack, model checkpoint, and run
+- Public HF repositories contain the dataset pack, model checkpoint, and run
   evidence under the documented run paths.
-- The private artifacts were downloaded with `hf download`, verified locally,
+- The artifacts were downloaded with `hf download`, verified locally,
   and rerun through retrieval, ablation, surprise, scorer-quality, score, and
   rerank checks.
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md` and the scaled dataset/model
@@ -42,7 +43,7 @@ Completed evidence:
   `6a0da3a08229e585f969c3f7` from source
   `7895d185e165a917af0956a313d8948c04b33638` with
   `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`,
-  `a10g-small`, and a `24h` timeout. It published private artifacts to
+  `a10g-small`, and a `24h` timeout. It published artifacts to
   `abdelstark/codelewm-public-shard`,
   `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`,
   then the artifacts were downloaded with `hf download` and verified locally.
@@ -61,10 +62,10 @@ Current blocker:
   MRR `0.708037`. The claim gate is `claim_allowed=false`.
 - The private diagnostic release-freeze gate is closed by #126 and recorded in
   `docs/release/RELEASE_FREEZE_2026-05-20.md`.
-- The implementation milestone is complete as a private negative/diagnostic
-  artifact. Public HF visibility and public positive action-conditioning claims
-  remain blocked. A future positive claim should start as a new research issue,
-  not as release cleanup.
+- The implementation milestone is complete as public negative/diagnostic
+  evidence. Public positive action-conditioning claims remain blocked. The next
+  research iteration is #167 and
+  `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
 
 Current landed CLI commands:
 
@@ -114,7 +115,7 @@ Minimum success criteria:
   and claim checklist.
 - `codelewm manifest verify` and `codelewm secret-scan` pass over every artifact
   selected for publication.
-- Published private artifacts can be downloaded with `hf download` and verified
+- Published artifacts can be downloaded with `hf download` and verified
   locally from a clean checkout.
 
 For a positive public action-conditioning claim, text-action must beat the
@@ -211,7 +212,7 @@ Delivered:
 - action-view ablation suite
 - scorer/reranker quality report
 - HF Jobs ml-intern automation
-- private dataset/model/results publication
+- dataset/model/results publication
 - downloaded-artifact verification
 - scaled benchmark report and cards
 
@@ -224,7 +225,7 @@ margin+retrieval remediation run.
 ### Phase 7: Action-Use Remediation
 
 Goal: make action use measurable, train against the failure mode, and rerun the
-scaled HF loop from private published artifacts.
+scaled HF loop from published artifacts.
 
 Deliverables:
 
@@ -259,24 +260,24 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | new | future positive action-use research iteration | Action-Use Research | only needed if the project wants a public positive model-quality claim |
+| 1 | #167 | v0.2 action-use and representation research intervention | Action-Use Research | public positive model-quality claim path |
 
 Completed backlog base:
 
 - #109 through #122 closed the first-results and scaled-artifact implementation
   path.
 - #137 added HF Jobs and ml-intern automation.
-- #138 executed the first scaled HF Jobs run, private publication,
+- #138 executed the first scaled HF Jobs run, artifact publication,
   downloaded-artifact verification, inference, and evals.
 - #151 added no-action dominance diagnostics and machine-readable action-use
   claim gates.
 - #152 added action-discriminative shard diagnostics and hard-negative metadata.
 - #153 added the no-action margin objective and A10G action-use sweep configs.
 - #154 executed the primary action-use HF Jobs follow-up run and verified the
-  downloaded private artifacts; the run remained negative because no-action
+  downloaded artifacts; the run remained negative because no-action
   still beat text-action.
 - #159 executed run `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs
-  job `6a0da3a08229e585f969c3f7`; private artifacts were downloaded and
+  job `6a0da3a08229e585f969c3f7`; artifacts were downloaded and
   verified locally, and the result remained negative because no-action still
   beat text-action.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
@@ -303,10 +304,12 @@ instead of creating duplicate trackers.
 - #10 Observability and artifact lineage: #159 complete; no active child.
 - #11 Security and licensing boundaries: no active child.
 - #12 Public API and packaging: no active child.
-- #13 Release CI and governance: #150 can close with the negative/diagnostic
+- #13 Release CI and governance: #150 closed with the negative/diagnostic
   boundary.
 - #150 Action-conditioned scaled result and release readiness: #159 complete;
-  no active child.
+  closed with the negative/diagnostic boundary.
+- #167 v0.2 action-use and representation research intervention: active,
+  tracked by #168 through #172.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -327,5 +330,6 @@ that subsystem.
 - Root legacy scripts can confuse contributors; public docs now mark the
   package-native path as authoritative, but the final release should still avoid
   widening the compatibility surface.
-- Release repositories remain private because the current evidence boundary is
-  diagnostic and does not support public positive action-conditioning claims.
+- HF repositories are public diagnostic artifact repositories; the current
+  evidence boundary still does not support public positive action-conditioning
+  claims.

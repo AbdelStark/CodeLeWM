@@ -11,6 +11,7 @@ ENV_EXAMPLE = ROOT / ".env.example"
 RUNBOOK = ROOT / "docs" / "operations" / "HF_ML_INTERN_TRAINING.md"
 GOAL_PROMPT = ROOT / "docs" / "roadmap" / "HF_ML_INTERN_GOAL_PROMPT.md"
 NEXT_GOAL = ROOT / "docs" / "roadmap" / "NEXT_GOAL_PROMPT.md"
+V0_2_PLAN = ROOT / "docs" / "roadmap" / "V0_2_ACTION_USE_RESEARCH_PLAN.md"
 SCRIPTS = (
     ROOT / "scripts" / "hf-launch-codelewm-job",
     ROOT / "scripts" / "hf-run-codelewm-pipeline",
@@ -28,6 +29,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_DATASET_REPO_ID=",
             "CODELEWM_HF_MODEL_REPO_ID=",
             "CODELEWM_HF_RESULTS_REPO_ID=",
+            "CODELEWM_HF_PRIVATE=0",
             "CODELEWM_HF_JOBS_DRY_RUN=1",
             "CODELEWM_HF_PUBLISH_DRY_RUN=1",
             "CODELEWM_HF_PIPELINE_MODE=smoke",
@@ -90,6 +92,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "Do not print, commit, paste, or summarize token values.",
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
+            "CODELEWM_HF_PRIVATE=0",
             "config/data/codelewm_public_shard_commitpackft_python.json",
             "bigcode/commitpackft:data/python/data.jsonl",
             "config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml",
@@ -97,6 +100,8 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "hf jobs logs <job-id>",
             "ml-intern --max-iterations -1",
             "downloaded checkpoint",
+            "#167",
+            "V0_2_ACTION_USE_RESEARCH_PLAN.md",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -105,6 +110,29 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         text = NEXT_GOAL.read_text(encoding="utf-8")
 
         self.assertIn("docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md", text)
+        self.assertIn("docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md", text)
+        self.assertIn("Publish HF artifacts publicly", text)
+
+    def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:
+        self.assertTrue(V0_2_PLAN.is_file(), f"missing: {V0_2_PLAN}")
+        text = V0_2_PLAN.read_text(encoding="utf-8")
+
+        for marker in (
+            "Current Evidence Boundary",
+            "Action-Use Gate",
+            "Representation Gate",
+            "Downstream Reranking Gate",
+            "The existing HF repositories are public",
+            "action-conditioned failure does not invalidate the entire",
+            "#167",
+            "#168",
+            "#169",
+            "#170",
+            "#171",
+            "#172",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, text)
 
     def test_launcher_dry_run_preserves_bash_login_command_boundary(self) -> None:
         completed = subprocess.run(

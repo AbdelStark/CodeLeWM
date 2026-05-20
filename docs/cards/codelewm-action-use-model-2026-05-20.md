@@ -9,13 +9,13 @@
 - Dataset artifact id: `dataset-67895f8dc3e217c4`
 - Source git SHA: `6650183`
 - Benchmark report: `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
-- Release status: private negative action-use evidence, not public positive quality release
+- Release status: public negative action-use evidence, not public positive quality release
 - Card date: `2026-05-20`
 
 ## Summary
 
 This card describes the #154 CodeLeWM checkpoint trained on Hugging Face Jobs
-with the no-action margin objective. The checkpoint was published privately,
+with the no-action margin objective. The checkpoint was published to Hugging Face,
 downloaded with `hf download`, verified locally with its parent dataset
 artifact, and used for downloaded-artifact retrieval, ablation, surprise,
 scorer-quality, score, and rerank checks.
@@ -157,8 +157,8 @@ downloaded artifact root returned `ok=true` with zero findings.
 - The no-action margin auxiliary did not improve the headline claim gate enough.
 - Scorer-quality has one labeled example and failed to rank the fixture true
   after-state first.
-- Repositories remain private; #159 also failed the positive action-use claim
-  gate.
+- Repositories are public diagnostic artifact repositories; #159 also failed
+  the positive action-use claim gate.
 
 ## Sign-off
 

@@ -9,7 +9,7 @@
 - Results repo path: `abdelstark/codelewm-runs/runs/codelewm-action-use-20260520-6650183`
 - Source git SHA: `6650183`
 - Benchmark report: `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
-- Evidence tier: scaled private HF artifact evidence
+- Evidence tier: scaled public HF artifact evidence
 - Card date: `2026-05-20`
 
 ## Summary
@@ -18,7 +18,7 @@ This dataset card describes the public-safe shard used for the #154 action-use
 HF Jobs follow-up run. The shard is built from the Python slice of
 `bigcode/commitpackft`, filtered through the repository's source-acquisition
 and license gates, packed into train/validation/test artifacts, published
-privately to Hugging Face, downloaded with `hf download`, and verified locally
+to Hugging Face, downloaded with `hf download`, and verified locally
 from the downloaded manifest chain.
 
 The shard passes the action-discriminative readiness gate, but the paired model
@@ -116,8 +116,8 @@ downloaded artifact root returned `ok=true` with zero findings.
 - The source is limited to the Python slice of CommitPackFT.
 - `near_before_different_after` was unavailable because the pair scan was
   truncated.
-- Repositories remain private; #159 also failed the positive action-use claim
-  gate.
+- Repositories are public diagnostic artifact repositories; #159 also failed
+  the positive action-use claim gate.
 
 ## Sign-off
 

@@ -6,9 +6,11 @@ documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. The primary
 action-use follow-up completed under #154 and is documented in
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. These runs prove the
 remote systems path but do not support a positive action-conditioned quality
-claim because text-action loses to no-action on headline retrieval. The next
-remote claim-seeking run is #159; verify downloaded private artifacts before
-any public claim.
+claim because text-action loses to no-action on headline retrieval. The #159
+margin+retrieval remediation run also completed negative/diagnostic. The next
+claim-seeking work is the v0.2 action-use research intervention tracked in
+#167 and `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`; verify downloaded
+artifacts before any positive public claim.
 
 ## Config Matrix
 
@@ -227,7 +229,7 @@ phase cannot accidentally embed the full train split as one CUDA batch.
 
 ## Post-Run Verification
 
-After a remote run succeeds, download the private artifacts with `hf download`
+After a remote run succeeds, download the artifacts with `hf download`
 and verify manifests before writing cards or benchmark prose:
 
 ```bash

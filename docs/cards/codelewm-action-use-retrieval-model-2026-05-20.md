@@ -9,14 +9,14 @@
 - Dataset artifact id: `dataset-5695087296ce4a97`
 - Source git SHA: `7895d185e165a917af0956a313d8948c04b33638`
 - Benchmark report: `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
-- Release status: private negative action-use remediation evidence, not public positive quality release
+- Release status: public negative action-use remediation evidence, not public positive quality release
 - Card date: `2026-05-20`
 
 ## Summary
 
 This card describes the #159 CodeLeWM checkpoint trained on Hugging Face Jobs
 with the no-action margin objective plus retrieval loss. The checkpoint was
-published privately, downloaded with `hf download`, verified locally with its
+published to Hugging Face, downloaded with `hf download`, verified locally with its
 parent dataset artifact, and used for downloaded-artifact retrieval, ablation,
 surprise, scorer-quality, score, and rerank checks.
 
@@ -164,7 +164,8 @@ downloaded artifact root returned `ok=true` with zero findings.
   after-state first.
 - The public `score` and `rerank` commands currently report the deterministic
   lightweight scorer backend plus retrieval prior.
-- Repositories remain private pending release and claim review.
+- Repositories are public diagnostic artifact repositories; positive
+  model-quality claims remain blocked by the no-action baseline result.
 
 ## Sign-off
 
