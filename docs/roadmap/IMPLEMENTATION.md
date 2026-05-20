@@ -104,7 +104,7 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #137 | ops: add HF Jobs ml-intern training automation | ci | p1 | m | RFC-0012 | Closed |
 | #138 | run: execute HF Jobs scaled training and publish artifacts | release | p1 | l | RFC-0012 | Closed |
 | #150 | [Tracking] Action-conditioned scaled result and release readiness | release | p1 | l | RFC-0012 | Open |
-| #151 | eval: add no-action dominance diagnostics and claim gates | evaluation | p1 | m | RFC-0007 | Open |
+| #151 | eval: add no-action dominance diagnostics and claim gates | evaluation | p1 | m | RFC-0007 | Closed |
 | #152 | data: add action-discriminative shard diagnostics and hard negatives | data | p1 | l | RFC-0002 | Open |
 | #153 | train: add action-use objective and scaled sweep configs | model | p1 | l | RFC-0006 | Open |
 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Open |
@@ -157,10 +157,10 @@ result and release readiness.
 - #118 through #122 closed the scaled-data, scaled-training, ablation,
   scorer-quality, and card population work needed before the first HF run.
 - #137 and #138 proved the HF Jobs/private-publication/downloaded-artifact path.
-- #151 is now the claim-gate precondition for any positive public
+- #151 is now the landed claim-gate precondition for any positive public
   action-conditioning language.
-- #152 is the data/eval precondition for hard negatives that can stress action
-  use instead of before-state priors.
+- #152 is the active data/eval precondition for hard negatives that can stress
+  action use instead of before-state priors.
 - #153 is the model/training precondition for the follow-up action-use scaled
   run.
 - #154 is the evidence precondition for #125 and #126.

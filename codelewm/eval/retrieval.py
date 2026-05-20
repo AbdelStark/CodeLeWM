@@ -261,12 +261,14 @@ class HardNegativeSamplerConfig:
     max_negatives: int = 1000
     seed: int = 0
     edit_size_bucket_width: int = 10
+    near_before_hamming_threshold: int = 3
     exclude_splits: tuple[str, ...] = ("train",)
     pool_name: str = "hard-1k"
 
     def __post_init__(self) -> None:
         _positive_int(self.max_negatives, "max_negatives")
         _positive_int(self.edit_size_bucket_width, "edit_size_bucket_width")
+        _non_negative_int(self.near_before_hamming_threshold, "near_before_hamming_threshold")
         if isinstance(self.seed, bool) or not isinstance(self.seed, int):
             raise RetrievalEvalError("seed must be an integer")
         if not self.pool_name:
@@ -277,6 +279,7 @@ class HardNegativeSamplerConfig:
             "max_negatives": self.max_negatives,
             "seed": self.seed,
             "edit_size_bucket_width": self.edit_size_bucket_width,
+            "near_before_hamming_threshold": self.near_before_hamming_threshold,
             "exclude_splits": list(self.exclude_splits),
             "pool_name": self.pool_name,
         }
@@ -289,6 +292,10 @@ class HardNegativeSamplerConfig:
             edit_size_bucket_width=_positive_int(
                 payload.get("edit_size_bucket_width", 10),
                 "edit_size_bucket_width",
+            ),
+            near_before_hamming_threshold=_non_negative_int(
+                payload.get("near_before_hamming_threshold", 3),
+                "near_before_hamming_threshold",
             ),
             exclude_splits=tuple(_split_name(split) for split in payload.get("exclude_splits", ("train",))),
             pool_name=str(payload.get("pool_name", "hard-1k")),
@@ -1176,6 +1183,26 @@ def _score_hard_negative(
     tie_breaker: float,
 ) -> _ScoredHardNegative:
     reasons: list[str] = []
+    query_before_hash = _metadata_string(query.metadata, "state_before_hash")
+    candidate_before_hash = _metadata_string(candidate.metadata, "state_before_hash")
+    query_after_hash = _metadata_string(query.metadata, "state_after_hash")
+    candidate_after_hash = _metadata_string(candidate.metadata, "state_after_hash")
+    different_after = (
+        query_after_hash is not None
+        and candidate_after_hash is not None
+        and query_after_hash != candidate_after_hash
+    )
+    if (
+        query_before_hash is not None
+        and candidate_before_hash is not None
+        and query_before_hash == candidate_before_hash
+        and different_after
+    ):
+        reasons.append("same_before_different_after")
+    elif different_after and _near_before_match(query, candidate, config=config):
+        reasons.append("near_before_different_after")
+    if query.path and candidate.path == query.path and (not query.repo or candidate.repo == query.repo):
+        reasons.append("same_file")
     if candidate.source == query.source:
         reasons.append("same_source")
     if _edit_size_bucket(candidate.edit_size, config.edit_size_bucket_width) == _edit_size_bucket(
@@ -1197,20 +1224,51 @@ def _score_hard_negative(
 
 def _hard_negative_composition(selected: Sequence[_ScoredHardNegative]) -> dict[str, int]:
     composition = {
+        "same_before_different_after": 0,
+        "near_before_different_after": 0,
+        "same_file": 0,
         "same_source": 0,
         "same_edit_size_bucket": 0,
         "same_action_cluster": 0,
+        "action_discriminative": 0,
         "similarity_ranked": 0,
         "fallback": 0,
     }
     for item in selected:
         for reason in item.primary_reasons:
             composition[reason] += 1
+        if any(
+            reason in item.primary_reasons
+            for reason in (
+                "same_before_different_after",
+                "near_before_different_after",
+                "same_file",
+                "same_action_cluster",
+            )
+        ):
+            composition["action_discriminative"] += 1
         if item.similarity is not None:
             composition["similarity_ranked"] += 1
         if not item.primary_reasons and item.similarity is None:
             composition["fallback"] += 1
     return composition
+
+
+def _near_before_match(
+    query: CandidatePoolEntry,
+    candidate: CandidatePoolEntry,
+    *,
+    config: HardNegativeSamplerConfig,
+) -> bool:
+    query_simhash = _metadata_string(query.metadata, "state_before_simhash")
+    candidate_simhash = _metadata_string(candidate.metadata, "state_before_simhash")
+    if query_simhash is None or candidate_simhash is None:
+        return False
+    try:
+        distance = (int(query_simhash, 16) ^ int(candidate_simhash, 16)).bit_count()
+    except ValueError:
+        return False
+    return distance <= config.near_before_hamming_threshold
 
 
 def _unique_candidate_entries(rows: Iterable[Any]) -> tuple[CandidatePoolEntry, ...]:
@@ -1260,6 +1318,13 @@ def _action_cluster(entry: CandidatePoolEntry) -> str | None:
         if value not in (None, ""):
             return str(value)
     return None
+
+
+def _metadata_string(metadata: Mapping[str, Any], key: str) -> str | None:
+    value = metadata.get(key)
+    if value in (None, ""):
+        return None
+    return str(value)
 
 
 def _entry_similarity(entry: CandidatePoolEntry) -> float | None:

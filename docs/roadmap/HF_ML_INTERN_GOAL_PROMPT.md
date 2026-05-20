@@ -94,19 +94,18 @@ Do not treat local-only execution as completion. Local runs are preflight only.
 Work in this order, skipping only issues already closed by merged PRs and
 verifying their artifacts before moving on:
 
-1. #151: eval: add no-action dominance diagnostics and claim gates.
-2. #152: data: add action-discriminative shard diagnostics and hard negatives.
-3. #153: train: add action-use objective and scaled sweep configs.
-4. #154: run follow-up HF Jobs action-use training, private publication,
+1. #152: data: add action-discriminative shard diagnostics and hard negatives.
+2. #153: train: add action-use objective and scaled sweep configs.
+3. #154: run follow-up HF Jobs action-use training, private publication,
    download verification, inference, and evals.
-5. #123: release: add uv build and package publishing gates.
-6. #124: release: add dependency audit and provenance evidence.
-7. #125: docs: refresh public docs against first-results evidence.
-8. #126: release: run final artifact freeze and checklist.
+4. #123: release: add uv build and package publishing gates.
+5. #124: release: add dependency audit and provenance evidence.
+6. #125: docs: refresh public docs against first-results evidence.
+7. #126: release: run final artifact freeze and checklist.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
-artifact cards, and #138 first scaled HF execution.
+artifact cards, #138 first scaled HF execution, and #151 no-action claim gates.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -133,7 +132,7 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-Do not launch the real follow-up scaled job until #151, #152, and #153 are
+Do not launch the real follow-up scaled job until #152 and #153 are
 merged or their issue bodies explicitly allow the run to proceed with known
 blockers recorded.
 

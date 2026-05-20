@@ -88,6 +88,11 @@ class DatasetPackCliTest(unittest.TestCase):
         self.assertEqual(train_shape[1], 1024)
         self.assertIn("hdf5/train.hdf5", {artifact.path for artifact in dataset_manifest.artifacts})
         self.assertIn("parquet/train/part-00000.parquet", {artifact.path for artifact in dataset_manifest.artifacts})
+        self.assertIn(
+            "reports/action_discriminative_shard_report.json",
+            {artifact.path for artifact in dataset_manifest.artifacts},
+        )
+        self.assertFalse(payload["action_discriminative_claim_ready"])
 
     @unittest.skipUnless(DATA_DEPS_AVAILABLE, "h5py and pyarrow are not installed")
     def test_manifest_verify_accepts_parent_build_manifest(self) -> None:

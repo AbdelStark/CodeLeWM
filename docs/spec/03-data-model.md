@@ -268,14 +268,25 @@ The hard-negative sampler consumes the following fields from each candidate:
 - `repo`;
 - `path`;
 - `edit_size`;
+- optional `metadata.state_before_hash`, `metadata.state_after_hash`, and
+  `metadata.state_before_simhash` for same-before and near-before negatives;
 - optional `metadata.action_cluster`, `metadata.weak_action_cluster`, or
   `metadata.action_abs_cluster`;
 - optional `metadata.similarity`, `metadata.similarity_to_query`,
   `metadata.state_similarity`, or `metadata.lexical_similarity`.
 
 Candidate pools must reject `train` split rows. Hard-negative reports must record
-how many selected negatives match source, edit-size bucket, action cluster,
-similarity metadata, and fallback selection.
+how many selected negatives match same-before different-after, near-before
+different-after, same-file, source, edit-size bucket, action cluster, similarity
+metadata, action-discriminative metadata, and fallback selection.
+
+Build and pack artifacts must also write
+`reports/action_discriminative_shard_report.json` with
+`schema_version=codelewm.data.action_discriminative_shard_report.v1`. The report
+summarizes action-signature distribution, edit-size buckets, metadata quality,
+duplicate before-state pressure, hard-negative pool availability, and whether
+the shard has enough action-discriminative coverage to support a positive
+action-use claim once model metrics also pass.
 
 Lexical baselines operate on caller-supplied query and candidate text. Reports
 must not embed raw source code by default; if candidate text is persisted, it

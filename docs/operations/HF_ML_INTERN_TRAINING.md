@@ -110,6 +110,14 @@ hf download bigcode/commitpackft \
   --dry-run
 ```
 
+The build and pack stages now emit
+`reports/action_discriminative_shard_report.json` with
+`schema_version=codelewm.data.action_discriminative_shard_report.v1`. Treat that
+report as the data preflight for the follow-up action-use run: record
+`claim_readiness.positive_action_use_claim_ready`, unavailable hard-negative
+pools, and same-file/near-before/action-cluster pair counts before launching a
+real GPU job.
+
 ## Scripts
 
 `scripts/hf-launch-codelewm-job` builds the `hf jobs run` command. It loads
@@ -310,8 +318,8 @@ Completed gates that must be preserved:
 
 Active gates for the next meaningful remote run:
 
-- #151 must add no-action dominance diagnostics and a claim gate.
-- #152 must add action-discriminative shard diagnostics and hard negatives.
+- #151 has added no-action dominance diagnostics and a claim gate.
+- #152 must land action-discriminative shard diagnostics and hard negatives.
 - #153 must add the action-use objective/intervention and scaled sweep configs.
 - #154 must execute the follow-up HF Jobs run and verify downloaded artifacts.
 - #123 through #126 remain release gates after the claim boundary is clear.

@@ -142,7 +142,8 @@ Remaining: #153 action-use objective and scaled sweep configs.
 
 ### Phase 4: Evaluation, Indexing, And Harness
 
-Status: complete for baseline reports, incomplete for claim gating.
+Status: complete for baseline reports and claim gates, incomplete for
+action-discriminative hard negatives.
 
 Delivered:
 
@@ -154,8 +155,8 @@ Delivered:
 - scorer/reranker retrieval-prior integration
 - downloaded-artifact score/rerank smoke checks
 
-Remaining: #151 no-action dominance diagnostics and claim gates, #152
-action-discriminative hard negatives, and #154 follow-up verification.
+Remaining: #152 action-discriminative hard negatives and #154 follow-up
+verification.
 
 ### Phase 5: First Results
 
@@ -196,7 +197,8 @@ scaled HF loop from private published artifacts.
 
 Deliverables:
 
-- no-action dominance diagnostics and machine-readable claim gates (#151)
+- no-action dominance diagnostics and machine-readable claim gates (#151,
+  complete)
 - action-discriminative shard diagnostics and hard negatives (#152)
 - action-use objective/intervention and scaled sweep configs (#153)
 - follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
@@ -219,14 +221,13 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #151 | eval: add no-action dominance diagnostics and claim gates | Action-Use Remediation | public claims, follow-up run |
-| 2 | #152 | data: add action-discriminative shard diagnostics and hard negatives | Action-Use Remediation | training sweep, evaluation gate |
-| 3 | #153 | train: add action-use objective and scaled sweep configs | Action-Use Remediation | follow-up HF run |
-| 4 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
-| 5 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
-| 6 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
-| 7 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
-| 8 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
+| 1 | #152 | data: add action-discriminative shard diagnostics and hard negatives | Action-Use Remediation | training sweep, evaluation gate |
+| 2 | #153 | train: add action-use objective and scaled sweep configs | Action-Use Remediation | follow-up HF run |
+| 3 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
+| 4 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
+| 5 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
+| 6 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
+| 7 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
 
 Completed backlog base:
 
@@ -235,6 +236,8 @@ Completed backlog base:
 - #137 added HF Jobs and ml-intern automation.
 - #138 executed the first scaled HF Jobs run, private publication,
   downloaded-artifact verification, inference, and evals.
+- #151 added no-action dominance diagnostics and machine-readable action-use
+  claim gates.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -245,14 +248,14 @@ instead of creating duplicate trackers.
 
 - #3 Edit transition dataset: active child #152.
 - #7 Training runtime: active child #153.
-- #8 Retrieval and surprise evaluation: active children #151, #152, #154.
+- #8 Retrieval and surprise evaluation: active children #152 and #154.
 - #9 Harness scorer and reranker: active child #154.
 - #10 Observability and artifact lineage: active children #154 and #126.
 - #11 Security and licensing boundaries: active children #124 and #126.
 - #12 Public API and packaging: active children #123 and #125.
 - #13 Release CI and governance: active children #150 and #123 through #126.
 - #150 Action-conditioned scaled result and release readiness: active children
-  #151 through #154 and release gates #123 through #126.
+  #152 through #154 and release gates #123 through #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

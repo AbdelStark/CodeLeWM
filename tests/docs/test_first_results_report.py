@@ -86,6 +86,8 @@ class FirstResultsReportTest(unittest.TestCase):
         self.assertIn("Text-action does not beat all required baselines on this fixture", self.text)
         self.assertIn("Positive action-conditioning claim allowed: `false`", self.text)
         self.assertIn("Action-use claim gate allows a positive action-conditioning claim", self.text)
+        self.assertIn("Action-discriminative shard report:", self.text)
+        self.assertIn("Dataset shard has action-discriminative hard-negative coverage", self.text)
         self.assertIn("- [ ] This report supports a scaled research claim", self.text)
         self.assertIn("- [x] Every selected artifact manifest verifies", self.text)
         self.assertIn("- [x] Secret scan passes", self.text)
@@ -105,6 +107,7 @@ class FirstResultsReportTest(unittest.TestCase):
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.harness.scorer_quality_report.v1",
+            "codelewm.data.action_discriminative_shard_report.v1",
             "codelewm.public_license_gate.v1",
         ):
             with self.subTest(marker=marker):

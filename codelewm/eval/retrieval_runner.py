@@ -12,7 +12,13 @@ from typing import Any, Literal
 
 import numpy as np
 
-from codelewm.data import DATASET_SCHEMA_VERSION, OptionalDependencyError
+from codelewm.data import (
+    DATASET_SCHEMA_VERSION,
+    OptionalDependencyError,
+    token_sequence_hash,
+    token_sequence_simhash,
+    validate_action_discriminative_shard_report_payload,
+)
 from codelewm.model import (
     ActionBatch,
     CodeStateBatch,
@@ -151,6 +157,7 @@ def run_retrieval_evaluation(
     dataset_artifact = _read_verified_artifact_manifest(pack_paths.artifact_manifest_path, root=pack_paths.root)
     if dataset_artifact.artifact_kind != "dataset":
         raise ArtifactManifestError("retrieval --data manifest must be a dataset artifact")
+    action_discriminative_report = _read_action_discriminative_report(pack_paths, dataset_artifact)
     training_artifact_path = _infer_training_artifact_manifest_path(checkpoint_path)
     training_artifact = read_artifact_manifest(training_artifact_path)
     if training_artifact.artifact_kind != "training_run":
@@ -196,6 +203,7 @@ def run_retrieval_evaluation(
         training_artifact=training_artifact,
         data_path=_display_path(pack_paths.root),
         checkpoint_path=_display_path(checkpoint_path),
+        action_discriminative_report=action_discriminative_report,
     )
     if report_scope == "headline":
         validate_required_headline_baselines(report)
@@ -251,6 +259,12 @@ def run_retrieval_evaluation(
             "action_use_claim_gate": None
             if report.action_use_claim_gate is None
             else report.action_use_claim_gate.to_dict(),
+            "action_discriminative_claim_ready": _action_discriminative_claim_ready(
+                report.metadata.get("action_discriminative_shard_report")
+            ),
+            "action_discriminative_hard_negative_pools": _action_discriminative_hard_negative_pools(
+                report.metadata.get("action_discriminative_shard_report")
+            ),
             "required_baselines": sorted(report.baselines),
         },
     )
@@ -274,6 +288,9 @@ def run_retrieval_evaluation(
             "action_use_claim_gate": None
             if report.action_use_claim_gate is None
             else report.action_use_claim_gate.to_dict(),
+            "action_discriminative_claim_ready": _action_discriminative_claim_ready(
+                report.metadata.get("action_discriminative_shard_report")
+            ),
         },
     )
 
@@ -295,6 +312,7 @@ def _evaluate_rows(
     training_artifact: ArtifactManifest,
     data_path: str,
     checkpoint_path: str,
+    action_discriminative_report: Mapping[str, Any],
 ) -> tuple[RetrievalReport, Any]:
     entries = tuple(row.candidate_entry() for row in rows)
     easy_pool = build_easy_candidate_pool(
@@ -396,6 +414,7 @@ def _evaluate_rows(
                 "artifact_id": dataset_artifact.artifact_id,
                 "split_counts": dict(dataset_artifact.metadata.get("split_counts", {})),
             },
+            "action_discriminative_shard_report": dict(action_discriminative_report),
             "training_artifact_id": training_artifact.artifact_id,
             "action_view_policy": dict(policy),
             "score": {
@@ -576,6 +595,8 @@ def _load_split_rows(
                 f"{observed_split!r} != {split!r}"
             )
         transition_id = str(metadata["transition_id"])
+        state_before_hash = _metadata_token_hash(metadata, "state_before")
+        state_after_hash = _metadata_token_hash(metadata, "state_after")
         rows.append(
             _EvalRow(
                 transition_id=transition_id,
@@ -600,10 +621,56 @@ def _load_split_rows(
                     "token_count_before": int(metadata.get("token_count_before", 0) or 0),
                     "token_count_after": int(metadata.get("token_count_after", 0) or 0),
                     "action_cluster": _action_cluster(metadata),
+                    "action_abs_cluster": _action_cluster(metadata),
+                    "state_before_hash": state_before_hash,
+                    "state_after_hash": state_after_hash,
+                    "state_before_simhash": _metadata_token_simhash(metadata, "state_before"),
+                    "edit_size_bucket": f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10}-"
+                    f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10 + 9}",
                 },
             )
         )
     return tuple(rows)
+
+
+def _read_action_discriminative_report(
+    pack_paths: _PackPaths,
+    dataset_artifact: ArtifactManifest,
+) -> dict[str, Any]:
+    path_value = dataset_artifact.metadata.get("action_discriminative_shard_report")
+    if not isinstance(path_value, str) or not path_value:
+        return {
+            "available": False,
+            "reason": "packed dataset artifact does not expose action_discriminative_shard_report",
+        }
+    report_path = pack_paths.root / path_value
+    if not report_path.is_file():
+        return {
+            "available": False,
+            "reason": f"action-discriminative report missing: {path_value}",
+        }
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping):
+        raise RetrievalEvalError("action-discriminative shard report must be a JSON object")
+    return validate_action_discriminative_shard_report_payload(payload)
+
+
+def _action_discriminative_claim_ready(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    claim = value.get("claim_readiness")
+    if not isinstance(claim, Mapping):
+        return False
+    return bool(claim.get("positive_action_use_claim_ready"))
+
+
+def _action_discriminative_hard_negative_pools(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    pools = value.get("hard_negative_pools")
+    if not isinstance(pools, Mapping):
+        return {}
+    return dict(pools)
 
 
 def _read_parquet_rows(directory: Path) -> tuple[Mapping[str, Any], ...]:
@@ -615,6 +682,32 @@ def _read_parquet_rows(directory: Path) -> tuple[Mapping[str, Any], ...]:
         table = pq.read_table(path)
         rows.extend(table.to_pylist())
     return tuple(rows)
+
+
+def _metadata_token_hash(metadata: Mapping[str, Any], prefix: str) -> str:
+    return token_sequence_hash(
+        _metadata_active_tokens(
+            metadata.get(f"{prefix}_input_ids", ()),
+            metadata.get(f"{prefix}_attention_mask", ()),
+        )
+    )
+
+
+def _metadata_token_simhash(metadata: Mapping[str, Any], prefix: str) -> str:
+    return token_sequence_simhash(
+        _metadata_active_tokens(
+            metadata.get(f"{prefix}_input_ids", ()),
+            metadata.get(f"{prefix}_attention_mask", ()),
+        )
+    )
+
+
+def _metadata_active_tokens(input_ids: Any, attention_mask: Any) -> tuple[int, ...]:
+    ids = [] if input_ids is None else list(input_ids)
+    masks = [] if attention_mask is None else list(attention_mask)
+    if not masks:
+        masks = [token != 0 for token in ids]
+    return tuple(int(token) for token, keep in zip(ids, masks) if keep and int(token) != 0)
 
 
 def _load_torch_checkpoint(checkpoint_path: Path, *, device: Any, runtime: Any) -> tuple[Any, Mapping[str, Any]]:

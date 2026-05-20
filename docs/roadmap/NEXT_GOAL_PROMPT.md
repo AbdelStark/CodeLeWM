@@ -13,21 +13,20 @@ docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/operations/HF_ML_INTERN_TRAINING.md, docs/training/SCALED_TRAINING_RUNBOOK.md,
 CONTRIBUTING.md, the relevant docs/spec files, and the relevant docs/rfcs files.
 
-Do not redo closed HF infrastructure work. Issues #109 through #122, #137, and
-#138 are complete. The first scaled HF run proved the systems path but failed
-the positive action-conditioned quality gate because text-action lost to the
-no-action baseline.
+Do not redo closed HF infrastructure work. Issues #109 through #122, #137,
+#138, and #151 are complete. The first scaled HF run proved the systems path
+but failed the positive action-conditioned quality gate because text-action
+lost to the no-action baseline.
 
 Work sequentially, one issue per branch and PR:
 
-1. #151 eval: add no-action dominance diagnostics and claim gates.
-2. #152 data: add action-discriminative shard diagnostics and hard negatives.
-3. #153 train: add action-use objective and scaled sweep configs.
-4. #154 run: execute follow-up HF Jobs action-use training and verify artifacts.
-5. #123 release: add uv build and package publishing gates.
-6. #124 release: add dependency audit and provenance evidence.
-7. #125 docs: refresh public docs against first-results evidence.
-8. #126 release: run final artifact freeze and checklist.
+1. #152 data: add action-discriminative shard diagnostics and hard negatives.
+2. #153 train: add action-use objective and scaled sweep configs.
+3. #154 run: execute follow-up HF Jobs action-use training and verify artifacts.
+4. #123 release: add uv build and package publishing gates.
+5. #124 release: add dependency audit and provenance evidence.
+6. #125 docs: refresh public docs against first-results evidence.
+7. #126 release: run final artifact freeze and checklist.
 
 For HF work, orchestrate the remote job lifecycle with the hf CLI: hf auth
 whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs

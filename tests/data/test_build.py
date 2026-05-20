@@ -65,6 +65,10 @@ class DatasetBuildTest(unittest.TestCase):
             "reports/source_acquisition_report.json",
             {artifact.path for artifact in dataset_manifest.artifacts},
         )
+        self.assertIn(
+            "reports/action_discriminative_shard_report.json",
+            {artifact.path for artifact in dataset_manifest.artifacts},
+        )
 
     def test_artifact_manifest_verifies_dataset_build_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -78,7 +82,7 @@ class DatasetBuildTest(unittest.TestCase):
 
             checked = validate_artifact_checksums(manifest, root=output_dir)
 
-        self.assertEqual(len(checked), 8)
+        self.assertEqual(len(checked), 9)
 
     def test_build_accepts_relative_output_dir_for_manifest_files(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
@@ -92,7 +96,7 @@ class DatasetBuildTest(unittest.TestCase):
             manifest = read_artifact_manifest(relative_output / "manifest.json")
             checked = validate_artifact_checksums(manifest, root=relative_output)
 
-        self.assertEqual(len(checked), 8)
+        self.assertEqual(len(checked), 9)
 
     def test_build_is_deterministic_for_transitions_and_splits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -166,6 +170,7 @@ class DatasetBuildTest(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["row_count"], 3)
         self.assertEqual(payload["source_acquisition_report"]["schema_version"], SOURCE_ACQUISITION_REPORT_SCHEMA_VERSION)
+        self.assertFalse(payload["action_discriminative_claim_ready"])
 
     def test_invalid_config_cli_returns_structured_error(self) -> None:
         payload = _fixture_config_payload()

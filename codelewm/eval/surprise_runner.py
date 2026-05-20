@@ -23,12 +23,15 @@ from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
 
 from .retrieval_runner import (
     _EvalRow,
+    _action_discriminative_claim_ready,
+    _action_discriminative_hard_negative_pools,
     _action_cluster,
     _display_path,
     _infer_training_artifact_manifest_path,
     _load_heldout_rows,
     _load_torch_checkpoint,
     _optional_int,
+    _read_action_discriminative_report,
     _read_verified_artifact_manifest,
     _require_torch_runtime,
     _resolve_device,
@@ -111,6 +114,7 @@ def run_surprise_evaluation(
     )
     if dataset_artifact.artifact_kind != "dataset":
         raise ArtifactManifestError("surprise --data manifest must be a dataset artifact")
+    action_discriminative_report = _read_action_discriminative_report(pack_paths, dataset_artifact)
     training_artifact_path = _infer_training_artifact_manifest_path(checkpoint_path)
     training_artifact = read_artifact_manifest(training_artifact_path)
     if training_artifact.artifact_kind != "training_run":
@@ -168,6 +172,7 @@ def run_surprise_evaluation(
                 "artifact_id": dataset_artifact.artifact_id,
                 "split_counts": dict(dataset_artifact.metadata.get("split_counts", {})),
             },
+            "action_discriminative_shard_report": dict(action_discriminative_report),
             "training_artifact_id": training_artifact.artifact_id,
             "action_view": model.config.action_view,
             "score": {
@@ -234,6 +239,12 @@ def run_surprise_evaluation(
             "decoy_counts": report.metrics.decoy_counts,
             "metrics": report.metrics.to_dict(),
             "category_caveats": report.metadata.get("category_caveats", {}),
+            "action_discriminative_claim_ready": _action_discriminative_claim_ready(
+                action_discriminative_report
+            ),
+            "action_discriminative_hard_negative_pools": _action_discriminative_hard_negative_pools(
+                action_discriminative_report
+            ),
         },
     )
     manifest_path = out_dir / "manifest.json"
@@ -250,6 +261,9 @@ def run_surprise_evaluation(
             "example_count": report.metrics.example_count,
             "decoy_counts": report.metrics.decoy_counts,
             "category_caveats": report.metadata.get("category_caveats", {}),
+            "action_discriminative_claim_ready": _action_discriminative_claim_ready(
+                action_discriminative_report
+            ),
         },
     )
 

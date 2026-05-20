@@ -46,7 +46,14 @@ The command emits:
   command;
 - `reports/filter_report.json`, `reports/license_gate_report.json`,
   `reports/source_acquisition_report.json`,
-  `reports/split_dedup_report.json`, and `reports/row_counts.json`.
+  `reports/split_dedup_report.json`, `reports/row_counts.json`, and
+  `reports/action_discriminative_shard_report.json`.
+
+The action-discriminative shard report uses
+`schema_version=codelewm.data.action_discriminative_shard_report.v1`. It records
+action-signature coverage, edit-size buckets, same-file/near-before hard
+negative opportunities, duplicate before-state pressure, action metadata
+coverage, and a shard-level readiness gate for positive action-use claims.
 
 Invalid configs exit 2 with `error_type=config_error`; unavailable sources exit
 3 with `error_type=source_unavailable`; malformed rows or empty kept outputs
@@ -72,6 +79,7 @@ writes:
 - `dataset_manifest.json` with pack artifact checksums and inherited
   license-gate metadata;
 - `reports/pack_report.json`;
+- `reports/action_discriminative_shard_report.json`;
 - `manifest.json` with `parent_artifacts=[<build artifact id>]`.
 
 Verify lineage with:
