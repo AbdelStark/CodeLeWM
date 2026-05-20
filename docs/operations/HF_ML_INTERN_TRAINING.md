@@ -79,6 +79,7 @@ CODELEWM_HF_JOB_IMAGE=python:3.13-bookworm
 CODELEWM_HF_PIPELINE_MODE=smoke
 CODELEWM_HF_PUBLISH=1
 CODELEWM_HF_PUBLISH_DRY_RUN=1
+CODELEWM_HF_PRIVATE=1
 ```
 
 Scaled mode additionally requires checked-in configs:
@@ -241,6 +242,7 @@ CODELEWM_HF_PIPELINE_MODE=scaled \
 CODELEWM_HF_JOBS_FLAVOR=a10g-small \
 CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
+CODELEWM_HF_PRIVATE=0 \
 CODELEWM_HF_RUN_ID=<new-run-id> \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
