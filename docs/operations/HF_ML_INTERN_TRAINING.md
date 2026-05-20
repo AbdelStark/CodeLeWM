@@ -13,7 +13,7 @@ action-use follow-up is documented in
 evidence, but neither is a positive action-conditioning claim because the
 no-action baseline beats text-action on headline retrieval. The active
 completion tracker is #150. Issue #159 owns the next action-use remediation
-sweep before the final release gates #125 and #126. Training config details
+sweep before the final artifact-freeze release gate #126. Training config details
 remain in `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 
 ## Upstream Contract
@@ -332,7 +332,7 @@ Active gates for the next meaningful remote run:
   verified downloaded artifacts, and recorded a negative claim gate.
 - #159 must execute the second-stage action-use remediation sweep if the project
   is still pursuing a positive claim.
-- #125 and #126 remain release gates after the claim boundary is clear.
+- #126 remains the final release gate after the claim boundary is clear.
 
 Do not flip repositories public, update public positive claims, or mark a result
 as meaningful until those gates are satisfied by artifact-backed evidence. If the

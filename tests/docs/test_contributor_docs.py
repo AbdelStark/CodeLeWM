@@ -104,6 +104,7 @@ class ChangelogContentTest(unittest.TestCase):
             "codelewm.error.v1",
             "codelewm.transition_index.v1",
             "codelewm.log_event.v1",
+            "codelewm.release_provenance.v1",
             "codelewm.transition.v1",
         ):
             with self.subTest(schema=schema):

@@ -228,7 +228,8 @@ Deliverables:
 
 - wheel/sdist build and package publishing gates (#123, complete)
 - dependency audit and provenance evidence (#124, complete)
-- public docs refreshed against the scaled evidence and claim boundary (#125)
+- public docs refreshed against the scaled evidence and claim boundary (#125,
+  complete)
 - final artifact freeze, release checklist, and release notes (#126)
 
 ## Ordered Backlog
@@ -238,8 +239,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
 | 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path |
-| 2 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
-| 3 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
+| 2 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
 
 Completed backlog base:
 
@@ -259,6 +259,8 @@ Completed backlog base:
   manual publishing gates for the Python package.
 - #124 added release dependency audit, provenance JSON, CI gates, and release
   checklist evidence for the package supply-chain path.
+- #125 refreshed README, usage, public API, roadmap, and release docs against
+  current artifact evidence and the negative action-use claim boundary.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -273,10 +275,10 @@ instead of creating duplicate trackers.
 - #9 Harness scorer and reranker: active child #159.
 - #10 Observability and artifact lineage: active children #159 and #126.
 - #11 Security and licensing boundaries: active child #126.
-- #12 Public API and packaging: active child #125.
-- #13 Release CI and governance: active children #150, #125, and #126.
+- #12 Public API and packaging: no active child.
+- #13 Release CI and governance: active children #150 and #126.
 - #150 Action-conditioned scaled result and release readiness: active children
-  #159 and release gates #125 through #126.
+  #159 and release gate #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -294,7 +296,8 @@ that subsystem.
   calibration claim.
 - Same-file and action-cluster surprise decoy counts are lower than random and
   mutation decoys on the first scaled shard.
-- Root legacy scripts can confuse contributors; public docs must keep the
-  package-native path clearly marked as authoritative.
+- Root legacy scripts can confuse contributors; public docs now mark the
+  package-native path as authoritative, but the final release should still avoid
+  widening the compatibility surface.
 - Release repositories must remain private until claim wording, provenance,
   package gates, manifest verification, and secret scans all pass.
