@@ -32,6 +32,9 @@ earliest one minor release after the deprecation notice.
 - Release package gates for wheel/sdist builds, metadata checks, clean wheel
   install smoke, dependency audit, and `codelewm.release_provenance.v1`
   provenance reports.
+- A filled #126 release-freeze report at
+  `docs/release/RELEASE_FREEZE_2026-05-20.md` for the private diagnostic
+  action-use artifact set.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.

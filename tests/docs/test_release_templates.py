@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RELEASE_CHECKLIST = ROOT / "docs" / "release" / "RELEASE_CHECKLIST.md"
+RELEASE_FREEZE = ROOT / "docs" / "release" / "RELEASE_FREEZE_2026-05-20.md"
 DATASET_CARD_TEMPLATE = ROOT / "docs" / "cards" / "DATASET_CARD_TEMPLATE.md"
 MODEL_CARD_TEMPLATE = ROOT / "docs" / "cards" / "MODEL_CARD_TEMPLATE.md"
 
@@ -82,6 +83,51 @@ class ReleaseChecklistContentTest(unittest.TestCase):
         for role in ("Release shepherd", "Codeowner", "Security reviewer"):
             with self.subTest(role=role):
                 self.assertIn(role, sign_off_section)
+
+
+class ReleaseFreezeReportTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.text = _read(RELEASE_FREEZE)
+
+    def test_release_freeze_report_exists(self) -> None:
+        self.assertTrue(RELEASE_FREEZE.is_file())
+
+    def test_release_freeze_records_diagnostic_boundary(self) -> None:
+        for marker in (
+            "private diagnostic artifact freeze",
+            "blocked for public positive action-conditioning claims",
+            "#159",
+            "claim_allowed=false",
+            "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
+
+    def test_release_freeze_records_package_and_provenance_evidence(self) -> None:
+        for marker in (
+            "codelewm-0.0.0-py3-none-any.whl",
+            "codelewm-0.0.0.tar.gz",
+            "codelewm.release_provenance.v1",
+            "tracked_git_dirty=false",
+            "pip-audit",
+            "0 known vulnerabilities",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
+
+    def test_release_freeze_records_hf_artifact_and_security_gates(self) -> None:
+        for marker in (
+            "codelewm-action-use-20260520-6650183",
+            "6a0d7a763aba298b21d147a9",
+            "abdelstark/codelewm-public-shard",
+            "abdelstark/codelewm-transition-model",
+            "hf auth whoami",
+            "release_allowed=true",
+            "checkpoint_error",
+            "secret-scan",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
 
 
 class DatasetCardTemplateTest(unittest.TestCase):

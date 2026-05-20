@@ -6,10 +6,11 @@ repository visibility.
 
 ## Status
 
-Package publication is manually gated until the final release freeze. CI builds
-and installs wheel/sdist artifacts on every pull request, but no workflow uploads
-to TestPyPI or PyPI. A maintainer must run the upload commands from a clean
-release commit after #126 is complete.
+Package publication is manually gated until the final release freeze and public
+visibility review. CI builds and installs wheel/sdist artifacts on every pull
+request, but no workflow uploads to TestPyPI or PyPI. A maintainer must run the
+upload commands from a clean release commit only after #126 is complete and the
+current claim boundary allows publication.
 
 ## Build And Check
 
@@ -52,7 +53,8 @@ The installed package must expose the same CLI surface tested by
 ## Manual Publication
 
 Do not upload automatically from pull-request CI. After #126 signs off the
-release, publish with repository-scoped credentials in a clean shell:
+release and the public visibility gate is satisfied, publish with
+repository-scoped credentials in a clean shell:
 
 ```bash
 uv run twine upload --repository testpypi .artifacts/package-gate/dist/*

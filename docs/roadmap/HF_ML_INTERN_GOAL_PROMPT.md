@@ -1,14 +1,13 @@
 # HF ml-intern `/goal` Prompt
 
 Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must either close the remaining action-use gap with a
-second-stage HF Jobs run or complete the release as explicitly negative
-diagnostic evidence.
+`ml-intern` run that must close or explicitly defer the remaining action-use
+gap with a second-stage HF Jobs run or a justified no-run decision.
 
 ```text
-/goal Complete CodeLeWM's remaining path to a release-ready first scaled
-artifact set, with a positive action-conditioned claim only if the evidence
-actually passes the claim gate.
+/goal Complete CodeLeWM's remaining positive action-conditioned result path.
+The private diagnostic release-freeze artifact set is already frozen; only make
+a public positive claim if the evidence actually passes the claim gate.
 
 You are operating in the CodeLeWM repository. The project already has a working
 package runtime, HF Jobs automation, private Hugging Face publication, and
@@ -100,15 +99,15 @@ verifying their artifacts before moving on:
    `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
    unless side-by-side analysis of #138 and #154 shows a smaller correction is
    required first.
-2. #126: release: run final artifact freeze and checklist.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
 artifact cards, #123 package build and manual publishing gates, #124 dependency
-audit and release provenance gates, #125 public docs evidence refresh, #137 HF
-Jobs automation, #138 first scaled HF execution, #151 no-action claim gates,
-#152 action-discriminative diagnostics, #153 action-use margin training configs,
-and #154 primary action-use HF execution.
+audit and release provenance gates, #125 public docs evidence refresh, #126
+private diagnostic release freeze, #137 HF Jobs automation, #138 first scaled HF
+execution, #151 no-action claim gates, #152 action-discriminative diagnostics,
+#153 action-use margin training configs, and #154 primary action-use HF
+execution.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -271,16 +270,16 @@ Do not call the result claim-eligible unless all of these are true:
 - the published private artifacts can be downloaded with `hf download` and
   verified locally from a clean checkout.
 
-Keep Hugging Face repositories private until #126 is complete and the public
-visibility gate is explicitly satisfied. If #159 remains negative, stop the
-positive-claim path, keep repositories private or frame the release explicitly
-as negative/diagnostic, and update #150 with the exact blocker, job ID, and next
-validation command.
+Keep Hugging Face repositories private until #159 passes and a follow-up public
+visibility review is explicitly satisfied. If #159 remains negative, stop the
+positive-claim path, keep repositories private or frame the result explicitly as
+negative/diagnostic, and update #150 with the exact blocker, job ID if one ran,
+and next validation command.
 
 Completion criteria:
 
-- #159 and #126 are closed by merged PRs, or any remaining
-  one is updated with an explicit blocker that prevents completion.
+- #159 is closed by a merged PR or updated with an explicit blocker that
+  prevents a positive claim.
 - At least one second-stage HF Jobs run or explicitly justified no-run decision
   is recorded in #159.
 - Dataset, model, and results artifacts selected for release are published

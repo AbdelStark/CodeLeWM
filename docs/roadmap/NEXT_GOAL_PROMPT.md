@@ -5,9 +5,9 @@ and ml-intern prompt is maintained in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
 
 ```text
-/goal Complete CodeLeWM's remaining path to a release-ready first scaled
-artifact set, with a positive action-conditioned claim only if the evidence
-actually passes the claim gate.
+/goal Complete CodeLeWM's remaining positive action-conditioned result path.
+The private diagnostic release-freeze artifact set is already frozen; only make
+a public positive claim if the evidence actually passes the claim gate.
 
 Start from the current main branch. Ground in AGENTS.md, SPEC.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
@@ -16,23 +16,25 @@ docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md,
 docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md, CONTRIBUTING.md, the
 relevant docs/spec files, and the relevant docs/rfcs files.
 
-Do not redo closed infrastructure work. Issues #109 through #125, #137,
+Do not redo closed infrastructure work. Issues #109 through #126, #137,
 #138, and #151 through #154 are complete. The first scaled HF run proved the
 systems path. The #154 action-use margin run also completed and verified private
 downloaded artifacts, but it still failed the positive action-conditioned claim
-gate because text-action lost to the no-action baseline.
+gate because text-action lost to the no-action baseline. Issue #126 froze this
+as a private diagnostic release boundary in
+docs/release/RELEASE_FREEZE_2026-05-20.md.
 
 Work sequentially, one issue per branch and PR:
 
 1. #159 run: execute the second-stage action-use remediation sweep or record a
    justified negative/diagnostic boundary.
-2. #126 release: run final artifact freeze and checklist.
 
 For HF work, orchestrate the remote job lifecycle with the hf CLI: hf auth
 whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs
 <job-id>, hf jobs stats <job-id>, and hf download. Keep Hugging Face
-repositories private until the claim gate, release gates, secret scans, manifest
-verification, and checkpoint-trust checks all pass.
+repositories private until the #159 claim gate, secret scans, manifest
+verification, checkpoint-trust checks, and any follow-up release visibility
+review all pass.
 
 After each issue, run the strongest relevant local validation, commit, push,
 open a PR, wait for available checks, merge when clean, return to main, pull

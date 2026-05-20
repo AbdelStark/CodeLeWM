@@ -119,7 +119,6 @@ Current completion order:
 
 1. #159 run the second-stage action-use remediation sweep through the `hf` CLI
    if the project is still pursuing a positive model-quality claim.
-2. #126 run the final artifact freeze and release checklist.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
@@ -129,6 +128,9 @@ a negative claim gate; #159 owns the next remediation sweep. Issue #123 closed
 the package build and manual publishing gate. Issue #124 closed the dependency
 audit and release provenance gate. Issue #125 closed the public docs refresh
 against the first-results, scaled systems, and negative action-use evidence.
+Issue #126 closed the private diagnostic release-freeze checkpoint in
+`docs/release/RELEASE_FREEZE_2026-05-20.md`; it does not permit public positive
+action-conditioning claims.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 

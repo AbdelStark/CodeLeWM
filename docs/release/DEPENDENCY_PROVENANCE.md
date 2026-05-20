@@ -32,8 +32,8 @@ affected package/version, reason, mitigation, and reviewer sign-off.
 
 The CI audit scope is the installed base package plus the `dev` and `release`
 dependency groups. If a release candidate includes optional data, train, or eval
-runtime artifacts, run and attach a separate audit for that environment before
-#126 signs off the release.
+runtime artifacts, run and attach a separate audit for that environment before a
+public release signs off.
 
 ## Provenance Report
 
