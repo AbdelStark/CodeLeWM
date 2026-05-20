@@ -27,6 +27,10 @@ uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
 ```
 
+The release group includes package metadata checks, dependency audit tooling,
+and provenance generation. See `docs/release/PACKAGE_PUBLISHING.md` and
+`docs/release/DEPENDENCY_PROVENANCE.md`.
+
 Verify the install:
 
 ```bash

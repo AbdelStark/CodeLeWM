@@ -55,6 +55,9 @@ A public release includes:
 - dataset card when a dataset is published;
 - benchmark report;
 - reproducibility manifest.
+- dependency audit report;
+- `codelewm.release_provenance.v1` provenance report tying source SHA,
+  lockfile, built artifacts, and release evidence checksums together.
 
 ## Contributor Workflow
 

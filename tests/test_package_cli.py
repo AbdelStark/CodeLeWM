@@ -68,6 +68,7 @@ class PackageMetadataTest(unittest.TestCase):
         self.assertIn("stable-worldmodel", _dependency_names(groups["train"]))
         self.assertIn("scikit-learn", _dependency_names(groups["eval"]))
         self.assertIn("build", _dependency_names(groups["release"]))
+        self.assertIn("pip-audit", _dependency_names(groups["release"]))
         self.assertIn("twine", _dependency_names(groups["release"]))
 
         for extra_name in ("data", "train", "eval", "docs", "release"):

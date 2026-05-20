@@ -94,6 +94,15 @@ Release and packaging changes must also prove the built artifacts:
 ```bash
 uv build --sdist --wheel --out-dir .artifacts/package-gate/dist --clear
 uv run twine check .artifacts/package-gate/dist/*
+mkdir -p .artifacts/release/dependency-audit
+uv run pip-audit --format json --output .artifacts/release/dependency-audit/pip-audit.json
+uv run scripts/release-provenance \
+  --dist .artifacts/package-gate/dist \
+  --audit-report .artifacts/release/dependency-audit/pip-audit.json \
+  --include docs/release/PACKAGE_PUBLISHING.md \
+  --include docs/release/DEPENDENCY_PROVENANCE.md \
+  --out .artifacts/release/provenance/provenance.json \
+  --json
 uv venv .artifacts/package-gate/venv --python 3.13
 uv pip install --python .artifacts/package-gate/venv/bin/python .artifacts/package-gate/dist/codelewm-*.whl
 .artifacts/package-gate/venv/bin/codelewm --help

@@ -30,6 +30,9 @@
 - [ ] **Package publishing gate is current.** Evidence:
       `docs/release/PACKAGE_PUBLISHING.md` matches the release
       workflow and package-build CI job.
+- [ ] **Dependency audit and provenance gate is current.**
+      Evidence: `docs/release/DEPENDENCY_PROVENANCE.md` matches the
+      release workflow and package-build CI job.
 
 ## Package Artifacts
 
@@ -126,6 +129,16 @@ glance.
 
 ## Security Evidence
 
+- [ ] **Release dependency audit passes.** Evidence:
+      `uv run pip-audit --format json --output <audit>/pip-audit.json`
+      exits 0 for the release environment; any non-zero result has a
+      signed waiver with advisory ID, affected package/version,
+      mitigation, and reviewer sign-off.
+- [ ] **Release provenance report is attached.** Evidence:
+      `<provenance>/provenance.json` validates as
+      `codelewm.release_provenance.v1` and records source SHA,
+      tracked dirty-state evidence, `uv.lock`, built wheel/sdist,
+      dependency audit report, and release evidence file checksums.
 - [ ] **Secret scan over all published artifacts returns clean.**
       Evidence: `codelewm secret-scan <release_dir>` exit 0.
 - [ ] **No raw user code or private paths in logs.** Evidence:

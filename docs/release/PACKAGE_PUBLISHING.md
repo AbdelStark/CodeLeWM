@@ -71,6 +71,7 @@ tokens to `.env`, logs, PR bodies, release notes, or benchmark artifacts.
 
 - CI package-build job passes on the release commit.
 - `uv lock --check` passes.
+- `docs/release/DEPENDENCY_PROVENANCE.md` audit and provenance gates pass.
 - Full test suite passes.
 - Manifest and secret gates pass.
 - Release checklist references the exact wheel and sdist filenames.

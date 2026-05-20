@@ -166,6 +166,11 @@ jobs:
       - name: Check package metadata rendering
         run: uv run twine check .ci/dist/*
 
+      - name: Audit release dependencies
+        run: |
+          mkdir -p .ci/dependency-audit
+          uv run pip-audit --format json --output .ci/dependency-audit/pip-audit.json
+
       - name: Inspect built artifacts
         run: |
           uv run python - <<'PY'
@@ -217,6 +222,17 @@ jobs:
           uv pip install --python .ci/package-venv/bin/python .ci/dist/codelewm-*.whl
           .ci/package-venv/bin/codelewm --help
           .ci/package-venv/bin/python -c "import codelewm; print(codelewm.__version__)"
+
+      - name: Generate release provenance evidence
+        run: |
+          uv run scripts/release-provenance \
+            --dist .ci/dist \
+            --audit-report .ci/dependency-audit/pip-audit.json \
+            --include docs/release/PACKAGE_PUBLISHING.md \
+            --include docs/release/DEPENDENCY_PROVENANCE.md \
+            --out .ci/release-provenance/provenance.json \
+            --require-clean-tracked-tree \
+            --json
 
   docs-check:
     name: Docs sanity

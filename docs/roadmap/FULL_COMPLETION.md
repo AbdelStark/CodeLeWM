@@ -45,10 +45,10 @@ Current blocker:
   but no-action is stronger on headline retrieval: text-action Recall@1
   `0.363`, MRR `0.467875`; no-action Recall@1 `0.469`, MRR `0.549624`.
 - The next project milestone is the second-stage action-use remediation tracked
-  by #159, followed by provenance/docs/freeze release gates. The package build
-  and manual publishing gate is closed by #123. If #159 remains negative, the
-  release path must be explicitly negative/diagnostic rather than a positive
-  model-quality claim.
+  by #159, followed by public-docs and artifact-freeze release gates. The
+  package build, manual publishing, dependency audit, and provenance gates are
+  closed by #123 and #124. If #159 remains negative, the release path must be
+  explicitly negative/diagnostic rather than a positive model-quality claim.
 
 Current landed CLI commands:
 
@@ -227,7 +227,7 @@ Goal: package and publish only after the evidence boundary is clear.
 Deliverables:
 
 - wheel/sdist build and package publishing gates (#123, complete)
-- dependency audit and provenance evidence (#124)
+- dependency audit and provenance evidence (#124, complete)
 - public docs refreshed against the scaled evidence and claim boundary (#125)
 - final artifact freeze, release checklist, and release notes (#126)
 
@@ -238,9 +238,8 @@ Keep this table in implementation order and update it when issue scope changes.
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
 | 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path |
-| 2 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
-| 3 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
-| 4 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
+| 2 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
+| 3 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
 
 Completed backlog base:
 
@@ -258,6 +257,8 @@ Completed backlog base:
   still beat text-action.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
   manual publishing gates for the Python package.
+- #124 added release dependency audit, provenance JSON, CI gates, and release
+  checklist evidence for the package supply-chain path.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -271,11 +272,11 @@ instead of creating duplicate trackers.
 - #8 Retrieval and surprise evaluation: active child #159.
 - #9 Harness scorer and reranker: active child #159.
 - #10 Observability and artifact lineage: active children #159 and #126.
-- #11 Security and licensing boundaries: active children #124 and #126.
+- #11 Security and licensing boundaries: active child #126.
 - #12 Public API and packaging: active child #125.
-- #13 Release CI and governance: active children #150 and #124 through #126.
+- #13 Release CI and governance: active children #150, #125, and #126.
 - #150 Action-conditioned scaled result and release readiness: active children
-  #159 and release gates #124 through #126.
+  #159 and release gates #125 through #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
