@@ -21,9 +21,19 @@ ACTION_USE_CLAIM_GATE_SCHEMA_VERSION = "codelewm.eval.action_use_claim_gate.v1"
 CANDIDATE_POOL_SCHEMA_VERSION = "codelewm.eval.candidate_pool.v1"
 HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION = "codelewm.eval.hard_negative_sample.v1"
 HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION = "codelewm.eval.hard_negative_sampler_report.v1"
+ACTION_CONTRAST_POOL_REPORT_SCHEMA_VERSION = "codelewm.eval.action_contrast_pool_report.v1"
 TRAIN_SPLITS = frozenset({"train"})
 REQUIRED_HEADLINE_BASELINES = ("random", "lexical", "no_action", "shuffled_action")
 ACTION_USE_REQUIRED_METRICS = ("recall_at_1", "mrr")
+ACTION_CONTRAST_POOL_NAMES = (
+    "exact_same_before",
+    "near_before",
+    "same_file",
+    "action_cluster",
+    "edit_shape",
+    "mutation",
+    "random",
+)
 _LEXICAL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 
 
@@ -398,6 +408,200 @@ class HardNegativeSamplerReport:
             schema_version=str(payload["schema_version"]),
             config=HardNegativeSamplerConfig.from_dict(payload["config"]),
             samples=samples,
+        )
+
+
+@dataclass(frozen=True)
+class ActionContrastPoolConfig:
+    """Configuration for deterministic v0.2 action-contrast pools."""
+
+    max_queries: int = 1000
+    max_candidates_per_pool: int = 16
+    seed: int = 0
+    near_before_hamming_threshold: int = 3
+    exclude_splits: tuple[str, ...] = ("train",)
+    pool_names: tuple[str, ...] = ACTION_CONTRAST_POOL_NAMES
+
+    def __post_init__(self) -> None:
+        _positive_int(self.max_queries, "max_queries")
+        _positive_int(self.max_candidates_per_pool, "max_candidates_per_pool")
+        _non_negative_int(self.near_before_hamming_threshold, "near_before_hamming_threshold")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise RetrievalEvalError("seed must be an integer")
+        if not self.pool_names:
+            raise RetrievalEvalError("action-contrast pool_names must not be empty")
+        unsupported = tuple(name for name in self.pool_names if name not in ACTION_CONTRAST_POOL_NAMES)
+        if unsupported:
+            raise RetrievalEvalError(
+                "unsupported action-contrast pool names: " + ", ".join(unsupported)
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "max_queries": self.max_queries,
+            "max_candidates_per_pool": self.max_candidates_per_pool,
+            "seed": self.seed,
+            "near_before_hamming_threshold": self.near_before_hamming_threshold,
+            "exclude_splits": list(self.exclude_splits),
+            "pool_names": list(self.pool_names),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ActionContrastPoolConfig":
+        return cls(
+            max_queries=_positive_int(payload.get("max_queries", 1000), "max_queries"),
+            max_candidates_per_pool=_positive_int(
+                payload.get("max_candidates_per_pool", 16),
+                "max_candidates_per_pool",
+            ),
+            seed=int(payload.get("seed", 0)),
+            near_before_hamming_threshold=_non_negative_int(
+                payload.get("near_before_hamming_threshold", 3),
+                "near_before_hamming_threshold",
+            ),
+            exclude_splits=tuple(_split_name(split) for split in payload.get("exclude_splits", ("train",))),
+            pool_names=tuple(str(name) for name in payload.get("pool_names", ACTION_CONTRAST_POOL_NAMES)),
+        )
+
+
+@dataclass(frozen=True)
+class ActionContrastPoolSample:
+    """Per-query action-contrast candidate ids."""
+
+    query_id: str
+    target_id: str
+    split: str
+    pools: Mapping[str, tuple[str, ...]]
+    unavailable_pools: Mapping[str, str]
+    no_action_challenge: bool
+
+    def __post_init__(self) -> None:
+        if not self.query_id or not self.target_id:
+            raise RetrievalEvalError("action-contrast sample requires query_id and target_id")
+        if not self.split:
+            raise RetrievalEvalError(f"action-contrast sample {self.query_id!r} requires split")
+        for name, ids in self.pools.items():
+            if name not in ACTION_CONTRAST_POOL_NAMES:
+                raise RetrievalEvalError(f"unsupported action-contrast pool name: {name}")
+            if len(set(ids)) != len(ids):
+                raise RetrievalEvalError(f"action-contrast pool {name!r} has duplicate ids")
+            if self.target_id in ids:
+                raise RetrievalEvalError(f"action-contrast pool {name!r} cannot include the target id")
+            if any(not candidate_id for candidate_id in ids):
+                raise RetrievalEvalError(f"action-contrast pool {name!r} contains an empty candidate id")
+        _require_json_native(self.unavailable_pools, "action-contrast unavailable_pools")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "query_id": self.query_id,
+            "target_id": self.target_id,
+            "split": self.split,
+            "pools": {
+                name: list(ids)
+                for name, ids in sorted(self.pools.items())
+            },
+            "unavailable_pools": dict(sorted(self.unavailable_pools.items())),
+            "no_action_challenge": self.no_action_challenge,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ActionContrastPoolSample":
+        return cls(
+            query_id=str(payload["query_id"]),
+            target_id=str(payload["target_id"]),
+            split=_split_name(payload["split"]),
+            pools={
+                str(name): tuple(str(candidate_id) for candidate_id in ids)
+                for name, ids in _require_mapping(payload["pools"], "pools").items()
+            },
+            unavailable_pools={
+                str(name): str(reason)
+                for name, reason in _require_mapping(
+                    payload.get("unavailable_pools", {}),
+                    "unavailable_pools",
+                ).items()
+            },
+            no_action_challenge=bool(payload.get("no_action_challenge", False)),
+        )
+
+
+@dataclass(frozen=True)
+class ActionContrastPoolReport:
+    """Schema-versioned v0.2 action-contrast pool report."""
+
+    samples: tuple[ActionContrastPoolSample, ...]
+    pool_counts: Mapping[str, int]
+    available_pools: tuple[str, ...]
+    unavailable_pools: Mapping[str, str]
+    leakage: Mapping[str, Any]
+    split_membership_proofs: Mapping[str, Any]
+    no_action_challenge: Mapping[str, Any]
+    config: ActionContrastPoolConfig = field(default_factory=ActionContrastPoolConfig)
+    schema_version: str = ACTION_CONTRAST_POOL_REPORT_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        validate_action_contrast_pool_report(self)
+
+    @property
+    def query_count(self) -> int:
+        return len(self.samples)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "query_count": self.query_count,
+            "pool_counts": dict(sorted(self.pool_counts.items())),
+            "available_pools": list(self.available_pools),
+            "unavailable_pools": dict(sorted(self.unavailable_pools.items())),
+            "leakage": dict(self.leakage),
+            "split_membership_proofs": dict(self.split_membership_proofs),
+            "no_action_challenge": dict(self.no_action_challenge),
+            "config": self.config.to_dict(),
+            "samples": [sample.to_dict() for sample in self.samples],
+        }
+
+    def summary_dict(self) -> dict[str, Any]:
+        """Return a compact JSON-native summary safe to embed in retrieval metadata."""
+
+        return {
+            "schema_version": self.schema_version,
+            "query_count": self.query_count,
+            "pool_counts": dict(sorted(self.pool_counts.items())),
+            "available_pools": list(self.available_pools),
+            "unavailable_pools": dict(sorted(self.unavailable_pools.items())),
+            "leakage": dict(self.leakage),
+            "no_action_challenge": dict(self.no_action_challenge),
+            "config": self.config.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ActionContrastPoolReport":
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            config=ActionContrastPoolConfig.from_dict(_require_mapping(payload["config"], "config")),
+            samples=tuple(
+                ActionContrastPoolSample.from_dict(_require_mapping(sample, "samples[]"))
+                for sample in payload["samples"]
+            ),
+            pool_counts={
+                str(name): _non_negative_int(count, f"pool_counts.{name}")
+                for name, count in _require_mapping(payload["pool_counts"], "pool_counts").items()
+            },
+            available_pools=tuple(str(name) for name in payload.get("available_pools", ())),
+            unavailable_pools={
+                str(name): str(reason)
+                for name, reason in _require_mapping(
+                    payload.get("unavailable_pools", {}),
+                    "unavailable_pools",
+                ).items()
+            },
+            leakage=dict(_require_mapping(payload["leakage"], "leakage")),
+            split_membership_proofs=dict(
+                _require_mapping(payload["split_membership_proofs"], "split_membership_proofs")
+            ),
+            no_action_challenge=dict(
+                _require_mapping(payload["no_action_challenge"], "no_action_challenge")
+            ),
         )
 
 
@@ -855,6 +1059,107 @@ def build_hard_negative_sampler_report(
     return HardNegativeSamplerReport(samples=tuple(samples), config=config)
 
 
+def build_action_contrast_pool_report(
+    rows: Iterable[Any],
+    *,
+    query_ids: Sequence[str] | None = None,
+    config: ActionContrastPoolConfig | None = None,
+) -> ActionContrastPoolReport:
+    """Build deterministic v0.2 pools where action text should matter."""
+
+    config = ActionContrastPoolConfig() if config is None else config
+    entries = _unique_candidate_entries(rows)
+    by_id = {entry.transition_id: entry for entry in entries}
+    excluded = frozenset(config.exclude_splits) | TRAIN_SPLITS
+    heldout_entries = tuple(entry for entry in entries if entry.split not in excluded)
+    if not heldout_entries:
+        raise RetrievalEvalError("action-contrast pools require at least one held-out row")
+
+    if query_ids is None:
+        ordered_queries = sorted(heldout_entries, key=lambda entry: entry.transition_id)
+        rng = random.Random(config.seed)
+        rng.shuffle(ordered_queries)
+        queries = tuple(ordered_queries[: config.max_queries])
+    else:
+        ids = tuple(str(query_id) for query_id in query_ids)
+        missing = [query_id for query_id in ids if query_id not in by_id]
+        if missing:
+            raise RetrievalEvalError(f"action-contrast query ids not found: {', '.join(missing)}")
+        queries = tuple(by_id[query_id] for query_id in ids[: config.max_queries])
+
+    samples: list[ActionContrastPoolSample] = []
+    for query in queries:
+        if query.split in excluded:
+            raise RetrievalEvalError(f"action-contrast query {query.transition_id!r} must be held out")
+        pools, unavailable = _action_contrast_pools_for_query(query, heldout_entries, config=config)
+        samples.append(
+            ActionContrastPoolSample(
+                query_id=query.transition_id,
+                target_id=query.transition_id,
+                split=query.split,
+                pools=pools,
+                unavailable_pools=unavailable,
+                no_action_challenge=_is_no_action_challenge(query, pools, by_id),
+            )
+        )
+
+    pool_counts = {
+        pool_name: sum(len(sample.pools.get(pool_name, ())) for sample in samples)
+        for pool_name in config.pool_names
+    }
+    available_pools = tuple(pool_name for pool_name in config.pool_names if pool_counts[pool_name] > 0)
+    unavailable_pools = {
+        pool_name: "no held-out candidates matched this action-contrast predicate"
+        for pool_name in config.pool_names
+        if pool_counts[pool_name] == 0
+    }
+    split_membership_proofs = _action_contrast_split_membership_proofs(
+        samples,
+        entries_by_id=by_id,
+        pool_names=config.pool_names,
+    )
+    selected_train_rows = sum(
+        int(proof["split_counts"].get("train", 0))
+        for proof in split_membership_proofs.values()
+        if isinstance(proof, Mapping)
+    )
+    if selected_train_rows:
+        raise RetrievalEvalError("action-contrast pool selected train split rows")
+    leakage = {
+        "excluded_splits": list(sorted(excluded)),
+        "input_train_rows": sum(1 for entry in entries if entry.split in excluded),
+        "query_train_rows": sum(1 for query in queries if query.split in excluded),
+        "selected_train_rows": selected_train_rows,
+        "leakage_detected": bool(selected_train_rows),
+    }
+    no_action_challenge = {
+        "same_before_multi_action_query_count": sum(
+            1 for sample in samples if sample.no_action_challenge
+        ),
+        "exact_same_before_query_count": sum(
+            1 for sample in samples if sample.pools.get("exact_same_before")
+        ),
+        "synthetic_controlled_same_before_query_count": sum(
+            1
+            for sample in samples
+            if sample.no_action_challenge and _sample_has_synthetic_entries(sample, by_id)
+        ),
+    }
+    no_action_challenge["no_action_prior_insufficient"] = (
+        no_action_challenge["same_before_multi_action_query_count"] > 0
+    )
+    return ActionContrastPoolReport(
+        samples=tuple(samples),
+        pool_counts=pool_counts,
+        available_pools=available_pools,
+        unavailable_pools=unavailable_pools,
+        leakage=leakage,
+        split_membership_proofs=split_membership_proofs,
+        no_action_challenge=no_action_challenge,
+        config=config,
+    )
+
+
 def build_retrieval_report(
     ranks: Iterable[int],
     *,
@@ -907,6 +1212,62 @@ def validate_candidate_pool(pool: CandidatePool) -> CandidatePool:
         raise RetrievalEvalError(f"candidate pool includes training rows: {', '.join(leaked)}")
     _require_json_native(pool.metadata, "candidate pool metadata")
     return pool
+
+
+def validate_action_contrast_pool_report(report: ActionContrastPoolReport) -> ActionContrastPoolReport:
+    """Validate v0.2 action-contrast pool report payloads."""
+
+    if report.schema_version != ACTION_CONTRAST_POOL_REPORT_SCHEMA_VERSION:
+        raise RetrievalEvalError(
+            "unsupported action-contrast pool report schema; "
+            f"expected {ACTION_CONTRAST_POOL_REPORT_SCHEMA_VERSION!r}, got {report.schema_version!r}"
+        )
+    if not report.samples:
+        raise RetrievalEvalError("action-contrast pool report requires at least one sample")
+    if set(report.pool_counts) != set(report.config.pool_names):
+        raise RetrievalEvalError("action-contrast pool_counts must cover every configured pool")
+    for pool_name, count in report.pool_counts.items():
+        _non_negative_int(count, f"pool_counts.{pool_name}")
+    for pool_name in report.available_pools:
+        if pool_name not in report.config.pool_names:
+            raise RetrievalEvalError(f"unknown available action-contrast pool: {pool_name}")
+        if report.pool_counts.get(pool_name, 0) <= 0:
+            raise RetrievalEvalError(f"available action-contrast pool has zero count: {pool_name}")
+    for pool_name in report.unavailable_pools:
+        if pool_name not in report.config.pool_names:
+            raise RetrievalEvalError(f"unknown unavailable action-contrast pool: {pool_name}")
+    for sample in report.samples:
+        if sample.split in (set(report.config.exclude_splits) | TRAIN_SPLITS):
+            raise RetrievalEvalError(f"action-contrast sample {sample.query_id!r} is not held out")
+    leakage = _require_mapping(report.leakage, "action-contrast leakage")
+    selected_train_rows = _non_negative_int(
+        leakage.get("selected_train_rows", 0),
+        "leakage.selected_train_rows",
+    )
+    if selected_train_rows:
+        raise RetrievalEvalError("action-contrast leakage selected train rows")
+    _require_json_native(report.to_dict(), "action-contrast pool report")
+    return report
+
+
+def validate_action_contrast_pool_report_payload(payload: Mapping[str, Any]) -> ActionContrastPoolReport:
+    """Return a validated action-contrast pool report from a JSON payload."""
+
+    return ActionContrastPoolReport.from_dict(payload)
+
+
+def write_action_contrast_pool_report(report: ActionContrastPoolReport, path: Path) -> None:
+    """Write a v0.2 action-contrast pool report JSON file."""
+
+    validate_action_contrast_pool_report(report)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True, allow_nan=False) + "\n")
+
+
+def read_action_contrast_pool_report(path: Path) -> ActionContrastPoolReport:
+    """Read and validate a v0.2 action-contrast pool report."""
+
+    return validate_action_contrast_pool_report_payload(json.loads(path.read_text()))
 
 
 def validate_retrieval_metrics(metrics: RetrievalMetrics) -> RetrievalMetrics:
@@ -1220,6 +1581,176 @@ def _score_hard_negative(
         similarity=_entry_similarity(candidate),
         tie_breaker=tie_breaker,
     )
+
+
+def _action_contrast_pools_for_query(
+    query: CandidatePoolEntry,
+    candidates: Sequence[CandidatePoolEntry],
+    *,
+    config: ActionContrastPoolConfig,
+) -> tuple[dict[str, tuple[str, ...]], dict[str, str]]:
+    pools: dict[str, tuple[str, ...]] = {}
+    unavailable: dict[str, str] = {}
+    for pool_name in config.pool_names:
+        pool_candidates = _select_action_contrast_candidates(
+            query,
+            candidates,
+            pool_name=pool_name,
+            config=config,
+        )
+        if pool_candidates:
+            pools[pool_name] = pool_candidates
+        else:
+            unavailable[pool_name] = "no held-out candidates matched this action-contrast predicate"
+    return pools, unavailable
+
+
+def _select_action_contrast_candidates(
+    query: CandidatePoolEntry,
+    candidates: Sequence[CandidatePoolEntry],
+    *,
+    pool_name: str,
+    config: ActionContrastPoolConfig,
+) -> tuple[str, ...]:
+    if pool_name == "random":
+        matches = [
+            candidate
+            for candidate in candidates
+            if candidate.transition_id != query.transition_id
+        ]
+    else:
+        matches = [
+            candidate
+            for candidate in candidates
+            if candidate.transition_id != query.transition_id
+            and _matches_action_contrast_pool(query, candidate, pool_name=pool_name, config=config)
+        ]
+    ordered = sorted(matches, key=lambda entry: entry.transition_id)
+    if len(ordered) > config.max_candidates_per_pool:
+        rng = random.Random(config.seed + _stable_seed_offset(f"{query.transition_id}:{pool_name}"))
+        rng.shuffle(ordered)
+        ordered = sorted(ordered[: config.max_candidates_per_pool], key=lambda entry: entry.transition_id)
+    return tuple(entry.transition_id for entry in ordered)
+
+
+def _matches_action_contrast_pool(
+    query: CandidatePoolEntry,
+    candidate: CandidatePoolEntry,
+    *,
+    pool_name: str,
+    config: ActionContrastPoolConfig,
+) -> bool:
+    different_after = _different_after(query, candidate)
+    if pool_name == "exact_same_before":
+        return _same_before(query, candidate) and different_after
+    if pool_name == "near_before":
+        return not _same_before(query, candidate) and different_after and _near_before_match(
+            query,
+            candidate,
+            config=HardNegativeSamplerConfig(
+                near_before_hamming_threshold=config.near_before_hamming_threshold,
+            ),
+        )
+    if pool_name == "same_file":
+        return (
+            bool(query.path)
+            and candidate.path == query.path
+            and (not query.repo or candidate.repo == query.repo)
+            and different_after
+        )
+    if pool_name == "action_cluster":
+        query_cluster = _action_cluster(query)
+        return query_cluster is not None and query_cluster == _action_cluster(candidate) and different_after
+    if pool_name == "edit_shape":
+        query_shape = _edit_shape(query)
+        return query_shape is not None and query_shape == _edit_shape(candidate) and different_after
+    if pool_name == "mutation":
+        return _is_mutation_candidate(candidate) and different_after
+    raise RetrievalEvalError(f"unsupported action-contrast pool name: {pool_name}")
+
+
+def _action_contrast_split_membership_proofs(
+    samples: Sequence[ActionContrastPoolSample],
+    *,
+    entries_by_id: Mapping[str, CandidatePoolEntry],
+    pool_names: Sequence[str],
+) -> dict[str, dict[str, Any]]:
+    proofs: dict[str, dict[str, Any]] = {}
+    for pool_name in pool_names:
+        ids: list[str] = []
+        split_counts: dict[str, int] = {}
+        query_count = 0
+        for sample in samples:
+            pool_ids = sample.pools.get(pool_name, ())
+            if not pool_ids:
+                continue
+            query_count += 1
+            ids.extend(pool_ids)
+            for candidate_id in pool_ids:
+                entry = entries_by_id[candidate_id]
+                split_counts[entry.split] = split_counts.get(entry.split, 0) + 1
+        proofs[pool_name] = {
+            "query_count": query_count,
+            "candidate_count": len(ids),
+            "split_counts": dict(sorted(split_counts.items())),
+            "example_transition_ids": sorted(set(ids))[:10],
+        }
+    return proofs
+
+
+def _is_no_action_challenge(
+    query: CandidatePoolEntry,
+    pools: Mapping[str, Sequence[str]],
+    entries_by_id: Mapping[str, CandidatePoolEntry],
+) -> bool:
+    exact_ids = pools.get("exact_same_before", ())
+    if not exact_ids:
+        return False
+    action_clusters = {_action_cluster(query)}
+    action_clusters.update(_action_cluster(entries_by_id[candidate_id]) for candidate_id in exact_ids)
+    action_clusters.discard(None)
+    return len(action_clusters) >= 2
+
+
+def _sample_has_synthetic_entries(
+    sample: ActionContrastPoolSample,
+    entries_by_id: Mapping[str, CandidatePoolEntry],
+) -> bool:
+    ids = (sample.query_id, *(candidate_id for ids in sample.pools.values() for candidate_id in ids))
+    return any(entries_by_id[transition_id].source == "synthetic" for transition_id in ids)
+
+
+def _same_before(query: CandidatePoolEntry, candidate: CandidatePoolEntry) -> bool:
+    query_before_hash = _metadata_string(query.metadata, "state_before_hash")
+    candidate_before_hash = _metadata_string(candidate.metadata, "state_before_hash")
+    return (
+        query_before_hash is not None
+        and candidate_before_hash is not None
+        and query_before_hash == candidate_before_hash
+    )
+
+
+def _different_after(query: CandidatePoolEntry, candidate: CandidatePoolEntry) -> bool:
+    query_after_hash = _metadata_string(query.metadata, "state_after_hash")
+    candidate_after_hash = _metadata_string(candidate.metadata, "state_after_hash")
+    if query_after_hash is None or candidate_after_hash is None:
+        return query.transition_id != candidate.transition_id
+    return query_after_hash != candidate_after_hash
+
+
+def _edit_shape(entry: CandidatePoolEntry) -> str | None:
+    for key in ("diff_shape", "edit_shape", "edit_size_bucket"):
+        value = entry.metadata.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return None
+
+
+def _is_mutation_candidate(entry: CandidatePoolEntry) -> bool:
+    kind = str(entry.metadata.get("candidate_kind", "")).casefold()
+    if kind in {"mutation", "mutated_after", "bug_injection"}:
+        return True
+    return bool(entry.metadata.get("is_mutation", False))
 
 
 def _hard_negative_composition(selected: Sequence[_ScoredHardNegative]) -> dict[str, int]:

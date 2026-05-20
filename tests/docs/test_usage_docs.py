@@ -75,6 +75,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.index_build.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.action_contrast_pool_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.action_ablation_run.v1",
             "codelewm.eval.surprise_report.v1",

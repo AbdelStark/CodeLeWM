@@ -88,6 +88,7 @@ class ChangelogContentTest(unittest.TestCase):
             "codelewm.eval.retrieval_metrics.v1",
             "codelewm.eval.retrieval_report.v1",
             "codelewm.eval.candidate_pool.v1",
+            "codelewm.eval.action_contrast_pool_report.v1",
             "codelewm.eval.hard_negative_sample.v1",
             "codelewm.eval.hard_negative_sampler_report.v1",
             "codelewm.eval.surprise_report.v1",

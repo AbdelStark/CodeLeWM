@@ -43,6 +43,9 @@ class SyntheticTransformTest(unittest.TestCase):
                 "modernize-set-literal",
             ],
         )
+        self.assertEqual({record.before for record in records}, {SOURCE})
+        self.assertEqual(len({record.after for record in records}), 3)
+        self.assertEqual(len({record.message for record in records}), 3)
         self.assertTrue(all(isinstance(record, RawEditRecord) for record in records))
         for record in records:
             self.assertEqual(record.source, "synthetic")
