@@ -96,12 +96,17 @@ The public docs use three evidence tiers:
   `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`,
   `docs/cards/codelewm-action-use-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-model-2026-05-20.md`.
+- Second-stage negative action-use HF evidence:
+  `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
 
 The scaled runs prove the Hugging Face Jobs, private publication,
 downloaded-artifact verification, and evaluation path. They do not prove a
 positive action-conditioned quality claim: text-action still loses to no-action
-on headline retrieval. Public claim wording must keep that boundary until a
-later artifact passes the action-use claim gate.
+on headline retrieval, including the completed #159 margin+retrieval run.
+Public claim wording must keep that boundary until a later artifact passes the
+action-use claim gate.
 
 ### `codelewm score`
 

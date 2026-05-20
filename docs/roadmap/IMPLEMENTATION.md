@@ -103,12 +103,12 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #122 | docs: fill dataset and model cards from artifacts | release | p1 | m | RFC-0012 | Closed |
 | #137 | ops: add HF Jobs ml-intern training automation | ci | p1 | m | RFC-0012 | Closed |
 | #138 | run: execute HF Jobs scaled training and publish artifacts | release | p1 | l | RFC-0012 | Closed |
-| #150 | [Tracking] Action-conditioned scaled result and release readiness | release | p1 | l | RFC-0012 | Open |
+| #150 | [Tracking] Action-conditioned scaled result and release readiness | release | p1 | l | RFC-0012 | Closed |
 | #151 | eval: add no-action dominance diagnostics and claim gates | evaluation | p1 | m | RFC-0007 | Closed |
 | #152 | data: add action-discriminative shard diagnostics and hard negatives | data | p1 | l | RFC-0002 | Closed |
 | #153 | train: add action-use objective and scaled sweep configs | model | p1 | l | RFC-0006 | Closed |
 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Closed |
-| #159 | run: execute second-stage action-use remediation sweep | evaluation | p1 | l | RFC-0007 | Open |
+| #159 | run: execute second-stage action-use remediation sweep | evaluation | p1 | l | RFC-0007 | Closed |
 | #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Closed |
 | #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Closed |
 | #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Closed |
@@ -132,8 +132,8 @@ until every child issue closes or is explicitly superseded.
 - #12 [Tracking] Public API and packaging — RFC-0011
 - #13 [Tracking] Release CI and governance — RFC-0012
 
-Additional active completion tracker: #150 [Tracking] Action-conditioned scaled
-result and release readiness.
+Additional completion tracker: #150 [Tracking] Action-conditioned scaled result
+and release readiness, closed with the negative/diagnostic #159 boundary.
 
 ## Cross-Cutting Dependencies
 
@@ -166,11 +166,11 @@ result and release readiness.
   scaled run.
 - #154 executed the primary action-use margin follow-up and verified the
   downloaded private artifacts, but the result remained negative.
-- #159 is the active evidence precondition for a future positive claim path.
-  The remediation run `codelewm-action-use-retrieval-20260520-7895d18` is
-  running on HF Jobs job `6a0da3a08229e585f969c3f7`; it must be downloaded,
-  manifest-verified, locally re-evaluated, and recorded as positive or
-  negative/diagnostic before #150 can close.
+- #159 executed the second-stage remediation run
+  `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
+  `6a0da3a08229e585f969c3f7`; private artifacts were downloaded with
+  `hf download`, manifest-verified, locally re-evaluated, secret-scanned, and
+  recorded as negative/diagnostic because no-action still beat text-action.
 - #123 closed the package build and manual publishing gate for wheel/sdist
   artifacts.
 - #124 closed the dependency-audit and release-provenance gate for package
@@ -179,7 +179,7 @@ result and release readiness.
   legacy-script boundary.
 - #126 closed the private diagnostic release freeze in
   `docs/release/RELEASE_FREEZE_2026-05-20.md`; public positive model-quality
-  claims and public HF visibility remain blocked until #159 supplies
+  claims and public HF visibility remain blocked because #159 did not supply
   claim-eligible evidence.
 
 ## Cross-Reference Map

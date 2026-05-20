@@ -23,8 +23,38 @@ The model-quality gate does not pass. Text-action still loses to no-action on
 the agreed headline retrieval metrics, so the Hugging Face repositories remain
 private and public positive action-conditioning claims remain disabled.
 
-The remaining project gap is #159 if the project still wants a positive
-action-conditioned result.
+After this freeze, #159 completed the second-stage margin+retrieval remediation
+run and remained negative. The remaining project gap, if a positive public claim
+is still desired, is a new research iteration beyond the frozen diagnostic
+artifact set.
+
+## Post-Freeze #159 Boundary
+
+The #159 run `codelewm-action-use-retrieval-20260520-7895d18` completed on HF
+Jobs job `6a0da3a08229e585f969c3f7` from source
+`7895d185e165a917af0956a313d8948c04b33638`. It published private artifacts to
+the same Hugging Face repositories, downloaded them with `hf download`, and
+passed manifest verification, local retrieval, ablation, surprise,
+scorer-quality, score, rerank, and secret-scan checks.
+
+The run improved text-action retrieval, but did not pass the claim gate:
+
+| Metric | Text action | No action | Gate |
+| --- | ---: | ---: | --- |
+| Recall@1 | 0.597 | 0.650 | fail |
+| Recall@5 | 0.770 | 0.774 | fail |
+| Recall@10 | 0.813 | 0.816 | fail |
+| MRR | 0.674500 | 0.708037 | fail |
+
+The action-use claim gate remains `claim_allowed=false` with:
+
+```text
+no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action
+```
+
+See `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
+`docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
+`docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
 
 ## Selected Artifacts
 
@@ -164,10 +194,11 @@ dependency audit, release provenance, dataset/model cards, and a frozen private
 diagnostic scaled artifact set.
 
 This is not a public positive model-quality release. The selected action-use
-checkpoint is useful evidence for the system and for the no-action dominance
-failure mode, but no-action remains stronger than text-action on Recall@1 and
-MRR. Public repositories and public positive claims stay blocked unless #159
-produces a passing action-use claim gate.
+checkpoint and the later #159 margin+retrieval checkpoint are useful evidence
+for the system and for the no-action dominance failure mode, but no-action
+remains stronger than text-action on Recall@1 and MRR. Public repositories and
+public positive claims stay blocked unless a future research iteration produces
+a passing action-use claim gate.
 
 ## Sign-Off Status
 
@@ -178,4 +209,4 @@ produces a passing action-use claim gate.
 | Security reviewer | blocked for public tag |
 
 The diagnostic freeze is complete. A public tag, public HF visibility flip, and
-positive action-conditioned claim remain blocked by #159.
+positive action-conditioned claim remain blocked by the negative #159 result.

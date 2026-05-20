@@ -93,6 +93,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "## Evidence Boundary",
             "docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md",
+            "docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md",
             "text-action still loses to no-action",
             "positive action-conditioned quality claim",
         ):
