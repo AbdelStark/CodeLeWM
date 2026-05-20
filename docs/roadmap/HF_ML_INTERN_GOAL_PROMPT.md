@@ -280,6 +280,17 @@ uv run codelewm eval retrieval \
   --overwrite \
   --json
 
+uv run codelewm eval latent-probe \
+  --checkpoint .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
+  --data .artifacts/hf-download/<run-id>/dataset/runs/<run-id>/pack \
+  --out .artifacts/hf-download/<run-id>/local-checks/latent_probe \
+  --device cpu \
+  --max-examples-per-split 1000 \
+  --bootstrap-samples 200 \
+  --seed 0 \
+  --overwrite \
+  --json
+
 uv run codelewm eval ablation \
   --retrieval-artifact .artifacts/hf-download/<run-id>/local-checks/retrieval/manifest.json \
   --training-artifact .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/manifest.json \

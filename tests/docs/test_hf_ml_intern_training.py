@@ -202,6 +202,8 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "verify_dataset_pack",
             "verify_model",
             "eval_retrieval",
+            "eval_latent_probe",
+            "verify_latent_probe",
             "eval_ablation",
             "eval_surprise",
             "verify_index",
