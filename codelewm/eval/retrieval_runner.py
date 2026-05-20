@@ -873,6 +873,14 @@ def _load_torch_checkpoint(checkpoint_path: Path, *, device: Any, runtime: Any) 
         action_sequence_length=int(wm.get("action_sequence_length", 256 if action_view == "text" else 192)),
         vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
         dropout=0.0,
+        action_fusion=str(wm.get("action_fusion", "conditional_transformer")),
+        enable_inverse_action_head=bool(
+            wm.get("enable_inverse_action_head")
+            or (
+                isinstance(compatibility.get("loss"), Mapping)
+                and compatibility["loss"].get("enable_inverse_action_reconstruction")
+            )
+        ),
     )
     model = build_torch_transition_model(config)
     try:

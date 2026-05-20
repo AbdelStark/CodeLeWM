@@ -33,6 +33,8 @@ class CodeLatentPredictorConfigTest(unittest.TestCase):
             CodeLatentPredictorConfig(history_size=0)
         with self.assertRaisesRegex(ValueError, "dimensions"):
             CodeLatentPredictorConfig(latent_dim=0)
+        with self.assertRaisesRegex(ValueError, "action_fusion"):
+            CodeLatentPredictorConfig(action_fusion="cross_attention")
 
 
 class CodeLatentPredictorTorchTest(unittest.TestCase):
@@ -100,6 +102,24 @@ class CodeLatentPredictorTorchTest(unittest.TestCase):
                 dim_head=4,
                 dropout=0.0,
                 emb_dropout=0.0,
+            )
+        )
+
+        output = model(torch.randn(2, 8), torch.randn(2, 8))
+
+        self.assertEqual(tuple(output.shape), (2, 8))
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
+    def test_gated_residual_fusion_accepts_one_step_code_latents(self) -> None:
+        import torch
+
+        model = CodeLatentPredictor(
+            CodeLatentPredictorConfig(
+                latent_dim=8,
+                action_dim=8,
+                hidden_dim=8,
+                action_fusion="gated_residual",
+                dropout=0.0,
             )
         )
 

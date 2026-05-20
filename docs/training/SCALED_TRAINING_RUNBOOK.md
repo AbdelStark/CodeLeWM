@@ -18,7 +18,9 @@ All scaled configs keep the v0.1 one-step contract: `history_size=1`,
 `num_preds=1`, `embed_dim=256`, and `action_view=text`. Patch-action remains diagnostic-only.
 Training config validation rejects patch-action. The baseline CPU/MPS/A10G
 configs keep retrieval and action-use margin disabled; the follow-up A10G sweep
-explicitly enables the no-action margin objective.
+explicitly enables the no-action margin objective. The v0.2 A10G intervention
+adds gated residual action fusion plus action-swap and inverse-action
+auxiliaries behind explicit config gates.
 
 | Profile | Config | Seed | Steps | Batch | Precision | Budget |
 | --- | --- | --- | ---: | ---: | --- | --- |
@@ -27,6 +29,7 @@ explicitly enables the no-action margin objective.
 | HF A10G baseline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Prior systems proof from #138; rerun only for regression comparison |
 | HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #154; negative claim gate |
 | HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Candidate for #159 after side-by-side analysis |
+| HF A10G v0.2 action-swap+inverse | `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | #170 intervention for action-contrast gate |
 
 The primary follow-up candidate was
 `codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targeted the
@@ -36,6 +39,12 @@ does not beat the no-action identity baseline by `action_use_margin=0.02`, with
 fallback adds the existing retrieval auxiliary at `retrieval_weight=0.05`; keep
 it as the likely #159 run unless side-by-side analysis shows a smaller
 data/eval correction is required first.
+The v0.2 intervention uses `action_fusion=gated_residual`,
+`action_swap_contrastive_weight=0.20`,
+`action_swap_contrastive_margin=0.05`, and
+`inverse_action_reconstruction_weight=0.10` in addition to the no-action
+margin. Use it only for the #170/#172 action-contrast evaluation path, not as a
+replacement for the #159 replay.
 The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
 research claims.
 
@@ -49,8 +58,9 @@ uv run scripts/validate-training-configs
 ```
 
 The command emits `codelewm.train_config_validation.v1` with each config path,
-seed, action view, hardware profile, batch size, max steps, retrieval objective
-settings, action-use margin settings, and deterministic config SHA-256. A
+seed, action view, action fusion, hardware profile, batch size, max steps,
+retrieval objective settings, action-use margin settings, action-swap and
+inverse-action objective settings, and deterministic config SHA-256. A
 non-zero exit means the config must be fixed before launch.
 
 ## Public Shard Preconditions
@@ -209,6 +219,8 @@ available only for regression comparison against the #138 systems result. The
 primary action-use result and failure mode are recorded in #154 and
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; #159 owns any escalation
 to `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
+#170 owns the v0.2 intervention launch with
+`config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
 
 Monitor and inspect only through the HF CLI:
 

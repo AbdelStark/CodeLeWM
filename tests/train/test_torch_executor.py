@@ -190,6 +190,40 @@ class TorchTrainingExecutorTest(unittest.TestCase):
         self.assertEqual(report["objective"]["action_use_margin"], 0.02)
         self.assertTrue(manifest.metadata["executor"]["objective"]["enable_action_use_margin"])
 
+    def test_action_swap_inverse_objectives_run_one_torch_step_and_record_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pack_dir = _build_and_pack_fixture(root)
+            payload = _train_config_payload(root, pack_dir, name="torch_action_swap_inverse_fixture")
+            payload["wm"]["action_fusion"] = "gated_residual"
+            payload["loss"]["enable_action_swap_contrastive"] = True
+            payload["loss"]["action_swap_contrastive_weight"] = 0.20
+            payload["loss"]["action_swap_contrastive_margin"] = 0.05
+            payload["loss"]["enable_inverse_action_reconstruction"] = True
+            payload["loss"]["inverse_action_reconstruction_weight"] = 0.10
+            config = validate_train_config(payload)
+
+            manifest = train_torch(
+                config,
+                root=root,
+                source_git_sha=SOURCE_SHA,
+                created_at=CREATED_AT,
+            )
+
+            run_dir = root / "runs" / "torch_action_swap_inverse_fixture"
+            report = json.loads((run_dir / "reports" / "torch_training_report.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(manifest.step_count, 1)
+        self.assertTrue(math.isfinite(manifest.final_metrics["loss/action_swap_contrastive"]))
+        self.assertTrue(math.isfinite(manifest.final_metrics["loss/inverse_action_reconstruction"]))
+        self.assertTrue(math.isfinite(manifest.final_metrics["action_diagnostics/swap_distance_gap"]))
+        self.assertTrue(math.isfinite(manifest.final_metrics["val/loss/action_swap_contrastive"]))
+        self.assertTrue(math.isfinite(manifest.final_metrics["val/loss/inverse_action_reconstruction"]))
+        self.assertEqual(report["objective"]["action_swap_contrastive_weight"], 0.20)
+        self.assertEqual(report["objective"]["action_swap_contrastive_margin"], 0.05)
+        self.assertTrue(report["objective"]["enable_inverse_action_reconstruction"])
+        self.assertTrue(manifest.metadata["executor"]["objective"]["enable_action_swap_contrastive"])
+
 
 def _build_and_pack_fixture(root: Path) -> Path:
     build_dir = root / "build"

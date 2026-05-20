@@ -44,6 +44,8 @@ class TorchCodeTransitionModelConfig:
     action_sequence_length: int = TEXT_ACTION_SEQUENCE_LENGTH
     vocab_size: int = 32768
     dropout: float = 0.1
+    action_fusion: str = "conditional_transformer"
+    enable_inverse_action_head: bool = False
 
     def __post_init__(self) -> None:
         if self.action_view not in ("text", "abstract"):
@@ -62,6 +64,8 @@ class TorchCodeTransitionModelConfig:
                 "action_sequence_length must be "
                 f"{expected_action_length} for action_view={self.action_view!r}"
             )
+        if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
+            raise ValueError("action_fusion must be conditional_transformer or gated_residual")
 
 
 class TorchCodeTransitionModel(CodeTransitionModel):
@@ -84,6 +88,16 @@ class TorchCodeTransitionModel(CodeTransitionModel):
         self.predictor = predictor
         self.projector = nn.Identity()
         self.pred_proj = nn.Identity()
+        self.inverse_action_head = (
+            nn.Sequential(
+                nn.Linear(config.latent_dim * 2, config.latent_dim),
+                nn.GELU(),
+                nn.Dropout(config.dropout),
+                nn.Linear(config.latent_dim, config.latent_dim),
+            )
+            if config.enable_inverse_action_head
+            else None
+        )
 
     def encode_state(self, batch: CodeStateBatch) -> Any:
         return self.encoder(
@@ -104,17 +118,25 @@ class TorchCodeTransitionModel(CodeTransitionModel):
     def predict_after(self, z_before: Any, action_emb: Any) -> Any:
         return self.predictor.predict_after(z_before, action_emb)
 
+    def reconstruct_action(self, z_before: Any, z_after: Any) -> Any:
+        if self.inverse_action_head is None:
+            raise ValueError("inverse action head is disabled")
+        return self.inverse_action_head(torch.cat((z_before, z_after), dim=-1))
+
     def forward(self, batch: TransitionBatch) -> dict[str, Any]:
         z_before = self.encode_state(batch.state_before)
         action_emb = self.encode_action(batch.action)
         z_after = self.encode_state(batch.state_after)
         z_pred_after = self.predict_after(z_before, action_emb)
-        return {
+        output = {
             "z_before": z_before,
             "action_emb": action_emb,
             "z_after": z_after,
             "z_pred_after": z_pred_after,
         }
+        if self.inverse_action_head is not None:
+            output["action_reconstruction"] = self.reconstruct_action(z_before, z_after)
+        return output
 
 
 def build_torch_transition_model(
@@ -161,6 +183,7 @@ def build_torch_transition_model(
             latent_dim=config.latent_dim,
             action_dim=config.latent_dim,
             hidden_dim=config.latent_dim,
+            action_fusion=config.action_fusion,
         )
     )
     return TorchCodeTransitionModel(

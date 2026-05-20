@@ -20,11 +20,14 @@ class ScaledTrainingRunbookTest(unittest.TestCase):
             "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
             "config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml",
             "config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml",
+            "config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml",
             "config/data/codelewm_public_shard_commitpackft_python.json",
             "seed",
             "240119",
             "a10g-small",
             "action_use_margin_weight=0.25",
+            "action_swap_contrastive_weight=0.20",
+            "inverse_action_reconstruction_weight=0.10",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.text)

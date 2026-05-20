@@ -159,11 +159,15 @@ def torch_training_executor(
             optimizer.zero_grad(set_to_none=True)
             with _autocast_context(context.config.trainer.precision, selected_device, runtime):
                 outputs = model(batch)
+                z_pred_after_swapped = _swapped_action_prediction(model, outputs)
                 terms = compute_transition_objective(
                     outputs["z_before"],
                     outputs["z_after"],
                     outputs["z_pred_after"],
                     config=objective_config,
+                    z_pred_after_swapped=z_pred_after_swapped,
+                    action_emb=outputs["action_emb"],
+                    action_reconstruction=outputs.get("action_reconstruction"),
                 )
             terms.total.backward()
             grad_norm = runtime.nn.utils.clip_grad_norm_(
@@ -175,6 +179,13 @@ def torch_training_executor(
             batch_size = int(batch.state_before.input_ids.shape[0])
             examples_seen += batch_size
             last_terms = terms.scalars()
+            last_terms.update(
+                _action_swap_diagnostics(
+                    outputs["z_after"],
+                    outputs["z_pred_after"],
+                    z_pred_after_swapped,
+                )
+            )
             last_terms["train/gradient_norm"] = _finite_float(grad_norm, "train/gradient_norm")
             last_embeddings = _collapse_embeddings(outputs, runtime=runtime)
         if len(train_loader) == 0:
@@ -423,6 +434,8 @@ def _model_config(config: TrainConfig) -> TorchCodeTransitionModelConfig:
         action_sequence_length=config.wm.action_sequence_length,
         vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
         dropout=0.0,
+        action_fusion=config.wm.action_fusion,
+        enable_inverse_action_head=config.loss.enable_inverse_action_reconstruction,
     )
 
 
@@ -435,6 +448,11 @@ def _objective_config(config: TrainConfig) -> ObjectiveConfig:
         enable_action_use_margin=config.loss.enable_action_use_margin,
         action_use_margin_weight=config.loss.action_use_margin_weight,
         action_use_margin=config.loss.action_use_margin,
+        enable_action_swap_contrastive=config.loss.enable_action_swap_contrastive,
+        action_swap_contrastive_weight=config.loss.action_swap_contrastive_weight,
+        action_swap_contrastive_margin=config.loss.action_swap_contrastive_margin,
+        enable_inverse_action_reconstruction=config.loss.enable_inverse_action_reconstruction,
+        inverse_action_reconstruction_weight=config.loss.inverse_action_reconstruction_weight,
         sigreg_knots=config.loss.sigreg_knots,
         sigreg_num_proj=config.loss.sigreg_num_proj,
         sigreg_seed=config.seed,
@@ -516,17 +534,59 @@ def _evaluate_validation(
                 action_view=config.wm.action_view,
             )
             outputs = model(batch)
+            z_pred_after_swapped = _swapped_action_prediction(model, outputs)
             terms = compute_transition_objective(
                 outputs["z_before"],
                 outputs["z_after"],
                 outputs["z_pred_after"],
                 config=objective_config,
+                z_pred_after_swapped=z_pred_after_swapped,
+                action_emb=outputs["action_emb"],
+                action_reconstruction=outputs.get("action_reconstruction"),
             )
             for key, value in terms.scalars().items():
+                accum.setdefault(f"val/{key}", []).append(value)
+            for key, value in _action_swap_diagnostics(
+                outputs["z_after"],
+                outputs["z_pred_after"],
+                z_pred_after_swapped,
+            ).items():
                 accum.setdefault(f"val/{key}", []).append(value)
     if was_training:
         model.train()
     return {key: float(np.mean(values)) for key, values in accum.items()}
+
+
+def _swapped_action_prediction(model: TorchCodeTransitionModel, outputs: dict[str, Any]) -> Any:
+    swapped_action = outputs["action_emb"].roll(shifts=1, dims=0)
+    return model.predict_after(outputs["z_before"], swapped_action)
+
+
+def _action_swap_diagnostics(z_after: Any, z_pred_after: Any, z_pred_after_swapped: Any) -> dict[str, float]:
+    positive_dist = _mean_sq_distance(z_pred_after, z_after)
+    swapped_dist = _mean_sq_distance(z_pred_after_swapped, z_after)
+    return {
+        "action_diagnostics/positive_distance": _finite_float(
+            positive_dist,
+            "action_diagnostics/positive_distance",
+        ),
+        "action_diagnostics/swapped_distance": _finite_float(
+            swapped_dist,
+            "action_diagnostics/swapped_distance",
+        ),
+        "action_diagnostics/swap_distance_gap": _finite_float(
+            swapped_dist - positive_dist,
+            "action_diagnostics/swap_distance_gap",
+        ),
+    }
+
+
+def _mean_sq_distance(left: Any, right: Any) -> Any:
+    delta = left - right
+    reduce_dims = tuple(range(1, delta.ndim))
+    if reduce_dims:
+        return delta.pow(2).mean(dim=reduce_dims).mean()
+    return delta.pow(2).mean()
 
 
 def _collapse_embeddings(outputs: dict[str, Any], *, runtime: Any) -> np.ndarray:

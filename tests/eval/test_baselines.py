@@ -61,6 +61,32 @@ class RetrievalBaselineTest(unittest.TestCase):
         self.assertEqual(no_action, (2, 2))
         self.assertEqual(shuffled, (2, 2))
 
+    def test_shuffled_action_degrades_controlled_same_before_fixture(self) -> None:
+        candidate_ids = (
+            ("target-add-timeout", "wrong-rename-symbol"),
+            ("wrong-add-timeout", "target-rename-symbol"),
+        )
+        target_ids = ("target-add-timeout", "target-rename-symbol")
+        action_conditioned_scores = (
+            (0.95, 0.10),
+            (0.10, 0.95),
+        )
+
+        text_action = no_action_baseline_ranks(
+            action_conditioned_scores,
+            candidate_ids,
+            target_ids,
+        )
+        shuffled_action = shuffled_action_baseline_ranks(
+            action_conditioned_scores,
+            candidate_ids,
+            target_ids,
+            seed=0,
+        )
+
+        self.assertEqual(text_action, (1, 1))
+        self.assertEqual(shuffled_action, (2, 2))
+
     def test_required_headline_baselines_validate_report_contract(self) -> None:
         baselines = build_baseline_metrics(
             {

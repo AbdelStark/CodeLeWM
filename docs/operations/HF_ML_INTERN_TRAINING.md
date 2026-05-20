@@ -217,11 +217,15 @@ locally. The claim gate remained negative: text-action Recall@1 `0.597` and MRR
 `0.674500` versus no-action Recall@1 `0.650` and MRR `0.708037`. Do not
 relaunch it as release cleanup. The original
 `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains available
-only for regression comparison against #138.
+only for regression comparison against #138. The v0.2 #170 intervention config
+is
+`config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`;
+it adds gated residual action fusion, action-swap contrastive loss, and
+inverse-action reconstruction for the #172 action-contrast sweep.
 
 If a future research issue justifies a new GPU run and the recorded decision
-does not require a code or config repair, use this margin+retrieval template as
-a starting point with a new run ID and issue:
+does not require another code or config repair after #170 lands, use this v0.2
+template as a starting point with a new run ID and issue:
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -232,7 +236,7 @@ CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_RUN_ID=<new-run-id> \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -342,6 +346,9 @@ Completed action-use gates:
 - #151 has added no-action dominance diagnostics and a claim gate.
 - #152 has added action-discriminative shard diagnostics and hard negatives.
 - #153 has added the action-use margin objective and scaled sweep configs.
+- #170 adds the v0.2 action-swap/inverse-action training intervention config
+  `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`
+  for the next action-contrast sweep.
 - #154 executed the follow-up HF Jobs run with
   `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`,
   verified downloaded artifacts, and recorded a negative claim gate.

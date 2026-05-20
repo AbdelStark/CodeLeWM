@@ -8,7 +8,9 @@ import numpy as np
 
 from codelewm.model import (
     ObjectiveConfig,
+    compute_action_swap_contrastive_loss,
     compute_action_use_margin_loss,
+    compute_inverse_action_reconstruction_loss,
     compute_prediction_mse,
     compute_sigreg_loss,
     compute_transition_objective,
@@ -120,6 +122,80 @@ class ObjectiveNumpyTest(unittest.TestCase):
             ObjectiveConfig(enable_action_use_margin=True, action_use_margin=0.1)
         with self.assertRaisesRegex(ValueError, "nonzero action_use_margin"):
             ObjectiveConfig(enable_action_use_margin=True, action_use_margin_weight=0.1)
+
+    def test_action_swap_contrastive_penalizes_swapped_action_winning(self) -> None:
+        z_after = np.array([[1.0, 0.0], [-1.0, 0.0]])
+        z_pred = np.array([[0.95, 0.0], [-0.95, 0.0]])
+        z_pred_swapped_far = np.array([[-1.0, 0.0], [1.0, 0.0]])
+        z_pred_swapped_close = z_pred.copy()
+
+        satisfied = compute_action_swap_contrastive_loss(
+            z_after,
+            z_pred,
+            z_pred_swapped_far,
+            margin=0.1,
+        )
+        violated = compute_action_swap_contrastive_loss(
+            z_after,
+            z_pred,
+            z_pred_swapped_close,
+            margin=0.1,
+        )
+
+        self.assertEqual(satisfied, 0.0)
+        self.assertGreater(violated, 0.0)
+
+    def test_transition_objective_reports_action_swap_and_inverse_action_terms(self) -> None:
+        z_before = np.array([[0.0, 0.0], [0.0, 1.0]])
+        z_after = np.array([[1.0, 0.0], [1.0, 1.0]])
+        z_pred = np.array([[0.9, 0.0], [0.9, 1.0]])
+        z_pred_swapped = z_before.copy()
+        action_emb = np.array([[0.5, 0.1], [0.1, 0.5]])
+        action_reconstruction = np.array([[0.4, 0.1], [0.1, 0.4]])
+        config = ObjectiveConfig(
+            sigreg_weight=0.0,
+            enable_action_swap_contrastive=True,
+            action_swap_contrastive_weight=0.2,
+            action_swap_contrastive_margin=0.1,
+            enable_inverse_action_reconstruction=True,
+            inverse_action_reconstruction_weight=0.3,
+            sigreg_num_proj=8,
+            sigreg_seed=3,
+        )
+
+        terms = compute_transition_objective(
+            z_before,
+            z_after,
+            z_pred,
+            config=config,
+            z_pred_after_swapped=z_pred_swapped,
+            action_emb=action_emb,
+            action_reconstruction=action_reconstruction,
+        )
+        scalars = terms.scalars()
+
+        self.assertIn("loss/action_swap_contrastive", scalars)
+        self.assertIn("loss/action_swap_contrastive_weighted", scalars)
+        self.assertIn("loss/inverse_action_reconstruction", scalars)
+        self.assertIn("loss/inverse_action_reconstruction_weighted", scalars)
+        self.assertAlmostEqual(
+            scalars["loss/inverse_action_reconstruction"],
+            compute_inverse_action_reconstruction_loss(action_reconstruction, action_emb),
+        )
+
+    def test_action_swap_and_inverse_action_require_explicit_gates(self) -> None:
+        with self.assertRaisesRegex(ValueError, "enable_action_swap_contrastive"):
+            ObjectiveConfig(action_swap_contrastive_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "enable_action_swap_contrastive"):
+            ObjectiveConfig(action_swap_contrastive_margin=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero action_swap_contrastive_weight"):
+            ObjectiveConfig(enable_action_swap_contrastive=True, action_swap_contrastive_margin=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero action_swap_contrastive_margin"):
+            ObjectiveConfig(enable_action_swap_contrastive=True, action_swap_contrastive_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "enable_inverse_action_reconstruction"):
+            ObjectiveConfig(inverse_action_reconstruction_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero inverse_action_reconstruction_weight"):
+            ObjectiveConfig(enable_inverse_action_reconstruction=True)
 
 
 class ObjectiveTorchTest(unittest.TestCase):

@@ -220,7 +220,7 @@ def _compatibility_config_payload(config: TrainConfig) -> dict:
     """
 
     return {
-        "wm": config.wm.to_dict(),
+        "wm": config.wm.to_compatibility_dict(),
         "loss": config.loss.to_compatibility_dict(),
     }
 

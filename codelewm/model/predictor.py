@@ -31,6 +31,7 @@ class CodeLatentPredictorConfig:
     dim_head: int = 64
     dropout: float = 0.1
     emb_dropout: float = 0.0
+    action_fusion: str = "conditional_transformer"
 
     def __post_init__(self) -> None:
         if self.history_size <= 0:
@@ -45,6 +46,8 @@ class CodeLatentPredictorConfig:
             raise ValueError("dropout must be in [0, 1)")
         if not 0.0 <= self.emb_dropout < 1.0:
             raise ValueError("emb_dropout must be in [0, 1)")
+        if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
+            raise ValueError("action_fusion must be conditional_transformer or gated_residual")
 
 
 class CodeLatentPredictor(nn.Module if nn is not None else object):
@@ -118,6 +121,8 @@ class CodeLatentPredictor(nn.Module if nn is not None else object):
 
     @staticmethod
     def _build_predictor(config: CodeLatentPredictorConfig) -> Any:
+        if config.action_fusion == "gated_residual":
+            return _GatedResidualActionPredictor(config)
         from codelewm.model.modules import ARPredictor
 
         return ARPredictor(
@@ -132,3 +137,35 @@ class CodeLatentPredictor(nn.Module if nn is not None else object):
             dropout=config.dropout,
             emb_dropout=config.emb_dropout,
         )
+
+
+class _GatedResidualActionPredictor(nn.Module if nn is not None else object):
+    """State-action fusion option that gates an action-conditioned residual."""
+
+    def __init__(self, config: CodeLatentPredictorConfig) -> None:
+        if nn is None or torch is None:
+            raise ModelRuntimeUnavailableError("_GatedResidualActionPredictor requires torch")
+        super().__init__()
+        self.config = config
+        fused_dim = config.latent_dim + config.action_dim
+        self.gate = nn.Sequential(
+            nn.Linear(fused_dim, config.hidden_dim),
+            nn.GELU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(config.hidden_dim, config.latent_dim),
+            nn.Sigmoid(),
+        )
+        self.residual = nn.Sequential(
+            nn.Linear(fused_dim, config.hidden_dim),
+            nn.GELU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(config.hidden_dim, config.latent_dim),
+        )
+
+    def forward(self, z_history: Any, action_history: Any) -> Any:
+        if z_history.ndim != 3 or action_history.ndim != 3:
+            raise ValueError("gated residual fusion expects rank-3 history tensors")
+        if z_history.shape[:2] != action_history.shape[:2]:
+            raise ValueError("z_history and action_history must share batch/history shape")
+        fused = torch.cat((z_history, action_history), dim=-1)
+        return z_history + self.gate(fused) * self.residual(fused)
