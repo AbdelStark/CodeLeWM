@@ -65,6 +65,8 @@ class ReleaseChecklistContentTest(unittest.TestCase):
         for marker in (
             "codelewm manifest verify",
             "codelewm secret-scan",
+            "pip-audit",
+            "codelewm.release_provenance.v1",
             "checkpoint_error",
             "allow-unsafe-checkpoint",
         ):

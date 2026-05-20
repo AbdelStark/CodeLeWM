@@ -266,6 +266,10 @@ uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
 ```
 
+Release candidates also run `pip-audit` and write a
+`codelewm.release_provenance.v1` report with `scripts/release-provenance`; see
+`docs/release/DEPENDENCY_PROVENANCE.md`.
+
 The package extras mirror the same runtime boundaries for wheel consumers:
 
 ```bash

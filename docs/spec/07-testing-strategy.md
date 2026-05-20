@@ -79,6 +79,16 @@ uv run scripts/validate-training-configs
 uv sync --group dev --group release
 uv build --sdist --wheel --out-dir .artifacts/package-gate/dist --clear
 uv run twine check .artifacts/package-gate/dist/*
+mkdir -p .artifacts/release/dependency-audit
+uv run pip-audit --format json --output .artifacts/release/dependency-audit/pip-audit.json
+uv run scripts/release-provenance \
+  --dist .artifacts/package-gate/dist \
+  --audit-report .artifacts/release/dependency-audit/pip-audit.json \
+  --include docs/release/PACKAGE_PUBLISHING.md \
+  --include docs/release/DEPENDENCY_PROVENANCE.md \
+  --out .artifacts/release/provenance/provenance.json \
+  --require-clean-tracked-tree \
+  --json
 uv venv .artifacts/package-gate/venv --python 3.13
 uv pip install --python .artifacts/package-gate/venv/bin/python .artifacts/package-gate/dist/codelewm-*.whl
 .artifacts/package-gate/venv/bin/codelewm --help
@@ -154,7 +164,9 @@ through `uv sync --group dev`, keeps running
 and generated CI artifacts, builds and packs the committed tiny dataset fixture
 with the data dependency group, builds wheel and sdist artifacts with
 `uv build`, checks metadata rendering with `twine check`, installs the wheel in
-a clean virtual environment, verifies the installed `codelewm` console script,
+a clean virtual environment, audits release dependencies with `pip-audit`,
+generates `codelewm.release_provenance.v1` evidence, verifies the installed
+`codelewm` console script,
 verifies the spec-doc tree is present, and pins the GitHub Actions versions it
 depends on. Local
 `uv run python -m pytest tests/` runs the same lightweight test suite; the
