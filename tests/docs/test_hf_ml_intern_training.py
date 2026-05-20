@@ -150,6 +150,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
                 "CODELEWM_HF_PIPELINE_MODE": "scaled",
                 "CODELEWM_HF_JOBS_TIMEOUT": "24h",
                 "CODELEWM_HF_PUBLISH_DRY_RUN": "0",
+                "CODELEWM_HF_PRIVATE": "0",
                 "CODELEWM_HF_REF": "main",
             },
             stdout=subprocess.PIPE,
@@ -160,6 +161,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn(" -- python:3.13-bookworm bash -lc ", completed.stdout)
         self.assertIn("CODELEWM_HF_INDEX_BATCH_SIZE=64", completed.stdout)
+        self.assertIn("CODELEWM_HF_PRIVATE=0", completed.stdout)
         self.assertNotIn(" --label c ", completed.stdout)
 
     def test_download_verifier_dry_run_is_secret_safe_and_complete(self) -> None:
