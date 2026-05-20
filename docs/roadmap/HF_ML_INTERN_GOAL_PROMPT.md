@@ -1,8 +1,8 @@
 # HF ml-intern `/goal` Prompt
 
 Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must close or explicitly defer the remaining action-use
-gap with a second-stage HF Jobs run or a justified no-run decision.
+`ml-intern` run that must finish the active #159 HF Jobs remediation lifecycle
+and close or explicitly defer the remaining action-use gap.
 
 ```text
 /goal Complete CodeLeWM's remaining positive action-conditioned result path.
@@ -26,6 +26,17 @@ Recall@1 is `0.363` and MRR is `0.467875`; no-action Recall@1 is `0.469` and
 MRR is `0.549624`. The result is documented in
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. The positive-claim path
 is blocked until text-action beats no-action on the agreed headline metrics.
+
+Issue #159 has already been launched as
+`codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
+`6a0da3a08229e585f969c3f7` from source SHA
+`7895d185e165a917af0956a313d8948c04b33638`. It uses
+`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
+on `a10g-small` with a `24h` timeout and private publication targets
+`abdelstark/codelewm-public-shard`,
+`abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
+Do not relaunch while this job is running; resume from the HF CLI lifecycle and
+only relaunch if the issue records the failure phase and repair.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
@@ -94,11 +105,10 @@ builds the policy-compliant `hf jobs run` command with `--secrets HF_TOKEN`,
 Work in this order, skipping only issues already closed by merged PRs and
 verifying their artifacts before moving on:
 
-1. #159: run the second-stage action-use remediation sweep if the project is
-   still pursuing a positive claim. Prefer the checked-in fallback config
-   `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
-   unless side-by-side analysis of #138 and #154 shows a smaller correction is
-   required first.
+1. #159: monitor the active second-stage action-use remediation job, download
+   private artifacts after success, verify locally from the downloaded copy, and
+   close the issue with either a passing action-use claim gate or an explicit
+   negative/diagnostic boundary.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
@@ -116,7 +126,18 @@ commit, push, open the PR, wait for checks when available, merge after passing,
 return to main, pull latest main, and continue. Do not mix unrelated issue work
 in the same PR.
 
-Before spending GPU compute, verify the HF CLI and dry-run infrastructure:
+The #159 launch preflights have already run for the active job. If resuming the
+active job, do not spend GPU compute or launch another job first; verify the
+current state with:
+
+- `hf auth whoami`
+- `hf jobs ps`
+- `hf jobs inspect 6a0da3a08229e585f969c3f7`
+- `hf jobs logs 6a0da3a08229e585f969c3f7`
+- `hf jobs stats 6a0da3a08229e585f969c3f7`
+
+Before spending any new GPU compute, verify the HF CLI and dry-run
+infrastructure:
 
 hf auth whoami
 
@@ -134,12 +155,14 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-For #159, first compare the baseline and action-use reports:
+For #159, first compare the baseline and action-use reports if deciding whether
+to repair and relaunch after a failure:
 
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
 
-If no code/config correction is needed, launch the checked-in fallback profile.
+If the active job failed and no code/config correction is needed, relaunch the
+checked-in fallback profile.
 The current public shard source is `config/data/codelewm_public_shard_commitpackft_python.json`,
 which expects `bigcode/commitpackft:data/python/data.jsonl` under
 `.artifacts/hf-sources/commitpackft`. Preflight the source path first:
@@ -150,7 +173,8 @@ hf download bigcode/commitpackft \
   --local-dir .artifacts/hf-sources/commitpackft \
   --dry-run
 
-Start the #159 run through the launcher:
+If relaunching after a recorded failure, start the replacement #159 run through
+the launcher:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -158,6 +182,7 @@ CODELEWM_HF_JOBS_FLAVOR=a10g-small \
 CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH=1 \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
+CODELEWM_HF_RUN_ID=<new-run-id> \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml \

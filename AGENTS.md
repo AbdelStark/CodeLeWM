@@ -8,7 +8,8 @@ changes.
 ## Current State
 
 As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, and two completed scaled Hugging Face Jobs runs.
+first-results smoke loop, two completed scaled Hugging Face Jobs runs, and one
+active #159 second-stage action-use remediation job.
 
 Implemented foundations:
 
@@ -57,6 +58,13 @@ Current evidence:
   `docs/cards/codelewm-action-use-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-model-2026-05-20.md` are the
   artifact-backed record for the #154 follow-up run.
+- The #159 remediation run `codelewm-action-use-retrieval-20260520-7895d18`
+  is active on HF Jobs job `6a0da3a08229e585f969c3f7` from source SHA
+  `7895d185e165a917af0956a313d8948c04b33638`. It uses
+  `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
+  on `a10g-small` with a `24h` timeout and private publication targets
+  `abdelstark/codelewm-public-shard`,
+  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
 
 Current blocker:
 
@@ -65,9 +73,9 @@ Current blocker:
 - The #154 action-use margin run beats random, shuffled-action, and lexical
   baselines, but loses to no-action on headline retrieval: Recall@1 `0.363`
   and MRR `0.467875` versus no-action Recall@1 `0.469` and MRR `0.549624`.
-- Public model-quality claims remain blocked until a follow-up run passes an
-  explicit action-use gate or the release is deliberately framed as a
-  negative/diagnostic artifact.
+- Public model-quality claims remain blocked until the active #159 run is
+  downloaded from Hugging Face, verified locally, and either passes an explicit
+  action-use gate or is recorded as another negative/diagnostic artifact.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -117,8 +125,9 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #159 run the second-stage action-use remediation sweep through the `hf` CLI
-   if the project is still pursuing a positive model-quality claim.
+1. #159 monitor the active HF Jobs remediation run, download private artifacts
+   with `hf download` after success, verify manifests and local evals, then
+   close the claim gate as positive or explicitly negative/diagnostic.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
@@ -157,6 +166,8 @@ hf jobs stats <job-id>
 hf download ...
 ```
 
-Do not mark the project complete unless the release-candidate artifacts can be
-downloaded from Hugging Face, verified locally, and either pass the action-use
-claim gate or explicitly document a negative/diagnostic claim boundary.
+Do not relaunch #159 while job `6a0da3a08229e585f969c3f7` is running unless the
+existing job fails and the issue records the failure phase. Do not mark the
+project complete unless the release-candidate artifacts can be downloaded from
+Hugging Face, verified locally, and either pass the action-use claim gate or
+explicitly document a negative/diagnostic claim boundary.

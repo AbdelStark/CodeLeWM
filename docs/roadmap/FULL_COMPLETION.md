@@ -16,7 +16,8 @@ The repository is past pure specification and past local smoke evidence. The
 package contains data contracts, model components, manifest-backed training,
 evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
 observability, security gates, CI, release templates, a local first-results
-smoke loop, and two completed scaled HF Jobs runs.
+smoke loop, two completed scaled HF Jobs runs, and one active #159 remediation
+run.
 
 Completed evidence:
 
@@ -36,6 +37,14 @@ Completed evidence:
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md` and the action-use
   dataset/model cards are the artifact-backed report for the #154 follow-up
   run.
+- The #159 second-stage remediation run
+  `codelewm-action-use-retrieval-20260520-7895d18` is running as HF Jobs job
+  `6a0da3a08229e585f969c3f7` from source
+  `7895d185e165a917af0956a313d8948c04b33638` with
+  `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`,
+  `a10g-small`, and a `24h` timeout. Its private publication targets are
+  `abdelstark/codelewm-public-shard`,
+  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
 
 Current blocker:
 
@@ -46,10 +55,10 @@ Current blocker:
   `0.363`, MRR `0.467875`; no-action Recall@1 `0.469`, MRR `0.549624`.
 - The private diagnostic release-freeze gate is closed by #126 and recorded in
   `docs/release/RELEASE_FREEZE_2026-05-20.md`.
-- The next project milestone is the second-stage action-use remediation tracked
-  by #159 if the project still wants a positive model-quality claim. Until #159
-  passes the action-use gate, public HF visibility and public positive
-  action-conditioning claims remain blocked.
+- The active project milestone is #159: monitor the remediation job, download
+  the published private artifacts after success, verify locally, and update the
+  claim boundary. Until #159 passes the action-use gate, public HF visibility
+  and public positive action-conditioning claims remain blocked.
 
 Current landed CLI commands:
 
@@ -218,8 +227,10 @@ Deliverables:
 - action-use objective/intervention and scaled sweep configs (#153, complete)
 - follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
   evaluated through the `hf` CLI (#154, complete with a negative claim gate)
-- second-stage action-use remediation sweep, likely using the margin+retrieval
-  fallback config unless analysis shows a smaller correction is required (#159)
+- second-stage action-use remediation sweep using the margin+retrieval fallback
+  config, launched as run `codelewm-action-use-retrieval-20260520-7895d18` on
+  HF Jobs job `6a0da3a08229e585f969c3f7`; remaining work is monitoring,
+  download, verification, evaluation, docs/cards, and claim-gate closure (#159)
 
 ### Phase 8: Publishing And Release
 
@@ -240,7 +251,7 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path |
+| 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path; active HF job `6a0da3a08229e585f969c3f7` |
 
 Completed backlog base:
 
@@ -256,6 +267,9 @@ Completed backlog base:
 - #154 executed the primary action-use HF Jobs follow-up run and verified the
   downloaded private artifacts; the run remained negative because no-action
   still beat text-action.
+- #159 launched run `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs
+  job `6a0da3a08229e585f969c3f7`; no result claim is available until private
+  artifacts are downloaded and verified after job success.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
   manual publishing gates for the Python package.
 - #124 added release dependency audit, provenance JSON, CI gates, and release
