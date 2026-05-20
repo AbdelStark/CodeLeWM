@@ -9,6 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-first-results-dataset-2026-05-19.md"
 MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-first-results-model-2026-05-19.md"
 FIRST_RESULTS = ROOT / "docs" / "benchmark" / "FIRST_RESULTS.md"
+SCALED_DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-scaled-dataset-2026-05-20.md"
+SCALED_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-scaled-model-2026-05-20.md"
+SCALED_RESULTS = ROOT / "docs" / "benchmark" / "SCALED_HF_RESULTS_2026-05-20.md"
 
 
 class FirstResultsArtifactCardTest(unittest.TestCase):
@@ -16,6 +19,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.dataset = DATASET_CARD.read_text(encoding="utf-8")
         self.model = MODEL_CARD.read_text(encoding="utf-8")
         self.report = FIRST_RESULTS.read_text(encoding="utf-8")
+        self.scaled_dataset = SCALED_DATASET_CARD.read_text(encoding="utf-8")
+        self.scaled_model = SCALED_MODEL_CARD.read_text(encoding="utf-8")
+        self.scaled_report = SCALED_RESULTS.read_text(encoding="utf-8")
 
     def test_cards_exist_and_are_not_templates(self) -> None:
         for path, text in ((DATASET_CARD, self.dataset), (MODEL_CARD, self.model)):
@@ -23,6 +29,16 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
                 self.assertTrue(path.is_file(), f"missing: {path}")
                 self.assertNotIn("<", text)
                 self.assertNotIn(">", text)
+                self.assertNotIn("TODO", text)
+                self.assertNotIn("Copy this file", text)
+
+        for path, text in (
+            (SCALED_DATASET_CARD, self.scaled_dataset),
+            (SCALED_MODEL_CARD, self.scaled_model),
+            (SCALED_RESULTS, self.scaled_report),
+        ):
+            with self.subTest(path=path.name):
+                self.assertTrue(path.is_file(), f"missing: {path}")
                 self.assertNotIn("TODO", text)
                 self.assertNotIn("Copy this file", text)
 
@@ -69,6 +85,22 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.model)
+
+    def test_scaled_cards_match_verified_hf_report(self) -> None:
+        for marker in (
+            "codelewm-scaled-20260520-9699b53",
+            "dataset-ef8ad3f4f48dea9e",
+            "training_run-d9074199c0d58911",
+            "09bf8d3880ec272a858dd9b19f2b29622a66a5ebbef6dbd1f8e4ebeb8b6392b8",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.scaled_report)
+
+        self.assertIn("| Text action | 0.371 | 0.586 | 0.672 | 0.472984 |", self.scaled_model)
+        self.assertIn("| No action | 0.459 | 0.641 | 0.712 | 0.546116 |", self.scaled_model)
+        self.assertIn("Text action beats the no-action baseline.", self.scaled_report)
+        self.assertIn("- [ ] Text action beats the no-action baseline.", self.scaled_report)
+        self.assertIn("| `commitpackft` | 56,025 | 23,015 | 33,010 |", self.scaled_dataset)
 
 
 if __name__ == "__main__":
