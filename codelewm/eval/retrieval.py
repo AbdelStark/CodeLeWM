@@ -853,11 +853,16 @@ def shuffled_action_baseline_ranks(
     seed: int = 0,
     larger_is_better: bool = True,
 ) -> tuple[int, ...]:
-    """Rank targets after shuffling action-conditioned score rows across queries."""
+    """Rank targets after shuffling action-conditioned score rows across compatible queries.
+
+    Candidate rows can have different lengths in action-contrast pools. Score rows
+    are therefore shuffled only within equal-length buckets so the baseline cannot
+    pair a two-candidate score row with a five-candidate candidate set.
+    """
 
     if len(score_rows) != len(candidate_ids_by_query) or len(score_rows) != len(target_ids):
         raise RetrievalEvalError("score_rows, candidate_ids_by_query, and target_ids must have equal length")
-    order = _deranged_order(len(score_rows), seed=seed)
+    order = _candidate_count_preserving_deranged_order(candidate_ids_by_query, seed=seed)
     shuffled_rows = tuple(score_rows[index] for index in order)
     return rank_targets(
         shuffled_rows,
@@ -1840,6 +1845,23 @@ def _deranged_order(length: int, *, seed: int) -> tuple[int, ...]:
         order = order[1:] + order[:1]
         if any(index == value for index, value in enumerate(order)):
             order = list(range(1, length)) + [0]
+    return tuple(order)
+
+
+def _candidate_count_preserving_deranged_order(
+    candidate_ids_by_query: Sequence[Sequence[str]],
+    *,
+    seed: int,
+) -> tuple[int, ...]:
+    by_count: dict[int, list[int]] = {}
+    for index, candidate_ids in enumerate(candidate_ids_by_query):
+        by_count.setdefault(len(candidate_ids), []).append(index)
+
+    order = list(range(len(candidate_ids_by_query)))
+    for count, indices in sorted(by_count.items()):
+        bucket_order = _deranged_order(len(indices), seed=seed + count * 1009)
+        for position, source_position in enumerate(bucket_order):
+            order[indices[position]] = indices[source_position]
     return tuple(order)
 
 
