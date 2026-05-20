@@ -413,6 +413,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
     )
     index.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        help="number of train rows to embed per index batch",
+    )
+    index.add_argument(
         "--distance",
         default="l2",
         choices=("l2", "cosine"),
@@ -1340,6 +1346,7 @@ def _index_command(args: argparse.Namespace) -> int:
                     "data": str(args.data),
                     "out": str(args.out),
                     "device": args.device,
+                    "batch_size": args.batch_size,
                     "distance": args.distance,
                     "name": args.name,
                     "overwrite": bool(args.overwrite),
@@ -1351,6 +1358,7 @@ def _index_command(args: argparse.Namespace) -> int:
             data=args.data,
             out=args.out,
             device=args.device,
+            batch_size=args.batch_size,
             distance=args.distance,
             name=args.name,
             overwrite=args.overwrite,
@@ -1746,6 +1754,8 @@ def _index_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         str(args.out),
         "--device",
         str(args.device),
+        "--batch-size",
+        str(args.batch_size),
         "--distance",
         str(args.distance),
         "--name",
@@ -1800,6 +1810,7 @@ def _index_error(args: argparse.Namespace, exc: Exception) -> tuple[ScoreError, 
     if (
         "output already exists" in normalized
         or "--data" in normalized
+        or "batch_size" in normalized
         or "device" in normalized
         or "distance" in normalized
         or "name must not be empty" in normalized

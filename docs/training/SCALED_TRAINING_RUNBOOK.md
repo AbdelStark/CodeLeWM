@@ -174,6 +174,7 @@ CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_pyt
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
+CODELEWM_HF_INDEX_BATCH_SIZE=64 \
 CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft \
 CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset \
 CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl \
@@ -194,6 +195,10 @@ hf jobs stats <job-id>
 If the job fails, record the job ID, commit SHA, run ID, config paths, hardware
 flavor, timeout, failure phase, and a short log excerpt in the relevant issue
 before patching or relaunching.
+
+The transition index builder embeds the train split in bounded batches. Keep
+`CODELEWM_HF_INDEX_BATCH_SIZE` explicit for HF Jobs relaunches so the index
+phase cannot accidentally embed the full train split as one CUDA batch.
 
 ## Post-Run Verification
 

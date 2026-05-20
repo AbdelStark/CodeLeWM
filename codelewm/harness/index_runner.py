@@ -81,6 +81,7 @@ def build_transition_index_artifact(
     data: Path | str,
     out: Path | str,
     device: str = "cpu",
+    batch_size: int = 64,
     distance: IndexDistance = "l2",
     name: str = "codelewm-train-index",
     overwrite: bool = False,
@@ -94,6 +95,14 @@ def build_transition_index_artifact(
         raise TransitionIndexError("distance must be l2 or cosine")
     if not name:
         raise TransitionIndexError("index name must not be empty")
+    if isinstance(batch_size, bool):
+        raise TransitionIndexError("batch_size must be a positive integer")
+    try:
+        batch_size = int(batch_size)
+    except (TypeError, ValueError) as exc:
+        raise TransitionIndexError("batch_size must be a positive integer") from exc
+    if batch_size <= 0:
+        raise TransitionIndexError("batch_size must be a positive integer")
 
     checkpoint_path = Path(checkpoint).resolve()
     out_dir = Path(out).resolve()
@@ -128,7 +137,13 @@ def build_transition_index_artifact(
         )
 
     rows = _load_train_rows(pack_paths, action_view=model.config.action_view)
-    vectors = _embed_after_states(rows, model=model, runtime=runtime, device=selected_device)
+    vectors = _embed_after_states(
+        rows,
+        model=model,
+        runtime=runtime,
+        device=selected_device,
+        batch_size=batch_size,
+    )
     entries = tuple(_entry_from_row(row) for row in rows)
     config_payload = {
         "schema_version": INDEX_BUILD_RESULT_SCHEMA_VERSION,
@@ -138,6 +153,7 @@ def build_transition_index_artifact(
         "device": str(selected_device),
         "distance": distance,
         "name": name,
+        "batch_size": batch_size,
         "indexed_splits": ["train"],
         "action_view": model.config.action_view,
     }
@@ -183,6 +199,7 @@ def build_transition_index_artifact(
             "checkpoint_step": index.metadata.get("checkpoint_step"),
             "dataset_artifact_id": dataset_artifact.artifact_id,
             "training_artifact_id": training_artifact.artifact_id,
+            "batch_size": batch_size,
         },
     )
 
@@ -199,14 +216,29 @@ def _load_train_rows(pack_paths: _PackPaths, *, action_view: str) -> tuple[_Eval
     return rows
 
 
-def _embed_after_states(rows: tuple[_EvalRow, ...], *, model: Any, runtime: Any, device: Any) -> np.ndarray:
-    state_after = _state_batch(tuple(row.state_after for row in rows), runtime=runtime, device=device)
+def _embed_after_states(
+    rows: tuple[_EvalRow, ...],
+    *,
+    model: Any,
+    runtime: Any,
+    device: Any,
+    batch_size: int,
+) -> np.ndarray:
     was_training = bool(model.training)
     model.eval()
+    chunks: list[np.ndarray] = []
     with runtime.no_grad():
-        z_after = model.encode_state(state_after).float().detach().cpu().numpy()
+        for start in range(0, len(rows), batch_size):
+            batch_rows = rows[start : start + batch_size]
+            state_after = _state_batch(
+                tuple(row.state_after for row in batch_rows),
+                runtime=runtime,
+                device=device,
+            )
+            chunks.append(model.encode_state(state_after).float().detach().cpu().numpy())
     if was_training:
         model.train()
+    z_after = np.concatenate(chunks, axis=0)
     if not np.isfinite(z_after).all():
         raise TransitionIndexError("index vectors must be finite")
     return np.asarray(z_after, dtype=np.float32)
