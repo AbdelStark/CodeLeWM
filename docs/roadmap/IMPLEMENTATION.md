@@ -157,7 +157,7 @@ and release readiness, closed with the negative/diagnostic #159 boundary.
 - #109 through #117 closed the package-native first-results runtime.
 - #118 through #122 closed the scaled-data, scaled-training, ablation,
   scorer-quality, and card population work needed before the first HF run.
-- #137 and #138 proved the HF Jobs/private-publication/downloaded-artifact path.
+- #137 and #138 proved the HF Jobs/artifact-publication/downloaded-artifact path.
 - #151 is now the landed claim-gate precondition for any positive public
   action-conditioning language.
 - #152 landed the data/eval precondition for hard negatives that can stress
@@ -165,10 +165,10 @@ and release readiness, closed with the negative/diagnostic #159 boundary.
 - #153 landed the model/training precondition for the follow-up action-use
   scaled run.
 - #154 executed the primary action-use margin follow-up and verified the
-  downloaded private artifacts, but the result remained negative.
+  downloaded artifacts, but the result remained negative.
 - #159 executed the second-stage remediation run
   `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
-  `6a0da3a08229e585f969c3f7`; private artifacts were downloaded with
+  `6a0da3a08229e585f969c3f7`; artifacts were downloaded with
   `hf download`, manifest-verified, locally re-evaluated, secret-scanned, and
   recorded as negative/diagnostic because no-action still beat text-action.
 - #123 closed the package build and manual publishing gate for wheel/sdist
@@ -177,10 +177,10 @@ and release readiness, closed with the negative/diagnostic #159 boundary.
   release candidates.
 - #125 closed the public docs refresh against the current artifact evidence and
   legacy-script boundary.
-- #126 closed the private diagnostic release freeze in
-  `docs/release/RELEASE_FREEZE_2026-05-20.md`; public positive model-quality
-  claims and public HF visibility remain blocked because #159 did not supply
-  claim-eligible evidence.
+- #126 closed the diagnostic release freeze in
+  `docs/release/RELEASE_FREEZE_2026-05-20.md`; public HF diagnostic artifacts
+  are allowed, but public positive model-quality claims remain blocked because
+  #159 did not supply claim-eligible evidence.
 
 ## Cross-Reference Map
 

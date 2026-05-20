@@ -67,7 +67,7 @@ torch executor, `codelewm train`, model-backed retrieval/surprise/ablation
 evaluation, a train-split `codelewm index` artifact path, index-backed retrieval
 priors for scoring/reranking, scorer/reranker quality reports, manifest
 verification, secret scanning, `uv` dependency management, pull-request CI, HF
-Jobs launch scripts, private HF artifact publication, and downloaded-artifact
+Jobs launch scripts, public HF artifact publication, and downloaded-artifact
 verification are all present.
 
 The reproducible local first-results runner writes
@@ -79,9 +79,10 @@ margin+retrieval remediation report lives at
 `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. Those runs
 prove the systems path, but none supports a positive action-conditioned quality
 claim: text-action beats random, shuffled-action, and lexical baselines but
-loses to no-action on headline retrieval. The remaining research gap is a new
-positive-claim intervention beyond the completed #159 remediation, not release
-cleanup. Core harness
+loses to no-action on headline retrieval. The remaining research gap is the
+v0.2 action-use research intervention in
+`docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`, not release cleanup. Core
+harness
 commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 `train.py`, `eval.py`, and the existing Hydra configs are inherited from the
 original LeWorldModel seed and are kept for compatibility while the package
@@ -116,9 +117,9 @@ Scaled evidence is recorded separately:
 - `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`
 
 The scaled runs are valid systems evidence and valid negative action-use
-evidence. They do not support a public positive action-conditioning claim
-because text-action still does not beat no-action on the agreed headline
-metrics.
+evidence. The Hugging Face artifact repositories are public diagnostic repos.
+They do not support a public positive action-conditioning claim because
+text-action still does not beat no-action on the agreed headline metrics.
 
 ## Core Concepts
 

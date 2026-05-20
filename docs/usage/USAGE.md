@@ -101,7 +101,7 @@ The public docs use three evidence tiers:
   `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
 
-The scaled runs prove the Hugging Face Jobs, private publication,
+The scaled runs prove the Hugging Face Jobs, public artifact publication,
 downloaded-artifact verification, and evaluation path. They do not prove a
 positive action-conditioned quality claim: text-action still loses to no-action
 on headline retrieval, including the completed #159 margin+retrieval run.

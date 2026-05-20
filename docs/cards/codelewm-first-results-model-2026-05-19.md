@@ -26,7 +26,7 @@ that CodeLeWM has learned general action-conditioned code-edit structure.
 | ---- | ------ | -------------- |
 | Smoke evidence | present | The package-native path runs end to end from dataset build through scorer-quality reporting. |
 | First-results evidence | present | Metrics are recorded in `docs/benchmark/FIRST_RESULTS.md` from local artifacts. |
-| Scaled evidence | absent | No scaled HF Jobs run or downloaded private Hub artifact has been verified yet. |
+| Scaled evidence | absent | No scaled HF Jobs run or downloaded Hub artifact has been verified yet. |
 
 ## Schema Versions
 

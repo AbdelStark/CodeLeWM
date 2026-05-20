@@ -5,7 +5,7 @@ first-results smoke loop to a Hugging Face Hub-backed training, publication, and
 evaluation run. It is designed to be usable by a human operator or by
 `ml-intern` in headless mode.
 
-Current status: the smoke path, scaled HF Jobs path, private publication path,
+Current status: the smoke path, scaled HF Jobs path, public publication path,
 and downloaded-artifact verification path are implemented. The first scaled run
 is documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the primary
 action-use follow-up is documented in
@@ -57,12 +57,14 @@ Required repository targets:
 CODELEWM_HF_DATASET_REPO_ID=abdelstark/codelewm-public-shard
 CODELEWM_HF_MODEL_REPO_ID=abdelstark/codelewm-transition-model
 CODELEWM_HF_RESULTS_REPO_ID=abdelstark/codelewm-runs
-CODELEWM_HF_PRIVATE=1
+CODELEWM_HF_PRIVATE=0
 ```
 
-Keep those repositories private until the action-use claim gate, release
-checklist, public source/license gate, card evidence, manifest verification,
-secret scan, and checkpoint-trust checks all pass.
+The CodeLeWM dataset/model/results repositories are public diagnostic artifact
+repositories. Public publication is allowed after the public source/license
+gate, card evidence, manifest verification, secret scan, and checkpoint-trust
+checks pass. Public visibility does not permit a positive model-quality claim
+unless the relevant benchmark gate passes.
 
 Job defaults:
 
@@ -210,7 +212,7 @@ claim gate remained negative. The #159 remediation job is
 `6a0da3a08229e585f969c3f7`, launched from
 `7895d185e165a917af0956a313d8948c04b33638` with
 `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
-It completed, published private artifacts, and was downloaded and verified
+It completed, published HF artifacts, and was downloaded and verified
 locally. The claim gate remained negative: text-action Recall@1 `0.597` and MRR
 `0.674500` versus no-action Recall@1 `0.650` and MRR `0.708037`. Do not
 relaunch it as release cleanup. The original
@@ -332,7 +334,7 @@ Completed gates that must be preserved:
 - #120 added the action-view ablation suite.
 - #121 added scorer calibration and reranker quality evidence.
 - #122 filled dataset and model cards from real artifacts.
-- #138 executed the first scaled HF Jobs run, private publication, download
+- #138 executed the first scaled HF Jobs run, artifact publication, download
   verification, inference, and eval loop.
 
 Completed action-use gates:
@@ -350,8 +352,7 @@ Completed action-use gates:
   `6a0da3a08229e585f969c3f7`; HF monitoring, download, manifest verification,
   local eval/inference checks, docs/cards, and claim gate closure are complete.
 
-Do not flip repositories public, update public positive claims, or mark a result
-as a positive action-conditioning result until those gates are satisfied by
-artifact-backed evidence. The current follow-up still loses to no-action, so
-keep repositories private or frame the release explicitly as a
-negative/diagnostic artifact.
+Do not update public positive claims or mark a result as a positive
+action-conditioning result until those gates are satisfied by artifact-backed
+evidence. The current follow-up still loses to no-action, so public artifacts
+must be framed explicitly as negative/diagnostic.

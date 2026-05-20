@@ -6,7 +6,7 @@ and ml-intern prompt is maintained in
 
 ```text
 /goal Complete CodeLeWM's first scaled-result project boundary. Treat the
-current artifact set as a private negative/diagnostic result unless new evidence
+current artifact set as a public negative/diagnostic result unless new evidence
 actually passes the action-use claim gate.
 
 Start from the current main branch. Ground in AGENTS.md, SPEC.md,
@@ -19,26 +19,26 @@ the relevant docs/spec files, and the relevant docs/rfcs files.
 
 Do not redo closed infrastructure work. Issues #109 through #126, #137,
 #138, #151 through #154, and #159 are complete. The first scaled HF run proved
-the systems path. The #154 action-use margin run completed and verified private
+the systems path. The #154 action-use margin run completed and verified
 downloaded artifacts, but failed the positive claim gate. The #159
-margin+retrieval run also completed and verified private downloaded artifacts;
+margin+retrieval run also completed and verified downloaded artifacts;
 it improved text-action retrieval to Recall@1 `0.597` and MRR `0.674500`, but
 still lost to no-action Recall@1 `0.650` and MRR `0.708037`.
 
 Work sequentially, one issue per branch and PR:
 
-1. Close the current project boundary by keeping #159 and #150 recorded as
-   negative/diagnostic, keeping HF repositories private, and ensuring docs,
-   cards, roadmap, release checklist, README, and issue tracker all agree.
-2. If a positive public action-conditioning claim is still desired, open a new
-   research issue with a concrete intervention and acceptance gate. Do not
-   relaunch old configs by default.
+1. Execute the v0.2 action-use research intervention from #167 and
+   docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md. Start with the child issue
+   that owns the concrete implementation slice.
+2. Publish HF artifacts publicly after source/license, manifest, secret-scan,
+   and checkpoint-trust gates pass. Do not turn public visibility into a
+   positive model-quality claim unless the benchmark gate passes.
 
 For any future HF work, orchestrate the remote job lifecycle with the hf CLI:
 hf auth whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs
-<job-id>, hf jobs stats <job-id>, and hf download. Keep Hugging Face
-repositories private until a future claim gate, secret scans, manifest
-verification, checkpoint-trust checks, and release visibility review all pass.
+<job-id>, hf jobs stats <job-id>, and hf download. Hugging Face artifacts may
+be published publicly after source/license, secret-scan, manifest verification,
+and checkpoint-trust checks pass.
 
 After each issue, run the strongest relevant local validation, commit, push,
 open a PR, wait for available checks, merge when clean, return to main, pull

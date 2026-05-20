@@ -5,7 +5,7 @@
 - Job ID: `6a0d43c92dc5b1243da50bba`
 - Job URL: `https://huggingface.co/jobs/abdelstark/6a0d43c92dc5b1243da50bba`
 - Source git SHA: `9699b5309e43a3278f272663ef60cda23040d92a`
-- Evidence tier: scaled HF Jobs artifact evidence, private repositories
+- Evidence tier: scaled HF Jobs artifact evidence, public diagnostic repositories
 - Hardware: HF Jobs `a10g-small`, timeout `24h`
 - Dataset card: `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - Model card: `docs/cards/codelewm-scaled-model-2026-05-20.md`
@@ -16,7 +16,7 @@
 
 The scaled HF pipeline completed end to end after PR #148 bounded transition
 index embedding batches. Dataset, model, and run evidence artifacts were
-published privately to Hugging Face, downloaded with `hf download`, verified
+published to Hugging Face, downloaded with `hf download`, verified
 locally, and rerun through retrieval, ablation, surprise, scorer-quality,
 score, and rerank checks from the downloaded checkpoint/artifacts.
 
@@ -27,7 +27,7 @@ on the headline retrieval metric. Public model-quality claims remain blocked
 until a follow-up run beats the required no-action baseline or the benchmark is
 reframed with a justified claim boundary.
 
-## Published Private Artifacts
+## Published Public Artifacts
 
 | Surface | Repository | Path |
 | --- | --- | --- |
@@ -213,7 +213,7 @@ uv run codelewm secret-scan .artifacts/hf-download/codelewm-scaled-20260520-9699
 ## Claim Checklist
 
 - [x] Scaled HF Jobs run completed on the merged source SHA.
-- [x] Private dataset, model, and result artifacts published to HF.
+- [x] Dataset, model, and result artifacts published to HF.
 - [x] Published artifacts downloaded with `hf download`.
 - [x] Manifest chain verified locally from downloaded artifacts.
 - [x] Retrieval, ablation, surprise, scorer-quality, score, and rerank checks ran from downloaded artifacts.

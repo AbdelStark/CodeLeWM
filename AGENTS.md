@@ -46,9 +46,10 @@ Current evidence:
   `9699b5309e43a3278f272663ef60cda23040d92a`.
 - The action-use follow-up run `codelewm-action-use-20260520-6650183`
   completed on job `6a0d7a763aba298b21d147a9` from source SHA `6650183`.
-- Private HF artifacts were published to `abdelstark/codelewm-public-shard`,
+- HF artifacts were published to `abdelstark/codelewm-public-shard`,
   `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`, then
-  downloaded with `hf download` and verified locally.
+  downloaded with `hf download` and verified locally. The repositories are now
+  public diagnostic artifact repositories.
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`,
   `docs/cards/codelewm-scaled-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-scaled-model-2026-05-20.md` are the artifact-backed
@@ -59,7 +60,7 @@ Current evidence:
   artifact-backed record for the #154 follow-up run.
 - The #159 remediation run `codelewm-action-use-retrieval-20260520-7895d18`
   completed on job `6a0da3a08229e585f969c3f7` from source SHA
-  `7895d185e165a917af0956a313d8948c04b33638`, published private artifacts,
+  `7895d185e165a917af0956a313d8948c04b33638`, published artifacts,
   downloaded them with `hf download`, and verified retrieval, ablation,
   surprise, scorer-quality, score, rerank, manifest, and secret-scan checks
   locally.
@@ -80,9 +81,11 @@ Current blocker:
   `0.650` and MRR `0.708037`. Its action-use claim gate is
   `claim_allowed=false` with
   `no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action`.
-- Public model-quality claims remain blocked. The project is complete as a
-  private negative/diagnostic artifact unless a new research iteration is
+- Public positive model-quality claims remain blocked. The project is complete
+  as public negative/diagnostic evidence unless a new research iteration is
   opened for a future positive claim.
+- The v0.2 research specification lives in
+  `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md` and is tracked by #167.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -97,6 +100,7 @@ Before editing, read:
 - the relevant RFC under `docs/rfcs/`
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
+- `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -124,6 +128,9 @@ training recipes are touched, also read:
   applicable, checksum-verifiable, and secret-scanned.
 - Do not print, commit, paste, or summarize Hugging Face token values. Treat
   `.env` as local secret state.
+- Hugging Face dataset/model/results repositories may be public by default after
+  license/source, manifest, secret-scan, and checkpoint-trust gates pass. Public
+  visibility does not permit unsupported positive model-quality claims.
 
 ## Implementation Order
 
@@ -132,8 +139,9 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. Close #159 and #150 with the #159 negative/diagnostic result after the docs
-   and issue tracker reference the verified downloaded artifacts.
+1. Execute the v0.2 action-use research intervention through #167 only after
+   the relevant child issue has a concrete hypothesis, config, and validation
+   gate.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
@@ -147,7 +155,8 @@ and negative action-use evidence. Issue #126 closed the private diagnostic
 release-freeze checkpoint in `docs/release/RELEASE_FREEZE_2026-05-20.md`; it
 does not permit public positive action-conditioning claims.
 
-Tracking issue #150 owns the action-conditioned scaled-result milestone.
+Issue #150 is the completed negative/diagnostic scaled-result milestone. Issue
+#167 owns the next v0.2 action-use and representation research iteration.
 
 ## Validation
 
@@ -174,5 +183,6 @@ hf download ...
 
 Do not relaunch #159. Job `6a0da3a08229e585f969c3f7` completed and its
 downloaded artifacts documented a negative/diagnostic claim boundary. Any future
-positive claim requires a new issue, a new research hypothesis, and the same HF
-download, manifest, eval, secret-scan, checkpoint-trust, and visibility gates.
+positive claim requires #167 or a child issue, a new research hypothesis, and
+the same HF download, manifest, eval, secret-scan, checkpoint-trust, and claim
+review gates.

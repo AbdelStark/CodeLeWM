@@ -9,7 +9,7 @@
 - Results repo path: `abdelstark/codelewm-runs/runs/codelewm-scaled-20260520-9699b53`
 - Source git SHA: `9699b5309e43a3278f272663ef60cda23040d92a`
 - Benchmark report: `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
-- Evidence tier: scaled private HF artifact evidence
+- Evidence tier: scaled public HF artifact evidence
 - Card date: `2026-05-20`
 
 ## Summary
@@ -18,7 +18,7 @@ This dataset card describes the first scaled CodeLeWM public-safe shard used for
 the HF Jobs run `codelewm-scaled-20260520-9699b53`. The shard is built from the
 Python split of `bigcode/commitpackft`, filtered through the repository's
 source-acquisition and license gates, packed into train/validation/test HDF5
-artifacts, published privately to Hugging Face, downloaded with `hf download`,
+artifacts, published to Hugging Face, downloaded with `hf download`,
 and verified locally from the downloaded manifest chain.
 
 ## Source Mix
@@ -113,7 +113,8 @@ zero findings.
 - The paired scaled model did not beat the no-action baseline on headline
   retrieval, so this dataset should not be presented as proving action-conditioned
   model quality by itself.
-- Repositories remain private until release gates and claim wording are reviewed.
+- Repositories are public diagnostic artifact repositories; positive
+  model-quality claims remain blocked by the no-action baseline result.
 
 ## Sign-off
 

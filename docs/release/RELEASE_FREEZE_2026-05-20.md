@@ -20,8 +20,9 @@ build, dependency audit, provenance, manifest lineage, license, secret-scan,
 checkpoint-trust, docs, and CI-style local validation gates pass.
 
 The model-quality gate does not pass. Text-action still loses to no-action on
-the agreed headline retrieval metrics, so the Hugging Face repositories remain
-private and public positive action-conditioning claims remain disabled.
+the agreed headline retrieval metrics. The Hugging Face repositories may be
+public diagnostic artifact repositories, but public positive
+action-conditioning claims remain disabled.
 
 After this freeze, #159 completed the second-stage margin+retrieval remediation
 run and remained negative. The remaining project gap, if a positive public claim
@@ -32,7 +33,7 @@ artifact set.
 
 The #159 run `codelewm-action-use-retrieval-20260520-7895d18` completed on HF
 Jobs job `6a0da3a08229e585f969c3f7` from source
-`7895d185e165a917af0956a313d8948c04b33638`. It published private artifacts to
+`7895d185e165a917af0956a313d8948c04b33638`. It published artifacts to
 the same Hugging Face repositories, downloaded them with `hf download`, and
 passed manifest verification, local retrieval, ablation, surprise,
 scorer-quality, score, rerank, and secret-scan checks.
@@ -60,9 +61,9 @@ See `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
 
 | Surface | Repository | Path | Visibility |
 | --- | --- | --- | --- |
-| Dataset pack | `abdelstark/codelewm-public-shard` | `runs/codelewm-action-use-20260520-6650183/pack` | private |
-| Model checkpoint | `abdelstark/codelewm-transition-model` | `checkpoints/codelewm-action-use-20260520-6650183` | private |
-| Run evidence | `abdelstark/codelewm-runs` | `runs/codelewm-action-use-20260520-6650183` | private |
+| Dataset pack | `abdelstark/codelewm-public-shard` | `runs/codelewm-action-use-20260520-6650183/pack` | public |
+| Model checkpoint | `abdelstark/codelewm-transition-model` | `checkpoints/codelewm-action-use-20260520-6650183` | public |
+| Run evidence | `abdelstark/codelewm-runs` | `runs/codelewm-action-use-20260520-6650183` | public |
 
 Downloaded local root:
 `.artifacts/hf-download/codelewm-action-use-20260520-6650183`.
@@ -188,17 +189,17 @@ The warning is PyTorch's nested-tensor prototype warning in
 
 ## Release Notes Draft
 
-CodeLeWM now has a package-native first-results runtime, private HF Jobs
+CodeLeWM now has a package-native first-results runtime, HF Jobs
 publication and downloaded-artifact verification path, package build gates,
-dependency audit, release provenance, dataset/model cards, and a frozen private
+dependency audit, release provenance, dataset/model cards, and a frozen
 diagnostic scaled artifact set.
 
 This is not a public positive model-quality release. The selected action-use
 checkpoint and the later #159 margin+retrieval checkpoint are useful evidence
 for the system and for the no-action dominance failure mode, but no-action
-remains stronger than text-action on Recall@1 and MRR. Public repositories and
-public positive claims stay blocked unless a future research iteration produces
-a passing action-use claim gate.
+remains stronger than text-action on Recall@1 and MRR. Public positive claims
+stay blocked unless a future research iteration produces a passing action-use
+claim gate.
 
 ## Sign-Off Status
 
@@ -208,5 +209,6 @@ a passing action-use claim gate.
 | Codeowner | blocked for public tag |
 | Security reviewer | blocked for public tag |
 
-The diagnostic freeze is complete. A public tag, public HF visibility flip, and
-positive action-conditioned claim remain blocked by the negative #159 result.
+The diagnostic freeze is complete. Public HF visibility is allowed for the
+diagnostic artifacts, but a public tag and positive action-conditioned claim
+remain blocked by the negative #159 result.
