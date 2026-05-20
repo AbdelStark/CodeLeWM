@@ -68,10 +68,37 @@ class PackageMetadataTest(unittest.TestCase):
         self.assertIn("stable-worldmodel", _dependency_names(groups["train"]))
         self.assertIn("scikit-learn", _dependency_names(groups["eval"]))
         self.assertIn("build", _dependency_names(groups["release"]))
+        self.assertIn("twine", _dependency_names(groups["release"]))
 
         for extra_name in ("data", "train", "eval", "docs", "release"):
             with self.subTest(extra=extra_name):
                 self.assertEqual(extras[extra_name], groups[extra_name])
+
+    def test_release_metadata_is_publishable(self) -> None:
+        metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
+        project = metadata["project"]
+
+        self.assertEqual(project["readme"], "README.md")
+        self.assertEqual(project["license"], "MIT")
+        self.assertEqual(project["license-files"], ["LICENSE"])
+        self.assertEqual(project["requires-python"], ">=3.10")
+        self.assertIn("Development Status :: 2 - Pre-Alpha", project["classifiers"])
+        self.assertIn("Typing :: Typed", project["classifiers"])
+        self.assertEqual(
+            project["urls"]["Repository"],
+            "https://github.com/AbdelStark/CodeLeWM",
+        )
+        self.assertTrue((ROOT / "README.md").is_file())
+        self.assertTrue((ROOT / "LICENSE").is_file())
+
+    def test_typed_package_marker_is_included(self) -> None:
+        metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
+
+        self.assertTrue((ROOT / "codelewm" / "py.typed").is_file())
+        self.assertEqual(
+            metadata["tool"]["setuptools"]["package-data"]["codelewm"],
+            ["py.typed"],
+        )
 
     def test_cli_module_help_runs(self) -> None:
         completed = subprocess.run(
