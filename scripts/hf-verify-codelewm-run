@@ -127,6 +127,7 @@ def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     retrieval_dir = local_checks_root / "retrieval"
+    latent_probe_dir = local_checks_root / "latent_probe"
     ablation_dir = local_checks_root / "ablation"
     surprise_dir = local_checks_root / "surprise"
     scorer_quality_dir = local_checks_root / "scorer_quality"
@@ -176,6 +177,39 @@ def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
                 "verify",
                 "--manifest",
                 str(retrieval_dir / "manifest.json"),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(dataset_pack_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "eval_latent_probe",
+                "eval",
+                "latent-probe",
+                "--checkpoint",
+                str(checkpoint),
+                "--data",
+                str(dataset_pack),
+                "--out",
+                str(latent_probe_dir),
+                "--device",
+                str(args.device),
+                "--max-examples-per-split",
+                "1000",
+                "--bootstrap-samples",
+                "200",
+                "--seed",
+                "0",
+                "--overwrite",
+                "--json",
+            ),
+            _codelewm(
+                "verify_latent_probe",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(latent_probe_dir / "manifest.json"),
                 "--parent-manifest",
                 str(model_manifest),
                 "--parent-manifest",

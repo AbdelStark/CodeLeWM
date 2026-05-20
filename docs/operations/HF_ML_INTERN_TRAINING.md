@@ -154,10 +154,10 @@ publication.
 `scripts/hf-verify-codelewm-run` is the local post-publication gate. It loads
 project defaults from `.env`, downloads the published results/model/dataset
 artifacts with `hf download`, verifies the manifest chain, reruns retrieval,
-ablation, surprise, scorer-quality, score, and rerank checks from the downloaded
-checkpoint and index, and runs `codelewm secret-scan` over the download root. Use
-`--dry-run --json` before final artifacts exist to inspect the exact command
-plan without printing secrets.
+latent-probe, ablation, surprise, scorer-quality, score, and rerank checks from
+the downloaded checkpoint and index, and runs `codelewm secret-scan` over the
+download root. Use `--dry-run --json` before final artifacts exist to inspect
+the exact command plan without printing secrets.
 
 ## Local Dry Runs
 
@@ -275,7 +275,8 @@ Definition of done for any further scaled run:
 ## Download And Post-Run Verification
 
 Prefer the scripted verifier so the `hf download` paths, manifest parent chain,
-local eval reruns, score/rerank smokes, and secret scan stay consistent:
+local eval reruns, latent-probe report, score/rerank smokes, and secret scan
+stay consistent:
 
 ```bash
 CODELEWM_HF_RUN_ID=<run-id> \
