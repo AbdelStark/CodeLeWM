@@ -164,7 +164,10 @@ Deliver:
 - labeled candidate-ranking corpus;
 - retrieval-prior-only and transition-energy comparisons;
 - non-execution candidate validation;
-- report separating fixture evidence from scaled benchmark evidence.
+- `benchmark_readiness` gate requiring 100 labeled examples or a documented
+  blocker;
+- report separating fixture evidence from scaled benchmark evidence in
+  `docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md`.
 
 ### Phase 5: Public HF v0.2 Sweep (#172)
 

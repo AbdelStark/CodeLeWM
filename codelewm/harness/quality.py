@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import statistics
@@ -417,6 +418,9 @@ def _build_report(
             sorted(Counter(str(row["error_type"]) for row in error_rows).items())
         ),
     }
+    component_metrics = _component_metrics(examples)
+    baseline_controls = _baseline_controls(examples, component_metrics)
+    readiness = _benchmark_readiness(examples)
     report = {
         "schema_version": SCORER_QUALITY_REPORT_SCHEMA_VERSION,
         "source": {
@@ -434,6 +438,9 @@ def _build_report(
             "execution_policy": "candidate code is parsed and diff-applied as text but never executed",
         },
         "summary": summary,
+        "benchmark_readiness": readiness,
+        "component_metrics": component_metrics,
+        "baseline_controls": baseline_controls,
         "score_distributions": {
             "transition_energy": _distribution(
                 row["transition_energy"] for row in scored_rows
@@ -447,7 +454,7 @@ def _build_report(
         },
         "calibration_slices": _calibration_slices(candidate_rows),
         "examples": list(examples),
-        "caveats": _report_caveats(examples, retrieval_prior_weight),
+        "caveats": _report_caveats(examples, retrieval_prior_weight, readiness),
     }
     _validate_summary(summary)
     _ensure_json_native(report, "scorer quality report")
@@ -480,13 +487,162 @@ def _calibration_slices(rows: Sequence[Mapping[str, Any]]) -> dict[str, dict[str
     return slices
 
 
+def _component_metrics(examples: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
+        "final_score": _component_metric(examples, "final_score"),
+        "transition_energy_only": _component_metric(examples, "transition_energy"),
+        "retrieval_prior_only": _component_metric(examples, "retrieval_prior"),
+    }
+
+
+def _component_metric(
+    examples: Sequence[Mapping[str, Any]],
+    score_key: str,
+) -> dict[str, Any]:
+    ranks: list[int] = []
+    blockers: list[str] = []
+    for example in examples:
+        rank = _component_true_rank(example, score_key)
+        if rank is None:
+            blockers.append(f"{example['id']}: true candidate or {score_key} unavailable")
+            continue
+        ranks.append(rank)
+    completed = len(ranks) == len(examples) and bool(examples)
+    payload: dict[str, Any] = {
+        "status": "completed" if completed else "blocked",
+        "score_direction": "lower_is_better",
+        "example_count": len(examples),
+        "evaluable_count": len(ranks),
+        "blocked_count": len(examples) - len(ranks),
+        "recall_at_1": _recall_at_k(ranks, len(examples), k=1),
+        "recall_at_5": _recall_at_k(ranks, len(examples), k=5),
+        "recall_at_10": _recall_at_k(ranks, len(examples), k=10),
+        "mrr": _mrr(ranks, len(examples)),
+        "mean_true_rank": _mean(ranks),
+        "median_true_rank": _median(ranks),
+        "blockers": blockers,
+    }
+    return payload
+
+
+def _baseline_controls(
+    examples: Sequence[Mapping[str, Any]],
+    component_metrics: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Mapping[str, Any]]:
+    return {
+        "random": _random_control_metric(examples),
+        "retrieval_prior_only": component_metrics["retrieval_prior_only"],
+        "lexical": _blocked_control(
+            "lexical baseline requires scaled candidate text features or a lexical scorer run"
+        ),
+        "no_action": _blocked_control(
+            "no-action baseline requires a downloaded no-action checkpoint or explicit no-action scorer"
+        ),
+        "checkpoint_159": _blocked_control(
+            "#159 replay requires the downloaded #159 checkpoint and index artifacts"
+        ),
+    }
+
+
+def _random_control_metric(examples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    ranks: list[int] = []
+    blockers: list[str] = []
+    for example in examples:
+        scored_rows = [row for row in example["candidate_rows"] if row["status"] == "scored"]
+        true_rows = [row for row in scored_rows if row["kind"] == "true_after"]
+        if len(true_rows) != 1:
+            blockers.append(f"{example['id']}: true candidate unavailable")
+            continue
+        ordered = sorted(
+            scored_rows,
+            key=lambda row: _stable_random_key(str(example["id"]), str(row["candidate"])),
+        )
+        true_candidate = true_rows[0]["candidate"]
+        for rank, row in enumerate(ordered, start=1):
+            if row["candidate"] == true_candidate:
+                ranks.append(rank)
+                break
+    completed = len(ranks) == len(examples) and bool(examples)
+    return {
+        "status": "completed" if completed else "blocked",
+        "score_direction": "lower_is_better",
+        "example_count": len(examples),
+        "evaluable_count": len(ranks),
+        "blocked_count": len(examples) - len(ranks),
+        "recall_at_1": _recall_at_k(ranks, len(examples), k=1),
+        "recall_at_5": _recall_at_k(ranks, len(examples), k=5),
+        "recall_at_10": _recall_at_k(ranks, len(examples), k=10),
+        "mrr": _mrr(ranks, len(examples)),
+        "mean_true_rank": _mean(ranks),
+        "median_true_rank": _median(ranks),
+        "blockers": blockers,
+    }
+
+
+def _blocked_control(reason: str) -> dict[str, Any]:
+    return {
+        "status": "blocked",
+        "reason": reason,
+        "recall_at_1": None,
+        "recall_at_5": None,
+        "recall_at_10": None,
+        "mrr": None,
+    }
+
+
+def _stable_random_key(example_id: str, candidate: str) -> str:
+    return hashlib.sha256(f"{example_id}\0{candidate}".encode("utf-8")).hexdigest()
+
+
+def _component_true_rank(example: Mapping[str, Any], score_key: str) -> int | None:
+    scored_rows = [
+        row
+        for row in example["candidate_rows"]
+        if row["status"] == "scored" and _is_finite_number(row.get(score_key))
+    ]
+    true_rows = [row for row in scored_rows if row["kind"] == "true_after"]
+    if len(true_rows) != 1:
+        return None
+    ordered = sorted(
+        enumerate(scored_rows),
+        key=lambda item: (float(item[1][score_key]), int(item[0])),
+    )
+    true_candidate = true_rows[0]["candidate"]
+    for rank, (_, row) in enumerate(ordered, start=1):
+        if row["candidate"] == true_candidate:
+            return rank
+    return None
+
+
+def _benchmark_readiness(examples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    minimum = 100
+    blockers = []
+    if len(examples) < minimum:
+        blockers.append(
+            f"scaled downstream benchmark requires at least {minimum} labeled examples; got {len(examples)}"
+        )
+    return {
+        "minimum_scaled_examples": minimum,
+        "example_count": len(examples),
+        "scaled_evaluation_ready": not blockers,
+        "downstream_claim_allowed": not blockers,
+        "blockers": blockers,
+    }
+
+
 def _report_caveats(
-    examples: Sequence[Mapping[str, Any]], retrieval_prior_weight: float
+    examples: Sequence[Mapping[str, Any]],
+    retrieval_prior_weight: float,
+    readiness: Mapping[str, Any],
 ) -> list[str]:
     caveats = [
         "Fixture quality reports validate scorer/reranker plumbing, not scaled model usefulness.",
         "Lower final_score is better.",
     ]
+    if not readiness.get("scaled_evaluation_ready", False):
+        caveats.append(
+            "Downstream usefulness claims are blocked until at least 100 labeled reranking examples are evaluated."
+        )
     if retrieval_prior_weight == 0.0:
         caveats.append(
             "Retrieval priors may be computed but do not affect final_score at weight 0."
@@ -536,9 +692,13 @@ def _quantile(values: Sequence[float], q: float) -> float:
 
 
 def _recall_at_1(ranks: Sequence[int], total: int) -> float:
+    return _recall_at_k(ranks, total, k=1)
+
+
+def _recall_at_k(ranks: Sequence[int], total: int, *, k: int) -> float:
     if total <= 0:
         return 0.0
-    return sum(1 for rank in ranks if rank == 1) / total
+    return sum(1 for rank in ranks if rank <= k) / total
 
 
 def _mrr(ranks: Sequence[int], total: int) -> float:

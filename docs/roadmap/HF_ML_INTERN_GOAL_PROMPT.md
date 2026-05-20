@@ -82,6 +82,7 @@ Before editing or launching compute, read:
 - docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md
 - docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md
 - docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md
+- docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md
 - docs/cards/codelewm-action-use-dataset-2026-05-20.md
 - docs/cards/codelewm-action-use-model-2026-05-20.md
 - docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md

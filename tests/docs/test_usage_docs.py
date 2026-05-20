@@ -88,6 +88,10 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.transition_index.v1",
             "codelewm.secret_scan.v1",
             "codelewm.release_provenance.v1",
+            "benchmark_readiness",
+            "baseline_controls",
+            "transition_energy_only",
+            "retrieval_prior_only",
         ):
             with self.subTest(schema=schema):
                 self.assertIn(schema, self.text)
@@ -98,6 +102,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md",
+            "docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md",
             "text-action still loses to no-action",
             "positive action-conditioned quality claim",
         ):

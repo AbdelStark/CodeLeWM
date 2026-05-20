@@ -223,6 +223,33 @@ candidates as text without executing candidate code.
 | Failure counts | `<error_type -> count>` | `summary.failure_counts` |
 | Retrieval prior weight | `<float>` | `scoring_policy.retrieval_prior_weight` |
 | Retrieval prior k | `<int>` | `scoring_policy.retrieval_prior_k` |
+| Scaled examples ready | `<true|false>` | `benchmark_readiness.scaled_evaluation_ready` |
+| Downstream claim allowed | `<true|false>` | `benchmark_readiness.downstream_claim_allowed` |
+| Readiness blockers | `<list>` | `benchmark_readiness.blockers` |
+
+`component_metrics` must separate transition energy from the retrieval prior.
+`final_score` is the policy actually used by `codelewm rerank`;
+`transition_energy_only` removes the retrieval prior; `retrieval_prior_only`
+must be `completed` only when an index was supplied and every example has a
+finite true-candidate retrieval prior.
+
+| Component | Status | Recall@1 | Recall@5 | Recall@10 | MRR | Evaluable examples |
+| --------- | ------ | -------- | -------- | --------- | --- | ------------------ |
+| final_score | | | | | | |
+| transition_energy_only | | | | | | |
+| retrieval_prior_only | | | | | | |
+
+`baseline_controls` must include random, lexical, no-action, #159 replay, and
+retrieval-prior-only rows. Mark unavailable rows as `blocked` with the reason;
+do not silently drop a control from the report.
+
+| Control | Status | Recall@1 | MRR | Reason if blocked |
+| ------- | ------ | -------- | --- | ----------------- |
+| random | | | | |
+| lexical | | | | |
+| no_action | | | | |
+| checkpoint_159 | | | | |
+| retrieval_prior_only | | | | |
 
 | Slice | Candidates | Valid | Errors | Mean final score | Mean retrieval prior |
 | ----- | ---------- | ----- | ------ | ---------------- | -------------------- |
