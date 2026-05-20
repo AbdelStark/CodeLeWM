@@ -11,6 +11,7 @@ from codelewm.model import LATENT_DIM, compute_config_hash
 from codelewm.training import (
     TRAIN_CONFIG_SCHEMA_VERSION,
     TrainConfigError,
+    compatibility_config_payload,
     default_train_config_paths,
     load_default_train_configs,
     load_scaled_train_configs,
@@ -94,6 +95,8 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
                 "codelewm_scaled_cpu",
                 "codelewm_scaled_mps",
                 "codelewm_scaled_gpu_a10g",
+                "codelewm_scaled_action_use_margin_gpu_a10g",
+                "codelewm_scaled_action_use_margin_retrieval_gpu_a10g",
             },
         )
         for config in configs.values():
@@ -105,8 +108,28 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
                 self.assertEqual(config.wm.embed_dim, LATENT_DIM)
                 self.assertEqual(config.wm.action_view, "text")
                 self.assertEqual(config.wm.action_sequence_length, 256)
-                self.assertFalse(config.loss.enable_retrieval_loss)
-                self.assertEqual(config.loss.retrieval_weight, 0.0)
+
+        for name in ("codelewm_scaled_cpu", "codelewm_scaled_mps", "codelewm_scaled_gpu_a10g"):
+            with self.subTest(config=name):
+                self.assertFalse(configs[name].loss.enable_retrieval_loss)
+                self.assertEqual(configs[name].loss.retrieval_weight, 0.0)
+                self.assertFalse(configs[name].loss.enable_action_use_margin)
+                self.assertEqual(configs[name].loss.action_use_margin_weight, 0.0)
+                self.assertEqual(configs[name].loss.action_use_margin, 0.0)
+
+        action_margin = configs["codelewm_scaled_action_use_margin_gpu_a10g"]
+        self.assertTrue(action_margin.loss.enable_action_use_margin)
+        self.assertEqual(action_margin.loss.action_use_margin_weight, 0.25)
+        self.assertEqual(action_margin.loss.action_use_margin, 0.02)
+        self.assertFalse(action_margin.loss.enable_retrieval_loss)
+        self.assertEqual(action_margin.loss.retrieval_weight, 0.0)
+
+        action_retrieval = configs["codelewm_scaled_action_use_margin_retrieval_gpu_a10g"]
+        self.assertTrue(action_retrieval.loss.enable_action_use_margin)
+        self.assertEqual(action_retrieval.loss.action_use_margin_weight, 0.25)
+        self.assertEqual(action_retrieval.loss.action_use_margin, 0.02)
+        self.assertTrue(action_retrieval.loss.enable_retrieval_loss)
+        self.assertEqual(action_retrieval.loss.retrieval_weight, 0.05)
 
     def test_scaled_config_budgets_match_hardware_profiles(self) -> None:
         configs = {config.name: config for config in load_scaled_train_configs(ROOT)}
@@ -130,6 +153,18 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
         self.assertGreaterEqual(gpu.trainer.max_steps, 60000)
         self.assertLessEqual(gpu.trainer.max_steps, 100000)
 
+        action_margin = configs["codelewm_scaled_action_use_margin_gpu_a10g"]
+        self.assertEqual(action_margin.trainer.accelerator, "gpu")
+        self.assertEqual(action_margin.trainer.precision, "bf16-mixed")
+        self.assertEqual(action_margin.loader.batch_size, 64)
+        self.assertEqual(action_margin.trainer.max_steps, 60000)
+
+        action_retrieval = configs["codelewm_scaled_action_use_margin_retrieval_gpu_a10g"]
+        self.assertEqual(action_retrieval.trainer.accelerator, "gpu")
+        self.assertEqual(action_retrieval.trainer.precision, "bf16-mixed")
+        self.assertEqual(action_retrieval.loader.batch_size, 64)
+        self.assertEqual(action_retrieval.trainer.max_steps, 60000)
+
     def test_scaled_paths_helper_points_to_checked_in_configs(self) -> None:
         paths = scaled_train_config_paths(ROOT)
 
@@ -139,6 +174,8 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
                 "codelewm_scaled_cpu.yaml",
                 "codelewm_scaled_mps.yaml",
                 "codelewm_scaled_gpu_a10g.yaml",
+                "codelewm_scaled_action_use_margin_gpu_a10g.yaml",
+                "codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml",
             ),
         )
         for path in paths:
@@ -168,12 +205,21 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["schema_version"], "codelewm.train_config_validation.v1")
         self.assertEqual(payload["train_config_schema_version"], TRAIN_CONFIG_SCHEMA_VERSION)
-        self.assertEqual(len(payload["configs"]), 3)
+        self.assertEqual(len(payload["configs"]), 5)
         for item in payload["configs"]:
             with self.subTest(config=item["name"]):
                 self.assertEqual(item["seed"], 240119)
                 self.assertEqual(item["action_view"], "text")
                 self.assertRegex(item["config_sha256"], r"^[0-9a-f]{64}$")
+                self.assertIn("action_use_margin_enabled", item)
+                self.assertIn("action_use_margin_weight", item)
+                self.assertIn("action_use_margin", item)
+        by_name = {item["name"]: item for item in payload["configs"]}
+        self.assertFalse(by_name["codelewm_scaled_gpu_a10g"]["action_use_margin_enabled"])
+        self.assertTrue(by_name["codelewm_scaled_action_use_margin_gpu_a10g"]["action_use_margin_enabled"])
+        self.assertTrue(
+            by_name["codelewm_scaled_action_use_margin_retrieval_gpu_a10g"]["retrieval_loss_enabled"]
+        )
 
 
 class TrainConfigValidationTest(unittest.TestCase):
@@ -225,6 +271,41 @@ class TrainConfigValidationTest(unittest.TestCase):
 
         with self.assertRaisesRegex(TrainConfigError, "enable_retrieval_loss"):
             validate_train_config(payload)
+
+    def test_validation_rejects_action_use_margin_without_gate(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["loss"]["action_use_margin_weight"] = 0.25
+        payload["loss"]["action_use_margin"] = 0.02
+
+        with self.assertRaisesRegex(TrainConfigError, "enable_action_use_margin"):
+            validate_train_config(payload)
+
+    def test_validation_rejects_action_use_margin_gate_without_weight_and_margin(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["loss"]["enable_action_use_margin"] = True
+
+        with self.assertRaisesRegex(TrainConfigError, "action_use_margin_weight"):
+            validate_train_config(payload)
+
+    def test_compatibility_hash_omits_disabled_action_margin_defaults(self) -> None:
+        config = validate_train_config(self.payload)
+        payload = compatibility_config_payload(config)
+
+        self.assertNotIn("enable_action_use_margin", payload["loss"])
+        self.assertNotIn("action_use_margin_weight", payload["loss"])
+        self.assertNotIn("action_use_margin", payload["loss"])
+
+    def test_compatibility_hash_records_enabled_action_margin_surface(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["loss"]["enable_action_use_margin"] = True
+        payload["loss"]["action_use_margin_weight"] = 0.25
+        payload["loss"]["action_use_margin"] = 0.02
+        config = validate_train_config(payload)
+        compatibility_payload = compatibility_config_payload(config)
+
+        self.assertTrue(compatibility_payload["loss"]["enable_action_use_margin"])
+        self.assertEqual(compatibility_payload["loss"]["action_use_margin_weight"], 0.25)
+        self.assertEqual(compatibility_payload["loss"]["action_use_margin"], 0.02)
 
     def test_validation_rejects_image_control_data_paths(self) -> None:
         payload = copy.deepcopy(self.payload)

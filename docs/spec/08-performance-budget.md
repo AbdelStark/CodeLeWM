@@ -44,7 +44,8 @@ v1.0 small model:
 - batch size `4`;
 - `16` max steps;
 - `float32` precision;
-- retrieval loss disabled.
+- retrieval loss disabled;
+- action-use margin disabled.
 
 `config/train/codelewm_small.yaml` is the initial single-device training config.
 It uses:
@@ -57,7 +58,8 @@ It uses:
 - batch size `64`;
 - `10000` max steps;
 - `bf16-mixed` precision;
-- retrieval loss disabled.
+- retrieval loss disabled;
+- action-use margin disabled.
 
 Neither default config may reference the inherited image-control datasets or
 pixel/proprioception loader keys.
@@ -70,9 +72,16 @@ Scaled research profiles live under `config/train/scaled/`:
 - `codelewm_scaled_mps.yaml`: Apple Silicon development profile, seed `240119`,
   batch size `32`, `10000` steps, `float32`, expected 4-12h on M2/M3 Max class
   hardware, 16-32 GiB unified memory, 1-4 GiB artifacts.
-- `codelewm_scaled_gpu_a10g.yaml`: Hugging Face Jobs headline profile, seed
+- `codelewm_scaled_gpu_a10g.yaml`: Hugging Face Jobs baseline profile, seed
   `240119`, batch size `64`, `60000` steps, `bf16-mixed`, expected 12-24h on
   `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts.
+- `codelewm_scaled_action_use_margin_gpu_a10g.yaml`: Hugging Face Jobs primary
+  action-use follow-up profile, seed `240119`, batch size `64`, `60000` steps,
+  `bf16-mixed`, no-action margin enabled with weight `0.25` and margin `0.02`,
+  expected 12-24h on `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts.
+- `codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`: Hugging Face
+  Jobs fallback profile with the same A10G budget plus retrieval loss enabled at
+  weight `0.05`.
 
 All scaled configs keep `action_view=text` as the headline path. Patch-action
 remains diagnostic-only and cannot be used by training configs.

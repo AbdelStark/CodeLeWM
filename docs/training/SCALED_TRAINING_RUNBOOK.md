@@ -5,26 +5,34 @@ bounded scaled training run. The first HF A10G run completed under #138 and is
 documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. It proves the
 remote systems path but does not support a positive action-conditioned quality
 claim because text-action loses to no-action on headline retrieval. The next
-training work is #153: add an action-use objective/intervention and scaled sweep
-configs before the follow-up HF run in #154.
+remote run is #154: use the action-use configs added under #153 and verify the
+downloaded private artifacts before any public claim.
 
 ## Config Matrix
 
 All scaled configs keep the v0.1 one-step contract: `history_size=1`,
-`num_preds=1`, `embed_dim=256`, `action_view=text`, and retrieval loss disabled.
-Patch-action remains diagnostic-only and is rejected by training config
-validation.
+`num_preds=1`, `embed_dim=256`, and `action_view=text`. Patch-action remains diagnostic-only.
+Training config validation rejects patch-action. The baseline CPU/MPS/A10G
+configs keep retrieval and action-use margin disabled; the follow-up A10G sweep
+explicitly enables the no-action margin objective.
 
 | Profile | Config | Seed | Steps | Batch | Precision | Budget |
 | --- | --- | --- | ---: | ---: | --- | --- |
 | CPU rehearsal | `config/train/scaled/codelewm_scaled_cpu.yaml` | `240119` | `2048` | `8` | `float32` | 6-18h on 8-12 CPU cores, 8-12 GiB RAM, 1-3 GiB artifacts |
 | Apple MPS development | `config/train/scaled/codelewm_scaled_mps.yaml` | `240119` | `10000` | `32` | `float32` | 4-12h on M2/M3 Max class hardware, 16-32 GiB unified memory, 1-4 GiB artifacts |
-| HF A10G headline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | 12-24h on `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts |
+| HF A10G baseline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Prior systems proof from #138; rerun only for regression comparison |
+| HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | 12-24h on `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts |
+| HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Launch only if the primary margin run still fails the action-use gate |
 
-The A10G profile was the baseline candidate used for the first scaled HF Jobs
-run. The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
-research claims. A follow-up action-use config from #153 supersedes the baseline
-A10G profile for the next claim-seeking run when it lands.
+The primary follow-up candidate is
+`codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targets the
+observed failure mode by penalizing predictions whose after-state latent error
+does not beat the no-action identity baseline by `action_use_margin=0.02`, with
+`action_use_margin_weight=0.25`. The fallback adds the existing retrieval
+auxiliary at `retrieval_weight=0.05`; keep it as a second run only if the
+primary result still loses to no-action or produces an ambiguous claim gate.
+The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
+research claims.
 
 ## Config Validation
 
@@ -36,8 +44,9 @@ uv run scripts/validate-training-configs
 ```
 
 The command emits `codelewm.train_config_validation.v1` with each config path,
-seed, action view, hardware profile, batch size, max steps, and deterministic
-config SHA-256. A non-zero exit means the config must be fixed before launch.
+seed, action view, hardware profile, batch size, max steps, retrieval objective
+settings, action-use margin settings, and deterministic config SHA-256. A
+non-zero exit means the config must be fixed before launch.
 
 ## Public Shard Preconditions
 
@@ -168,7 +177,7 @@ reuse the failed output directory.
 
 ## HF Jobs Launch
 
-The baseline A10G launch command is:
+The primary action-use A10G launch command is:
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -178,7 +187,7 @@ CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -190,8 +199,12 @@ CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 ```
 
-For the follow-up action-use run, keep this HF CLI orchestration boundary and
-replace `CODELEWM_TRAIN_CONFIG` with the checked-in action-use config from #153.
+The old `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
+available only for regression comparison against the #138 systems result.
+Escalate to
+`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
+only after recording the primary run's claim-gate result and failure mode in
+#154.
 
 Monitor and inspect only through the HF CLI:
 

@@ -37,6 +37,8 @@ ML regression tests:
 - shuffled actions underperform true actions on deterministic fixtures;
 - retrieval auxiliary loss can only run behind an explicit config gate and logs
   separately from prediction and SIGReg losses;
+- action-use margin auxiliary loss can only run behind an explicit config gate
+  and logs separately from prediction, SIGReg, and retrieval losses;
 - patch-action upper bound outperforms no-action on deterministic fixtures.
 - headline evaluation reports reject `action_patch`; patch-action reports must
   be tagged as diagnostic upper bounds.

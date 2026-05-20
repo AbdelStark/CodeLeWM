@@ -45,6 +45,8 @@ Training metrics:
 - `loss/sigreg_weighted`;
 - optional `loss/retrieval`;
 - optional `loss/retrieval_weighted`;
+- optional `loss/action_use_margin`;
+- optional `loss/action_use_margin_weighted`;
 - embedding effective rank;
 - embedding effective rank ratio;
 - per-dimension variance min/median/max;

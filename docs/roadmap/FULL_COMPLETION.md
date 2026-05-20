@@ -126,7 +126,7 @@ Delivered:
 
 ### Phase 3: Package-Native Training
 
-Status: complete for baseline objective, incomplete for action-use remediation.
+Status: complete for baseline objective and action-use remediation configs.
 
 Delivered:
 
@@ -137,13 +137,15 @@ Delivered:
 - resume compatibility tests
 - `codelewm train`
 - scaled CPU/MPS/A10G configs
+- no-action margin action-use objective
+- primary A10G action-use and margin+retrieval fallback configs
 
-Remaining: #153 action-use objective and scaled sweep configs.
+Remaining: #154 remote follow-up run to prove or falsify the action-use recipe.
 
 ### Phase 4: Evaluation, Indexing, And Harness
 
-Status: complete for baseline reports and claim gates, incomplete for
-action-discriminative hard negatives.
+Status: complete for baseline reports, claim gates, action-discriminative shard
+diagnostics, and hard-negative metadata.
 
 Delivered:
 
@@ -154,9 +156,11 @@ Delivered:
 - `codelewm index`
 - scorer/reranker retrieval-prior integration
 - downloaded-artifact score/rerank smoke checks
+- action-discriminative shard reports
+- hard-negative sampler pools for same-before, near-before, same-file, and
+  action-discriminative candidates
 
-Remaining: #152 action-discriminative hard negatives and #154 follow-up
-verification.
+Remaining: #154 follow-up verification.
 
 ### Phase 5: First Results
 
@@ -199,8 +203,8 @@ Deliverables:
 
 - no-action dominance diagnostics and machine-readable claim gates (#151,
   complete)
-- action-discriminative shard diagnostics and hard negatives (#152)
-- action-use objective/intervention and scaled sweep configs (#153)
+- action-discriminative shard diagnostics and hard negatives (#152, complete)
+- action-use objective/intervention and scaled sweep configs (#153, complete)
 - follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
   evaluated through the `hf` CLI (#154)
 
@@ -221,13 +225,11 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #152 | data: add action-discriminative shard diagnostics and hard negatives | Action-Use Remediation | training sweep, evaluation gate |
-| 2 | #153 | train: add action-use objective and scaled sweep configs | Action-Use Remediation | follow-up HF run |
-| 3 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
-| 4 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
-| 5 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
-| 6 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
-| 7 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
+| 1 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
+| 2 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
+| 3 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
+| 4 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
+| 5 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
 
 Completed backlog base:
 
@@ -238,6 +240,8 @@ Completed backlog base:
   downloaded-artifact verification, inference, and evals.
 - #151 added no-action dominance diagnostics and machine-readable action-use
   claim gates.
+- #152 added action-discriminative shard diagnostics and hard-negative metadata.
+- #153 added the no-action margin objective and A10G action-use sweep configs.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -246,16 +250,16 @@ Completed backlog base:
 Use the existing subsystem tracking issues and the new completion tracker
 instead of creating duplicate trackers.
 
-- #3 Edit transition dataset: active child #152.
-- #7 Training runtime: active child #153.
-- #8 Retrieval and surprise evaluation: active children #152 and #154.
+- #3 Edit transition dataset: #152 complete; no active child.
+- #7 Training runtime: #153 complete; no active child.
+- #8 Retrieval and surprise evaluation: active child #154.
 - #9 Harness scorer and reranker: active child #154.
 - #10 Observability and artifact lineage: active children #154 and #126.
 - #11 Security and licensing boundaries: active children #124 and #126.
 - #12 Public API and packaging: active children #123 and #125.
 - #13 Release CI and governance: active children #150 and #123 through #126.
 - #150 Action-conditioned scaled result and release readiness: active children
-  #152 through #154 and release gates #123 through #126.
+  #154 and release gates #123 through #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -265,10 +269,10 @@ that subsystem.
 
 - The scaled result currently fails the core action-conditioning claim gate
   because no-action beats text-action.
-- The current public shard may not contain enough action-discriminative pressure
-  for text actions to matter without targeted hard negatives or data filtering.
-- The default objective may reward state priors more than action-conditioned
-  transition structure.
+- The current public shard may still not contain enough action-discriminative
+  pressure for text actions to matter, even with targeted hard negatives.
+- The new no-action margin objective is unproven until #154 runs the follow-up
+  HF job and downloaded-artifact evals.
 - Scorer-quality evidence is still small and should remain a gate, not a broad
   calibration claim.
 - Same-file and action-cluster surprise decoy counts are lower than random and

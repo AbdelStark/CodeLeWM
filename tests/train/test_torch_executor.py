@@ -162,6 +162,34 @@ class TorchTrainingExecutorTest(unittest.TestCase):
         self.assertGreater(manifest.final_metrics["collapse/per_dim_variance_max"], 0.0)
         self.assertIn("checkpoints/checkpoint.pt", {item.path for item in manifest.checkpoint_files})
 
+    def test_action_use_margin_objective_runs_one_torch_step_and_records_manifest_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pack_dir = _build_and_pack_fixture(root)
+            payload = _train_config_payload(root, pack_dir, name="torch_action_margin_fixture")
+            payload["loss"]["enable_action_use_margin"] = True
+            payload["loss"]["action_use_margin_weight"] = 0.25
+            payload["loss"]["action_use_margin"] = 0.02
+            config = validate_train_config(payload)
+
+            manifest = train_torch(
+                config,
+                root=root,
+                source_git_sha=SOURCE_SHA,
+                created_at=CREATED_AT,
+            )
+
+            run_dir = root / "runs" / "torch_action_margin_fixture"
+            report = json.loads((run_dir / "reports" / "torch_training_report.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(manifest.step_count, 1)
+        self.assertTrue(math.isfinite(manifest.final_metrics["loss/action_use_margin"]))
+        self.assertTrue(math.isfinite(manifest.final_metrics["val/loss/action_use_margin"]))
+        self.assertTrue(report["objective"]["enable_action_use_margin"])
+        self.assertEqual(report["objective"]["action_use_margin_weight"], 0.25)
+        self.assertEqual(report["objective"]["action_use_margin"], 0.02)
+        self.assertTrue(manifest.metadata["executor"]["objective"]["enable_action_use_margin"])
+
 
 def _build_and_pack_fixture(root: Path) -> Path:
     build_dir = root / "build"
@@ -179,19 +207,19 @@ def _build_and_pack_fixture(root: Path) -> Path:
     return pack_dir
 
 
-def _train_config_payload(root: Path, pack_dir: Path) -> dict:
+def _train_config_payload(root: Path, pack_dir: Path, *, name: str = "torch_fixture") -> dict:
     payload = load_train_config(ROOT / "config" / "train" / "codelewm_tiny.yaml").to_dict()
-    payload["name"] = "torch_fixture"
+    payload["name"] = name
     payload["data"]["train"] = str(pack_dir / "hdf5" / "train.hdf5")
     payload["data"]["val"] = str(pack_dir / "hdf5" / "val.hdf5")
     payload["data"]["manifest"] = str(pack_dir / "manifest.json")
     payload["trainer"]["max_steps"] = 1
     payload["loader"]["batch_size"] = 2
     payload["loader"]["shuffle"] = False
-    payload["output"]["run_dir"] = str(root / "runs" / "torch_fixture")
-    payload["output"]["checkpoint_dir"] = str(root / "runs" / "torch_fixture" / "checkpoints")
-    payload["output"]["metrics_path"] = str(root / "runs" / "torch_fixture" / "metrics.jsonl")
-    payload["output"]["manifest_path"] = str(root / "runs" / "torch_fixture" / "training_manifest.json")
+    payload["output"]["run_dir"] = str(root / "runs" / name)
+    payload["output"]["checkpoint_dir"] = str(root / "runs" / name / "checkpoints")
+    payload["output"]["metrics_path"] = str(root / "runs" / name / "metrics.jsonl")
+    payload["output"]["manifest_path"] = str(root / "runs" / name / "training_manifest.json")
     return payload
 
 

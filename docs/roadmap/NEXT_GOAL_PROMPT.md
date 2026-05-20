@@ -14,19 +14,19 @@ docs/operations/HF_ML_INTERN_TRAINING.md, docs/training/SCALED_TRAINING_RUNBOOK.
 CONTRIBUTING.md, the relevant docs/spec files, and the relevant docs/rfcs files.
 
 Do not redo closed HF infrastructure work. Issues #109 through #122, #137,
-#138, and #151 are complete. The first scaled HF run proved the systems path
-but failed the positive action-conditioned quality gate because text-action
-lost to the no-action baseline.
+#138, #151, #152, and #153 are complete. The first scaled HF run proved the
+systems path but failed the positive action-conditioned quality gate because
+text-action lost to the no-action baseline. The next HF run must use the
+checked-in primary action-use margin config:
+`config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`.
 
 Work sequentially, one issue per branch and PR:
 
-1. #152 data: add action-discriminative shard diagnostics and hard negatives.
-2. #153 train: add action-use objective and scaled sweep configs.
-3. #154 run: execute follow-up HF Jobs action-use training and verify artifacts.
-4. #123 release: add uv build and package publishing gates.
-5. #124 release: add dependency audit and provenance evidence.
-6. #125 docs: refresh public docs against first-results evidence.
-7. #126 release: run final artifact freeze and checklist.
+1. #154 run: execute follow-up HF Jobs action-use training and verify artifacts.
+2. #123 release: add uv build and package publishing gates.
+3. #124 release: add dependency audit and provenance evidence.
+4. #125 docs: refresh public docs against first-results evidence.
+5. #126 release: run final artifact freeze and checklist.
 
 For HF work, orchestrate the remote job lifecycle with the hf CLI: hf auth
 whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs

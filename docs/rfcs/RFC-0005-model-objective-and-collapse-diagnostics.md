@@ -7,9 +7,9 @@
 
 ## Summary
 
-The primary objective is next-latent MSE plus SIGReg. In-batch retrieval loss is
-allowed only after the base objective is instrumented and collapse diagnostics
-show why it is needed.
+The primary objective is next-latent MSE plus SIGReg. In-batch retrieval loss
+and no-action margin regularization are allowed only after the base objective is
+instrumented and collapse/action-use diagnostics show why they are needed.
 
 ## Motivation
 
@@ -23,6 +23,8 @@ results harder to interpret.
 - Log collapse diagnostics every validation interval.
 - Define kill thresholds before large runs.
 - Add retrieval loss only through a config flag and report it separately.
+- Add no-action margin regularization only through a config flag and report it
+  separately.
 
 ## Non-Goals
 
@@ -46,6 +48,15 @@ Optional retrieval auxiliary:
 scores = cosine_similarity(z_pred_after[:, None, :], z_after[None, :, :]) / temperature
 loss_retrieval = cross_entropy(scores, torch.arange(batch_size, device=scores.device))
 loss = loss + cfg.loss.retrieval_weight * loss_retrieval
+```
+
+Optional action-use margin auxiliary:
+
+```python
+no_action_dist = torch.mean((z_before.detach() - z_after.detach()) ** 2, dim=-1)
+pred_dist = torch.mean((z_pred_after - z_after.detach()) ** 2, dim=-1)
+loss_action_use = torch.relu(pred_dist - no_action_dist + cfg.loss.action_use_margin).mean()
+loss = loss + cfg.loss.action_use_margin_weight * loss_action_use
 ```
 
 Diagnostics:
@@ -74,6 +85,8 @@ Default sweep:
 ```text
 sigreg_weight: 0.05, 0.09, 0.15
 retrieval_weight: 0.00 for base, 0.05 only after base diagnostics
+action_use_margin_weight: 0.00 for base, 0.25 only after no-action dominance diagnostics
+action_use_margin: 0.02 for the first action-use follow-up sweep
 ```
 
 Failure modes:
@@ -93,7 +106,8 @@ Failure modes:
 
 ## Drawbacks
 
-- MSE in latent space may be too weak without retrieval loss.
+- MSE in latent space may be too weak without retrieval or no-action margin
+  regularization.
 - SIGReg hyperparameters still need tuning.
 - Kill thresholds are conservative and may stop runs that could recover.
 
@@ -103,6 +117,7 @@ Failure modes:
 2. Add base MSE+SIGReg training.
 3. Add kill report output.
 4. Add retrieval loss behind config flag after base smoke report.
+5. Add action-use margin behind a config flag after no-action dominance evidence.
 
 ## Testing Strategy
 
@@ -111,6 +126,8 @@ Failure modes:
 - Fixture training test that loss decreases on deterministic transforms.
 - Kill test with forced constant embeddings.
 - Config test that retrieval weight cannot be enabled without report output.
+- Config test that action-use margin cannot be enabled without explicit margin
+  and weight fields.
 
 ## Open Questions
 

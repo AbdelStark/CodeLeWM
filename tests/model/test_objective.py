@@ -8,6 +8,7 @@ import numpy as np
 
 from codelewm.model import (
     ObjectiveConfig,
+    compute_action_use_margin_loss,
     compute_prediction_mse,
     compute_sigreg_loss,
     compute_transition_objective,
@@ -62,6 +63,64 @@ class ObjectiveNumpyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "enable_retrieval_loss"):
             ObjectiveConfig(retrieval_weight=0.1)
 
+    def test_action_use_margin_penalizes_no_action_dominance(self) -> None:
+        z_before = np.array([[0.0, 0.0], [0.0, 1.0]])
+        z_after = np.array([[1.0, 0.0], [1.0, 1.0]])
+        z_pred_better_than_no_action = np.array([[0.95, 0.0], [0.95, 1.0]])
+        z_pred_no_action = z_before.copy()
+
+        satisfied = compute_action_use_margin_loss(
+            z_before,
+            z_after,
+            z_pred_better_than_no_action,
+            margin=0.1,
+        )
+        dominated = compute_action_use_margin_loss(
+            z_before,
+            z_after,
+            z_pred_no_action,
+            margin=0.1,
+        )
+
+        self.assertEqual(satisfied, 0.0)
+        self.assertAlmostEqual(dominated, 0.1)
+
+    def test_transition_objective_reports_action_use_margin_terms_when_enabled(self) -> None:
+        z_before = np.array([[0.0, 0.0], [0.0, 1.0]])
+        z_after = np.array([[1.0, 0.0], [1.0, 1.0]])
+        z_pred = z_before.copy()
+        config = ObjectiveConfig(
+            sigreg_weight=0.0,
+            enable_action_use_margin=True,
+            action_use_margin_weight=0.25,
+            action_use_margin=0.1,
+            sigreg_num_proj=8,
+            sigreg_seed=3,
+        )
+
+        terms = compute_transition_objective(z_before, z_after, z_pred, config=config)
+        scalars = terms.scalars()
+
+        self.assertIn("loss/action_use_margin", scalars)
+        self.assertIn("loss/action_use_margin_weighted", scalars)
+        self.assertAlmostEqual(scalars["loss/action_use_margin"], 0.1)
+        self.assertAlmostEqual(
+            scalars["loss/total"],
+            scalars["loss/prediction_mse"]
+            + scalars["loss/sigreg_weighted"]
+            + scalars["loss/action_use_margin_weighted"],
+        )
+
+    def test_action_use_margin_requires_explicit_config_gate(self) -> None:
+        with self.assertRaisesRegex(ValueError, "enable_action_use_margin"):
+            ObjectiveConfig(action_use_margin_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "enable_action_use_margin"):
+            ObjectiveConfig(action_use_margin=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero action_use_margin_weight"):
+            ObjectiveConfig(enable_action_use_margin=True, action_use_margin=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero action_use_margin"):
+            ObjectiveConfig(enable_action_use_margin=True, action_use_margin_weight=0.1)
+
 
 class ObjectiveTorchTest(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
@@ -78,6 +137,21 @@ class ObjectiveTorchTest(unittest.TestCase):
 
         self.assertIsNotNone(z_pred.grad)
         self.assertEqual(tuple(z_pred.grad.shape), (4, 3))
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
+    def test_action_use_margin_only_backprops_through_prediction(self) -> None:
+        import torch
+
+        z_before = torch.zeros(2, 2, requires_grad=True)
+        z_after = torch.ones(2, 2, requires_grad=True)
+        z_pred = torch.zeros(2, 2, requires_grad=True)
+
+        loss = compute_action_use_margin_loss(z_before, z_after, z_pred, margin=0.1)
+        loss.backward()
+
+        self.assertIsNotNone(z_pred.grad)
+        self.assertIsNone(z_before.grad)
+        self.assertIsNone(z_after.grad)
 
 
 if __name__ == "__main__":
