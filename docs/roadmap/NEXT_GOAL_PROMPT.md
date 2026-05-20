@@ -24,10 +24,19 @@ gate because text-action lost to the no-action baseline. Issue #126 froze this
 as a private diagnostic release boundary in
 docs/release/RELEASE_FREEZE_2026-05-20.md.
 
+Issue #159 has already been launched as
+`codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
+`6a0da3a08229e585f969c3f7` from source SHA
+`7895d185e165a917af0956a313d8948c04b33638` with
+`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`,
+`a10g-small`, and a `24h` timeout. Do not relaunch while that job is running;
+resume with `hf jobs inspect`, `hf jobs logs`, and `hf jobs stats`.
+
 Work sequentially, one issue per branch and PR:
 
-1. #159 run: execute the second-stage action-use remediation sweep or record a
-   justified negative/diagnostic boundary.
+1. #159 run: monitor the active second-stage action-use remediation job,
+   download private artifacts after success, verify locally, and record either
+   a passing claim gate or a justified negative/diagnostic boundary.
 
 For HF work, orchestrate the remote job lifecycle with the hf CLI: hf auth
 whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs

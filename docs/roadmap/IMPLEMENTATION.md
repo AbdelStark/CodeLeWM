@@ -167,6 +167,10 @@ result and release readiness.
 - #154 executed the primary action-use margin follow-up and verified the
   downloaded private artifacts, but the result remained negative.
 - #159 is the active evidence precondition for a future positive claim path.
+  The remediation run `codelewm-action-use-retrieval-20260520-7895d18` is
+  running on HF Jobs job `6a0da3a08229e585f969c3f7`; it must be downloaded,
+  manifest-verified, locally re-evaluated, and recorded as positive or
+  negative/diagnostic before #150 can close.
 - #123 closed the package build and manual publishing gate for wheel/sdist
   artifacts.
 - #124 closed the dependency-audit and release-provenance gate for package

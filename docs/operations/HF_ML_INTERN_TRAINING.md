@@ -12,11 +12,12 @@ action-use follow-up is documented in
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. Both are useful systems
 evidence, but neither is a positive action-conditioning claim because the
 no-action baseline beats text-action on headline retrieval. The active
-completion tracker is #150. Issue #126 has frozen the current private
-diagnostic release boundary in
-`docs/release/RELEASE_FREEZE_2026-05-20.md`. Issue #159 owns the next
-action-use remediation sweep if the project still wants a positive
-action-conditioning claim. Training config details remain in
+completion tracker is #150. Issue #159 has launched the second-stage
+margin+retrieval remediation run `codelewm-action-use-retrieval-20260520-7895d18`
+on HF Jobs job `6a0da3a08229e585f969c3f7`; it is not claim evidence until the
+published private artifacts are downloaded and verified locally. Issue #126 has
+frozen the current private diagnostic release boundary in
+`docs/release/RELEASE_FREEZE_2026-05-20.md`. Training config details remain in
 `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 
 ## Upstream Contract
@@ -206,11 +207,18 @@ hf jobs stats <job-id>
 The command below is the primary #154 follow-up profile already executed in run
 `codelewm-action-use-20260520-6650183`. It used the #153 no-action margin
 objective to target the observed failure mode from the first scaled run, but the
-claim gate remained negative. The original
-`config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
-available only for regression comparison against #138. Issue #159 should decide
-whether to launch the margin+retrieval fallback config or make a smaller
-data/eval correction first.
+claim gate remained negative. The active #159 remediation job is
+`codelewm-action-use-retrieval-20260520-7895d18` / job
+`6a0da3a08229e585f969c3f7`, launched from
+`7895d185e165a917af0956a313d8948c04b33638` with
+`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
+Do not relaunch it while that job is running; resume with `hf jobs inspect`,
+`hf jobs logs`, `hf jobs stats`, and then `hf download` after success. The
+original `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
+available only for regression comparison against #138.
+
+If the active #159 job fails and the recorded failure does not require a code or
+config repair, use this margin+retrieval relaunch template:
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -218,9 +226,10 @@ CODELEWM_HF_PIPELINE_MODE=scaled \
 CODELEWM_HF_JOBS_FLAVOR=a10g-small \
 CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
+CODELEWM_HF_RUN_ID=<new-run-id> \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -335,8 +344,11 @@ Active gates for the next meaningful remote run:
   verified downloaded artifacts, and recorded a negative claim gate.
 - #126 froze the private diagnostic release boundary without enabling public
   positive claims.
-- #159 must execute the second-stage action-use remediation sweep if the project
-  is still pursuing a positive claim.
+- #159 launched the second-stage action-use remediation sweep as
+  `codelewm-action-use-retrieval-20260520-7895d18` / job
+  `6a0da3a08229e585f969c3f7`; remaining work is HF monitoring, download,
+  manifest verification, local eval/inference checks, docs/cards, and claim
+  gate closure.
 
 Do not flip repositories public, update public positive claims, or mark a result
 as meaningful until those gates are satisfied by artifact-backed evidence. If the
