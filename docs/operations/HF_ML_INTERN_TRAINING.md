@@ -7,12 +7,14 @@ evaluation run. It is designed to be usable by a human operator or by
 
 Current status: the smoke path, scaled HF Jobs path, private publication path,
 and downloaded-artifact verification path are implemented. The first scaled run
-is documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; it is useful
-systems evidence but not a positive action-conditioning claim because the
+is documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the primary
+action-use follow-up is documented in
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. Both are useful systems
+evidence, but neither is a positive action-conditioning claim because the
 no-action baseline beats text-action on headline retrieval. The active
-completion tracker is #150, with #151 through #154 closing the action-use gap
-before release gates #123 through #126. Training config details remain in
-`docs/training/SCALED_TRAINING_RUNBOOK.md`.
+completion tracker is #150. Issue #159 owns the next action-use remediation
+sweep before the final release gates #123 through #126. Training config details
+remain in `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 
 ## Upstream Contract
 
@@ -198,12 +200,14 @@ hf jobs stats <job-id>
 
 ## Remote Scaled Training And Publication
 
-The command below is the primary #154 follow-up profile. It uses the #153
-no-action margin objective to target the observed failure mode from the first
-scaled run. The original
+The command below is the primary #154 follow-up profile already executed in run
+`codelewm-action-use-20260520-6650183`. It used the #153 no-action margin
+objective to target the observed failure mode from the first scaled run, but the
+claim gate remained negative. The original
 `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
-available only for regression comparison against #138; use the margin+retrieval
-fallback config only after recording the primary run's claim-gate result.
+available only for regression comparison against #138. Issue #159 should decide
+whether to launch the margin+retrieval fallback config or make a smaller
+data/eval correction first.
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -225,7 +229,7 @@ CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 ```
 
-Definition of done for the scaled run:
+Definition of done for any further scaled run:
 
 - the HF job exits successfully;
 - the source prefetch logs show the expected `hf download` path and the dataset
@@ -323,9 +327,11 @@ Active gates for the next meaningful remote run:
 - #151 has added no-action dominance diagnostics and a claim gate.
 - #152 has added action-discriminative shard diagnostics and hard negatives.
 - #153 has added the action-use margin objective and scaled sweep configs.
-- #154 must execute the follow-up HF Jobs run with
-  `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` and
-  verify downloaded artifacts.
+- #154 executed the follow-up HF Jobs run with
+  `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`,
+  verified downloaded artifacts, and recorded a negative claim gate.
+- #159 must execute the second-stage action-use remediation sweep if the project
+  is still pursuing a positive claim.
 - #123 through #126 remain release gates after the claim boundary is clear.
 
 Do not flip repositories public, update public positive claims, or mark a result

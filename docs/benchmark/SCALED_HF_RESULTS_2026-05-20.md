@@ -9,6 +9,8 @@
 - Hardware: HF Jobs `a10g-small`, timeout `24h`
 - Dataset card: `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - Model card: `docs/cards/codelewm-scaled-model-2026-05-20.md`
+- Follow-up action-use report:
+  `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
 
 ## Verdict
 
@@ -73,13 +75,13 @@ retrieval, ablation, surprise, and scorer-quality also verified.
 
 This first scaled artifact predates
 `codelewm.data.action_discriminative_shard_report.v1`, so it does not contain a
-manifested action-discriminative shard report. That absence is now an explicit
-data-evidence blocker: the follow-up #154 run must use the #152/#153 code path
-to regenerate the public shard build and pack artifacts and publish
-`reports/action_discriminative_shard_report.json` before any positive
-action-use claim can be considered.
+manifested action-discriminative shard report. That absence was closed by the
+#154 follow-up run, documented in
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; the follow-up shard passed
+the action-discriminative readiness gate but the paired model still lost to
+no-action on headline retrieval.
 
-Required follow-up fields:
+Fields now present in the #154 follow-up artifacts:
 
 - `claim_readiness.positive_action_use_claim_ready`
 - `hard_negative_pools.same_before_different_after.pair_count`

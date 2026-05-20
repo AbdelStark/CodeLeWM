@@ -107,7 +107,8 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #151 | eval: add no-action dominance diagnostics and claim gates | evaluation | p1 | m | RFC-0007 | Closed |
 | #152 | data: add action-discriminative shard diagnostics and hard negatives | data | p1 | l | RFC-0002 | Closed |
 | #153 | train: add action-use objective and scaled sweep configs | model | p1 | l | RFC-0006 | Closed |
-| #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Open |
+| #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Closed |
+| #159 | run: execute second-stage action-use remediation sweep | evaluation | p1 | l | RFC-0007 | Open |
 | #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Open |
 | #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Open |
 | #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Open |
@@ -163,9 +164,12 @@ result and release readiness.
   action use instead of before-state priors.
 - #153 landed the model/training precondition for the follow-up action-use
   scaled run.
-- #154 is the active evidence precondition for #125 and #126.
+- #154 executed the primary action-use margin follow-up and verified the
+  downloaded private artifacts, but the result remained negative.
+- #159 is the active evidence precondition for a positive claim path in #125 and
+  #126.
 - #123 and #124 can proceed independently as package/provenance hardening, but
-  #126 cannot close until #154 supplies claim-eligible evidence or an explicit
+  #126 cannot close until #159 supplies claim-eligible evidence or an explicit
   negative-release boundary.
 
 ## Cross-Reference Map

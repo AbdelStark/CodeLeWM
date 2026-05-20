@@ -2,11 +2,13 @@
 
 This runbook is the #119 operator contract for moving from smoke evidence to a
 bounded scaled training run. The first HF A10G run completed under #138 and is
-documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. It proves the
-remote systems path but does not support a positive action-conditioned quality
+documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. The primary
+action-use follow-up completed under #154 and is documented in
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. These runs prove the
+remote systems path but do not support a positive action-conditioned quality
 claim because text-action loses to no-action on headline retrieval. The next
-remote run is #154: use the action-use configs added under #153 and verify the
-downloaded private artifacts before any public claim.
+remote claim-seeking run is #159; verify downloaded private artifacts before
+any public claim.
 
 ## Config Matrix
 
@@ -21,16 +23,17 @@ explicitly enables the no-action margin objective.
 | CPU rehearsal | `config/train/scaled/codelewm_scaled_cpu.yaml` | `240119` | `2048` | `8` | `float32` | 6-18h on 8-12 CPU cores, 8-12 GiB RAM, 1-3 GiB artifacts |
 | Apple MPS development | `config/train/scaled/codelewm_scaled_mps.yaml` | `240119` | `10000` | `32` | `float32` | 4-12h on M2/M3 Max class hardware, 16-32 GiB unified memory, 1-4 GiB artifacts |
 | HF A10G baseline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Prior systems proof from #138; rerun only for regression comparison |
-| HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | 12-24h on `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts |
-| HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Launch only if the primary margin run still fails the action-use gate |
+| HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #154; negative claim gate |
+| HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Candidate for #159 after side-by-side analysis |
 
-The primary follow-up candidate is
-`codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targets the
+The primary follow-up candidate was
+`codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targeted the
 observed failure mode by penalizing predictions whose after-state latent error
 does not beat the no-action identity baseline by `action_use_margin=0.02`, with
-`action_use_margin_weight=0.25`. The fallback adds the existing retrieval
-auxiliary at `retrieval_weight=0.05`; keep it as a second run only if the
-primary result still loses to no-action or produces an ambiguous claim gate.
+`action_use_margin_weight=0.25`. It still lost to no-action in #154. The
+fallback adds the existing retrieval auxiliary at `retrieval_weight=0.05`; keep
+it as the likely #159 run unless side-by-side analysis shows a smaller
+data/eval correction is required first.
 The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
 research claims.
 
@@ -177,7 +180,7 @@ reuse the failed output directory.
 
 ## HF Jobs Launch
 
-The primary action-use A10G launch command is:
+The primary action-use A10G launch command used for #154 was:
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -200,11 +203,10 @@ uv run scripts/hf-launch-codelewm-job
 ```
 
 The old `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
-available only for regression comparison against the #138 systems result.
-Escalate to
-`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
-only after recording the primary run's claim-gate result and failure mode in
-#154.
+available only for regression comparison against the #138 systems result. The
+primary action-use result and failure mode are recorded in #154 and
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; #159 owns any escalation
+to `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
 
 Monitor and inspect only through the HF CLI:
 

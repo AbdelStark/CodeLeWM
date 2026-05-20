@@ -161,7 +161,7 @@ def run_scorer_quality_evaluation(
     """Run scorer/reranker quality evaluation and materialize an artifact."""
 
     config_path = Path(config)
-    output_dir = Path(out)
+    output_dir = Path(out).resolve()
     report_path = output_dir / "reports" / "scorer_quality_report.json"
     copied_config_path = output_dir / "config.json"
     artifact_manifest_path = output_dir / "manifest.json"

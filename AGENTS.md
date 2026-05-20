@@ -8,7 +8,7 @@ changes.
 ## Current State
 
 As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, and one completed scaled Hugging Face Jobs run.
+first-results smoke loop, and two completed scaled Hugging Face Jobs runs.
 
 Implemented foundations:
 
@@ -41,6 +41,8 @@ Current evidence:
 - The scaled HF Jobs run `codelewm-scaled-20260520-9699b53` completed on job
   `6a0d43c92dc5b1243da50bba` from source SHA
   `9699b5309e43a3278f272663ef60cda23040d92a`.
+- The action-use follow-up run `codelewm-action-use-20260520-6650183`
+  completed on job `6a0d7a763aba298b21d147a9` from source SHA `6650183`.
 - Private HF artifacts were published to `abdelstark/codelewm-public-shard`,
   `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`, then
   downloaded with `hf download` and verified locally.
@@ -48,14 +50,18 @@ Current evidence:
   `docs/cards/codelewm-scaled-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-scaled-model-2026-05-20.md` are the artifact-backed
   record for that run.
+- `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-action-use-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-action-use-model-2026-05-20.md` are the
+  artifact-backed record for the #154 follow-up run.
 
 Current blocker:
 
-- The scaled pipeline is proven, but the first scaled checkpoint is not a
-  positive action-conditioned quality result.
-- Text-action beats random, shuffled-action, and lexical baselines, but loses
-  to no-action on headline retrieval: Recall@1 `0.371` and MRR `0.472984`
-  versus no-action Recall@1 `0.459` and MRR `0.546116`.
+- The scaled pipeline is proven, but neither scaled checkpoint is a positive
+  action-conditioned quality result.
+- The #154 action-use margin run beats random, shuffled-action, and lexical
+  baselines, but loses to no-action on headline retrieval: Recall@1 `0.363`
+  and MRR `0.467875` versus no-action Recall@1 `0.469` and MRR `0.549624`.
 - Public model-quality claims remain blocked until a follow-up run passes an
   explicit action-use gate or the release is deliberately framed as a
   negative/diagnostic artifact.
@@ -108,17 +114,18 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #154 run the follow-up HF Jobs action-use training, publication, download,
-   inference, and eval cycle through the `hf` CLI.
+1. #159 run the second-stage action-use remediation sweep through the `hf` CLI
+   if the project is still pursuing a positive model-quality claim.
 2. #123 add package build and publishing gates.
 3. #124 add dependency audit and provenance evidence.
 4. #125 refresh public docs against the scaled evidence and claim boundary.
 5. #126 run the final artifact freeze and release checklist.
 
-Issues #152 and #153 are completed preconditions for the next HF Jobs run: the
+Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
 config matrix includes the primary action-use margin A10G profile plus a
-margin+retrieval fallback.
+margin+retrieval fallback. Issue #154 executed the primary profile and recorded
+a negative claim gate; #159 owns the next remediation sweep.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 

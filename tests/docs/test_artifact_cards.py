@@ -12,6 +12,9 @@ FIRST_RESULTS = ROOT / "docs" / "benchmark" / "FIRST_RESULTS.md"
 SCALED_DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-scaled-dataset-2026-05-20.md"
 SCALED_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-scaled-model-2026-05-20.md"
 SCALED_RESULTS = ROOT / "docs" / "benchmark" / "SCALED_HF_RESULTS_2026-05-20.md"
+ACTION_USE_DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-action-use-dataset-2026-05-20.md"
+ACTION_USE_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-action-use-model-2026-05-20.md"
+ACTION_USE_RESULTS = ROOT / "docs" / "benchmark" / "ACTION_USE_HF_RESULTS_2026-05-20.md"
 
 
 class FirstResultsArtifactCardTest(unittest.TestCase):
@@ -22,6 +25,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.scaled_dataset = SCALED_DATASET_CARD.read_text(encoding="utf-8")
         self.scaled_model = SCALED_MODEL_CARD.read_text(encoding="utf-8")
         self.scaled_report = SCALED_RESULTS.read_text(encoding="utf-8")
+        self.action_use_dataset = ACTION_USE_DATASET_CARD.read_text(encoding="utf-8")
+        self.action_use_model = ACTION_USE_MODEL_CARD.read_text(encoding="utf-8")
+        self.action_use_report = ACTION_USE_RESULTS.read_text(encoding="utf-8")
 
     def test_cards_exist_and_are_not_templates(self) -> None:
         for path, text in ((DATASET_CARD, self.dataset), (MODEL_CARD, self.model)):
@@ -36,6 +42,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
             (SCALED_DATASET_CARD, self.scaled_dataset),
             (SCALED_MODEL_CARD, self.scaled_model),
             (SCALED_RESULTS, self.scaled_report),
+            (ACTION_USE_DATASET_CARD, self.action_use_dataset),
+            (ACTION_USE_MODEL_CARD, self.action_use_model),
+            (ACTION_USE_RESULTS, self.action_use_report),
         ):
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file(), f"missing: {path}")
@@ -104,6 +113,27 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.assertIn("Text action beats the no-action baseline.", self.scaled_report)
         self.assertIn("- [ ] Text action beats the no-action baseline.", self.scaled_report)
         self.assertIn("| `commitpackft` | 56,025 | 23,015 | 33,010 |", self.scaled_dataset)
+
+    def test_action_use_cards_match_verified_hf_report(self) -> None:
+        for marker in (
+            "codelewm-action-use-20260520-6650183",
+            "dataset-67895f8dc3e217c4",
+            "training_run-ce98fe8768af2143",
+            "1e361498c722893c9754abcc9c2efa4499a615590572b77c7f0de939e789ac66",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.action_use_report)
+
+        self.assertIn("| Text action | 0.363 | 0.589 | 0.673 | 0.467875 |", self.action_use_model)
+        self.assertIn("| No action | 0.469 | 0.640 | 0.700 | 0.549624 |", self.action_use_model)
+        self.assertIn("## Action-Use Claim Gate", self.action_use_report)
+        self.assertIn("claim_allowed=false", self.action_use_report)
+        self.assertIn(
+            "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action",
+            self.action_use_report,
+        )
+        self.assertIn("- [ ] Text action beats the no-action baseline.", self.action_use_report)
+        self.assertIn("Claim-readiness gate | true", self.action_use_dataset)
 
 
 if __name__ == "__main__":
