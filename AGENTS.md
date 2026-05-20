@@ -1,51 +1,63 @@
 # CodeLeWM Agent Context
 
 This repository is a spec-driven research artifact for learning latent
-transition models over Python code edits. Treat the spec corpus, RFCs,
-GitHub issues, and roadmap docs as the contract before making code changes.
+transition models over Python code edits. Treat the spec corpus, RFCs, GitHub
+issues, roadmap docs, and benchmark evidence as the contract before making code
+changes.
 
 ## Current State
 
-As of 2026-05-19, CodeLeWM has a real package surface but does not yet have a
-meaningful first training result.
+As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
+first-results smoke loop, and one completed scaled Hugging Face Jobs run.
 
 Implemented foundations:
 
 - `codelewm.data`: source adapters, filtering, license decisions, split and
   dedup policy, CodeState extraction, action extraction, staging and pack
-  helpers, and dataset manifests.
+  helpers, dataset manifests, and a public CommitPackFT Python shard config.
 - `codelewm.model`: transition interfaces, action encoders, predictor modules,
-  transition energy, objective helpers, retrieval-loss gate, and checkpoint
-  compatibility manifests.
+  transition energy, objective helpers, retrieval-loss gate, checkpoint
+  compatibility manifests, and checkpoint trust gates.
 - `codelewm.training`: manifest-backed training runner, resume compatibility,
-  default configs, a CPU smoke executor, and a package-native torch executor
-  over packed CodeLeWM transition batches.
+  default and scaled configs, CPU smoke executor, and a package-native torch
+  executor over packed CodeLeWM transition batches.
 - `codelewm.eval`: retrieval metrics, hard-negative pools, required baselines,
-  action-view policy, collapse diagnostics, and patch-surprise reports.
-- `codelewm.harness`: package CLI entry point with landed `score`, `rerank`,
-  `train`, `eval retrieval`, `eval surprise`, `index`, `manifest verify`, and
-  `secret-scan` commands.
+  action-view policy, collapse diagnostics, action ablation, surprise reports,
+  and scorer-quality reports.
+- `codelewm.harness`: package CLI entry point with `dataset build`, `dataset
+  pack`, `train`, `eval retrieval`, `eval ablation`, `eval surprise`, `eval
+  scorer-quality`, `index`, `score`, `rerank`, `manifest verify`, and
+  `secret-scan`.
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
 
-Current first-results evidence:
+Current evidence:
 
-- `scripts/first-results` runs the local dataset build, pack, torch train,
-  retrieval eval, surprise eval, index build, manifest verification, report
-  rendering, and secret scan loop.
-- `docs/benchmark/FIRST_RESULTS.md` records the resulting smoke evidence. It
-  does not make a research-quality learning claim: text-action ties the required
-  retrieval baselines on the one-query fixture, and surprise decoy coverage is
-  intentionally called out as insufficient.
+- `scripts/first-results` runs the local build, pack, torch train, retrieval,
+  surprise, index, manifest verification, report rendering, and secret scan
+  loop. `docs/benchmark/FIRST_RESULTS.md` is smoke evidence only.
+- The scaled HF Jobs run `codelewm-scaled-20260520-9699b53` completed on job
+  `6a0d43c92dc5b1243da50bba` from source SHA
+  `9699b5309e43a3278f272663ef60cda23040d92a`.
+- Private HF artifacts were published to `abdelstark/codelewm-public-shard`,
+  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`, then
+  downloaded with `hf download` and verified locally.
+- `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-scaled-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-scaled-model-2026-05-20.md` are the artifact-backed
+  record for that run.
 
-Missing for scaled meaningful results:
+Current blocker:
 
-- A bounded public-safe shard with enough held-out examples to support
-  non-trivial random, lexical, no-action, shuffled-action, and surprise-decoy
-  comparisons.
-- Release and publishing automation that can build, verify, and publish package
-  artifacts without weakening optional-runtime boundaries.
+- The scaled pipeline is proven, but the first scaled checkpoint is not a
+  positive action-conditioned quality result.
+- Text-action beats random, shuffled-action, and lexical baselines, but loses
+  to no-action on headline retrieval: Recall@1 `0.371` and MRR `0.472984`
+  versus no-action Recall@1 `0.459` and MRR `0.546116`.
+- Public model-quality claims remain blocked until a follow-up run passes an
+  explicit action-use gate or the release is deliberately framed as a
+  negative/diagnostic artifact.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -56,8 +68,8 @@ truth for CodeLeWM's code-edit training path.
 Before editing, read:
 
 - `SPEC.md`
-- The relevant file under `docs/spec/`
-- The relevant RFC under `docs/rfcs/`
+- the relevant file under `docs/spec/`
+- the relevant RFC under `docs/rfcs/`
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
 - `CONTRIBUTING.md`
@@ -65,6 +77,13 @@ Before editing, read:
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
 or reports are touched, also read `docs/spec/06-security.md` and
 `docs/spec/05-observability.md`.
+
+If Hugging Face Jobs, ml-intern, publication, downloaded-artifact validation, or
+training recipes are touched, also read:
+
+- `docs/operations/HF_ML_INTERN_TRAINING.md`
+- `docs/training/SCALED_TRAINING_RUNBOOK.md`
+- `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`
 
 ## Work Rules
 
@@ -78,26 +97,31 @@ or reports are touched, also read `docs/spec/06-security.md` and
   effort artifact writes.
 - Every published artifact must be schema-versioned, finite, JSON-native where
   applicable, checksum-verifiable, and secret-scanned.
+- Do not print, commit, paste, or summarize Hugging Face token values. Treat
+  `.env` as local secret state.
 
 ## Implementation Order
 
-Use GitHub issues as the authoritative queue. The intended order starts with:
+Use GitHub issues as the authoritative queue. The closed #109 through #122 and
+#137 through #138 issues are completed evidence, not the next queue.
 
-1. #109 Migrate dependency management and CI to `uv`.
-2. #110 Add dataset build CLI.
-3. #111 Add dataset pack CLI and a tiny committed fixture dataset.
-4. #112 Wire a concrete package-native training executor.
-5. #113 Expose `codelewm train`.
-6. #114 and #115 expose retrieval and surprise evaluation CLI commands.
-7. #116 Build transition indexes and connect retrieval priors to scoring.
-8. #117 Generate the first-results report from reproducible commands.
-9. #118 through #122 scale the dataset, training, ablations, reports, and cards.
-10. #123 through #126 harden publishing, release automation, docs, and final
-   artifact freeze.
+Current completion order:
+
+1. #151 add no-action dominance diagnostics and claim gates.
+2. #152 add action-discriminative shard diagnostics and hard negatives.
+3. #153 add action-use objective and scaled sweep configs.
+4. #154 run the follow-up HF Jobs action-use training, publication, download,
+   inference, and eval cycle through the `hf` CLI.
+5. #123 add package build and publishing gates.
+6. #124 add dependency audit and provenance evidence.
+7. #125 refresh public docs against the scaled evidence and claim boundary.
+8. #126 run the final artifact freeze and release checklist.
+
+Tracking issue #150 owns the action-conditioned scaled-result milestone.
 
 ## Validation
 
-Current lightweight validation after the `uv` migration:
+Current lightweight validation:
 
 ```bash
 uv sync --group dev
@@ -106,8 +130,18 @@ uv run python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|afte
 uv run codelewm --help
 ```
 
-First-results smoke work is complete when `uv run scripts/first-results
---overwrite`, artifact verification, secret scanning, retrieval baselines,
-surprise metrics, and the benchmark report all pass from a clean checkout.
-Scaled research work remains separate until a larger public-safe shard supports
-non-trivial baseline and decoy comparisons.
+HF Jobs orchestration must use the `hf` CLI for launch, monitoring, logs, stats,
+download, and local verification:
+
+```bash
+hf auth whoami
+CODELEWM_HF_JOBS_DRY_RUN=1 uv run scripts/hf-launch-codelewm-job
+hf jobs inspect <job-id>
+hf jobs logs <job-id>
+hf jobs stats <job-id>
+hf download ...
+```
+
+Do not mark the project complete unless the release-candidate artifacts can be
+downloaded from Hugging Face, verified locally, and either pass the action-use
+claim gate or explicitly document a negative/diagnostic claim boundary.

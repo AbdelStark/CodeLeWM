@@ -5,11 +5,14 @@ first-results smoke loop to a Hugging Face Hub-backed training, publication, and
 evaluation run. It is designed to be usable by a human operator or by
 `ml-intern` in headless mode.
 
-Current status: the smoke path is ready for dry-run validation. The scaled path
-uses the source-acquisition gate from #118 and the training config/runbook
-contract in `docs/training/SCALED_TRAINING_RUNBOOK.md`. It must still wait for
-the remaining ablation, quality-report, and card gates before publishing a
-public claim. The full remote execution and publication run is tracked by #138.
+Current status: the smoke path, scaled HF Jobs path, private publication path,
+and downloaded-artifact verification path are implemented. The first scaled run
+is documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; it is useful
+systems evidence but not a positive action-conditioning claim because the
+no-action baseline beats text-action on headline retrieval. The active
+completion tracker is #150, with #151 through #154 closing the action-use gap
+before release gates #123 through #126. Training config details remain in
+`docs/training/SCALED_TRAINING_RUNBOOK.md`.
 
 ## Upstream Contract
 
@@ -53,8 +56,9 @@ CODELEWM_HF_RESULTS_REPO_ID=abdelstark/codelewm-runs
 CODELEWM_HF_PRIVATE=1
 ```
 
-Keep those repositories private until the public source/license gate in #118 and
-the card population work in #122 are complete.
+Keep those repositories private until the action-use claim gate, release
+checklist, public source/license gate, card evidence, manifest verification,
+secret scan, and checkpoint-trust checks all pass.
 
 Job defaults:
 
@@ -186,8 +190,10 @@ hf jobs stats <job-id>
 
 ## Remote Scaled Training And Publication
 
-Run this only after #118 and #119 have landed, the public shard config exists on
-the published ref, and the remaining issue gates allow spending GPU compute.
+The command below is the baseline scaled profile used by #138. For the follow-up
+action-use run in #154, keep the same HF CLI boundary but replace
+`CODELEWM_TRAIN_CONFIG` with the primary action-use config produced by #153 when
+it differs from the original A10G baseline.
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -292,17 +298,25 @@ uv run codelewm score \
 
 ## Issue Gate
 
-Use the existing ordered backlog as the gate for a meaningful remote run:
+Completed gates that must be preserved:
 
-- #118 must produce a public source acquisition report and license gate.
-- #119 must add scaled dataset/training configs and update this runbook if the
-  command shape changes.
-- #120 must run the action-view ablation suite.
-- #121 must produce scorer calibration and reranker quality evidence.
-- #122 must fill dataset and model cards from the actual artifacts.
-- #123 through #126 remain release gates after the model/data artifacts exist.
-- #138 tracks the actual HF Jobs scaled run, private publication, download
-  verification, inference smoke, and final evidence update.
+- #118 produced the public source acquisition report and license gate.
+- #119 added scaled dataset/training configs and this runbook.
+- #120 added the action-view ablation suite.
+- #121 added scorer calibration and reranker quality evidence.
+- #122 filled dataset and model cards from real artifacts.
+- #138 executed the first scaled HF Jobs run, private publication, download
+  verification, inference, and eval loop.
 
-Do not flip repositories public, update public claims, or mark a result as
-meaningful until those gates are satisfied by artifact-backed evidence.
+Active gates for the next meaningful remote run:
+
+- #151 must add no-action dominance diagnostics and a claim gate.
+- #152 must add action-discriminative shard diagnostics and hard negatives.
+- #153 must add the action-use objective/intervention and scaled sweep configs.
+- #154 must execute the follow-up HF Jobs run and verify downloaded artifacts.
+- #123 through #126 remain release gates after the claim boundary is clear.
+
+Do not flip repositories public, update public positive claims, or mark a result
+as meaningful until those gates are satisfied by artifact-backed evidence. If the
+follow-up run still loses to no-action, keep repositories private or frame the
+release explicitly as a negative/diagnostic artifact.

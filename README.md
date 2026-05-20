@@ -61,21 +61,26 @@ The current package includes:
   gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
-The CodeLeWM-specific runtime is landing in stages. Manifest-backed training,
-the CPU smoke training path, the package-native torch training executor,
-`codelewm train`, model-backed `codelewm eval retrieval`, hard-negative
-sampling, baseline validation, `codelewm eval ablation`, model-backed
-`codelewm eval surprise`, a
-train-split `codelewm index` artifact path, index-backed retrieval priors for
-scoring/reranking, scorer/reranker quality reports, manifest verification, secret scanning, `uv` dependency
-management, and pull-request CI are implemented. The reproducible first-results
-runner now writes `docs/benchmark/FIRST_RESULTS.md` from actual local artifacts.
-That report is smoke evidence only: on the tiny fixture, text-action ties the
-required baselines and surprise evaluation lacks enough decoy coverage for a
-research-quality claim. Core harness commands can write local JSONL logs with
-redaction via `--log-jsonl`. Root `train.py`, `eval.py`, and the existing Hydra
-configs are inherited from the original LeWorldModel seed and are kept for
-compatibility while the package runtime continues to replace them.
+The CodeLeWM-specific runtime is implemented through a complete first scaled HF
+Jobs loop: manifest-backed training, the CPU smoke path, the package-native
+torch executor, `codelewm train`, model-backed retrieval/surprise/ablation
+evaluation, a train-split `codelewm index` artifact path, index-backed retrieval
+priors for scoring/reranking, scorer/reranker quality reports, manifest
+verification, secret scanning, `uv` dependency management, pull-request CI, HF
+Jobs launch scripts, private HF artifact publication, and downloaded-artifact
+verification are all present.
+
+The reproducible local first-results runner writes
+`docs/benchmark/FIRST_RESULTS.md` from actual local artifacts. The first scaled
+HF report lives at `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. That scaled
+run proves the systems path, but it is not a positive action-conditioned
+quality claim: text-action beats random, shuffled-action, and lexical baselines
+but loses to no-action on headline retrieval. The remaining research gap is an
+action-use remediation pass tracked by #150 through #154. Core harness commands
+can write local JSONL logs with redaction via `--log-jsonl`. Root `train.py`,
+`eval.py`, and the existing Hydra configs are inherited from the original
+LeWorldModel seed and are kept for compatibility while the package runtime
+continues to replace them.
 
 ## Core Concepts
 

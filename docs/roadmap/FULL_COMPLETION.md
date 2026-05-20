@@ -1,236 +1,276 @@
 # Full Completion Roadmap
 
-Last updated: 2026-05-19
+Last updated: 2026-05-20
 
-This roadmap tracks the work from the current pre-alpha package to a meaningful
-first training result, then to a publishable research artifact. GitHub issues
-remain the source of truth for implementation state; this document explains the
-order, acceptance boundary, and remaining risk.
+This roadmap tracks the remaining path from the current scaled systems result to
+a claim-eligible CodeLeWM research artifact. GitHub issues remain the source of
+truth for implementation state; this document explains the order, acceptance
+boundary, and remaining risk.
 
-The next implementation-run prompt lives in
-`docs/roadmap/NEXT_GOAL_PROMPT.md`.
+The next executable `/goal` prompt lives in
+`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
 
 ## Project Status
 
-The repository is past pure specification. The package contains data contracts,
-model components, training-run manifests, CPU smoke training, evaluation
-contracts, scoring/reranking harness commands, observability, security gates,
-CI, and release templates.
+The repository is past pure specification and past local smoke evidence. The
+package contains data contracts, model components, manifest-backed training,
+evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
+observability, security gates, CI, release templates, a local first-results
+smoke loop, and one completed scaled HF Jobs run.
 
-The repository now has a reproducible first-results smoke report. The landed
-tiny path can build, pack, train the package-native torch model, emit retrieval
-and surprise reports, build a transition index, verify manifests, run a secret
-scan, and regenerate `docs/benchmark/FIRST_RESULTS.md` through
-`scripts/first-results`.
+Completed evidence:
 
-The first report does not establish a research-quality learning result. On the
-tiny fixture, text-action ties the required retrieval baselines and surprise
-evaluation has only mutation decoy coverage. The remaining research work is to
-scale to a bounded public-safe shard with enough held-out examples for meaningful
-baseline and decoy comparisons.
+- `scripts/first-results` regenerates the local smoke evidence in
+  `docs/benchmark/FIRST_RESULTS.md`.
+- HF Jobs run `codelewm-scaled-20260520-9699b53` completed on job
+  `6a0d43c92dc5b1243da50bba`.
+- Private HF repositories contain the dataset pack, model checkpoint, and run
+  evidence under the documented run paths.
+- The private artifacts were downloaded with `hf download`, verified locally,
+  and rerun through retrieval, ablation, surprise, scorer-quality, score, and
+  rerank checks.
+- `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md` and the scaled dataset/model
+  cards are the artifact-backed report for that run.
+
+Current blocker:
+
+- The scaled run is a meaningful systems result but not a positive
+  action-conditioned model-quality result.
+- Text-action beats random, shuffled-action, and lexical baselines, but
+  no-action is stronger on headline retrieval: text-action Recall@1 `0.371`,
+  MRR `0.472984`; no-action Recall@1 `0.459`, MRR `0.546116`.
+- The next project milestone is not another infrastructure pass. It is an
+  action-use remediation pass that produces a claim-eligible follow-up run or an
+  explicit negative/diagnostic release boundary.
 
 Current landed CLI commands:
 
-- `codelewm score`
-- `codelewm rerank`
-- `codelewm manifest verify`
-- `codelewm secret-scan`
 - `codelewm dataset build`
 - `codelewm dataset pack`
 - `codelewm train`
 - `codelewm eval retrieval`
+- `codelewm eval ablation`
 - `codelewm eval surprise`
+- `codelewm eval scorer-quality`
 - `codelewm index`
+- `codelewm score`
+- `codelewm rerank`
+- `codelewm manifest verify`
+- `codelewm secret-scan`
 
-No additional first-results CLI command is currently missing. The remaining
-work is scaled data acquisition, ablations, report/card population, and release
-automation.
+## Meaningful First Scaled Result
 
-## Meaningful First Training Result
-
-A first result is meaningful only when it is reproducible from a clean checkout
-and produces evidence for the actual research question:
+A first scaled result is meaningful only when it is reproducible from a clean
+checkout and answers the actual research question:
 
 Can a compact JEPA-style latent transition model learn action-conditioned
 structure from Python edit trajectories?
 
 Minimum success criteria:
 
-- A local raw edit fixture or bounded public shard builds into a verified
-  `codelewm.dataset.v1` artifact.
-- The dataset is packed into the training format with deterministic splits,
-  leakage checks, license evidence, row counts, and SHA-256 checksums.
+- A bounded public-safe shard builds into a verified `codelewm.dataset.v1`
+  artifact with source acquisition, license, split, leakage, row-count, and
+  checksum evidence.
+- The dataset is packed into deterministic train/validation/test artifacts.
 - `codelewm train` trains the package-native CodeLeWM transition model, writes a
   `codelewm.training_run.v1` manifest, writes trusted checkpoint manifests, and
   records finite metrics.
-- Collapse diagnostics pass configured minimum gates or emit a kill report that
-  blocks the result from being called successful.
+- Collapse diagnostics pass configured gates or emit a kill report that blocks
+  success claims.
 - Retrieval evaluation reports random, lexical, no-action, shuffled-action,
-  text-action, abstract-action, and patch-action diagnostic rows where
-  applicable.
+  text-action, abstract-action when available, and patch-action diagnostic rows
+  where applicable.
+- Retrieval or ablation artifacts include explicit text-action versus no-action
+  deltas and a machine-readable action-use claim gate.
 - Surprise evaluation scores true after-states against random, same-file,
-  mutation, and action-cluster decoys.
+  mutation, and action-cluster decoys where source coverage allows.
 - `codelewm index` builds a verified transition index, and the scorer/reranker
   can use its retrieval prior without changing the public schema.
-- `docs/benchmark/FIRST_RESULTS.md` records exact commands, config hash, seed,
-  source git SHA, metrics, caveats, and claim checklist.
-- `codelewm manifest verify` and `codelewm secret-scan` pass over every
-  first-results artifact selected for publication.
+- Benchmark docs, dataset cards, and model cards record exact commands, config
+  paths, seed, source git SHA, run ID, job ID when applicable, metrics, caveats,
+  and claim checklist.
+- `codelewm manifest verify` and `codelewm secret-scan` pass over every artifact
+  selected for publication.
+- Published private artifacts can be downloaded with `hf download` and verified
+  locally from a clean checkout.
 
-## Roadmap Phases
+For a positive public action-conditioning claim, text-action must beat the
+no-action baseline on the agreed headline metrics. If it does not, the project
+can still publish a negative/diagnostic artifact, but all release docs must keep
+that claim boundary explicit.
+
+## Completed Phases
 
 ### Phase 1: Dependency And Runtime Foundation
 
-Move the project to a locked `uv` workflow. Split dependencies into explicit
-groups so lightweight CI, data packing, training, evaluation, docs, and release
-jobs install only what they need. CI should use the same commands documented for
-contributors.
+Status: complete.
 
-Deliverables:
+Delivered:
 
-- `uv.lock`
-- dependency groups for `dev`, `data`, `train`, `eval`, `docs`, and `release`
-- CI using `uv sync` / `uv run`
-- docs updated away from pip-only install guidance
+- `uv` workflow and lockfile
+- dependency groups for development and optional runtime paths
+- CI using `uv`
+- contributor and usage docs
 
 ### Phase 2: Dataset CLI
 
-Expose the existing source adapters, filters, state/action extraction, split and
-dedup policy, and pack helpers as real CLI commands.
+Status: complete.
 
-Deliverables:
+Delivered:
 
 - `codelewm dataset build`
 - `codelewm dataset pack`
-- a tiny committed first-results dataset fixture
-- manifest verification and contract tests for both commands
+- committed tiny first-results fixture
+- manifest verification and contract tests
+- public CommitPackFT Python shard config and source-acquisition policy
 
 ### Phase 3: Package-Native Training
 
-Replace fixture-only training with a concrete executor that consumes CodeLeWM
-transition batches and trains the package model modules through the
-manifest-backed runner.
+Status: complete for baseline objective, incomplete for action-use remediation.
 
-Deliverables:
+Delivered:
 
 - torch-backed transition dataset loader
 - training executor for text and abstract action views
-- SIGReg/collapse diagnostics integrated into the run report
+- SIGReg/collapse diagnostics integrated into run reports
 - trusted checkpoint manifests
 - resume compatibility tests
 - `codelewm train`
+- scaled CPU/MPS/A10G configs
 
-### Phase 4: Evaluation And Indexing
+Remaining: #153 action-use objective and scaled sweep configs.
 
-Turn the evaluation and transition-index APIs into reproducible CLI workflows
-that consume first-results artifacts.
+### Phase 4: Evaluation, Indexing, And Harness
 
-Deliverables:
+Status: complete for baseline reports, incomplete for claim gating.
+
+Delivered:
 
 - `codelewm eval retrieval`
+- `codelewm eval ablation`
 - `codelewm eval surprise`
+- `codelewm eval scorer-quality`
 - `codelewm index`
 - scorer/reranker retrieval-prior integration
-- headline baseline validation gates
-- report and manifest verification tests
+- downloaded-artifact score/rerank smoke checks
+
+Remaining: #151 no-action dominance diagnostics and claim gates, #152
+action-discriminative hard negatives, and #154 follow-up verification.
 
 ### Phase 5: First Results
 
-Run the complete local loop and publish the first honest benchmark report in the
-repo.
+Status: complete for smoke evidence.
 
-Deliverables:
+Delivered:
 
-- `scripts/first-results` or equivalent checked-in runner
+- `scripts/first-results`
 - first-results config bundle
 - generated artifact manifest inventory
 - `docs/benchmark/FIRST_RESULTS.md`
-- caveat section that separates smoke evidence from research evidence
+- caveat section separating smoke evidence from research evidence
 
-Status: complete for smoke evidence through `scripts/first-results` and
-`docs/benchmark/FIRST_RESULTS.md`; not complete for scaled research evidence.
+### Phase 6: Scaled HF Artifact
 
-### Phase 6: Scaled Research Artifact
+Status: complete as systems evidence, blocked as positive action-conditioning
+evidence.
 
-Move beyond the tiny first-results fixture to a bounded, documented, public-safe
-dataset and ablation suite.
-
-Deliverables:
+Delivered:
 
 - public source acquisition and license-gate report
 - scaled training configs
-- ablations for text action, abstract action, no-action, shuffled-action,
-  patch-action diagnostic, retrieval loss, and collapse settings
-- calibration and scorer/reranker quality report
-- dataset and model cards filled from real artifacts
+- action-view ablation suite
+- scorer/reranker quality report
+- HF Jobs ml-intern automation
+- private dataset/model/results publication
+- downloaded-artifact verification
+- scaled benchmark report and cards
 
-### Phase 7: Publishing And Release
+Blocker: no-action baseline beats text-action on headline retrieval.
 
-Package and publish the artifact without weakening the security and
-observability contracts.
+## Remaining Phases
+
+### Phase 7: Action-Use Remediation
+
+Goal: make action use measurable, train against the failure mode, and rerun the
+scaled HF loop from private published artifacts.
 
 Deliverables:
 
-- buildable wheel and sdist
-- TestPyPI/PyPI release workflow or documented manual gate
-- release evidence bundle
-- dependency audit and supply-chain report
-- final release checklist with all manifests verified
+- no-action dominance diagnostics and machine-readable claim gates (#151)
+- action-discriminative shard diagnostics and hard negatives (#152)
+- action-use objective/intervention and scaled sweep configs (#153)
+- follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
+  evaluated through the `hf` CLI (#154)
+
+### Phase 8: Publishing And Release
+
+Goal: package and publish only after the evidence boundary is clear.
+
+Deliverables:
+
+- wheel/sdist build and package publishing gates (#123)
+- dependency audit and provenance evidence (#124)
+- public docs refreshed against the scaled evidence and claim boundary (#125)
+- final artifact freeze, release checklist, and release notes (#126)
 
 ## Ordered Backlog
 
-Issue numbers are assigned in GitHub. Keep this table in implementation order
-and update it when issue scope changes.
+Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #109 | build: migrate dependency management and CI to uv | v0.2 First Results Foundation | all first-results runtime work |
-| 2 | #110 | data: expose dataset build CLI | v0.2 First Results Foundation | dataset pack, training |
-| 3 | #111 | data: expose dataset pack CLI and tiny first-results fixture | v0.2 First Results Foundation | training, eval |
-| 4 | #112 | train: add package-native torch training executor | v0.2 First Results Foundation | train CLI, first result |
-| 5 | #113 | train: expose codelewm train CLI | v0.2 First Results Foundation | eval, first result |
-| 6 | #114 | eval: expose retrieval evaluation CLI | v0.2 First Results Foundation | benchmark report |
-| 7 | #115 | eval: expose surprise evaluation CLI | v0.2 First Results Foundation | benchmark report |
-| 8 | #116 | harness: expose index CLI and retrieval-prior scoring | v0.2 First Results Foundation | scorer evidence |
-| 9 | #117 | results: add reproducible first-results runner and report | v0.2 First Results Foundation | scaled artifact |
-| 10 | #118 | data: document and gate public source acquisition | v0.3 Scaled Research Artifact | scaled training |
-| 11 | #119 | train: add scaled training configs and runbook | v0.3 Scaled Research Artifact | ablations |
-| 12 | #120 | eval: add action-view ablation suite | v0.3 Scaled Research Artifact | public claims |
-| 13 | #121 | eval: add scorer calibration and reranker quality report | v0.3 Scaled Research Artifact | release claims |
-| 14 | #122 | docs: fill dataset and model cards from artifacts | v0.3 Scaled Research Artifact | release |
-| 15 | #123 | release: add uv build and package publishing gates | v0.4 Publishing | release |
-| 16 | #124 | release: add dependency audit and provenance evidence | v0.4 Publishing | release |
-| 17 | #125 | docs: refresh public docs against first-results evidence | v0.4 Publishing | release |
-| 18 | #126 | release: run final artifact freeze and checklist | v1.0 Public Research Release | v1.0 |
+| 1 | #151 | eval: add no-action dominance diagnostics and claim gates | Action-Use Remediation | public claims, follow-up run |
+| 2 | #152 | data: add action-discriminative shard diagnostics and hard negatives | Action-Use Remediation | training sweep, evaluation gate |
+| 3 | #153 | train: add action-use objective and scaled sweep configs | Action-Use Remediation | follow-up HF run |
+| 4 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
+| 5 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
+| 6 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
+| 7 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
+| 8 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
+
+Completed backlog base:
+
+- #109 through #122 closed the first-results and scaled-artifact implementation
+  path.
+- #137 added HF Jobs and ml-intern automation.
+- #138 executed the first scaled HF Jobs run, private publication,
+  downloaded-artifact verification, inference, and evals.
+- #150 tracks the remaining action-conditioned scaled-result and release
+  readiness milestone.
 
 ## Tracking Issue Mapping
 
-Use the existing subsystem tracking issues instead of creating duplicate
-trackers. The closed v0.1 foundation children remain in those bodies as completed
-history; the open full-completion children are listed beneath them.
+Use the existing subsystem tracking issues and the new completion tracker
+instead of creating duplicate trackers.
 
-- #3 Edit transition dataset
-- #7 Training runtime
-- #8 Retrieval and surprise evaluation
-- #9 Harness scorer and reranker
-- #10 Observability and artifact lineage
-- #11 Security and licensing boundaries
-- #12 Public API and packaging
-- #13 Release CI and governance
+- #3 Edit transition dataset: active child #152.
+- #7 Training runtime: active child #153.
+- #8 Retrieval and surprise evaluation: active children #151, #152, #154.
+- #9 Harness scorer and reranker: active child #154.
+- #10 Observability and artifact lineage: active children #154 and #126.
+- #11 Security and licensing boundaries: active children #124 and #126.
+- #12 Public API and packaging: active children #123 and #125.
+- #13 Release CI and governance: active children #150 and #123 through #126.
+- #150 Action-conditioned scaled result and release readiness: active children
+  #151 through #154 and release gates #123 through #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
-and the release checklist no longer lists a blocker for that subsystem.
+or explicitly superseded and the release checklist no longer lists a blocker for
+that subsystem.
 
 ## Residual Risks
 
-- The current default dependency set pulls heavy inherited runtime packages into
-  the base install. The `uv` migration must correct this before first-results
-  work expands CI.
-- The CPU smoke path validates runner contracts but does not prove the model can
-  learn the CodeLeWM task.
-- The first-results report is now artifact-backed, but it intentionally records
-  a tiny-fixture baseline tie rather than a learning claim.
+- The scaled result currently fails the core action-conditioning claim gate
+  because no-action beats text-action.
+- The current public shard may not contain enough action-discriminative pressure
+  for text actions to matter without targeted hard negatives or data filtering.
+- The default objective may reward state priors more than action-conditioned
+  transition structure.
+- Scorer-quality evidence is still small and should remain a gate, not a broad
+  calibration claim.
+- Same-file and action-cluster surprise decoy counts are lower than random and
+  mutation decoys on the first scaled shard.
 - Root legacy scripts can confuse contributors; public docs must keep the
   package-native path clearly marked as authoritative.
-- First-result claims must stay narrow until scaled ablations show reliable
-  action-conditioned improvement.
+- Release repositories must remain private until claim wording, provenance,
+  package gates, manifest verification, and secret scans all pass.

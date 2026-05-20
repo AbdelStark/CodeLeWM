@@ -1,20 +1,28 @@
 # HF ml-intern `/goal` Prompt
 
 Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must close the remaining evidence gap and orchestrate the
+`ml-intern` run that must close the remaining action-use gap and orchestrate the
 remote training/publication loop through the Hugging Face CLI.
 
 ```text
-/goal Complete CodeLeWM's path to a meaningful first scaled training result.
-Use Hugging Face Hub infrastructure for remote execution, private artifact
-publication, download verification, inference, and evaluation.
+/goal Complete CodeLeWM's remaining path to a claim-eligible first scaled
+training result and release-ready artifact set. Use Hugging Face Hub
+infrastructure for remote execution, private artifact publication, download
+verification, inference, and evaluation.
 
-You are operating in the CodeLeWM repository. The current gap is not more smoke
-infrastructure. The remaining gap is scaled, public-safe, artifact-backed
-evidence: source-acquisition proof, scaled training configs, action-view
-ablations, scorer/reranker quality evidence, populated dataset/model cards, and
-one successful HF Jobs run whose private artifacts can be downloaded and
-verified from a clean checkout.
+You are operating in the CodeLeWM repository. The current gap is not smoke
+infrastructure and not first HF Jobs automation. Issues #118, #119, #120, #121,
+#122, #137, and #138 are closed. The completed scaled run
+`codelewm-scaled-20260520-9699b53` / job `6a0d43c92dc5b1243da50bba` published
+private artifacts and verified them after `hf download`, but it is not a
+positive action-conditioning result because text-action lost to no-action on the
+headline retrieval metrics.
+
+The remaining gap is action-use evidence: diagnostics and claim gates around
+no-action dominance, action-discriminative shard/hard-negative support, a
+training intervention that forces useful action conditioning, a follow-up HF
+Jobs run from a merged SHA, downloaded-artifact inference/evals, then release
+packaging/provenance/docs/freeze gates.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
@@ -22,11 +30,15 @@ prompt's issue status is current. Run:
 - `git status --short`
 - `git branch --show-current`
 - `git fetch origin`
-- `gh issue view 118`
-- `gh issue view 119`
-- `gh issue view 120`
-- `gh issue view 121`
-- `gh issue view 122`
+- `gh issue view 150`
+- `gh issue view 151`
+- `gh issue view 152`
+- `gh issue view 153`
+- `gh issue view 154`
+- `gh issue view 123`
+- `gh issue view 124`
+- `gh issue view 125`
+- `gh issue view 126`
 - `gh issue view 138`
 - `gh pr list --state open --search "repo:AbdelStark/CodeLeWM"`
 
@@ -40,9 +52,13 @@ Before editing or launching compute, read:
 - docs/roadmap/NEXT_GOAL_PROMPT.md
 - docs/operations/HF_ML_INTERN_TRAINING.md
 - docs/training/SCALED_TRAINING_RUNBOOK.md
+- docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md
+- docs/spec/05-observability.md
 - docs/spec/06-security.md
 - docs/spec/07-testing-strategy.md
 - docs/spec/09-release-and-versioning.md
+- docs/rfcs/RFC-0002-edit-transition-dataset.md
+- docs/rfcs/RFC-0005-model-objective-and-collapse-diagnostics.md
 - docs/rfcs/RFC-0006-training-runtime-and-configs.md
 - docs/rfcs/RFC-0007-retrieval-and-surprise-evaluation.md
 - docs/rfcs/RFC-0008-agent-harness-scorer-reranker.md
@@ -75,16 +91,22 @@ policy-compliant `hf jobs run` command with `--secrets HF_TOKEN`, `--env`,
 
 Do not treat local-only execution as completion. Local runs are preflight only.
 
-Work in the existing issue order, skipping only issues already closed by merged
-PRs and verifying their artifacts before moving on:
+Work in this order, skipping only issues already closed by merged PRs and
+verifying their artifacts before moving on:
 
-1. #118: data: document and gate public source acquisition.
-2. #119: train: add scaled training configs and runbook.
-3. #120: eval: add action-view ablation suite.
-4. #121: eval: add scorer calibration and reranker quality report.
-5. #122: docs: fill dataset and model cards from artifacts.
-6. #138: run HF Jobs scaled training, private publication, download
-   verification, inference, and evals.
+1. #151: eval: add no-action dominance diagnostics and claim gates.
+2. #152: data: add action-discriminative shard diagnostics and hard negatives.
+3. #153: train: add action-use objective and scaled sweep configs.
+4. #154: run follow-up HF Jobs action-use training, private publication,
+   download verification, inference, and evals.
+5. #123: release: add uv build and package publishing gates.
+6. #124: release: add dependency audit and provenance evidence.
+7. #125: docs: refresh public docs against first-results evidence.
+8. #126: release: run final artifact freeze and checklist.
+
+Historical closed gates to preserve, not redo: #118 source acquisition, #119
+scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
+artifact cards, and #138 first scaled HF execution.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -93,12 +115,7 @@ commit, push, open the PR, wait for checks when available, merge after passing,
 return to main, pull latest main, and continue. Do not mix unrelated issue work
 in the same PR.
 
-If #118 or #119 is already merged, do not redo it. Verify the relevant source
-acquisition report, scaled config validation, and HF runbook commands still pass
-on the ref that will be used for `CODELEWM_HF_REF`.
-
-After #118 and #119 are merged and before spending GPU compute, verify the HF
-CLI and dry-run infrastructure:
+Before spending GPU compute, verify the HF CLI and dry-run infrastructure:
 
 hf auth whoami
 
@@ -116,12 +133,13 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-Do not launch the real scaled job until #120, #121, and #122 are merged or their
-issue bodies explicitly allow the run to proceed with known blockers recorded.
+Do not launch the real follow-up scaled job until #151, #152, and #153 are
+merged or their issue bodies explicitly allow the run to proceed with known
+blockers recorded.
 
-For the real scaled HF Jobs run, use a merged SHA or `main` for
+For the real follow-up HF Jobs run, use a merged SHA or `main` for
 `CODELEWM_HF_REF`, checked-in dataset and training configs, private publishing,
-HF CLI source prefetch, and a detached job. The first public shard candidate is
+HF CLI source prefetch, and a detached job. The current public shard source is
 `config/data/codelewm_public_shard_commitpackft_python.json`, which expects
 `bigcode/commitpackft:data/python/data.jsonl` under
 `.artifacts/hf-sources/commitpackft`. Preflight the source path first:
@@ -132,7 +150,9 @@ hf download bigcode/commitpackft \
   --local-dir .artifacts/hf-sources/commitpackft \
   --dry-run
 
-Start the run through the launcher:
+Start the run through the launcher, replacing the train config with the new
+primary action-use config from #153 if it differs from the original A10G
+baseline:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -142,7 +162,7 @@ CODELEWM_HF_PUBLISH=1 \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=<checked-in-action-use-scaled-train-config> \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -162,7 +182,7 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 
 Record the job ID, commit SHA, run ID, config paths, hardware flavor, timeout,
-repository targets, and command line in #138. If the job fails, preserve the job
+repository targets, and command line in #154. If the job fails, preserve the job
 ID, log excerpt, failure phase, and config paths in the relevant issue before
 patching. Do not relaunch blindly.
 
@@ -229,9 +249,13 @@ Update benchmark docs, dataset card, model card, and release evidence only with
 artifact-backed numbers. Every claim must name the command, data source, commit
 SHA, run ID, job ID when applicable, and artifact path that produced it.
 
-Do not call the result meaningful unless all of these are true:
+Do not call the result meaningful or claim-eligible unless all of these are
+true:
 
-- text-action improves over required baselines on held-out examples;
+- the action-use claim gate from #151 passes;
+- text-action improves over no-action on the agreed headline metrics;
+- text-action still improves over random, shuffled-action, and lexical
+  baselines;
 - action-view ablation includes completed baseline rows and explicit blocked
   rows for unavailable variants;
 - collapse gates pass;
@@ -241,7 +265,7 @@ Do not call the result meaningful unless all of these are true:
 - the published private artifacts can be downloaded with `hf download` and
   verified locally from a clean checkout.
 
-Keep Hugging Face repositories private until #122 is complete and the public
+Keep Hugging Face repositories private until #126 is complete and the public
 visibility gate is explicitly satisfied. If any prerequisite is missing or the
 result is negative, stop the public-claim path, keep repositories private, and
 open or update an evidence-backed GitHub issue with the exact blocker, job ID
@@ -249,15 +273,16 @@ when applicable, and next validation command.
 
 Completion criteria:
 
-- #118, #119, #120, #121, #122, and #138 are closed by merged PRs, or any
-  remaining one is updated with an explicit blocker that prevents completion.
-- At least one scaled HF Jobs run has a recorded job ID, commit SHA, run ID,
-  config paths, hardware flavor, timeout, and repo targets.
+- #151, #152, #153, #154, #123, #124, #125, and #126 are closed by merged PRs,
+  or any remaining one is updated with an explicit blocker that prevents
+  completion.
+- At least one follow-up scaled HF Jobs run has a recorded job ID, commit SHA,
+  run ID, config paths, hardware flavor, timeout, and repo targets.
 - Dataset, model, and results artifacts are published privately to the
   configured Hugging Face repositories.
 - Published artifacts are downloaded with `hf download` and verified locally.
 - Retrieval, action-view ablation, surprise, score, and rerank checks run from
-  downloaded checkpoint/artifacts.
+  the downloaded checkpoint/artifacts.
 - Dataset/model cards and benchmark docs reflect only verified artifacts.
 - The final response reports the HF job ID, published repo paths, validation
   commands, metrics summary, caveats, and any remaining release blockers.
