@@ -239,6 +239,18 @@ After the job succeeds, use `hf download` to fetch the published
 artifacts into a clean local artifact directory. Do not validate against the
 job's working directory. Validate the downloaded checkpoint and artifacts:
 
+```bash
+CODELEWM_HF_RUN_ID=<run-id> \
+uv run scripts/hf-verify-codelewm-run --dry-run --json
+
+CODELEWM_HF_RUN_ID=<run-id> \
+uv run scripts/hf-verify-codelewm-run --json
+```
+
+The scripted verifier is the preferred path. If it fails, preserve the failing
+command name and output before falling back to the equivalent manual commands:
+
+```bash
 hf download "$CODELEWM_HF_RESULTS_REPO_ID" \
   --repo-type dataset \
   --include "runs/<run-id>/**" \
@@ -296,6 +308,7 @@ uv run codelewm eval scorer-quality \
   --parent-manifest .artifacts/hf-download/<run-id>/results/runs/<run-id>/index/manifest.json \
   --overwrite \
   --json
+```
 
 Then run scorer and reranker smoke checks from the downloaded checkpoint and
 downloaded index. Use real examples from the downloaded result bundle when

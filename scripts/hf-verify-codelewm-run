@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Download and verify a published CodeLeWM Hugging Face run."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+SCHEMA_VERSION = "codelewm.hf_download_verification_plan.v1"
+
+
+def main(argv: list[str] | None = None) -> int:
+    _load_env_defaults(Path(".env"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-id", default=os.getenv("CODELEWM_HF_RUN_ID"))
+    parser.add_argument("--results-repo-id", default=os.getenv("CODELEWM_HF_RESULTS_REPO_ID"))
+    parser.add_argument("--model-repo-id", default=os.getenv("CODELEWM_HF_MODEL_REPO_ID"))
+    parser.add_argument("--dataset-repo-id", default=os.getenv("CODELEWM_HF_DATASET_REPO_ID"))
+    parser.add_argument("--download-root", type=Path)
+    parser.add_argument(
+        "--scorer-quality-config",
+        default=os.getenv("CODELEWM_HF_SCORER_QUALITY_CONFIG", "config/first_results/scorer_quality.json"),
+    )
+    parser.add_argument("--device", default=os.getenv("CODELEWM_HF_VERIFY_DEVICE", "cpu"))
+    parser.add_argument(
+        "--retrieval-prior-weight",
+        default=os.getenv("CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT", "1.0"),
+    )
+    parser.add_argument(
+        "--retrieval-prior-k",
+        default=os.getenv("CODELEWM_HF_RETRIEVAL_PRIOR_K", "10"),
+    )
+    parser.add_argument("--skip-download", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+
+    plan = _build_plan(args)
+    if args.dry_run:
+        return _emit(plan, json_output=args.json)
+
+    for command in plan["commands"]:
+        subprocess.run(command["argv"], check=True)
+        command["completed"] = True
+    plan["completed"] = True
+    return _emit(plan, json_output=args.json)
+
+
+def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
+    missing = [
+        name
+        for name, value in (
+            ("CODELEWM_HF_RUN_ID/--run-id", args.run_id),
+            ("CODELEWM_HF_RESULTS_REPO_ID/--results-repo-id", args.results_repo_id),
+            ("CODELEWM_HF_MODEL_REPO_ID/--model-repo-id", args.model_repo_id),
+            ("CODELEWM_HF_DATASET_REPO_ID/--dataset-repo-id", args.dataset_repo_id),
+        )
+        if not value
+    ]
+    if missing:
+        raise SystemExit(f"missing required setting(s): {', '.join(missing)}")
+
+    run_id = str(args.run_id)
+    root = args.download_root or Path(".artifacts") / "hf-download" / run_id
+    results_root = root / "results"
+    model_root = root / "model"
+    dataset_root = root / "dataset"
+    local_checks_root = root / "local-checks"
+
+    results_run = results_root / "runs" / run_id
+    dataset_pack = dataset_root / "runs" / run_id / "pack"
+    model_run = model_root / "checkpoints" / run_id
+    checkpoint = model_run / "checkpoints" / "checkpoint.pt"
+    model_manifest = model_run / "manifest.json"
+    dataset_pack_manifest = dataset_pack / "manifest.json"
+    results_build_manifest = results_run / "build" / "manifest.json"
+    results_index_manifest = results_run / "index" / "manifest.json"
+    results_index = results_run / "index"
+
+    commands: list[dict[str, Any]] = []
+    if not args.skip_download:
+        commands.extend(
+            [
+                _command(
+                    "download_results",
+                    "hf",
+                    "download",
+                    str(args.results_repo_id),
+                    "--repo-type",
+                    "dataset",
+                    "--include",
+                    f"runs/{run_id}/**",
+                    "--local-dir",
+                    str(results_root),
+                ),
+                _command(
+                    "download_model",
+                    "hf",
+                    "download",
+                    str(args.model_repo_id),
+                    "--repo-type",
+                    "model",
+                    "--include",
+                    f"checkpoints/{run_id}/**",
+                    "--local-dir",
+                    str(model_root),
+                ),
+                _command(
+                    "download_dataset_pack",
+                    "hf",
+                    "download",
+                    str(args.dataset_repo_id),
+                    "--repo-type",
+                    "dataset",
+                    "--include",
+                    f"runs/{run_id}/pack/**",
+                    "--local-dir",
+                    str(dataset_root),
+                ),
+            ]
+        )
+
+    retrieval_dir = local_checks_root / "retrieval"
+    ablation_dir = local_checks_root / "ablation"
+    surprise_dir = local_checks_root / "surprise"
+    scorer_quality_dir = local_checks_root / "scorer_quality"
+
+    commands.extend(
+        [
+            _codelewm(
+                "verify_dataset_pack",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(dataset_pack_manifest),
+                "--parent-manifest",
+                str(results_build_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "verify_model",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(dataset_pack_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "eval_retrieval",
+                "eval",
+                "retrieval",
+                "--checkpoint",
+                str(checkpoint),
+                "--data",
+                str(dataset_pack),
+                "--out",
+                str(retrieval_dir),
+                "--device",
+                str(args.device),
+                "--seed",
+                "0",
+                "--overwrite",
+                "--json",
+            ),
+            _codelewm(
+                "verify_retrieval",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(retrieval_dir / "manifest.json"),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(dataset_pack_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "eval_ablation",
+                "eval",
+                "ablation",
+                "--retrieval-artifact",
+                str(retrieval_dir / "manifest.json"),
+                "--training-artifact",
+                str(model_manifest),
+                "--out",
+                str(ablation_dir),
+                "--overwrite",
+                "--json",
+            ),
+            _codelewm(
+                "verify_ablation",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(ablation_dir / "manifest.json"),
+                "--parent-manifest",
+                str(retrieval_dir / "manifest.json"),
+                "--parent-manifest",
+                str(model_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "eval_surprise",
+                "eval",
+                "surprise",
+                "--checkpoint",
+                str(checkpoint),
+                "--data",
+                str(dataset_pack),
+                "--out",
+                str(surprise_dir),
+                "--device",
+                str(args.device),
+                "--seed",
+                "0",
+                "--overwrite",
+                "--json",
+            ),
+            _codelewm(
+                "verify_surprise",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(surprise_dir / "manifest.json"),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(dataset_pack_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "verify_index",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(results_index_manifest),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(dataset_pack_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "eval_scorer_quality",
+                "eval",
+                "scorer-quality",
+                "--config",
+                str(args.scorer_quality_config),
+                "--checkpoint",
+                str(checkpoint),
+                "--out",
+                str(scorer_quality_dir),
+                "--device",
+                str(args.device),
+                "--index",
+                str(results_index),
+                "--retrieval-prior-weight",
+                str(args.retrieval_prior_weight),
+                "--retrieval-prior-k",
+                str(args.retrieval_prior_k),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(results_index_manifest),
+                "--overwrite",
+                "--json",
+            ),
+            _codelewm(
+                "verify_scorer_quality",
+                "manifest",
+                "verify",
+                "--manifest",
+                str(scorer_quality_dir / "manifest.json"),
+                "--parent-manifest",
+                str(model_manifest),
+                "--parent-manifest",
+                str(results_index_manifest),
+                "--json",
+            ),
+            _codelewm(
+                "score_smoke",
+                "score",
+                "--before",
+                "tests/fixtures/codestate/class_method_before.py",
+                "--instruction",
+                "rewrite the accumulator update explicitly",
+                "--candidate",
+                "config/first_results/scorer_quality_candidates/true_after.py",
+                "--checkpoint",
+                str(checkpoint),
+                "--device",
+                str(args.device),
+                "--index",
+                str(results_index),
+                "--retrieval-prior-weight",
+                str(args.retrieval_prior_weight),
+                "--retrieval-prior-k",
+                str(args.retrieval_prior_k),
+                "--json",
+            ),
+            _codelewm(
+                "rerank_smoke",
+                "rerank",
+                "--before",
+                "tests/fixtures/codestate/class_method_before.py",
+                "--instruction",
+                "rewrite the accumulator update explicitly",
+                "--candidates",
+                "config/first_results/scorer_quality_candidates",
+                "--checkpoint",
+                str(checkpoint),
+                "--device",
+                str(args.device),
+                "--index",
+                str(results_index),
+                "--retrieval-prior-weight",
+                str(args.retrieval_prior_weight),
+                "--retrieval-prior-k",
+                str(args.retrieval_prior_k),
+                "--json",
+            ),
+            _codelewm("secret_scan", "secret-scan", str(root), "--json"),
+        ]
+    )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "download_root": str(root),
+        "dry_run": bool(args.dry_run),
+        "skip_download": bool(args.skip_download),
+        "completed": False,
+        "repositories": {
+            "results": args.results_repo_id,
+            "model": args.model_repo_id,
+            "dataset": args.dataset_repo_id,
+        },
+        "commands": commands,
+    }
+
+
+def _command(name: str, *argv: str) -> dict[str, Any]:
+    return {"name": name, "argv": list(argv), "completed": False}
+
+
+def _codelewm(name: str, *args: str) -> dict[str, Any]:
+    return _command(name, "uv", "run", "codelewm", *args)
+
+
+def _emit(plan: dict[str, Any], *, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(plan, indent=2, sort_keys=True))
+    else:
+        print(f"run_id: {plan['run_id']}")
+        print(f"download_root: {plan['download_root']}")
+        print(f"dry_run: {plan['dry_run']}")
+        for command in plan["commands"]:
+            print(f"{command['name']}: {_shell_join(command['argv'])}")
+    return 0
+
+
+def _shell_join(argv: list[str]) -> str:
+    import shlex
+
+    return " ".join(shlex.quote(part) for part in argv)
+
+
+def _load_env_defaults(env_file: Path) -> None:
+    if not env_file.is_file():
+        return
+    for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line.removeprefix("export ").strip()
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or not key.replace("_", "A").isalnum() or key[0].isdigit():
+            continue
+        if key in os.environ:
+            continue
+        value = value.strip()
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

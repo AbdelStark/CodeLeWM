@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import unittest
@@ -16,6 +17,7 @@ SCRIPTS = (
     ROOT / "scripts" / "hf-launch-codelewm-job",
     ROOT / "scripts" / "hf-run-codelewm-pipeline",
     ROOT / "scripts" / "hf-publish-codelewm-artifacts",
+    ROOT / "scripts" / "hf-verify-codelewm-run",
 )
 
 
@@ -62,6 +64,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "scripts/hf-launch-codelewm-job",
             "scripts/hf-run-codelewm-pipeline",
             "scripts/hf-publish-codelewm-artifacts",
+            "scripts/hf-verify-codelewm-run",
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "CODELEWM_HF_PIPELINE_MODE=scaled",
@@ -158,6 +161,57 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         self.assertIn(" -- python:3.13-bookworm bash -lc ", completed.stdout)
         self.assertIn("CODELEWM_HF_INDEX_BATCH_SIZE=64", completed.stdout)
         self.assertNotIn(" --label c ", completed.stdout)
+
+    def test_download_verifier_dry_run_is_secret_safe_and_complete(self) -> None:
+        completed = subprocess.run(
+            [
+                "uv",
+                "run",
+                "scripts/hf-verify-codelewm-run",
+                "--run-id",
+                "codelewm-test-run",
+                "--results-repo-id",
+                "owner/results",
+                "--model-repo-id",
+                "owner/model",
+                "--dataset-repo-id",
+                "owner/dataset",
+                "--dry-run",
+                "--json",
+            ],
+            cwd=ROOT,
+            check=False,
+            env={**os.environ, "HF_TOKEN": "hf_should_not_appear"},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertNotIn("hf_should_not_appear", completed.stdout)
+        self.assertNotIn("HF_TOKEN", completed.stdout)
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["schema_version"], "codelewm.hf_download_verification_plan.v1")
+        self.assertTrue(payload["dry_run"])
+        command_names = {command["name"] for command in payload["commands"]}
+        for marker in (
+            "download_results",
+            "download_model",
+            "download_dataset_pack",
+            "verify_dataset_pack",
+            "verify_model",
+            "eval_retrieval",
+            "eval_ablation",
+            "eval_surprise",
+            "verify_index",
+            "eval_scorer_quality",
+            "score_smoke",
+            "rerank_smoke",
+            "secret_scan",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, command_names)
 
 
 if __name__ == "__main__":
