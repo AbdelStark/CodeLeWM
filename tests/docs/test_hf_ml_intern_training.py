@@ -116,7 +116,9 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
 
         self.assertIn("docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md", text)
         self.assertIn("docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md", text)
-        self.assertIn("Publish HF artifacts publicly", text)
+        self.assertIn("docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md", text)
+        self.assertIn("Plan the next CodeLeWM research intervention", text)
+        self.assertIn("Do not launch compute until the new issue specifies", text)
 
     def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:
         self.assertTrue(V0_2_PLAN.is_file(), f"missing: {V0_2_PLAN}")
@@ -128,7 +130,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "Representation Gate",
             "Downstream Reranking Gate",
             "The existing HF repositories are public",
-            "action-conditioned failure does not invalidate the entire",
+            "action-conditioned failures do not invalidate the entire",
             "#167",
             "#168",
             "#169",

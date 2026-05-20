@@ -8,7 +8,7 @@ changes.
 ## Current State
 
 As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, and three completed scaled Hugging Face Jobs runs.
+first-results smoke loop, and four completed scaled Hugging Face Jobs runs.
 
 Implemented foundations:
 
@@ -68,6 +68,17 @@ Current evidence:
   `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md` are the
   artifact-backed record for the #159 run.
+- The v0.2 action-swap/inverse-action run
+  `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` completed on job
+  `6a0dea258229e585f969c808` from source SHA
+  `7c7cb0b8fe132e4819f05a77585c254267e77574`, published artifacts,
+  downloaded them with `hf download`, and verified retrieval, latent-probe,
+  ablation, surprise, scorer-quality, score, rerank, manifest, and secret-scan
+  checks locally.
+- `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md` are the
+  artifact-backed record for the v0.2 run.
 
 Current blocker:
 
@@ -81,11 +92,16 @@ Current blocker:
   `0.650` and MRR `0.708037`. Its action-use claim gate is
   `claim_allowed=false` with
   `no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action`.
+- The v0.2 action-swap/inverse-action run reaches text-action Recall@1
+  `0.263` and MRR `0.370048`, while no-action reaches Recall@1 `0.441` and
+  MRR `0.533105`. It also fails the exact-same-before and near-before
+  action-contrast margins, the latent-probe representation gate, and the
+  scaled downstream-reranking gate.
 - Public positive model-quality claims remain blocked. The project is complete
-  as public negative/diagnostic evidence unless a new research iteration is
+  as public negative/diagnostic evidence unless a new research hypothesis is
   opened for a future positive claim.
-- The v0.2 research specification lives in
-  `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md` and is tracked by #167.
+- The completed v0.2 research specification lives in
+  `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md` and was tracked by #167.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -139,9 +155,9 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. Execute the v0.2 action-use research intervention through #167 only after
-   the relevant child issue has a concrete hypothesis, config, and validation
-   gate.
+1. No active completion issue is currently required for the first public
+   evidence boundary. Future positive-claim work must open a new issue with a
+   new hypothesis, config, and validation gate.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
@@ -156,7 +172,8 @@ release-freeze checkpoint in `docs/release/RELEASE_FREEZE_2026-05-20.md`; it
 does not permit public positive action-conditioning claims.
 
 Issue #150 is the completed negative/diagnostic scaled-result milestone. Issue
-#167 owns the next v0.2 action-use and representation research iteration.
+#167 completed the v0.2 action-use and representation research iteration as
+negative/diagnostic evidence.
 
 ## Validation
 
@@ -181,8 +198,8 @@ hf jobs stats <job-id>
 hf download ...
 ```
 
-Do not relaunch #159. Job `6a0da3a08229e585f969c3f7` completed and its
-downloaded artifacts documented a negative/diagnostic claim boundary. Any future
-positive claim requires #167 or a child issue, a new research hypothesis, and
-the same HF download, manifest, eval, secret-scan, checkpoint-trust, and claim
-review gates.
+Do not relaunch #159 or #172. Job `6a0da3a08229e585f969c3f7` completed #159
+and job `6a0dea258229e585f969c808` completed #172; both downloaded artifact
+sets documented negative/diagnostic claim boundaries. Any future positive claim
+requires a new research issue, a new hypothesis, and the same HF download,
+manifest, eval, secret-scan, checkpoint-trust, and claim review gates.

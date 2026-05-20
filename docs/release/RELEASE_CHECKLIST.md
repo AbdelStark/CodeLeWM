@@ -9,9 +9,11 @@ Filled release-freeze instances:
 
 - `docs/release/RELEASE_FREEZE_2026-05-20.md` records the #126 private
   diagnostic artifact freeze. The later #159 remediation run is also
-  negative/diagnostic. HF artifact repositories may be public, but public
-  positive action-conditioning claims remain blocked until a future artifact
-  passes the action-use claim gate.
+  negative/diagnostic. The #172 v0.2 action-swap/inverse-action run is also
+  negative/diagnostic across action-use, representation, and downstream gates.
+  HF artifact repositories may be public, but public positive
+  action-conditioning claims remain blocked until a future artifact passes the
+  action-use claim gate.
 
 - Release tag: `<v0.x.y | v1.x.y>`
 - Release date (UTC): `<YYYY-MM-DD>`

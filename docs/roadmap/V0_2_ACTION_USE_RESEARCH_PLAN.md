@@ -4,6 +4,12 @@ Last updated: 2026-05-20
 
 Parent tracker: #167.
 
+Status: complete as public negative/diagnostic evidence. The #172 HF sweep ran
+`codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on job
+`6a0dea258229e585f969c808`, published public artifacts, downloaded them, and
+passed local verification. The action-use, representation, and downstream gates
+did not pass.
+
 ## Current Evidence Boundary
 
 CodeLeWM has validated a real end-to-end research pipeline: public-source data
@@ -28,12 +34,18 @@ The current model evidence is narrower:
   scorer/reranker path runs from downloaded artifacts, but the public CLI still
   reports the deterministic lightweight scorer backend plus retrieval prior, and
   the checked fixture ranks a hard negative above the true after-state.
+- The v0.2 intervention also failed the positive gates. The downloaded
+  verification reports text-action Recall@1 `0.263` and MRR `0.370048` versus
+  no-action Recall@1 `0.441` and MRR `0.533105`; exact-same-before and
+  near-before action-contrast slices do not beat the required v0.2 margins;
+  latent probes report `semantic_structure_status=unsupported`; downstream
+  readiness is blocked by the one-example scorer-quality fixture.
 
-Interpretation: the action-conditioned failure does not invalidate the entire
-latent-code-world-model direction. It invalidates the current positive claim
-that the model uses edit actions better than a before-state prior on the tested
-benchmarks. v0.2 must directly test semantic representation structure and
-downstream usefulness instead of inferring them from retrieval alone.
+Interpretation: the action-conditioned failures do not invalidate the entire
+latent-code-world-model direction. They invalidate the current positive claim
+that the tested models use edit actions better than a before-state prior on the
+tested benchmarks. v0.2 directly tested action-contrast, representation, and
+downstream gates and did not validate them.
 
 ## Research Question
 
@@ -124,6 +136,8 @@ license, manifest, secret-scan, checkpoint-trust, and claim-boundary evidence.
 
 ### Phase 1: Action-Contrast Data And Eval (#171)
 
+Status: complete.
+
 Deliver:
 
 - exact-same-before candidate pools;
@@ -136,6 +150,8 @@ Deliver:
 
 ### Phase 2: Representation Probe Suite (#168)
 
+Status: complete.
+
 Deliver:
 
 - probe CLI or eval subcommand;
@@ -145,6 +161,8 @@ Deliver:
 - stability criteria for semantic-axis claims.
 
 ### Phase 3: Action-Fusion And Objective Intervention (#170)
+
+Status: complete.
 
 Deliver:
 
@@ -159,6 +177,10 @@ Deliver:
 
 ### Phase 4: Downstream Reranking Benchmark (#169)
 
+Status: complete as a benchmark contract and one-example smoke gate. Scaled
+downstream usefulness remains blocked until at least 100 labeled examples are
+available.
+
 Deliver:
 
 - labeled candidate-ranking corpus;
@@ -171,6 +193,8 @@ Deliver:
 
 ### Phase 5: Public HF v0.2 Sweep (#172)
 
+Status: complete as a negative/diagnostic HF run.
+
 Deliver:
 
 - HF Jobs launch, logs, stats attempts, and downloads through the `hf` CLI;
@@ -178,6 +202,8 @@ Deliver:
 - downloaded-artifact local verification;
 - benchmark report, dataset card, model card, and claim checklist;
 - explicit positive/negative/diagnostic verdict.
+
+Delivered report: `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`.
 
 ## Expected Outcomes
 

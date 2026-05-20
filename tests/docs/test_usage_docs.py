@@ -102,6 +102,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md",
+            "docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md",
             "docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md",
             "text-action still loses to no-action",
             "positive action-conditioned quality claim",

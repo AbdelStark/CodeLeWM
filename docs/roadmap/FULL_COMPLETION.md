@@ -3,14 +3,16 @@
 Last updated: 2026-05-20
 
 This roadmap tracks the current completion boundary for CodeLeWM's first
-meaningful scaled training and evaluation artifact. GitHub issues remain the
+meaningful scaled training and evaluation artifacts. GitHub issues remain the
 source of truth for implementation state; this document explains what is
-complete, what claim is blocked, and what a future positive-claim research
+complete, what claims are blocked, and what a future positive-claim research
 iteration would need.
 
-The next executable `/goal` prompt lives in
-`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`. The v0.2 research intervention
-spec lives in `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
+The next research-planning `/goal` prompt lives in
+`docs/roadmap/NEXT_GOAL_PROMPT.md`. The v0.2 HF/ml-intern prompt in
+`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
+completed #172 run. The v0.2 research intervention spec lives in
+`docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
 
 ## Project Status
 
@@ -18,7 +20,7 @@ The repository is past pure specification and past local smoke evidence. The
 package contains data contracts, model components, manifest-backed training,
 evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
 observability, security gates, CI, release templates, a local first-results
-smoke loop, and three completed scaled HF Jobs runs.
+smoke loop, and four completed scaled HF Jobs runs.
 
 Completed evidence:
 
@@ -49,10 +51,21 @@ Completed evidence:
   then the artifacts were downloaded with `hf download` and verified locally.
 - `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md` and the
   paired retrieval dataset/model cards are the artifact-backed report for #159.
+- The v0.2 action-swap/inverse-action run
+  `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` completed as HF Jobs job
+  `6a0dea258229e585f969c808` from source
+  `7c7cb0b8fe132e4819f05a77585c254267e77574` with
+  `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`,
+  `a10g-small`, and a `24h` timeout. It published artifacts to
+  `abdelstark/codelewm-public-shard`,
+  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`,
+  then the artifacts were downloaded with `hf download` and verified locally.
+- `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md` and the paired
+  v0.2 dataset/model cards are the artifact-backed report for #172.
 
 Current blocker:
 
-- All three scaled runs are meaningful systems evidence, but none is a positive
+- All four scaled runs are meaningful systems evidence, but none is a positive
   action-conditioned model-quality result.
 - The #154 action-use run beats random, shuffled-action, and lexical baselines,
   but no-action is stronger on headline retrieval: text-action Recall@1
@@ -60,12 +73,18 @@ Current blocker:
 - The #159 margin+retrieval run improves text-action retrieval to Recall@1
   `0.597`, MRR `0.674500`, but no-action is still stronger: Recall@1 `0.650`,
   MRR `0.708037`. The claim gate is `claim_allowed=false`.
+- The v0.2 action-swap/inverse-action run reaches text-action Recall@1
+  `0.263`, MRR `0.370048`, while no-action reaches Recall@1 `0.441`,
+  MRR `0.533105`. It also fails the exact-same-before and near-before
+  action-contrast margins, the latent-probe representation gate, and the
+  scaled downstream-reranking gate.
 - The private diagnostic release-freeze gate is closed by #126 and recorded in
   `docs/release/RELEASE_FREEZE_2026-05-20.md`.
 - The implementation milestone is complete as public negative/diagnostic
-  evidence. Public positive action-conditioning claims remain blocked. The next
-  research iteration is #167 and
-  `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
+  evidence. Public positive action-conditioning, semantic latent-axis, and
+  downstream coding-usefulness claims remain blocked. Future positive-claim
+  work requires a new research hypothesis beyond the completed v0.2
+  intervention.
 
 Current landed CLI commands:
 
@@ -165,7 +184,7 @@ Delivered:
 - primary A10G action-use and margin+retrieval fallback configs
 
 Remaining for a positive claim: a new research issue with a stronger hypothesis
-than the completed #159 margin+retrieval remediation.
+than the completed #159 margin+retrieval and v0.2 action-swap remediations.
 
 ### Phase 4: Evaluation, Indexing, And Harness
 
@@ -217,12 +236,14 @@ Delivered:
 - scaled benchmark report and cards
 
 Blocker: no-action baseline beats text-action on headline retrieval in the
-#138 baseline run, the #154 no-action margin follow-up run, and the #159
-margin+retrieval remediation run.
+#138 baseline run, the #154 no-action margin follow-up run, the #159
+margin+retrieval remediation run, and the #172 v0.2 action-swap run.
 
 ## Remaining Phases
 
-### Phase 7: Action-Use Remediation
+### Phase 7: Action-Use Remediation And v0.2 Intervention
+
+Status: complete as negative/diagnostic evidence.
 
 Goal: make action use measurable, train against the failure mode, and rerun the
 scaled HF loop from published artifacts.
@@ -240,6 +261,12 @@ Deliverables:
   HF Jobs job `6a0da3a08229e585f969c3f7`; downloaded-artifact verification and
   local eval/inference checks passed, but the claim gate remained negative
   (#159)
+- v0.2 action-contrast pools (#171), latent probe suite (#168), action-swap /
+  inverse-action intervention config (#170), downstream reranking benchmark
+  contract (#169), and public HF v0.2 sweep (#172), completed as run
+  `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on HF Jobs job
+  `6a0dea258229e585f969c808`; downloaded-artifact verification passed, but the
+  action-use, representation, and downstream gates remained negative
 
 ### Phase 8: Publishing And Release
 
@@ -260,7 +287,7 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #167 | v0.2 action-use and representation research intervention | Action-Use Research | public positive model-quality claim path |
+| 1 | Future issue | New hypothesis after v0.2 negative result | Action-Use Research | public positive model-quality claim path |
 
 Completed backlog base:
 
@@ -280,6 +307,15 @@ Completed backlog base:
   job `6a0da3a08229e585f969c3f7`; artifacts were downloaded and
   verified locally, and the result remained negative because no-action still
   beat text-action.
+- #167 tracked the completed v0.2 action-use and representation intervention.
+- #171 built action-contrast benchmark pools.
+- #168 added latent representation probes and axis diagnostics.
+- #170 added v0.2 action-fusion and contrastive action-use objectives.
+- #169 added the downstream reranking benchmark contract.
+- #172 executed run `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on HF
+  Jobs job `6a0dea258229e585f969c808`; artifacts were downloaded and verified
+  locally, and the result remained negative across action-use, representation,
+  and downstream-readiness gates.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
   manual publishing gates for the Python package.
 - #124 added release dependency audit, provenance JSON, CI gates, and release
@@ -308,8 +344,8 @@ instead of creating duplicate trackers.
   boundary.
 - #150 Action-conditioned scaled result and release readiness: #159 complete;
   closed with the negative/diagnostic boundary.
-- #167 v0.2 action-use and representation research intervention: active,
-  tracked by #168 through #172.
+- #167 v0.2 action-use and representation research intervention: complete as
+  negative/diagnostic evidence through #168 through #172.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -317,12 +353,16 @@ that subsystem.
 
 ## Residual Risks
 
-- The scaled result fails the core action-conditioning claim gate because
-  no-action beats text-action.
+- The scaled results fail the core action-conditioning claim gate because
+  no-action beats text-action, including in the v0.2 action-contrast sweep.
 - The current public shard may still not contain enough action-discriminative
   pressure for text actions to matter, even with targeted hard negatives.
-- The no-action margin objective was proven insufficient by #154, and the
-  margin+retrieval remediation was proven insufficient by #159.
+- The no-action margin objective was proven insufficient by #154, the
+  margin+retrieval remediation was proven insufficient by #159, and the
+  action-swap/inverse-action intervention was proven insufficient by #172.
+- The v0.2 latent-probe gate does not support semantic latent-axis claims.
+- The v0.2 downstream scorer-quality path remains blocked as scaled evidence
+  because it has one labeled example instead of the required 100.
 - Scorer-quality evidence is still small and should remain a gate, not a broad
   calibration claim.
 - Same-file and action-cluster surprise decoy counts are lower than random and

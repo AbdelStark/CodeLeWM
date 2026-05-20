@@ -22,6 +22,11 @@ ACTION_USE_RETRIEVAL_MODEL_CARD = (
     ROOT / "docs" / "cards" / "codelewm-action-use-retrieval-model-2026-05-20.md"
 )
 ACTION_USE_RETRIEVAL_RESULTS = ROOT / "docs" / "benchmark" / "ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md"
+V0_2_ACTION_SWAP_DATASET_CARD = (
+    ROOT / "docs" / "cards" / "codelewm-v0-2-action-swap-dataset-2026-05-20.md"
+)
+V0_2_ACTION_SWAP_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-v0-2-action-swap-model-2026-05-20.md"
+V0_2_ACTION_SWAP_RESULTS = ROOT / "docs" / "benchmark" / "V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md"
 
 
 class FirstResultsArtifactCardTest(unittest.TestCase):
@@ -38,6 +43,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.action_use_retrieval_dataset = ACTION_USE_RETRIEVAL_DATASET_CARD.read_text(encoding="utf-8")
         self.action_use_retrieval_model = ACTION_USE_RETRIEVAL_MODEL_CARD.read_text(encoding="utf-8")
         self.action_use_retrieval_report = ACTION_USE_RETRIEVAL_RESULTS.read_text(encoding="utf-8")
+        self.v0_2_action_swap_dataset = V0_2_ACTION_SWAP_DATASET_CARD.read_text(encoding="utf-8")
+        self.v0_2_action_swap_model = V0_2_ACTION_SWAP_MODEL_CARD.read_text(encoding="utf-8")
+        self.v0_2_action_swap_report = V0_2_ACTION_SWAP_RESULTS.read_text(encoding="utf-8")
 
     def test_cards_exist_and_are_not_templates(self) -> None:
         for path, text in ((DATASET_CARD, self.dataset), (MODEL_CARD, self.model)):
@@ -58,6 +66,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
             (ACTION_USE_RETRIEVAL_DATASET_CARD, self.action_use_retrieval_dataset),
             (ACTION_USE_RETRIEVAL_MODEL_CARD, self.action_use_retrieval_model),
             (ACTION_USE_RETRIEVAL_RESULTS, self.action_use_retrieval_report),
+            (V0_2_ACTION_SWAP_DATASET_CARD, self.v0_2_action_swap_dataset),
+            (V0_2_ACTION_SWAP_MODEL_CARD, self.v0_2_action_swap_model),
+            (V0_2_ACTION_SWAP_RESULTS, self.v0_2_action_swap_report),
         ):
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file(), f"missing: {path}")
@@ -168,6 +179,28 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         )
         self.assertIn("- [ ] Text action beats the no-action baseline.", self.action_use_retrieval_report)
         self.assertIn("Claim-readiness gate | true", self.action_use_retrieval_dataset)
+
+    def test_v0_2_action_swap_cards_match_verified_hf_report(self) -> None:
+        for marker in (
+            "codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b",
+            "dataset-daecac9f9965c563",
+            "training_run-0a41863d1da33737",
+            "f2c5ba50ee0ec5e32ff5c3ceed848020e989ebdb1c98a917f17589ee523c6d7e",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.v0_2_action_swap_report)
+
+        self.assertIn("| Text action | 0.263 | 0.478 | 0.596 | 0.370048 |", self.v0_2_action_swap_model)
+        self.assertIn("| No action | 0.441 | 0.638 | 0.712 | 0.533105 |", self.v0_2_action_swap_model)
+        self.assertIn("## Action-Contrast Retrieval Gate", self.v0_2_action_swap_report)
+        self.assertIn("claim_allowed=false", self.v0_2_action_swap_report)
+        self.assertIn(
+            "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action",
+            self.v0_2_action_swap_report,
+        )
+        self.assertIn("- [ ] Text action beats no-action on headline retrieval.", self.v0_2_action_swap_report)
+        self.assertIn("Selected train rows | 0", self.v0_2_action_swap_dataset)
+        self.assertIn("semantic_structure_status=unsupported", self.v0_2_action_swap_model)
 
 
 if __name__ == "__main__":

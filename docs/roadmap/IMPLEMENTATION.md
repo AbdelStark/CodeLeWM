@@ -132,8 +132,10 @@ until every child issue closes or is explicitly superseded.
 - #12 [Tracking] Public API and packaging — RFC-0011
 - #13 [Tracking] Release CI and governance — RFC-0012
 
-Additional completion tracker: #150 [Tracking] Action-conditioned scaled result
-and release readiness, closed with the negative/diagnostic #159 boundary.
+Additional completion trackers: #150 [Tracking] Action-conditioned scaled
+result and release readiness, closed with the negative/diagnostic #159
+boundary; #167 [Tracking] v0.2 action-use and representation research
+intervention, closed with the negative/diagnostic #172 boundary.
 
 ## Cross-Cutting Dependencies
 
@@ -171,6 +173,16 @@ and release readiness, closed with the negative/diagnostic #159 boundary.
   `6a0da3a08229e585f969c3f7`; artifacts were downloaded with
   `hf download`, manifest-verified, locally re-evaluated, secret-scanned, and
   recorded as negative/diagnostic because no-action still beat text-action.
+- #171 built v0.2 action-contrast benchmark pools.
+- #168 added latent representation probes and axis diagnostics.
+- #170 added the v0.2 action-swap/inverse-action objective intervention.
+- #169 added the downstream reranking benchmark contract.
+- #172 executed the v0.2 action-swap run
+  `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on HF Jobs job
+  `6a0dea258229e585f969c808`; artifacts were downloaded with `hf download`,
+  manifest-verified, locally re-evaluated, secret-scanned, and recorded as
+  negative/diagnostic because action-use, representation, and downstream gates
+  did not pass.
 - #123 closed the package build and manual publishing gate for wheel/sdist
   artifacts.
 - #124 closed the dependency-audit and release-provenance gate for package

@@ -25,9 +25,11 @@ public diagnostic artifact repositories, but public positive
 action-conditioning claims remain disabled.
 
 After this freeze, #159 completed the second-stage margin+retrieval remediation
-run and remained negative. The remaining project gap, if a positive public claim
-is still desired, is a new research iteration beyond the frozen diagnostic
-artifact set.
+run and remained negative. #172 then completed the v0.2 action-swap /
+inverse-action sweep and also remained negative across action-use,
+representation, and downstream-readiness gates. The remaining project gap, if a
+positive public claim is still desired, is a new research hypothesis beyond the
+frozen diagnostic artifact set and the completed v0.2 intervention.
 
 ## Post-Freeze #159 Boundary
 
@@ -56,6 +58,33 @@ no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action
 See `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
 `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
 `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
+
+## Post-Freeze v0.2 Boundary
+
+The #172 run `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` completed on
+HF Jobs job `6a0dea258229e585f969c808` from source
+`7c7cb0b8fe132e4819f05a77585c254267e77574`. It published artifacts to the
+same Hugging Face repositories, downloaded them with `hf download`, and passed
+manifest verification, local retrieval, latent-probe, ablation, surprise,
+scorer-quality, score, rerank, and secret-scan checks.
+
+The run did not pass the action-use claim gate:
+
+| Metric | Text action | No action | Gate |
+| --- | ---: | ---: | --- |
+| Recall@1 | 0.263 | 0.441 | fail |
+| Recall@5 | 0.478 | 0.638 | fail |
+| Recall@10 | 0.596 | 0.712 | fail |
+| MRR | 0.370048 | 0.533105 | fail |
+
+The v0.2 exact-same-before and near-before action-contrast slices also failed
+the required margins. The latent-probe report records
+`semantic_structure_status=unsupported`, and downstream scorer-quality remains
+blocked because it has one labeled example rather than the required 100.
+
+See `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`,
+`docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md`, and
+`docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md`.
 
 ## Selected Artifacts
 
@@ -195,11 +224,11 @@ dependency audit, release provenance, dataset/model cards, and a frozen
 diagnostic scaled artifact set.
 
 This is not a public positive model-quality release. The selected action-use
-checkpoint and the later #159 margin+retrieval checkpoint are useful evidence
-for the system and for the no-action dominance failure mode, but no-action
-remains stronger than text-action on Recall@1 and MRR. Public positive claims
-stay blocked unless a future research iteration produces a passing action-use
-claim gate.
+checkpoint, the later #159 margin+retrieval checkpoint, and the #172 v0.2
+action-swap checkpoint are useful evidence for the system and for the no-action
+dominance failure mode, but no-action remains stronger than text-action on
+Recall@1 and MRR. Public positive claims stay blocked unless a future research
+iteration produces passing action-use, representation, and downstream gates.
 
 ## Sign-Off Status
 
@@ -211,4 +240,4 @@ claim gate.
 
 The diagnostic freeze is complete. Public HF visibility is allowed for the
 diagnostic artifacts, but a public tag and positive action-conditioned claim
-remain blocked by the negative #159 result.
+remain blocked by the negative #159 and #172 results.

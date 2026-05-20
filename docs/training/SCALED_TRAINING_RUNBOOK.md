@@ -4,13 +4,15 @@ This runbook is the #119 operator contract for moving from smoke evidence to a
 bounded scaled training run. The first HF A10G run completed under #138 and is
 documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. The primary
 action-use follow-up completed under #154 and is documented in
-`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. These runs prove the
-remote systems path but do not support a positive action-conditioned quality
-claim because text-action loses to no-action on headline retrieval. The #159
-margin+retrieval remediation run also completed negative/diagnostic. The next
-claim-seeking work is the v0.2 action-use research intervention tracked in
-#167 and `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`; verify downloaded
-artifacts before any positive public claim.
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. The #159
+margin+retrieval remediation run and #172 v0.2 action-swap/inverse-action run
+also completed negative/diagnostic, documented in
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md` and
+`docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`. These runs prove
+the remote systems path but do not support a positive action-conditioned
+quality claim because text-action loses to no-action on headline retrieval and
+v0.2 action-contrast gates. Verify downloaded artifacts before any positive
+public claim.
 
 ## Config Matrix
 
@@ -28,23 +30,22 @@ auxiliaries behind explicit config gates.
 | Apple MPS development | `config/train/scaled/codelewm_scaled_mps.yaml` | `240119` | `10000` | `32` | `float32` | 4-12h on M2/M3 Max class hardware, 16-32 GiB unified memory, 1-4 GiB artifacts |
 | HF A10G baseline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Prior systems proof from #138; rerun only for regression comparison |
 | HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #154; negative claim gate |
-| HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Candidate for #159 after side-by-side analysis |
-| HF A10G v0.2 action-swap+inverse | `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | #170 intervention for action-contrast gate |
+| HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #159; negative claim gate |
+| HF A10G v0.2 action-swap+inverse | `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #172; negative action-use, representation, and downstream gates |
 
 The primary follow-up candidate was
 `codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targeted the
 observed failure mode by penalizing predictions whose after-state latent error
 does not beat the no-action identity baseline by `action_use_margin=0.02`, with
 `action_use_margin_weight=0.25`. It still lost to no-action in #154. The
-fallback adds the existing retrieval auxiliary at `retrieval_weight=0.05`; keep
-it as the likely #159 run unless side-by-side analysis shows a smaller
-data/eval correction is required first.
+fallback adds the existing retrieval auxiliary at `retrieval_weight=0.05`; it
+completed in #159 and still lost to no-action.
 The v0.2 intervention uses `action_fusion=gated_residual`,
 `action_swap_contrastive_weight=0.20`,
 `action_swap_contrastive_margin=0.05`, and
 `inverse_action_reconstruction_weight=0.10` in addition to the no-action
-margin. Use it only for the #170/#172 action-contrast evaluation path, not as a
-replacement for the #159 replay.
+margin. It completed in #172 and also failed the action-use gate; keep it as a
+comparison baseline, not a job to relaunch.
 The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
 research claims.
 
@@ -217,9 +218,10 @@ uv run scripts/hf-launch-codelewm-job
 The old `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
 available only for regression comparison against the #138 systems result. The
 primary action-use result and failure mode are recorded in #154 and
-`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; #159 owns any escalation
-to `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
-#170 owns the v0.2 intervention launch with
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; #159 records the
+margin+retrieval escalation with
+`config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
+#172 records the v0.2 intervention launch with
 `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
 
 Monitor and inspect only through the HF CLI:

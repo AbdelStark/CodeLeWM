@@ -101,13 +101,18 @@ The public docs use three evidence tiers:
   `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
   `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
+- v0.2 negative action-swap HF evidence:
+  `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md`.
 - Downstream reranking benchmark contract:
   `docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md`.
 
 The scaled runs prove the Hugging Face Jobs, public artifact publication,
 downloaded-artifact verification, and evaluation path. They do not prove a
 positive action-conditioned quality claim: text-action still loses to no-action
-on headline retrieval, including the completed #159 margin+retrieval run.
+on headline retrieval, including the completed #159 margin+retrieval run and
+the completed v0.2 action-swap/inverse-action run.
 Public claim wording must keep that boundary until a later artifact passes the
 action-use claim gate.
 

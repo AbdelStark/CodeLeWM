@@ -11,12 +11,15 @@ is documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the primary
 action-use follow-up is documented in
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; the second-stage
 margin+retrieval remediation run is documented in
-`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. All three are
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`; the v0.2
+action-swap/inverse-action run is documented in
+`docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`. All four are
 useful systems evidence, but none is a positive action-conditioning claim
-because the no-action baseline beats text-action on headline retrieval. Issue
-#126 froze the private diagnostic release boundary, and #159 confirms that the
-current completion boundary remains negative/diagnostic. Training config details
-remain in `docs/training/SCALED_TRAINING_RUNBOOK.md`.
+because the no-action baseline beats text-action on headline retrieval and on
+the v0.2 action-contrast gates. Issue #126 froze the private diagnostic release
+boundary, #159 confirmed the margin+retrieval boundary, and #172 confirms that
+the v0.2 completion boundary remains negative/diagnostic. Training config
+details remain in `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 
 ## Upstream Contract
 
@@ -382,8 +385,14 @@ Completed action-use gates:
   `codelewm-action-use-retrieval-20260520-7895d18` / job
   `6a0da3a08229e585f969c3f7`; HF monitoring, download, manifest verification,
   local eval/inference checks, docs/cards, and claim gate closure are complete.
+- #172 executed the v0.2 action-swap/inverse-action sweep as
+  `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` / job
+  `6a0dea258229e585f969c808`; HF monitoring, public publication, download,
+  manifest verification, local eval/inference checks, docs/cards, and claim
+  gate closure are complete. The action-use, representation, and downstream
+  gates are negative.
 
 Do not update public positive claims or mark a result as a positive
 action-conditioning result until those gates are satisfied by artifact-backed
-evidence. The current follow-up still loses to no-action, so public artifacts
-must be framed explicitly as negative/diagnostic.
+evidence. The current v0.2 follow-up still loses to no-action, so public
+artifacts must be framed explicitly as negative/diagnostic.

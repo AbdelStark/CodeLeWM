@@ -1,9 +1,13 @@
 # HF ml-intern `/goal` Prompt
 
-Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must keep the completed #159 HF Jobs remediation lifecycle
-and the remaining action-use claim boundary in sync across docs, issues, and
-future research planning.
+This prompt is retained as historical context for the completed v0.2 HF Jobs
+run. Do not use it to relaunch #159 or #172. The current next research-planning
+prompt lives in `docs/roadmap/NEXT_GOAL_PROMPT.md`.
+
+It was written for a headless `ml-intern` run that had to keep the completed
+#159 HF Jobs remediation lifecycle, the v0.2 HF Jobs lifecycle, and the
+action-use claim boundary in sync across docs, issues, and future research
+planning.
 
 ```text
 /goal Complete CodeLeWM's first scaled-result project boundary. Treat the
@@ -22,14 +26,19 @@ completed primary action-use follow-up is
 `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`.
 
 The current gap is precise: #154 executed and verified the primary no-action
-margin recipe, and #159 executed and verified the second-stage margin+retrieval
-recipe. Both action-use claim gates are negative. The #159 run improved
+margin recipe, #159 executed and verified the second-stage margin+retrieval
+recipe, and #172 executed and verified the v0.2 action-swap/inverse-action
+recipe. All action-use claim gates are negative. The #159 run improved
 text-action to Recall@1 `0.597` and MRR `0.674500`, but no-action remained
-stronger with Recall@1 `0.650` and MRR `0.708037`. The results are documented
-in `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md` and
-`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. The
-positive-claim path is blocked until text-action beats no-action on the agreed
-headline metrics.
+stronger with Recall@1 `0.650` and MRR `0.708037`. The #172 run reached
+text-action Recall@1 `0.263` and MRR `0.370048`, but no-action remained
+stronger with Recall@1 `0.441` and MRR `0.533105`; its representation and
+downstream-readiness gates also failed. The results are documented in
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`,
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`, and
+`docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`. The positive-claim
+path is blocked until text-action beats no-action on the agreed headline and
+action-contrast metrics.
 
 Issue #159 has already completed as
 `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
@@ -42,10 +51,10 @@ on `a10g-small` with a `24h` timeout and public publication targets
 Do not relaunch this run. Use the HF CLI only to inspect, download, verify, or
 orchestrate a new future research issue with a different hypothesis.
 
-After #170 lands, the next v0.2 HF Jobs training config is
-`config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
-Use it for the #172 public action-contrast sweep; keep the #159
-margin+retrieval config only as the replay/comparison baseline.
+#172 has already used
+`config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`
+for the public action-contrast sweep. Keep the #159 margin+retrieval config and
+the #172 v0.2 config as replay/comparison baselines, not as jobs to relaunch.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
@@ -82,11 +91,14 @@ Before editing or launching compute, read:
 - docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md
 - docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md
 - docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md
+- docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md
 - docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md
 - docs/cards/codelewm-action-use-dataset-2026-05-20.md
 - docs/cards/codelewm-action-use-model-2026-05-20.md
 - docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md
 - docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md
+- docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md
+- docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md
 - docs/spec/05-observability.md
 - docs/spec/06-security.md
 - docs/spec/07-testing-strategy.md
@@ -326,7 +338,7 @@ downloaded index. Use real examples from the downloaded result bundle when
 available; otherwise use checked-in fixtures and label them as fixture checks.
 
 Update benchmark docs, dataset card, model card, roadmap, release checklist, and
-the #167 tracker or active child issue only with artifact-backed numbers. Every
+the #167 tracker or child issue only with artifact-backed numbers. Every
 claim must name the command, data source, commit SHA, run ID, job ID when
 applicable, and artifact path that produced it.
 
@@ -348,14 +360,14 @@ Do not call the result claim-eligible unless all of these are true:
   verified locally from a clean checkout.
 
 Publish Hugging Face artifacts publicly after the artifact gates pass. Because
-#159 remains negative, frame the existing result explicitly as
+#159 and #172 remain negative, frame the existing results explicitly as
 negative/diagnostic. A future positive claim must name the exact benchmark slice
 and gate that passed.
 
 Completion criteria:
 
-- #167 and its active child issues (#168 through #172) are closed by merged PRs
-  or updated with explicit, artifact-backed blockers.
+- #167 and its child issues (#168 through #172) are closed by merged PRs or
+  updated with explicit, artifact-backed blockers.
 - Any v0.2 HF Jobs run is recorded in #172 with job ID, run ID, source SHA,
   config paths, repo paths, and validation commands.
 - Dataset, model, and results artifacts selected for v0.2 evidence are

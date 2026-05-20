@@ -61,8 +61,8 @@ The current package includes:
   gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
 
-The CodeLeWM-specific runtime is implemented through a complete first scaled HF
-Jobs loop: manifest-backed training, the CPU smoke path, the package-native
+The CodeLeWM-specific runtime is implemented through complete scaled HF Jobs
+loops: manifest-backed training, the CPU smoke path, the package-native
 torch executor, `codelewm train`, model-backed retrieval/surprise/ablation
 evaluation, a train-split `codelewm index` artifact path, index-backed retrieval
 priors for scoring/reranking, scorer/reranker quality reports, manifest
@@ -76,13 +76,13 @@ HF report lives at `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the
 action-use follow-up report lives at
 `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; the second-stage
 margin+retrieval remediation report lives at
-`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. Those runs
-prove the systems path, but none supports a positive action-conditioned quality
-claim: text-action beats random, shuffled-action, and lexical baselines but
-loses to no-action on headline retrieval. The remaining research gap is the
-v0.2 action-use research intervention in
-`docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`, not release cleanup. Core
-harness
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`; the v0.2
+action-swap/inverse-action report lives at
+`docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`. Those runs prove
+the systems path, but none supports a positive action-conditioned quality
+claim. The v0.2 run also fails the representation and downstream-usefulness
+gates. The remaining research gap is a new hypothesis beyond the completed
+v0.2 intervention, not release cleanup. Core harness
 commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 `train.py`, `eval.py`, and the existing Hydra configs are inherited from the
 original LeWorldModel seed and are kept for compatibility while the package
@@ -109,17 +109,21 @@ Scaled evidence is recorded separately:
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
 - `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - `docs/cards/codelewm-scaled-model-2026-05-20.md`
 - `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
 - `docs/cards/codelewm-action-use-model-2026-05-20.md`
 - `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`
 - `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`
+- `docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md`
+- `docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md`
 
 The scaled runs are valid systems evidence and valid negative action-use
 evidence. The Hugging Face artifact repositories are public diagnostic repos.
 They do not support a public positive action-conditioning claim because
-text-action still does not beat no-action on the agreed headline metrics.
+text-action still does not beat no-action on the agreed headline metrics or the
+v0.2 action-contrast slices.
 
 ## Core Concepts
 
@@ -353,6 +357,7 @@ docs/training/SCALED_TRAINING_RUNBOOK.md scaled CPU/MPS/A10G training profiles
 docs/benchmark/FIRST_RESULTS.md first reproducible smoke results report
 docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md scaled HF systems evidence
 docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md negative action-use HF evidence
+docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md v0.2 negative HF evidence
 docs/cards/                     filled dataset/model cards and release templates
 docs/release/                   package, provenance, and release checklist gates
 codelewm/data/                  source loading, filtering, CodeState, packing
