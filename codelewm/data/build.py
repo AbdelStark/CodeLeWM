@@ -597,6 +597,12 @@ def _assignment_to_transition(
         license=record.license,
         filter_flags=tuple(filter_flags),
         dedup_keys=tuple(f"{key}:{value}" for key, value in sorted(dedup_keys.items())),
+        state_before_kind=state_pair.before.kind,
+        state_after_kind=state_pair.after.kind,
+        state_before_symbol=state_pair.before.symbol,
+        state_after_symbol=state_pair.after.symbol,
+        state_before_fallback_reason=state_pair.before.fallback_reason,
+        state_after_fallback_reason=state_pair.after.fallback_reason,
     )
 
 

@@ -100,6 +100,16 @@ exact-same-before, near-before, same-file, action-cluster, edit-shape, mutation,
 and random control pools where available; every pool stores held-out transition
 IDs only, split-membership proofs, unavailable-pool reasons, leakage counts, and
 whether same-before multi-action examples make the no-action prior insufficient.
+Latent probe reports use
+`schema_version=codelewm.eval.latent_probe_report.v1` and are written by
+`codelewm eval latent-probe` as `reports/latent_probe_report.json`. They record
+train/validation/test label counts for edit class, AST node kind, symbol kind,
+edit-size bucket, action cluster, and source family; probe metrics for
+`z_before`, `z_after`, and `z_pred_after`; majority, lexical, metadata-only,
+random-latent, no-action, and shuffled-action controls; bootstrap confidence
+intervals; and per-dimension association diagnostics. Dimension-level semantic
+claims remain blocked unless stable axes are demonstrated across seeds and
+splits.
 Action-discriminative shard reports use
 `schema_version=codelewm.data.action_discriminative_shard_report.v1` and are
 manifested by dataset build and pack artifacts as

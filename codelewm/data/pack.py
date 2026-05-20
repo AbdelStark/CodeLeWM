@@ -70,6 +70,12 @@ class PackedTransition:
     license: str | None = None
     filter_flags: tuple[str, ...] = ()
     dedup_keys: tuple[str, ...] = ()
+    state_before_kind: str | None = None
+    state_after_kind: str | None = None
+    state_before_symbol: str | None = None
+    state_after_symbol: str | None = None
+    state_before_fallback_reason: str | None = None
+    state_after_fallback_reason: str | None = None
 
     def to_parquet_row(self) -> dict[str, object]:
         return {
@@ -104,6 +110,12 @@ class PackedTransition:
             "license": self.license,
             "filter_flags": list(self.filter_flags),
             "dedup_keys": list(self.dedup_keys),
+            "state_before_kind": self.state_before_kind,
+            "state_after_kind": self.state_after_kind,
+            "state_before_symbol": self.state_before_symbol,
+            "state_after_symbol": self.state_after_symbol,
+            "state_before_fallback_reason": self.state_before_fallback_reason,
+            "state_after_fallback_reason": self.state_after_fallback_reason,
         }
 
     @classmethod
@@ -149,6 +161,16 @@ class PackedTransition:
             license=_optional_string(payload, "license", "transition row"),
             filter_flags=_optional_string_tuple(payload, "filter_flags", "transition row"),
             dedup_keys=_optional_string_tuple(payload, "dedup_keys", "transition row"),
+            state_before_kind=_optional_string(payload, "state_before_kind", "transition row"),
+            state_after_kind=_optional_string(payload, "state_after_kind", "transition row"),
+            state_before_symbol=_optional_string(payload, "state_before_symbol", "transition row"),
+            state_after_symbol=_optional_string(payload, "state_after_symbol", "transition row"),
+            state_before_fallback_reason=_optional_string(
+                payload, "state_before_fallback_reason", "transition row"
+            ),
+            state_after_fallback_reason=_optional_string(
+                payload, "state_after_fallback_reason", "transition row"
+            ),
         )
 
 

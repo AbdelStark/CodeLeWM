@@ -16,6 +16,7 @@ codelewm dataset build --config config/first_results/dataset_build.json --out .a
 codelewm dataset pack --manifest .artifacts/first-results/build/manifest.json --out .artifacts/first-results/pack --json
 codelewm train --config config/first_results/train_tiny.json --out .artifacts/first-results/train --executor torch --device cpu --json
 codelewm eval retrieval --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/retrieval --device cpu --json
+codelewm eval latent-probe --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/latent_probe --device cpu --json
 codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/manifest.json --training-artifact .artifacts/first-results/train/manifest.json --out .artifacts/first-results/ablation --json
 codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --json
 codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --json
@@ -155,7 +156,9 @@ paired checkpoint manifest before loading torch weights, and writes:
 - `config.json`: normalized retrieval evaluation config;
 - `reports/retrieval_report.json`: `codelewm.eval.retrieval_report.v1`;
 - `reports/hard_negative_sampler_report.json`:
-  `codelewm.eval.hard_negative_sampler_report.v1`.
+  `codelewm.eval.hard_negative_sampler_report.v1`;
+- `reports/action_contrast_pool_report.json`:
+  `codelewm.eval.action_contrast_pool_report.v1`.
 
 The command emits `codelewm.eval.retrieval_run.v1` on JSON stdout. Reports
 include `Recall@1`, `Recall@5`, `Recall@10`, MRR, median rank, candidate
@@ -164,6 +167,26 @@ hard-negative slices, and action-view policy metadata. Headline reports require
 the text action view; patch actions remain diagnostic upper bounds and are
 rejected for headline reports. Evaluation gate failures exit 6 with
 `error_type=evaluation_gate_error`.
+
+`codelewm eval latent-probe` is the public frozen-latent probe path:
+
+```bash
+codelewm eval latent-probe \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-latent-probe \
+  --json
+```
+
+It verifies the same dataset, training-run, and checkpoint manifests as
+retrieval evaluation, then writes `reports/latent_probe_report.json` with
+schema `codelewm.eval.latent_probe_report.v1`. The report probes `z_before`,
+`z_after`, and `z_pred_after` over train/validation/test labels for edit class,
+AST node kind, symbol kind, edit-size bucket, action cluster, and source family.
+It includes majority, lexical, metadata-only, random-latent, no-action, and
+shuffled-action controls, bootstrap confidence intervals, and per-dimension
+association diagnostics. Positive semantic-axis names are blocked unless future
+runs demonstrate stability across seeds and splits.
 
 `codelewm eval surprise` is the public training-run plus packed-dataset to
 patch-surprise-report path:

@@ -109,6 +109,26 @@ candidate pool. Treat random, same-file, action-cluster, edit-shape, and
 mutation pools as controls unless the report explicitly scopes the claim to a
 different slice.
 
+## Latent Representation Probes
+
+Representation claims require `reports/latent_probe_report.json` with schema
+`codelewm.eval.latent_probe_report.v1`. Fill this section from downloaded HF
+artifacts, not local-only scratch runs.
+
+| Probe target | Best latent view | Test accuracy | Best control | Control accuracy | Status |
+| ------------ | ---------------- | ------------- | ------------ | ---------------- | ------ |
+| edit_class | | | | | `<supported|unsupported|not_evaluable>` |
+| ast_node_kind | | | | | `<supported|unsupported|not_evaluable>` |
+| symbol_kind | | | | | `<supported|unsupported|not_evaluable>` |
+| edit_size_bucket | | | | | `<supported|unsupported|not_evaluable>` |
+| action_cluster | | | | | `<supported|unsupported|not_evaluable>` |
+| source_family | | | | | `<supported|unsupported|not_evaluable>` |
+
+Per-dimension associations are diagnostic only. Do not name semantic axes unless
+the report shows stable dimensions across seeds and splits and records
+`dimension_claims_allowed=true`. State the report-level
+`semantic_structure_status` exactly as emitted.
+
 ### Slices
 
 | Slice | Recall@1 | Recall@5 | Recall@10 | MRR | Sample count |
