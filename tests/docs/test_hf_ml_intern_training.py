@@ -35,6 +35,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_TRAIN_CONFIG=",
             "CODELEWM_HF_SCORER_QUALITY_CONFIG=",
             "CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=",
+            "CODELEWM_HF_INDEX_BATCH_SIZE=",
             "CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft",
             "CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl",
             "CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft",
@@ -62,6 +63,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "CODELEWM_HF_PIPELINE_MODE=scaled",
+            "CODELEWM_HF_INDEX_BATCH_SIZE=64",
             "config/data/codelewm_public_shard_commitpackft_python.json",
             "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
             "hf download bigcode/commitpackft",
@@ -89,6 +91,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "config/data/codelewm_public_shard_commitpackft_python.json",
             "bigcode/commitpackft:data/python/data.jsonl",
+            "CODELEWM_HF_INDEX_BATCH_SIZE=64",
             "hf jobs logs <job-id>",
             "ml-intern --max-iterations -1",
             "downloaded checkpoint",
@@ -121,6 +124,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn(" -- python:3.13-bookworm bash -lc ", completed.stdout)
+        self.assertIn("CODELEWM_HF_INDEX_BATCH_SIZE=64", completed.stdout)
         self.assertNotIn(" --label c ", completed.stdout)
 
 

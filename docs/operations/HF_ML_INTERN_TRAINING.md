@@ -80,6 +80,8 @@ CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0
 CODELEWM_HF_RETRIEVAL_PRIOR_K=10
+CODELEWM_HF_INDEX_DEVICE=auto
+CODELEWM_HF_INDEX_BATCH_SIZE=64
 ```
 
 The first public shard candidate is the Python subset of
@@ -116,8 +118,9 @@ to dry-run.
 - `scaled`: optionally download the configured HF source shard with
   `hf download`, build the dataset, pack it, train, run retrieval evaluation,
   build the action-view ablation report, run surprise evaluation, build the
-  transition index, run the scorer/reranker quality report with retrieval-prior
-  settings, verify manifests, and scan the run root for secrets.
+  transition index with bounded batches, run the scorer/reranker quality report
+  with retrieval-prior settings, verify manifests, and scan the run root for
+  secrets.
 
 `scripts/hf-publish-codelewm-artifacts` publishes the resulting directories:
 
@@ -197,6 +200,7 @@ CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_pyt
 CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
+CODELEWM_HF_INDEX_BATCH_SIZE=64 \
 CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft \
 CODELEWM_HF_SOURCE_DATASET_REPO_TYPE=dataset \
 CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl \

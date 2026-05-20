@@ -49,6 +49,8 @@ class IndexCliTest(unittest.TestCase):
                 str(pack_dir),
                 "--out",
                 str(out_dir),
+                "--batch-size",
+                "1",
                 "--json",
                 "--log-jsonl",
                 str(log_path),
@@ -82,6 +84,7 @@ class IndexCliTest(unittest.TestCase):
         self.assertEqual(index_header["schema_version"], TRANSITION_INDEX_SCHEMA_VERSION)
         self.assertEqual(index.count, 2)
         self.assertEqual(index.dim, 256)
+        self.assertEqual(payload["metadata"]["batch_size"], 1)
         self.assertEqual({entry.split for entry in index.entries}, {"train"})
         self.assertEqual(artifact_manifest.artifact_kind, "index")
         self.assertEqual(
@@ -108,6 +111,26 @@ class IndexCliTest(unittest.TestCase):
                 str(root / "missing-pack"),
                 "--out",
                 str(out_dir),
+                "--json",
+            )
+            payload = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(payload["error_type"], "config_error")
+
+    def test_index_cli_rejects_non_positive_batch_size(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            completed = _run_cli(
+                "index",
+                "--checkpoint",
+                str(root / "missing" / "checkpoint.pt"),
+                "--data",
+                str(root / "missing-pack"),
+                "--out",
+                str(root / "runs" / "index"),
+                "--batch-size",
+                "0",
                 "--json",
             )
             payload = json.loads(completed.stdout)
