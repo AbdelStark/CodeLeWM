@@ -1,34 +1,33 @@
 # Implementation Tracker
 
 Source of truth for work state: GitHub issues. This document is the
-human-readable index over the spec corpus and is updated whenever an
-issue is filed, closed, or superseded. See `CONTRIBUTING.md` and
-`docs/spec/09-release-and-versioning.md` for how this tracker fits
-into the release lifecycle.
+human-readable index over the spec corpus and is updated whenever an issue is
+filed, closed, or superseded. See `CONTRIBUTING.md` and
+`docs/spec/09-release-and-versioning.md` for how this tracker fits into the
+release lifecycle.
 
-- Last updated: 2026-05-19
-- Spec corpus: `docs/spec/00-overview.md` through
-  `docs/spec/10-glossary.md`
+- Last updated: 2026-05-20
+- Spec corpus: `docs/spec/00-overview.md` through `docs/spec/10-glossary.md`
 - RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0012-*.md`
 - Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
+- Next executable prompt: `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`
 
 ## How This Tracker Is Maintained
 
 1. Every implementation issue lives on GitHub with `type:*`, `area:*`,
    `priority:*`, `effort:*`, and `spec:rfc-NNNN` labels.
 2. When an issue is filed, add a row in the matching milestone table.
-3. When an issue closes, set its `Status` to `Closed` and link the
-   merging PR.
-4. When the spec or an RFC changes, audit the cross-cutting
-   dependency list at the bottom of this file.
-5. A `roadmap:` PR updates this file; the tracker contract is
-   asserted by `tests/docs/test_implementation_tracker.py`.
+3. When an issue closes, set its `Status` to `Closed` and link the merging PR
+   from the issue or PR body.
+4. When the spec, an RFC, or benchmark evidence changes, audit the
+   cross-cutting dependency list at the bottom of this file.
+5. A `roadmap:` PR updates this file; the tracker contract is asserted by
+   `tests/docs/test_implementation_tracker.py`.
 
 ## Milestone: v0.1
 
-Foundation: dataset, model, training smoke, retrieval eval, scorer
-CLI, observability manifests, public license gates, CI workflow,
-governance docs.
+Foundation: dataset, model, training smoke, retrieval eval, scorer CLI,
+observability manifests, public license gates, CI workflow, and governance docs.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
@@ -76,8 +75,8 @@ governance docs.
 
 ## Milestone: v1.0
 
-Research artifact: mixed data, ablations, reranking, cards, release
-gates.
+Research artifact: package-native runtime, scaled HF evidence, action-use
+remediation, publishing, provenance, docs refresh, and final artifact freeze.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
@@ -88,11 +87,36 @@ gates.
 | #48 | harness: implement local transition index | harness | p1 | m | RFC-0008 | Closed |
 | #57 | docs: add public API usage docs | docs | p1 | s | RFC-0011 | Closed |
 | #60 | release: add release checklist and card templates | release | p1 | m | RFC-0012 | Closed |
+| #109 | build: migrate dependency management and CI to uv | api | p1 | m | RFC-0011 | Closed |
+| #110 | data: expose dataset build CLI | data | p1 | m | RFC-0002 | Closed |
+| #111 | data: expose dataset pack CLI and tiny first-results fixture | data | p1 | m | RFC-0002 | Closed |
+| #112 | train: add package-native torch training executor | model | p1 | l | RFC-0006 | Closed |
+| #113 | train: expose codelewm train CLI | api | p1 | m | RFC-0011 | Closed |
+| #114 | eval: expose retrieval evaluation CLI | evaluation | p1 | m | RFC-0007 | Closed |
+| #115 | eval: expose surprise evaluation CLI | evaluation | p1 | m | RFC-0007 | Closed |
+| #116 | harness: expose index CLI and retrieval-prior scoring | harness | p1 | m | RFC-0008 | Closed |
+| #117 | results: add reproducible first-results runner and report | evaluation | p1 | m | RFC-0007 | Closed |
+| #118 | data: document and gate public source acquisition | data | p1 | m | RFC-0002 | Closed |
+| #119 | train: add scaled training configs and runbook | model | p1 | m | RFC-0006 | Closed |
+| #120 | eval: add action-view ablation suite | evaluation | p1 | m | RFC-0007 | Closed |
+| #121 | eval: add scorer calibration and reranker quality report | harness | p1 | m | RFC-0008 | Closed |
+| #122 | docs: fill dataset and model cards from artifacts | release | p1 | m | RFC-0012 | Closed |
+| #137 | ops: add HF Jobs ml-intern training automation | ci | p1 | m | RFC-0012 | Closed |
+| #138 | run: execute HF Jobs scaled training and publish artifacts | release | p1 | l | RFC-0012 | Closed |
+| #150 | [Tracking] Action-conditioned scaled result and release readiness | release | p1 | l | RFC-0012 | Open |
+| #151 | eval: add no-action dominance diagnostics and claim gates | evaluation | p1 | m | RFC-0007 | Open |
+| #152 | data: add action-discriminative shard diagnostics and hard negatives | data | p1 | l | RFC-0002 | Open |
+| #153 | train: add action-use objective and scaled sweep configs | model | p1 | l | RFC-0006 | Open |
+| #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Open |
+| #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Open |
+| #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Open |
+| #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Open |
+| #126 | release: run final artifact freeze and checklist | release | p1 | l | RFC-0012 | Open |
 
 ## Tracking Issues
 
-Tracking issues group child implementation issues by subsystem and
-remain open until every child issue closes.
+Tracking issues group child implementation issues by subsystem and remain open
+until every child issue closes or is explicitly superseded.
 
 - #2 [Tracking] Code transition model — RFC-0001
 - #3 [Tracking] Edit transition dataset — RFC-0002
@@ -107,47 +131,51 @@ remain open until every child issue closes.
 - #12 [Tracking] Public API and packaging — RFC-0011
 - #13 [Tracking] Release CI and governance — RFC-0012
 
+Additional active completion tracker: #150 [Tracking] Action-conditioned scaled
+result and release readiness.
+
 ## Cross-Cutting Dependencies
 
-- #14 was the package boundary precondition for every later command
-  and module-level change.
+- #14 was the package boundary precondition for every later command and
+  module-level change.
 - #15 was the module-move precondition for new packages such as
   `codelewm.eval`, `codelewm.security`, and `codelewm.observability`.
-- #16 and #17 defined the latent transition interface and were the
-  precondition for objective, encoders, scorer, and checkpoint work.
-- #19, #20, #21, and #22 form the dataset ingestion chain that
-  precedes HDF5 packing in #23 and downstream training.
-- #25 and #26 precede mask extraction, action extraction, synthetic
-  transforms, and CodeState fixture coverage.
-- #29 precedes text/abstract action encoders and patch-action
-  diagnostic boundary work.
-- #33 and #34 precede smoke training, action-conditioning regression,
-  retrieval evaluation, and scorer integration.
-- #50 is the shared artifact manifest schema that #18, #23, #38, #48,
-  and #52 build on.
-- #53 precedes #47 because reranking must preserve the non-execution
-  boundary.
-- #39, #52, #55, and #56 preceded #58 because CI needed the CPU
-  smoke path, manifest verifier, secret/checkpoint safety checks, and
-  CLI schema contract before it could stand alone.
-- #30, #39, #41, #42, and #43 are the minimum evidence chain for the
-  v0.1 claim that text actions improve transition retrieval over
-  no-action and shuffled baselines.
+- #16 and #17 defined the latent transition interface and were the precondition
+  for objective, encoders, scorer, and checkpoint work.
+- #19, #20, #21, and #22 form the dataset ingestion chain that precedes HDF5
+  packing in #23 and downstream training.
+- #25 and #26 precede mask extraction, action extraction, synthetic transforms,
+  and CodeState fixture coverage.
+- #29 precedes text/abstract action encoders and patch-action diagnostic
+  boundary work.
+- #33 and #34 precede smoke training, action-conditioning regression, retrieval
+  evaluation, and scorer integration.
+- #50 is the shared artifact manifest schema that #18, #23, #38, #48, #52, and
+  later HF/release evidence build on.
+- #53 precedes #47 because reranking must preserve the non-execution boundary.
+- #109 through #117 closed the package-native first-results runtime.
+- #118 through #122 closed the scaled-data, scaled-training, ablation,
+  scorer-quality, and card population work needed before the first HF run.
+- #137 and #138 proved the HF Jobs/private-publication/downloaded-artifact path.
+- #151 is now the claim-gate precondition for any positive public
+  action-conditioning language.
+- #152 is the data/eval precondition for hard negatives that can stress action
+  use instead of before-state priors.
+- #153 is the model/training precondition for the follow-up action-use scaled
+  run.
+- #154 is the evidence precondition for #125 and #126.
+- #123 and #124 can proceed independently as package/provenance hardening, but
+  #126 cannot close until #154 supplies claim-eligible evidence or an explicit
+  negative-release boundary.
 
 ## Cross-Reference Map
 
 Each implementation issue links to:
 
-- one spec section (`docs/spec/...`);
-- one RFC (`docs/rfcs/RFC-NNNN-*.md`);
-- one tracking issue (#2..#13).
+- one spec section under `docs/spec/`;
+- one RFC under `docs/rfcs/`;
+- one tracking issue (#2 through #13, plus #150 for the completion milestone).
 
-The reverse links are documented in the RFC References sections.
-When a new spec section or RFC is accepted, file the tracking issue
-first, then derive the child issues, then update this file.
-
-The closed v0.1 and v1.0 rows above capture completed foundation work. The
-active full-completion queue is maintained in
-`docs/roadmap/FULL_COMPLETION.md`; open tracking issues #3 and #7 through #13
-now point at the first-results, scaled-artifact, publishing, and release child
-issues.
+The reverse links are documented in the RFC References sections. When a new spec
+section or RFC is accepted, file the tracking issue first, derive child issues,
+then update this file.

@@ -85,6 +85,12 @@ glance.
       benchmark report's "Action view" slice or
       `action_view_policy=headline_text_only` in the retrieval
       report.
+- [ ] **Action-use claim gate is explicit.** Evidence:
+      retrieval or ablation report records text-action versus
+      no-action deltas and a machine-readable claim gate. Positive
+      action-conditioning claims are allowed only when the gate
+      passes; otherwise release notes must frame the artifact as
+      negative/diagnostic.
 - [ ] **Action-view ablation report accounts for missing runs.**
       Evidence: `codelewm.eval.action_ablation_report.v1` includes
       completed baseline rows and explicit `blocked` rows for

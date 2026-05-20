@@ -1,9 +1,12 @@
 # Scaled Training Configs And Runbook
 
 This runbook is the #119 operator contract for moving from smoke evidence to a
-bounded scaled training run. It does not make a learning claim by itself; the
-claim still depends on the ablation, scorer/reranker, card, and HF Jobs evidence
-tracked by #120, #121, #122, and #138.
+bounded scaled training run. The first HF A10G run completed under #138 and is
+documented in `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. It proves the
+remote systems path but does not support a positive action-conditioned quality
+claim because text-action loses to no-action on headline retrieval. The next
+training work is #153: add an action-use objective/intervention and scaled sweep
+configs before the follow-up HF run in #154.
 
 ## Config Matrix
 
@@ -18,9 +21,10 @@ validation.
 | Apple MPS development | `config/train/scaled/codelewm_scaled_mps.yaml` | `240119` | `10000` | `32` | `float32` | 4-12h on M2/M3 Max class hardware, 16-32 GiB unified memory, 1-4 GiB artifacts |
 | HF A10G headline | `config/train/scaled/codelewm_scaled_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | 12-24h on `a10g-small`, <=24 GiB device memory, 2-8 GiB artifacts |
 
-The A10G profile is the default candidate for the first meaningful HF Jobs run.
-The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
-research claims.
+The A10G profile was the baseline candidate used for the first scaled HF Jobs
+run. The CPU and MPS profiles are bounded rehearsal/debug profiles, not headline
+research claims. A follow-up action-use config from #153 supersedes the baseline
+A10G profile for the next claim-seeking run when it lands.
 
 ## Config Validation
 
@@ -160,8 +164,7 @@ reuse the failed output directory.
 
 ## HF Jobs Launch
 
-Use the A10G config for the real remote candidate once the public shard config is
-merged and the remaining evidence gates allow spending GPU compute:
+The baseline A10G launch command is:
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -182,6 +185,9 @@ CODELEWM_HF_SOURCE_DATASET_REVISION=main \
 CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft \
 uv run scripts/hf-launch-codelewm-job
 ```
+
+For the follow-up action-use run, keep this HF CLI orchestration boundary and
+replace `CODELEWM_TRAIN_CONFIG` with the checked-in action-use config from #153.
 
 Monitor and inspect only through the HF CLI:
 

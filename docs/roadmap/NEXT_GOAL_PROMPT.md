@@ -1,38 +1,49 @@
 # Next Goal Prompt
 
-Use this prompt for the next implementation run.
+Use this prompt for the next full-completion run. The full headless Hugging Face
+and ml-intern prompt is maintained in
+`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
 
 ```text
-Continue CodeLeWM from the current main branch and execute the full-completion
-roadmap one issue at a time.
+/goal Complete CodeLeWM's remaining path to a claim-eligible first scaled
+training result and release-ready artifact set.
 
-Start with #118: data: document and gate public source acquisition.
+Start from the current main branch. Ground in AGENTS.md, SPEC.md,
+docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
+docs/operations/HF_ML_INTERN_TRAINING.md, docs/training/SCALED_TRAINING_RUNBOOK.md,
+CONTRIBUTING.md, the relevant docs/spec files, and the relevant docs/rfcs files.
 
-Before editing, read AGENTS.md, SPEC.md, docs/roadmap/FULL_COMPLETION.md,
-docs/roadmap/IMPLEMENTATION.md, CONTRIBUTING.md, the relevant docs/spec file,
-and the relevant docs/rfcs file.
+Do not redo closed HF infrastructure work. Issues #109 through #122, #137, and
+#138 are complete. The first scaled HF run proved the systems path but failed
+the positive action-conditioned quality gate because text-action lost to the
+no-action baseline.
 
-Work sequentially: one issue, one branch, one PR. The dependency, dataset,
-training, evaluation, index, and first-results smoke foundations are now landed;
-do not add unsupported claims while moving toward a scaled public-safe shard.
+Work sequentially, one issue per branch and PR:
 
-For each issue:
-1. Re-read the issue body and linked spec/RFC.
-2. Inspect the current code and tests before editing.
-3. Implement the smallest complete change that satisfies the acceptance
-   criteria.
-4. Add or update focused tests and docs for public behavior.
-5. Run the strongest relevant validation locally.
-6. Commit, push, open one PR, and include problem, solution, validation,
-   caveats, and `Closes #<issue>`.
-7. Return to main after the PR is merged, pull latest main, and continue with the
-   next issue in docs/roadmap/FULL_COMPLETION.md.
+1. #151 eval: add no-action dominance diagnostics and claim gates.
+2. #152 data: add action-discriminative shard diagnostics and hard negatives.
+3. #153 train: add action-use objective and scaled sweep configs.
+4. #154 run: execute follow-up HF Jobs action-use training and verify artifacts.
+5. #123 release: add uv build and package publishing gates.
+6. #124 release: add dependency audit and provenance evidence.
+7. #125 docs: refresh public docs against first-results evidence.
+8. #126 release: run final artifact freeze and checklist.
 
-The next milestone is scaled research evidence: a bounded, documented,
-public-safe dataset path whose manifests, license gates, and source acquisition
-reports can support non-trivial retrieval baselines and surprise decoys.
+For HF work, orchestrate the remote job lifecycle with the hf CLI: hf auth
+whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs
+<job-id>, hf jobs stats <job-id>, and hf download. Keep Hugging Face
+repositories private until the claim gate, release gates, secret scans, manifest
+verification, and checkpoint-trust checks all pass.
 
-For the Hugging Face Jobs and ml-intern execution path, use
-docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md after this repository's HF automation
-branch has landed on the ref used by CODELEWM_HF_REF.
+After each issue, run the strongest relevant local validation, commit, push,
+open a PR, wait for available checks, merge when clean, return to main, pull
+latest main, and continue. Public docs must stay artifact-backed and must not
+claim action-conditioned quality until text-action beats no-action on the agreed
+headline metrics or the release is explicitly framed as negative/diagnostic.
+```
+
+Launch the full HF/ml-intern recipe with:
+
+```bash
+ml-intern --max-iterations -1 "$(cat docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md)"
 ```
