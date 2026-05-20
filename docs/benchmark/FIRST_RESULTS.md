@@ -3,7 +3,7 @@
 - Report ID: `codelewm-first-results-2026-05-20`
 - Schema version: `codelewm.first_results.v1`
 - Evidence tier: smoke fixture, not scaled research evidence
-- Source git SHA: `c5c5035055ce5ec4098f90c4605816737acfaf75`
+- Source git SHA: `420b1601b36a84e0e03d5b8259aa142b62b8219e`
 - Config bundle SHA-256: `6bf2b0b56dab663da0e42f29a5b0329aae3dc2213f5a14cd0db5d8a03d0af6f8`
 - Runtime train config SHA-256: `a824192ddb13147219478695b6b4d8f24b069a007bcf715962aee459af03c8b0`
 - Seed: dataset `7`, training `1337`, evaluation `0`
@@ -60,15 +60,15 @@ machine-readable command outputs and artifact IDs used by this report.
 
 | Artifact | Schema version | Manifest path | Artifact ID | Config SHA prefix |
 | -------- | -------------- | ------------- | ----------- | ----------------- |
-| dataset_build | codelewm.artifact_manifest.v1 | .artifacts/first-results/build/manifest.json | dataset-5b0ae8d11e4e1f29 | a87cc5fbfcfe |
-| dataset_pack | codelewm.artifact_manifest.v1 | .artifacts/first-results/pack/manifest.json | dataset-dfbe918a09e63fdf | 6ae8bed29201 |
-| training_run | codelewm.artifact_manifest.v1 | .artifacts/first-results/train/manifest.json | training_run-7c22ab9760f41311 | a908d8aa3dc8 |
-| retrieval_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/retrieval/manifest.json | eval_report-8643a94310b783b1 | 94dab553d9a3 |
-| action_ablation | codelewm.artifact_manifest.v1 | .artifacts/first-results/ablation/manifest.json | eval_report-0425fc6002fb7249 | 4afab675f686 |
-| surprise_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/surprise/manifest.json | eval_report-ec10afbcf7d30a03 | b02bfb81e70c |
-| transition_index | codelewm.artifact_manifest.v1 | .artifacts/first-results/index/manifest.json | index-a9ab7b4f5666c788 | 100530ae6b92 |
-| scorer_quality | codelewm.artifact_manifest.v1 | .artifacts/first-results/scorer_quality/manifest.json | score_report-8b62e00c9c2448bc | 65e01cbb7e78 |
-| Checkpoint | `codelewm.checkpoint.v1` | `checkpoint.pt` | `306253eef16fdc92` | `72822cb45ab8` |
+| dataset_build | codelewm.artifact_manifest.v1 | .artifacts/first-results/build/manifest.json | dataset-792a18e2b90b884c | a87cc5fbfcfe |
+| dataset_pack | codelewm.artifact_manifest.v1 | .artifacts/first-results/pack/manifest.json | dataset-c0efb4ef2e91ad0a | 6ae8bed29201 |
+| training_run | codelewm.artifact_manifest.v1 | .artifacts/first-results/train/manifest.json | training_run-5320c0ef26858ada | a908d8aa3dc8 |
+| retrieval_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/retrieval/manifest.json | eval_report-3ee684d8129f5ee0 | 94dab553d9a3 |
+| action_ablation | codelewm.artifact_manifest.v1 | .artifacts/first-results/ablation/manifest.json | eval_report-c9a07d7fbea22cd1 | 4afab675f686 |
+| surprise_eval | codelewm.artifact_manifest.v1 | .artifacts/first-results/surprise/manifest.json | eval_report-a0369739f4fcce0e | b02bfb81e70c |
+| transition_index | codelewm.artifact_manifest.v1 | .artifacts/first-results/index/manifest.json | index-34652ded039ee11a | 100530ae6b92 |
+| scorer_quality | codelewm.artifact_manifest.v1 | .artifacts/first-results/scorer_quality/manifest.json | score_report-a2de9b2a5ead55a1 | 65e01cbb7e78 |
+| Checkpoint | `codelewm.checkpoint.v1` | `checkpoint.pt` | `a396f2ca83fd2796` | `72822cb45ab8` |
 | License gate | `codelewm.public_license_gate.v1` | `.artifacts/first-results/build/reports/license_gate_report.json` | `release_allowed=true` | n/a |
 
 ## Manifest Verification
@@ -76,13 +76,13 @@ machine-readable command outputs and artifact IDs used by this report.
 | Artifact | Result | Files checked | Required parents | Command |
 | -------- | ------ | ------------- | ---------------- | ------- |
 | dataset_build | pass | 8 | none | uv run codelewm manifest verify --manifest .artifacts/first-results/build/manifest.json --json |
-| dataset_pack | pass | 9 | dataset-5b0ae8d11e4e1f29 | uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json |
-| training_run | pass | 6 | dataset-dfbe918a09e63fdf | uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| retrieval_eval | pass | 3 | training_run-7c22ab9760f41311, dataset-dfbe918a09e63fdf | uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| action_ablation | pass | 1 | eval_report-8643a94310b783b1, training_run-7c22ab9760f41311 | uv run codelewm manifest verify --manifest .artifacts/first-results/ablation/manifest.json --parent-manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --json |
-| surprise_eval | pass | 2 | training_run-7c22ab9760f41311, dataset-dfbe918a09e63fdf | uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| transition_index | pass | 3 | training_run-7c22ab9760f41311, dataset-dfbe918a09e63fdf | uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
-| scorer_quality | pass | 2 | training_run-7c22ab9760f41311, index-a9ab7b4f5666c788 | uv run codelewm manifest verify --manifest .artifacts/first-results/scorer_quality/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/index/manifest.json --json |
+| dataset_pack | pass | 9 | dataset-792a18e2b90b884c | uv run codelewm manifest verify --manifest .artifacts/first-results/pack/manifest.json --parent-manifest .artifacts/first-results/build/manifest.json --json |
+| training_run | pass | 6 | dataset-c0efb4ef2e91ad0a | uv run codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| retrieval_eval | pass | 3 | training_run-5320c0ef26858ada, dataset-c0efb4ef2e91ad0a | uv run codelewm manifest verify --manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| action_ablation | pass | 1 | eval_report-3ee684d8129f5ee0, training_run-5320c0ef26858ada | uv run codelewm manifest verify --manifest .artifacts/first-results/ablation/manifest.json --parent-manifest .artifacts/first-results/retrieval/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --json |
+| surprise_eval | pass | 2 | training_run-5320c0ef26858ada, dataset-c0efb4ef2e91ad0a | uv run codelewm manifest verify --manifest .artifacts/first-results/surprise/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| transition_index | pass | 3 | training_run-5320c0ef26858ada, dataset-c0efb4ef2e91ad0a | uv run codelewm manifest verify --manifest .artifacts/first-results/index/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json |
+| scorer_quality | pass | 2 | training_run-5320c0ef26858ada, index-34652ded039ee11a | uv run codelewm manifest verify --manifest .artifacts/first-results/scorer_quality/manifest.json --parent-manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/index/manifest.json --json |
 
 ## Dataset And Training
 
