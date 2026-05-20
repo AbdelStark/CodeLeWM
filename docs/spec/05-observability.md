@@ -93,6 +93,13 @@ selected negative IDs, target/train rejection counts, and aggregate composition
 counts for same-before different-after, near-before different-after, same-file,
 source, edit-size bucket, action-cluster, similarity, action-discriminative, and
 fallback selection.
+Action-contrast pool reports use
+`schema_version=codelewm.eval.action_contrast_pool_report.v1` and are written by
+retrieval evaluation as `reports/action_contrast_pool_report.json`. They record
+exact-same-before, near-before, same-file, action-cluster, edit-shape, mutation,
+and random control pools where available; every pool stores held-out transition
+IDs only, split-membership proofs, unavailable-pool reasons, leakage counts, and
+whether same-before multi-action examples make the no-action prior insufficient.
 Action-discriminative shard reports use
 `schema_version=codelewm.data.action_discriminative_shard_report.v1` and are
 manifested by dataset build and pack artifacts as

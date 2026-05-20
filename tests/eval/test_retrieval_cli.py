@@ -73,6 +73,11 @@ class RetrievalCliTest(unittest.TestCase):
         self.assertEqual(report["schema_version"], RETRIEVAL_REPORT_SCHEMA_VERSION)
         self.assertEqual(set(report["baselines"]), {"lexical", "no_action", "random", "shuffled_action"})
         self.assertIn("hard-1k", report["slices"])
+        self.assertIn("action_contrast_pool_report", report["metadata"])
+        self.assertEqual(
+            report["metadata"]["action_contrast_pool_report"]["schema_version"],
+            "codelewm.eval.action_contrast_pool_report.v1",
+        )
         self.assertEqual(report["metadata"]["action_view_policy"]["action_view"], "text")
         self.assertFalse(report["metadata"]["action_view_policy"]["diagnostic_upper_bound"])
         self.assertEqual(
@@ -92,7 +97,12 @@ class RetrievalCliTest(unittest.TestCase):
         )
         self.assertEqual(
             {path.name for path in checked_files},
-            {"config.json", "retrieval_report.json", "hard_negative_sampler_report.json"},
+            {
+                "config.json",
+                "retrieval_report.json",
+                "hard_negative_sampler_report.json",
+                "action_contrast_pool_report.json",
+            },
         )
         self.assertEqual(
             [event["event"] for event in log_events],

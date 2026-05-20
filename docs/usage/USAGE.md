@@ -55,7 +55,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
-| `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
@@ -379,15 +379,20 @@ loading torch weights, and writes:
   reports/
     retrieval_report.json                    codelewm.eval.retrieval_report.v1
     hard_negative_sampler_report.json        codelewm.eval.hard_negative_sampler_report.v1
+    action_contrast_pool_report.json         codelewm.eval.action_contrast_pool_report.v1
 ```
 
 The JSON stdout summary uses `codelewm.eval.retrieval_run.v1`. The report
 includes `Recall@1`, `Recall@5`, `Recall@10`, MRR, median rank, easy and hard
 candidate counts, random/lexical/no-action/shuffled-action baselines,
-hard-negative slices, and action-view policy metadata. Headline reports require
-`action_text`; patch-action reports remain diagnostic only. If the packed
-dataset exposes an action-discriminative shard report, retrieval metadata embeds
-it so hard-negative availability is visible in the eval artifact.
+hard-negative slices, action-contrast slices, and action-view policy metadata.
+Headline reports require `action_text`; patch-action reports remain diagnostic
+only. If the packed dataset exposes an action-discriminative shard report,
+retrieval metadata embeds it so hard-negative availability is visible in the eval
+artifact. The action-contrast report is additive: it does not change
+`codelewm.eval.retrieval_report.v1`, but it records exact-same-before,
+near-before, same-file, action-cluster, edit-shape, mutation, and random control
+pools with held-out split proofs and unavailable-pool reasons.
 
 Verify lineage by passing both parent manifests:
 
@@ -676,7 +681,9 @@ See `codelewm.eval` for the full API. Reports use
 `schema_version=codelewm.eval.retrieval_report.v1`; candidate pools
 use `schema_version=codelewm.eval.candidate_pool.v1` and must
 exclude `train`-split rows. Every headline retrieval report must
-include random, lexical, no-action, and shuffled-action baselines.
+include random, lexical, no-action, and shuffled-action baselines. v0.2
+action-contrast reports use
+`schema_version=codelewm.eval.action_contrast_pool_report.v1`.
 
 ### Run a patch-surprise evaluation
 
@@ -793,6 +800,7 @@ field list.
 | Index build report | `codelewm.index_build.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
+| Action-contrast pool report | `codelewm.eval.action_contrast_pool_report.v1` |
 | Action ablation run | `codelewm.eval.action_ablation_run.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |

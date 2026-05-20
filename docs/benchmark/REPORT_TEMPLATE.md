@@ -90,6 +90,25 @@ action-conditioning claims are allowed only when
 | No-action Recall@1 delta | `<text_action - no_action>` |
 | No-action MRR delta | `<text_action - no_action>` |
 
+### v0.2 Action-contrast gate
+
+For v0.2 action-use claims, the benchmark must include
+`reports/action_contrast_pool_report.json` with schema
+`codelewm.eval.action_contrast_pool_report.v1`. Positive action-use claims are
+blocked unless downloaded HF artifacts satisfy the v0.2 gate on action-contrast
+pools:
+
+| Pool | Text-action Recall@1 | No-action Recall@1 | Delta | Text-action MRR | No-action MRR | Delta | Gate |
+| ---- | -------------------- | ------------------ | ----- | --------------- | ------------- | ----- | ---- |
+| exact_same_before | | | `>= 0.10` | | | `>= 0.08` | `<pass|fail>` |
+| near_before | | | `>= 0.10` | | | `>= 0.08` | `<pass|fail>` |
+
+The action-contrast report must show `leakage.selected_train_rows=0`, list
+unavailable-pool reasons, and preserve split-membership proofs for every
+candidate pool. Treat random, same-file, action-cluster, edit-shape, and
+mutation pools as controls unless the report explicitly scopes the claim to a
+different slice.
+
 ### Slices
 
 | Slice | Recall@1 | Recall@5 | Recall@10 | MRR | Sample count |

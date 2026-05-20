@@ -62,6 +62,7 @@ class BenchmarkTemplateContentTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.checkpoint.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.action_contrast_pool_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.harness.scorer_quality_report.v1",

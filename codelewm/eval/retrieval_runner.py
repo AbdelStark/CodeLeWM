@@ -38,11 +38,13 @@ from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE, TORCH_CHECKPOINT_SCHE
 
 from .action_policy import build_action_view_report_policy
 from .retrieval import (
+    ActionContrastPoolConfig,
     CandidatePoolEntry,
     HardNegativeSamplerConfig,
     RetrievalEvalError,
     RetrievalMetrics,
     RetrievalReport,
+    build_action_contrast_pool_report,
     build_baseline_metrics,
     build_easy_candidate_pool,
     build_hard_candidate_pool,
@@ -53,6 +55,7 @@ from .retrieval import (
     random_baseline_ranks,
     rank_targets,
     shuffled_action_baseline_ranks,
+    write_action_contrast_pool_report,
     validate_required_headline_baselines,
     write_retrieval_report,
 )
@@ -69,6 +72,7 @@ class RetrievalEvalResult:
     artifact_manifest_path: str
     report_path: str
     hard_negative_sampler_report_path: str
+    action_contrast_pool_report_path: str
     parent_artifacts: tuple[str, ...]
     metrics: RetrievalMetrics
     baselines: Mapping[str, RetrievalMetrics]
@@ -82,6 +86,7 @@ class RetrievalEvalResult:
             "artifact_manifest_path": self.artifact_manifest_path,
             "report_path": self.report_path,
             "hard_negative_sampler_report_path": self.hard_negative_sampler_report_path,
+            "action_contrast_pool_report_path": self.action_contrast_pool_report_path,
             "parent_artifacts": list(self.parent_artifacts),
             "metrics": self.metrics.to_dict(),
             "baselines": {
@@ -187,7 +192,7 @@ def run_retrieval_evaluation(
         action_view=model.config.action_view,
         vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
     )
-    report, hard_report = _evaluate_rows(
+    report, hard_report, action_contrast_report = _evaluate_rows(
         rows,
         model=model,
         runtime=runtime,
@@ -224,15 +229,17 @@ def run_retrieval_evaluation(
     config_path = out_dir / "config.json"
     report_path = out_dir / "reports" / "retrieval_report.json"
     hard_report_path = out_dir / "reports" / "hard_negative_sampler_report.json"
+    action_contrast_report_path = out_dir / "reports" / "action_contrast_pool_report.json"
     _write_json(config_payload, config_path)
     write_retrieval_report(report, report_path)
     _write_json(hard_report.to_dict(), hard_report_path)
+    write_action_contrast_pool_report(action_contrast_report, action_contrast_report_path)
 
     parent_artifacts = (training_artifact.artifact_id, dataset_artifact.artifact_id)
     artifact_manifest = build_artifact_manifest(
         artifact_kind="eval_report",
         root=out_dir,
-        files=(config_path, report_path, hard_report_path),
+        files=(config_path, report_path, hard_report_path, action_contrast_report_path),
         command=command,
         config=config_payload,
         parent_artifacts=parent_artifacts,
@@ -243,6 +250,7 @@ def run_retrieval_evaluation(
             "report_schema_version": report.schema_version,
             "report_path": "reports/retrieval_report.json",
             "hard_negative_sampler_report_path": "reports/hard_negative_sampler_report.json",
+            "action_contrast_pool_report_path": "reports/action_contrast_pool_report.json",
             "checkpoint_sha256": checkpoint_manifest.checkpoint_sha256,
             "checkpoint_action_view": model.config.action_view,
             "checkpoint_step": _optional_int(checkpoint_payload.get("step"), "checkpoint.step"),
@@ -266,6 +274,7 @@ def run_retrieval_evaluation(
                 report.metadata.get("action_discriminative_shard_report")
             ),
             "required_baselines": sorted(report.baselines),
+            "action_contrast_pool_report": action_contrast_report.summary_dict(),
         },
     )
     manifest_path = out_dir / "manifest.json"
@@ -276,6 +285,7 @@ def run_retrieval_evaluation(
         artifact_manifest_path="manifest.json",
         report_path="reports/retrieval_report.json",
         hard_negative_sampler_report_path="reports/hard_negative_sampler_report.json",
+        action_contrast_pool_report_path="reports/action_contrast_pool_report.json",
         parent_artifacts=parent_artifacts,
         metrics=report.metrics,
         baselines=report.baselines,
@@ -313,7 +323,7 @@ def _evaluate_rows(
     data_path: str,
     checkpoint_path: str,
     action_discriminative_report: Mapping[str, Any],
-) -> tuple[RetrievalReport, Any]:
+) -> tuple[RetrievalReport, Any, Any]:
     entries = tuple(row.candidate_entry() for row in rows)
     easy_pool = build_easy_candidate_pool(
         entries,
@@ -385,6 +395,17 @@ def _evaluate_rows(
     hard_ranks = rank_targets(tuple(hard_score_rows), tuple(hard_candidate_ids_by_query), query_ids)
     hard_counts = tuple(len(ids) for ids in hard_candidate_ids_by_query)
     hard_report = build_hard_negative_sampler_report(hard_samples, config=hard_config)
+    action_contrast_config = ActionContrastPoolConfig(
+        max_queries=len(query_ids),
+        max_candidates_per_pool=min(max(hard_negatives, 1), 16),
+        seed=seed,
+        near_before_hamming_threshold=hard_config.near_before_hamming_threshold,
+    )
+    action_contrast_report = build_action_contrast_pool_report(
+        all_entries,
+        query_ids=query_ids,
+        config=action_contrast_config,
+    )
 
     slices = _build_slices(
         rows_by_id=row_by_id,
@@ -395,6 +416,15 @@ def _evaluate_rows(
         hard_counts=hard_counts,
         action_view=action_view,
     )
+    action_contrast_slices, action_contrast_metrics = _build_action_contrast_metrics(
+        action_contrast_report,
+        model_scores_all=model_scores_all,
+        no_action_scores_all=no_action_scores_all,
+        row_by_id=row_by_id,
+        row_index_by_id=row_index_by_id,
+        seed=seed,
+    )
+    slices.update(action_contrast_slices)
     report = build_retrieval_report(
         ranks,
         candidate_pool=easy_pool,
@@ -422,9 +452,11 @@ def _evaluate_rows(
                 "value": "negative_squared_l2",
             },
             "hard_negative_sampler_report": hard_report.to_dict(),
+            "action_contrast_pool_report": action_contrast_report.summary_dict(),
+            "action_contrast_metrics": action_contrast_metrics,
         },
     )
-    return report, hard_report
+    return report, hard_report, action_contrast_report
 
 
 def _build_slices(
@@ -458,6 +490,99 @@ def _build_slices(
     for bucket, bucket_ranks in by_edit_bucket.items():
         slices[f"edit_size:{bucket}"] = _metrics_for(bucket_ranks, by_edit_bucket_counts[bucket])
     return slices
+
+
+def _build_action_contrast_metrics(
+    action_contrast_report: Any,
+    *,
+    model_scores_all: np.ndarray,
+    no_action_scores_all: np.ndarray,
+    row_by_id: Mapping[str, _EvalRow],
+    row_index_by_id: Mapping[str, int],
+    seed: int,
+) -> tuple[dict[str, RetrievalMetrics], dict[str, Any]]:
+    slices: dict[str, RetrievalMetrics] = {}
+    metadata: dict[str, Any] = {}
+    for pool_name in action_contrast_report.config.pool_names:
+        score_rows: list[tuple[float, ...]] = []
+        no_action_score_rows: list[tuple[float, ...]] = []
+        candidate_ids_by_query: list[tuple[str, ...]] = []
+        candidate_texts_by_query: list[tuple[str, ...]] = []
+        query_texts: list[str] = []
+        target_ids: list[str] = []
+
+        for sample in action_contrast_report.samples:
+            negative_ids = tuple(sample.pools.get(pool_name, ()))
+            if not negative_ids:
+                continue
+            candidate_ids = (sample.target_id, *negative_ids)
+            query_index = row_index_by_id[sample.query_id]
+            candidate_indices = tuple(row_index_by_id[candidate_id] for candidate_id in candidate_ids)
+            score_rows.append(
+                tuple(
+                    float(model_scores_all[query_index, candidate_index])
+                    for candidate_index in candidate_indices
+                )
+            )
+            no_action_score_rows.append(
+                tuple(
+                    float(no_action_scores_all[query_index, candidate_index])
+                    for candidate_index in candidate_indices
+                )
+            )
+            candidate_ids_by_query.append(candidate_ids)
+            candidate_texts_by_query.append(
+                tuple(row_by_id[candidate_id].candidate_text for candidate_id in candidate_ids)
+            )
+            query_texts.append(_query_text(row_by_id[sample.query_id]))
+            target_ids.append(sample.target_id)
+
+        if not score_rows:
+            continue
+
+        ranks = rank_targets(tuple(score_rows), tuple(candidate_ids_by_query), tuple(target_ids))
+        candidate_counts = tuple(len(candidate_ids) for candidate_ids in candidate_ids_by_query)
+        metrics = _metrics_for(ranks, candidate_counts)
+        baseline_counts = {
+            name: candidate_counts
+            for name in ("random", "lexical", "no_action", "shuffled_action")
+        }
+        baseline_metrics = build_baseline_metrics(
+            {
+                "random": random_baseline_ranks(
+                    tuple(candidate_ids_by_query),
+                    tuple(target_ids),
+                    seed=seed + _stable_seed_offset(f"{pool_name}:random"),
+                ),
+                "lexical": lexical_baseline_ranks(
+                    tuple(query_texts),
+                    tuple(candidate_texts_by_query),
+                    tuple(candidate_ids_by_query),
+                    tuple(target_ids),
+                ),
+                "no_action": no_action_baseline_ranks(
+                    tuple(no_action_score_rows),
+                    tuple(candidate_ids_by_query),
+                    tuple(target_ids),
+                ),
+                "shuffled_action": shuffled_action_baseline_ranks(
+                    tuple(score_rows),
+                    tuple(candidate_ids_by_query),
+                    tuple(target_ids),
+                    seed=seed + _stable_seed_offset(f"{pool_name}:shuffled"),
+                ),
+            },
+            candidate_counts=baseline_counts,
+        )
+        slices[f"action_contrast:{pool_name}"] = metrics
+        metadata[pool_name] = {
+            "metrics": metrics.to_dict(),
+            "baselines": {
+                name: baseline.to_dict()
+                for name, baseline in sorted(baseline_metrics.items())
+            },
+        }
+    return slices, metadata
 
 
 def _metrics_for(ranks: Sequence[int], candidate_counts: Sequence[int]) -> RetrievalMetrics:
@@ -627,6 +752,7 @@ def _load_split_rows(
                     "state_before_simhash": _metadata_token_simhash(metadata, "state_before"),
                     "edit_size_bucket": f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10}-"
                     f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10 + 9}",
+                    "diff_shape": _metadata_diff_shape(metadata),
                 },
             )
         )
@@ -793,6 +919,7 @@ def _reject_existing_retrieval_outputs(out_dir: Path, *, overwrite: bool) -> Non
         out_dir / "config.json",
         out_dir / "reports" / "retrieval_report.json",
         out_dir / "reports" / "hard_negative_sampler_report.json",
+        out_dir / "reports" / "action_contrast_pool_report.json",
         out_dir / "manifest.json",
     ):
         if path.exists() and not overwrite:
@@ -915,11 +1042,25 @@ def _action_cluster(metadata: Mapping[str, Any]) -> str:
     return digest[:12]
 
 
+def _metadata_diff_shape(metadata: Mapping[str, Any]) -> str:
+    for value in metadata.get("dedup_keys", ()) or ():
+        text = str(value)
+        if text.startswith("diff_shape:"):
+            return text.split(":", 1)[1]
+    edit_size = int(metadata.get("edit_size", 0) or 0)
+    return f"edit_size:{(edit_size // 10) * 10}-{(edit_size // 10) * 10 + 9}"
+
+
 def _display_path(path: Path) -> str:
     try:
         return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
     except ValueError:
         return str(path)
+
+
+def _stable_seed_offset(value: str) -> int:
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16)
 
 
 def _hdf5_attr_text(value: Any) -> str:

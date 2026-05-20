@@ -86,6 +86,7 @@ their workflow depends on.
 | Retrieval metrics             | `codelewm.eval.retrieval_metrics.v1`            |
 | Retrieval report              | `codelewm.eval.retrieval_report.v1`             |
 | Candidate pool                | `codelewm.eval.candidate_pool.v1`               |
+| Action-contrast pool report   | `codelewm.eval.action_contrast_pool_report.v1`  |
 | Hard-negative sample          | `codelewm.eval.hard_negative_sample.v1`         |
 | Hard-negative sampler report  | `codelewm.eval.hard_negative_sampler_report.v1` |
 | Patch-surprise eval run       | `codelewm.eval.surprise_run.v1`                 |
