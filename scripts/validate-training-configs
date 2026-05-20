@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
                     "seed": config.seed,
                     "config_sha256": compute_config_hash(payload),
                     "action_view": config.wm.action_view,
+                    "action_fusion": config.wm.action_fusion,
                     "max_steps": config.trainer.max_steps,
                     "accelerator": config.trainer.accelerator,
                     "devices": config.trainer.devices,
@@ -54,6 +55,15 @@ def main(argv: list[str] | None = None) -> int:
                     "action_use_margin_enabled": config.loss.enable_action_use_margin,
                     "action_use_margin_weight": config.loss.action_use_margin_weight,
                     "action_use_margin": config.loss.action_use_margin,
+                    "action_swap_contrastive_enabled": config.loss.enable_action_swap_contrastive,
+                    "action_swap_contrastive_weight": config.loss.action_swap_contrastive_weight,
+                    "action_swap_contrastive_margin": config.loss.action_swap_contrastive_margin,
+                    "inverse_action_reconstruction_enabled": (
+                        config.loss.enable_inverse_action_reconstruction
+                    ),
+                    "inverse_action_reconstruction_weight": (
+                        config.loss.inverse_action_reconstruction_weight
+                    ),
                 }
             )
     except TrainConfigError as exc:

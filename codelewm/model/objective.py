@@ -26,6 +26,11 @@ class ObjectiveConfig:
     enable_action_use_margin: bool = False
     action_use_margin_weight: float = 0.0
     action_use_margin: float = 0.0
+    enable_action_swap_contrastive: bool = False
+    action_swap_contrastive_weight: float = 0.0
+    action_swap_contrastive_margin: float = 0.0
+    enable_inverse_action_reconstruction: bool = False
+    inverse_action_reconstruction_weight: float = 0.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
     sigreg_seed: int | None = None
@@ -59,6 +64,38 @@ class ObjectiveConfig:
             raise ValueError("action_use_margin_weight requires enable_action_use_margin=true")
         if not self.enable_action_use_margin and self.action_use_margin != 0.0:
             raise ValueError("action_use_margin requires enable_action_use_margin=true")
+        if not math.isfinite(self.action_swap_contrastive_weight) or self.action_swap_contrastive_weight < 0.0:
+            raise ValueError("action_swap_contrastive_weight must be finite and non-negative")
+        if self.action_swap_contrastive_weight > 1.0:
+            raise ValueError("action_swap_contrastive_weight must be at most 1.0")
+        if not math.isfinite(self.action_swap_contrastive_margin) or self.action_swap_contrastive_margin < 0.0:
+            raise ValueError("action_swap_contrastive_margin must be finite and non-negative")
+        if self.enable_action_swap_contrastive and self.action_swap_contrastive_weight <= 0.0:
+            raise ValueError("enable_action_swap_contrastive requires nonzero action_swap_contrastive_weight")
+        if self.enable_action_swap_contrastive and self.action_swap_contrastive_margin <= 0.0:
+            raise ValueError("enable_action_swap_contrastive requires nonzero action_swap_contrastive_margin")
+        if not self.enable_action_swap_contrastive and self.action_swap_contrastive_weight != 0.0:
+            raise ValueError("action_swap_contrastive_weight requires enable_action_swap_contrastive=true")
+        if not self.enable_action_swap_contrastive and self.action_swap_contrastive_margin != 0.0:
+            raise ValueError("action_swap_contrastive_margin requires enable_action_swap_contrastive=true")
+        if (
+            not math.isfinite(self.inverse_action_reconstruction_weight)
+            or self.inverse_action_reconstruction_weight < 0.0
+        ):
+            raise ValueError("inverse_action_reconstruction_weight must be finite and non-negative")
+        if self.inverse_action_reconstruction_weight > 1.0:
+            raise ValueError("inverse_action_reconstruction_weight must be at most 1.0")
+        if self.enable_inverse_action_reconstruction and self.inverse_action_reconstruction_weight <= 0.0:
+            raise ValueError(
+                "enable_inverse_action_reconstruction requires nonzero inverse_action_reconstruction_weight"
+            )
+        if (
+            not self.enable_inverse_action_reconstruction
+            and self.inverse_action_reconstruction_weight != 0.0
+        ):
+            raise ValueError(
+                "inverse_action_reconstruction_weight requires enable_inverse_action_reconstruction=true"
+            )
         if self.sigreg_knots < 2:
             raise ValueError("sigreg_knots must be at least 2")
         if self.sigreg_num_proj <= 0:
@@ -77,6 +114,10 @@ class ObjectiveTerms:
     retrieval_weighted: Any | None = None
     action_use_margin: Any | None = None
     action_use_margin_weighted: Any | None = None
+    action_swap_contrastive: Any | None = None
+    action_swap_contrastive_weighted: Any | None = None
+    inverse_action_reconstruction: Any | None = None
+    inverse_action_reconstruction_weighted: Any | None = None
 
     def scalars(self) -> dict[str, float]:
         values = {
@@ -93,6 +134,20 @@ class ObjectiveTerms:
             values["loss/action_use_margin"] = _as_float(self.action_use_margin)
         if self.action_use_margin_weighted is not None:
             values["loss/action_use_margin_weighted"] = _as_float(self.action_use_margin_weighted)
+        if self.action_swap_contrastive is not None:
+            values["loss/action_swap_contrastive"] = _as_float(self.action_swap_contrastive)
+        if self.action_swap_contrastive_weighted is not None:
+            values["loss/action_swap_contrastive_weighted"] = _as_float(
+                self.action_swap_contrastive_weighted
+            )
+        if self.inverse_action_reconstruction is not None:
+            values["loss/inverse_action_reconstruction"] = _as_float(
+                self.inverse_action_reconstruction
+            )
+        if self.inverse_action_reconstruction_weighted is not None:
+            values["loss/inverse_action_reconstruction_weighted"] = _as_float(
+                self.inverse_action_reconstruction_weighted
+            )
         return values
 
 
@@ -102,6 +157,9 @@ def compute_transition_objective(
     z_pred_after: Any,
     *,
     config: ObjectiveConfig = ObjectiveConfig(),
+    z_pred_after_swapped: Any | None = None,
+    action_emb: Any | None = None,
+    action_reconstruction: Any | None = None,
 ) -> ObjectiveTerms:
     """Return MSE, SIGReg, and total loss for one-step latent prediction."""
 
@@ -119,6 +177,10 @@ def compute_transition_objective(
     retrieval_weighted = None
     action_use_margin = None
     action_use_margin_weighted = None
+    action_swap_contrastive = None
+    action_swap_contrastive_weighted = None
+    inverse_action_reconstruction = None
+    inverse_action_reconstruction_weighted = None
     if config.enable_retrieval_loss:
         retrieval = compute_in_batch_retrieval_loss(
             z_pred_after,
@@ -136,6 +198,32 @@ def compute_transition_objective(
         )
         action_use_margin_weighted = action_use_margin * config.action_use_margin_weight
         total = total + action_use_margin_weighted
+    if config.enable_action_swap_contrastive:
+        if z_pred_after_swapped is None:
+            raise ValueError("enable_action_swap_contrastive requires z_pred_after_swapped")
+        action_swap_contrastive = compute_action_swap_contrastive_loss(
+            z_after,
+            z_pred_after,
+            z_pred_after_swapped,
+            margin=config.action_swap_contrastive_margin,
+        )
+        action_swap_contrastive_weighted = (
+            action_swap_contrastive * config.action_swap_contrastive_weight
+        )
+        total = total + action_swap_contrastive_weighted
+    if config.enable_inverse_action_reconstruction:
+        if action_emb is None or action_reconstruction is None:
+            raise ValueError(
+                "enable_inverse_action_reconstruction requires action_emb and action_reconstruction"
+            )
+        inverse_action_reconstruction = compute_inverse_action_reconstruction_loss(
+            action_reconstruction,
+            action_emb,
+        )
+        inverse_action_reconstruction_weighted = (
+            inverse_action_reconstruction * config.inverse_action_reconstruction_weight
+        )
+        total = total + inverse_action_reconstruction_weighted
     _check_finite(total, "loss/total")
     _check_finite(prediction_mse, "loss/prediction_mse")
     _check_finite(sigreg, "loss/sigreg")
@@ -143,6 +231,10 @@ def compute_transition_objective(
         _check_finite(retrieval, "loss/retrieval")
     if action_use_margin is not None:
         _check_finite(action_use_margin, "loss/action_use_margin")
+    if action_swap_contrastive is not None:
+        _check_finite(action_swap_contrastive, "loss/action_swap_contrastive")
+    if inverse_action_reconstruction is not None:
+        _check_finite(inverse_action_reconstruction, "loss/inverse_action_reconstruction")
     return ObjectiveTerms(
         total=total,
         prediction_mse=prediction_mse,
@@ -152,6 +244,10 @@ def compute_transition_objective(
         retrieval_weighted=retrieval_weighted,
         action_use_margin=action_use_margin,
         action_use_margin_weighted=action_use_margin_weighted,
+        action_swap_contrastive=action_swap_contrastive,
+        action_swap_contrastive_weighted=action_swap_contrastive_weighted,
+        inverse_action_reconstruction=inverse_action_reconstruction,
+        inverse_action_reconstruction_weighted=inverse_action_reconstruction_weighted,
     )
 
 
@@ -239,6 +335,62 @@ def compute_action_use_margin_loss(
         no_action_dist = np.square(no_action_delta)
         pred_dist = np.square(pred_delta)
     return float(np.maximum(pred_dist - no_action_dist + margin, 0.0).mean())
+
+
+def compute_action_swap_contrastive_loss(
+    z_after: Any,
+    z_pred_after: Any,
+    z_pred_after_swapped: Any,
+    *,
+    margin: float,
+) -> Any:
+    """Penalize swapped-action predictions that stay too close to the true after-state."""
+
+    if not math.isfinite(margin) or margin <= 0.0:
+        raise ValueError("margin must be finite and positive")
+    _require_same_shape(z_after, z_pred_after, "z_after", "z_pred_after")
+    _require_same_shape(z_after, z_pred_after_swapped, "z_after", "z_pred_after_swapped")
+    _check_finite(z_after, "z_after")
+    _check_finite(z_pred_after, "z_pred_after")
+    _check_finite(z_pred_after_swapped, "z_pred_after_swapped")
+    if _is_torch_tensor(z_after):
+        target = z_after.detach()
+        positive_delta = z_pred_after - target
+        swapped_delta = z_pred_after_swapped - target
+        reduce_dims = tuple(range(1, positive_delta.ndim))
+        if reduce_dims:
+            positive_dist = positive_delta.pow(2).mean(dim=reduce_dims)
+            swapped_dist = swapped_delta.pow(2).mean(dim=reduce_dims)
+        else:
+            positive_dist = positive_delta.pow(2)
+            swapped_dist = swapped_delta.pow(2)
+        return torch.relu(positive_dist - swapped_dist + margin).mean()
+    target = np.asarray(z_after, dtype=float)
+    positive = np.asarray(z_pred_after, dtype=float)
+    swapped = np.asarray(z_pred_after_swapped, dtype=float)
+    reduce_axes = tuple(range(1, positive.ndim))
+    positive_delta = positive - target
+    swapped_delta = swapped - target
+    if reduce_axes:
+        positive_dist = np.square(positive_delta).mean(axis=reduce_axes)
+        swapped_dist = np.square(swapped_delta).mean(axis=reduce_axes)
+    else:
+        positive_dist = np.square(positive_delta)
+        swapped_dist = np.square(swapped_delta)
+    return float(np.maximum(positive_dist - swapped_dist + margin, 0.0).mean())
+
+
+def compute_inverse_action_reconstruction_loss(action_reconstruction: Any, action_emb: Any) -> Any:
+    """Recover the encoded action from before/after latents as an auxiliary signal."""
+
+    _require_same_shape(action_reconstruction, action_emb, "action_reconstruction", "action_emb")
+    _check_finite(action_reconstruction, "action_reconstruction")
+    _check_finite(action_emb, "action_emb")
+    if _is_torch_tensor(action_reconstruction):
+        return (action_reconstruction - action_emb.detach()).pow(2).mean()
+    reconstruction = np.asarray(action_reconstruction, dtype=float)
+    target = np.asarray(action_emb, dtype=float)
+    return float(np.square(reconstruction - target).mean())
 
 
 def stack_objective_embeddings(z_before: Any, z_after: Any, z_pred_after: Any) -> Any:

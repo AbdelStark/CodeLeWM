@@ -42,6 +42,11 @@ on `a10g-small` with a `24h` timeout and public publication targets
 Do not relaunch this run. Use the HF CLI only to inspect, download, verify, or
 orchestrate a new future research issue with a different hypothesis.
 
+After #170 lands, the next v0.2 HF Jobs training config is
+`config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
+Use it for the #172 public action-contrast sweep; keep the #159
+margin+retrieval config only as the replay/comparison baseline.
+
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
 
@@ -205,7 +210,7 @@ CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_RUN_ID=<new-run-id> \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \

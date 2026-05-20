@@ -152,7 +152,10 @@ Deliver:
 - inverse-action or action-reconstruction auxiliary;
 - gated state-action fusion option behind config flags;
 - config validation and CPU fixture tests;
-- A10G configs for #159 replay and one v0.2 intervention.
+- A10G configs for #159 replay and one v0.2 intervention:
+  `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
+  and
+  `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
 
 ### Phase 4: Downstream Reranking Benchmark (#169)
 

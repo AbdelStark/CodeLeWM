@@ -28,6 +28,7 @@ SCALED_TRAIN_CONFIGS = (
     Path("config/train/scaled/codelewm_scaled_gpu_a10g.yaml"),
     Path("config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml"),
     Path("config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml"),
+    Path("config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml"),
 )
 
 _ACTION_VIEWS = frozenset({"text", "abstract"})
@@ -81,6 +82,7 @@ class WorldModelTrainConfig:
     action_view: str = "text"
     state_sequence_length: int = STATE_SEQUENCE_LENGTH
     action_sequence_length: int = TEXT_ACTION_SEQUENCE_LENGTH
+    action_fusion: str = "conditional_transformer"
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any]) -> "WorldModelTrainConfig":
@@ -93,12 +95,16 @@ class WorldModelTrainConfig:
                 "action_view",
                 "state_sequence_length",
                 "action_sequence_length",
+                "action_fusion",
             },
             "wm",
         )
         action_view = _optional_string(payload, "action_view", "wm")
         if action_view is None:
             action_view = "text"
+        action_fusion = _optional_string(payload, "action_fusion", "wm")
+        if action_fusion is None:
+            action_fusion = "conditional_transformer"
         try:
             default_action_sequence_length = expected_action_sequence_length(action_view)
         except ValueError as exc:
@@ -120,6 +126,7 @@ class WorldModelTrainConfig:
                 "wm",
                 default=default_action_sequence_length,
             ),
+            action_fusion=action_fusion,
         )
 
     def __post_init__(self) -> None:
@@ -138,6 +145,8 @@ class WorldModelTrainConfig:
             raise TrainConfigError(
                 f"wm.action_sequence_length must be {expected_length} for action_view={self.action_view!r}"
             )
+        if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
+            raise TrainConfigError("wm.action_fusion must be conditional_transformer or gated_residual")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -147,7 +156,21 @@ class WorldModelTrainConfig:
             "action_view": self.action_view,
             "state_sequence_length": self.state_sequence_length,
             "action_sequence_length": self.action_sequence_length,
+            "action_fusion": self.action_fusion,
         }
+
+    def to_compatibility_dict(self) -> dict[str, Any]:
+        payload = {
+            "history_size": self.history_size,
+            "num_preds": self.num_preds,
+            "embed_dim": self.embed_dim,
+            "action_view": self.action_view,
+            "state_sequence_length": self.state_sequence_length,
+            "action_sequence_length": self.action_sequence_length,
+        }
+        if self.action_fusion != "conditional_transformer":
+            payload["action_fusion"] = self.action_fusion
+        return payload
 
 
 @dataclass(frozen=True)
@@ -280,6 +303,11 @@ class TrainingLossConfig:
     enable_action_use_margin: bool = False
     action_use_margin_weight: float = 0.0
     action_use_margin: float = 0.0
+    enable_action_swap_contrastive: bool = False
+    action_swap_contrastive_weight: float = 0.0
+    action_swap_contrastive_margin: float = 0.0
+    enable_inverse_action_reconstruction: bool = False
+    inverse_action_reconstruction_weight: float = 0.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
 
@@ -295,6 +323,11 @@ class TrainingLossConfig:
                 "enable_action_use_margin",
                 "action_use_margin_weight",
                 "action_use_margin",
+                "enable_action_swap_contrastive",
+                "action_swap_contrastive_weight",
+                "action_swap_contrastive_margin",
+                "enable_inverse_action_reconstruction",
+                "inverse_action_reconstruction_weight",
                 "sigreg_knots",
                 "sigreg_num_proj",
             },
@@ -318,6 +351,36 @@ class TrainingLossConfig:
                 default=0.0,
             ),
             action_use_margin=_optional_float(payload, "action_use_margin", "loss", default=0.0),
+            enable_action_swap_contrastive=_optional_bool(
+                payload,
+                "enable_action_swap_contrastive",
+                "loss",
+                default=False,
+            ),
+            action_swap_contrastive_weight=_optional_float(
+                payload,
+                "action_swap_contrastive_weight",
+                "loss",
+                default=0.0,
+            ),
+            action_swap_contrastive_margin=_optional_float(
+                payload,
+                "action_swap_contrastive_margin",
+                "loss",
+                default=0.0,
+            ),
+            enable_inverse_action_reconstruction=_optional_bool(
+                payload,
+                "enable_inverse_action_reconstruction",
+                "loss",
+                default=False,
+            ),
+            inverse_action_reconstruction_weight=_optional_float(
+                payload,
+                "inverse_action_reconstruction_weight",
+                "loss",
+                default=0.0,
+            ),
             sigreg_knots=_optional_int(payload, "sigreg_knots", "loss", default=17),
             sigreg_num_proj=_optional_int(payload, "sigreg_num_proj", "loss", default=1024),
         )
@@ -332,6 +395,11 @@ class TrainingLossConfig:
                 enable_action_use_margin=self.enable_action_use_margin,
                 action_use_margin_weight=self.action_use_margin_weight,
                 action_use_margin=self.action_use_margin,
+                enable_action_swap_contrastive=self.enable_action_swap_contrastive,
+                action_swap_contrastive_weight=self.action_swap_contrastive_weight,
+                action_swap_contrastive_margin=self.action_swap_contrastive_margin,
+                enable_inverse_action_reconstruction=self.enable_inverse_action_reconstruction,
+                inverse_action_reconstruction_weight=self.inverse_action_reconstruction_weight,
                 sigreg_knots=self.sigreg_knots,
                 sigreg_num_proj=self.sigreg_num_proj,
             )
@@ -347,6 +415,11 @@ class TrainingLossConfig:
             enable_action_use_margin=self.enable_action_use_margin,
             action_use_margin_weight=self.action_use_margin_weight,
             action_use_margin=self.action_use_margin,
+            enable_action_swap_contrastive=self.enable_action_swap_contrastive,
+            action_swap_contrastive_weight=self.action_swap_contrastive_weight,
+            action_swap_contrastive_margin=self.action_swap_contrastive_margin,
+            enable_inverse_action_reconstruction=self.enable_inverse_action_reconstruction,
+            inverse_action_reconstruction_weight=self.inverse_action_reconstruction_weight,
             sigreg_knots=self.sigreg_knots,
             sigreg_num_proj=self.sigreg_num_proj,
         )
@@ -360,6 +433,11 @@ class TrainingLossConfig:
             "enable_action_use_margin": self.enable_action_use_margin,
             "action_use_margin_weight": self.action_use_margin_weight,
             "action_use_margin": self.action_use_margin,
+            "enable_action_swap_contrastive": self.enable_action_swap_contrastive,
+            "action_swap_contrastive_weight": self.action_swap_contrastive_weight,
+            "action_swap_contrastive_margin": self.action_swap_contrastive_margin,
+            "enable_inverse_action_reconstruction": self.enable_inverse_action_reconstruction,
+            "inverse_action_reconstruction_weight": self.inverse_action_reconstruction_weight,
             "sigreg_knots": self.sigreg_knots,
             "sigreg_num_proj": self.sigreg_num_proj,
         }
@@ -384,6 +462,30 @@ class TrainingLossConfig:
                     "enable_action_use_margin": self.enable_action_use_margin,
                     "action_use_margin_weight": self.action_use_margin_weight,
                     "action_use_margin": self.action_use_margin,
+                }
+            )
+        has_action_swap_surface = (
+            self.enable_action_swap_contrastive
+            or self.action_swap_contrastive_weight != 0.0
+            or self.action_swap_contrastive_margin != 0.0
+        )
+        if has_action_swap_surface:
+            payload.update(
+                {
+                    "enable_action_swap_contrastive": self.enable_action_swap_contrastive,
+                    "action_swap_contrastive_weight": self.action_swap_contrastive_weight,
+                    "action_swap_contrastive_margin": self.action_swap_contrastive_margin,
+                }
+            )
+        has_inverse_action_surface = (
+            self.enable_inverse_action_reconstruction
+            or self.inverse_action_reconstruction_weight != 0.0
+        )
+        if has_inverse_action_surface:
+            payload.update(
+                {
+                    "enable_inverse_action_reconstruction": self.enable_inverse_action_reconstruction,
+                    "inverse_action_reconstruction_weight": self.inverse_action_reconstruction_weight,
                 }
             )
         return payload

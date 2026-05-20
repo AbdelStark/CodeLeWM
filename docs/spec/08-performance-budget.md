@@ -82,6 +82,10 @@ Scaled research profiles live under `config/train/scaled/`:
 - `codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`: Hugging Face
   Jobs fallback profile with the same A10G budget plus retrieval loss enabled at
   weight `0.05`.
+- `codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`: Hugging Face Jobs
+  v0.2 intervention profile with the same A10G budget, `gated_residual` action
+  fusion, no-action margin, action-swap contrastive loss at weight `0.20` and
+  margin `0.05`, and inverse-action reconstruction at weight `0.10`.
 
 All scaled configs keep `action_view=text` as the headline path. Patch-action
 remains diagnostic-only and cannot be used by training configs.
