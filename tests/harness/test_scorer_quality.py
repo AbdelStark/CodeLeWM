@@ -91,6 +91,16 @@ class ScorerQualityTest(unittest.TestCase):
         self.assertEqual(report["summary"]["error_count"], 2)
         self.assertEqual(report["summary"]["failure_counts"]["invalid_syntax"], 1)
         self.assertEqual(report["summary"]["failure_counts"]["patch_apply_failed"], 1)
+        self.assertFalse(report["benchmark_readiness"]["scaled_evaluation_ready"])
+        self.assertFalse(report["benchmark_readiness"]["downstream_claim_allowed"])
+        self.assertIn("at least 100 labeled examples", report["benchmark_readiness"]["blockers"][0])
+        self.assertEqual(report["component_metrics"]["final_score"]["status"], "completed")
+        self.assertEqual(report["component_metrics"]["transition_energy_only"]["status"], "completed")
+        self.assertEqual(report["component_metrics"]["retrieval_prior_only"]["status"], "blocked")
+        self.assertEqual(report["baseline_controls"]["random"]["status"], "completed")
+        self.assertEqual(report["baseline_controls"]["lexical"]["status"], "blocked")
+        self.assertEqual(report["baseline_controls"]["no_action"]["status"], "blocked")
+        self.assertEqual(report["baseline_controls"]["checkpoint_159"]["status"], "blocked")
         self.assertIn("syntax_failure", report["calibration_slices"])
         self.assertIn("patch_failure", report["calibration_slices"])
         self.assertEqual(
@@ -137,6 +147,10 @@ class ScorerQualityTest(unittest.TestCase):
 
         self.assertEqual(report["scoring_policy"]["retrieval_prior_weight"], 2.0)
         self.assertGreater(report["score_distributions"]["retrieval_prior"]["count"], 0)
+        self.assertEqual(report["component_metrics"]["retrieval_prior_only"]["status"], "completed")
+        self.assertEqual(report["baseline_controls"]["retrieval_prior_only"]["status"], "completed")
+        self.assertIn("final_score", report["component_metrics"])
+        self.assertIn("transition_energy_only", report["component_metrics"])
         scored = [
             row
             for row in report["examples"][0]["candidate_rows"]

@@ -101,6 +101,8 @@ The public docs use three evidence tiers:
   `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
   `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`.
+- Downstream reranking benchmark contract:
+  `docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md`.
 
 The scaled runs prove the Hugging Face Jobs, public artifact publication,
 downloaded-artifact verification, and evaluation path. They do not prove a
@@ -618,7 +620,10 @@ text. It never executes candidate code. The report writes:
 The JSON stdout summary uses `codelewm.harness.scorer_quality_run.v1`. The
 report includes ranking metrics, score distributions, calibration slices by
 candidate kind, failure counts, retrieval-prior settings, risk-penalty caveats,
-and the non-execution policy used by the harness.
+component metrics for `final_score`, `transition_energy_only`, and
+`retrieval_prior_only`, `baseline_controls` for random, lexical, no-action,
+#159 replay, and retrieval-prior-only rows, the `benchmark_readiness`
+100-example gate, and the non-execution policy used by the harness.
 
 Verify lineage by passing the parent manifests recorded at report time:
 
