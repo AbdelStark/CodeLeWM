@@ -89,6 +89,16 @@ uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
 ```
 
+Release and packaging changes must also prove the built artifacts:
+
+```bash
+uv build --sdist --wheel --out-dir .artifacts/package-gate/dist --clear
+uv run twine check .artifacts/package-gate/dist/*
+uv venv .artifacts/package-gate/venv --python 3.13
+uv pip install --python .artifacts/package-gate/venv/bin/python .artifacts/package-gate/dist/codelewm-*.whl
+.artifacts/package-gate/venv/bin/codelewm --help
+```
+
 ## Deprecation Policy
 
 Public CLI flags, JSON schemas, error contracts, and public Python APIs

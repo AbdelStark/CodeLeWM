@@ -27,6 +27,25 @@
 - [ ] **Implementation tracker is up to date.** Evidence:
       `docs/roadmap/IMPLEMENTATION.md` reflects current
       open/closed state and the contract test passes.
+- [ ] **Package publishing gate is current.** Evidence:
+      `docs/release/PACKAGE_PUBLISHING.md` matches the release
+      workflow and package-build CI job.
+
+## Package Artifacts
+
+- [ ] **Wheel and source distribution build from a clean checkout.**
+      Evidence: `uv build --sdist --wheel --out-dir <dist> --clear`
+      writes exactly one `.whl` and one `.tar.gz`.
+- [ ] **Package metadata renders.** Evidence:
+      `uv run twine check <dist>/*` passes for the wheel and sdist.
+- [ ] **Built wheel installs in a clean environment.** Evidence:
+      `uv venv <venv>` plus `uv pip install --python <venv>/bin/python
+      <dist>/codelewm-*.whl` succeeds.
+- [ ] **Installed console script works.** Evidence:
+      `<venv>/bin/codelewm --help` prints the expected command surface.
+- [ ] **Publishing remains manually gated.** Evidence: no CI job uploads to
+      TestPyPI/PyPI; a maintainer runs `uv run twine upload` only after this
+      checklist and #126 are complete.
 
 ## Tests
 

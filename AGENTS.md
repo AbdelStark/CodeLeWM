@@ -32,6 +32,9 @@ Implemented foundations:
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
+- Release/package gates: `uv build` wheel/sdist checks, `twine check`, a clean
+  wheel-install smoke, typed package marker coverage, and manual-only
+  TestPyPI/PyPI publication instructions.
 
 Current evidence:
 
@@ -116,16 +119,16 @@ Current completion order:
 
 1. #159 run the second-stage action-use remediation sweep through the `hf` CLI
    if the project is still pursuing a positive model-quality claim.
-2. #123 add package build and publishing gates.
-3. #124 add dependency audit and provenance evidence.
-4. #125 refresh public docs against the scaled evidence and claim boundary.
-5. #126 run the final artifact freeze and release checklist.
+2. #124 add dependency audit and provenance evidence.
+3. #125 refresh public docs against the scaled evidence and claim boundary.
+4. #126 run the final artifact freeze and release checklist.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
 config matrix includes the primary action-use margin A10G profile plus a
 margin+retrieval fallback. Issue #154 executed the primary profile and recorded
-a negative claim gate; #159 owns the next remediation sweep.
+a negative claim gate; #159 owns the next remediation sweep. Issue #123 closed
+the package build and manual publishing gate.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 

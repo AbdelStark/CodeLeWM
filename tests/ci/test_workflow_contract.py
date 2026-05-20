@@ -60,6 +60,19 @@ class PullRequestWorkflowContractTest(unittest.TestCase):
         self.assertIn("codelewm dataset pack", text)
         self.assertIn("--parent-manifest .ci/dataset-build/manifest.json", text)
 
+    def test_workflow_builds_and_installs_package_artifacts(self) -> None:
+        text = PR_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("package-build:", text)
+        self.assertIn("uv sync --frozen --group dev --group release", text)
+        self.assertIn("uv build --sdist --wheel --out-dir .ci/dist --clear", text)
+        self.assertIn("uv run twine check .ci/dist/*", text)
+        self.assertIn("License-Expression: MIT", text)
+        self.assertIn("codelewm/py.typed", text)
+        self.assertIn("uv venv .ci/package-venv --python 3.13", text)
+        self.assertIn("uv pip install --python .ci/package-venv/bin/python .ci/dist/codelewm-*.whl", text)
+        self.assertIn(".ci/package-venv/bin/codelewm --help", text)
+
     def test_workflow_pins_supported_python_versions(self) -> None:
         text = PR_WORKFLOW.read_text(encoding="utf-8")
 

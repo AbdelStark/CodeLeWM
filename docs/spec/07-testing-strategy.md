@@ -76,6 +76,12 @@ uv run codelewm manifest verify --manifest .artifacts/tiny-scorer-quality/manife
 uv run scripts/first-results --overwrite
 uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
 uv run scripts/validate-training-configs
+uv sync --group dev --group release
+uv build --sdist --wheel --out-dir .artifacts/package-gate/dist --clear
+uv run twine check .artifacts/package-gate/dist/*
+uv venv .artifacts/package-gate/venv --python 3.13
+uv pip install --python .artifacts/package-gate/venv/bin/python .artifacts/package-gate/dist/codelewm-*.whl
+.artifacts/package-gate/venv/bin/codelewm --help
 CODELEWM_HF_JOBS_DRY_RUN=1 uv run scripts/hf-launch-codelewm-job
 CODELEWM_HF_PIPELINE_MODE=smoke CODELEWM_HF_RUN_ID=local-smoke CODELEWM_HF_OUTPUT_ROOT=.artifacts/hf-local CODELEWM_HF_PUBLISH=1 CODELEWM_HF_PUBLISH_DRY_RUN=1 uv run scripts/hf-run-codelewm-pipeline
 uv run codelewm score --before tests/fixtures/before.py --instruction tests/fixtures/instruction.txt --candidate tests/fixtures/after.py --checkpoint .artifacts/tiny/checkpoint.pt --json
@@ -142,12 +148,16 @@ The pull-request workflow lives at `.github/workflows/pr.yml`. The
 workflow contract is asserted by
 `tests/ci/test_workflow_contract.py`, which ensures the workflow installs
 through `uv sync --group dev`, keeps running
-`uv run python -m pytest`, compiles real Python sources while excluding
-intentionally invalid parser fixtures, verifies an artifact manifest with
+  `uv run python -m pytest`, compiles real Python sources while excluding
+  intentionally invalid parser fixtures, verifies an artifact manifest with
 `codelewm manifest verify`, runs `codelewm secret-scan` over public docs
 and generated CI artifacts, builds and packs the committed tiny dataset fixture
-with the data dependency group, verifies the spec-doc tree is present, and pins
-the GitHub Actions versions it depends on. Local
+with the data dependency group, builds wheel and sdist artifacts with
+`uv build`, checks metadata rendering with `twine check`, installs the wheel in
+a clean virtual environment, verifies the installed `codelewm` console script,
+verifies the spec-doc tree is present, and pins the GitHub Actions versions it
+depends on. Local
 `uv run python -m pytest tests/` runs the same lightweight test suite; the
 dataset pack fixture additionally requires
-`uv sync --group dev --group data`.
+`uv sync --group dev --group data`, and package artifact validation additionally
+requires `uv sync --group dev --group release`.

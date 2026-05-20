@@ -100,17 +100,17 @@ verifying their artifacts before moving on:
    `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
    unless side-by-side analysis of #138 and #154 shows a smaller correction is
    required first.
-2. #123: release: add uv build and package publishing gates.
-3. #124: release: add dependency audit and provenance evidence.
-4. #125: docs: refresh public docs against verified scaled evidence and the
+2. #124: release: add dependency audit and provenance evidence.
+3. #125: docs: refresh public docs against verified scaled evidence and the
    final claim boundary.
-5. #126: release: run final artifact freeze and checklist.
+4. #126: release: run final artifact freeze and checklist.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
-artifact cards, #137 HF Jobs automation, #138 first scaled HF execution, #151
-no-action claim gates, #152 action-discriminative diagnostics, #153 action-use
-margin training configs, and #154 primary action-use HF execution.
+artifact cards, #123 package build and manual publishing gates, #137 HF Jobs
+automation, #138 first scaled HF execution, #151 no-action claim gates, #152
+action-discriminative diagnostics, #153 action-use margin training configs, and
+#154 primary action-use HF execution.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -281,7 +281,7 @@ validation command.
 
 Completion criteria:
 
-- #159, #123, #124, #125, and #126 are closed by merged PRs, or any remaining
+- #159, #124, #125, and #126 are closed by merged PRs, or any remaining
   one is updated with an explicit blocker that prevents completion.
 - At least one second-stage HF Jobs run or explicitly justified no-run decision
   is recorded in #159.

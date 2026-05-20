@@ -140,6 +140,84 @@ jobs:
       - name: Verify packed dataset lineage
         run: uv run codelewm manifest verify --manifest .ci/dataset-pack/manifest.json --parent-manifest .ci/dataset-build/manifest.json --json
 
+  package-build:
+    name: Package build and install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install release dependencies
+        run: uv sync --frozen --group dev --group release
+
+      - name: Build wheel and sdist
+        run: uv build --sdist --wheel --out-dir .ci/dist --clear
+
+      - name: Check package metadata rendering
+        run: uv run twine check .ci/dist/*
+
+      - name: Inspect built artifacts
+        run: |
+          uv run python - <<'PY'
+          from pathlib import Path
+          import tarfile
+          import zipfile
+
+          dist = Path(".ci/dist")
+          wheels = sorted(dist.glob("codelewm-*.whl"))
+          sdists = sorted(dist.glob("codelewm-*.tar.gz"))
+          if len(wheels) != 1 or len(sdists) != 1:
+              raise SystemExit(f"expected one wheel and one sdist, got {wheels!r} {sdists!r}")
+
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              names = set(wheel.namelist())
+              metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
+              metadata = wheel.read(metadata_name).decode("utf-8")
+              entry_points = wheel.read(
+                  next(name for name in names if name.endswith(".dist-info/entry_points.txt"))
+              ).decode("utf-8")
+              required = (
+                  "Name: codelewm",
+                  "Requires-Python: >=3.10",
+                  "License-Expression: MIT",
+                  "License-File: LICENSE",
+                  "Classifier: Typing :: Typed",
+              )
+              for marker in required:
+                  if marker not in metadata:
+                      raise SystemExit(f"missing wheel metadata marker: {marker}")
+              if "codelewm = codelewm.harness.cli:main" not in entry_points:
+                  raise SystemExit("console script entry point is missing")
+              if "codelewm/py.typed" not in names:
+                  raise SystemExit("wheel is missing codelewm/py.typed")
+
+          with tarfile.open(sdists[0]) as sdist:
+              names = {member.name for member in sdist.getmembers()}
+              if not any(name.endswith("/README.md") for name in names):
+                  raise SystemExit("sdist is missing README.md")
+              if not any(name.endswith("/LICENSE") for name in names):
+                  raise SystemExit("sdist is missing LICENSE")
+              if not any(name.endswith("/codelewm/py.typed") for name in names):
+                  raise SystemExit("sdist is missing codelewm/py.typed")
+          PY
+
+      - name: Install built wheel in clean environment
+        run: |
+          uv venv .ci/package-venv --python 3.13
+          uv pip install --python .ci/package-venv/bin/python .ci/dist/codelewm-*.whl
+          .ci/package-venv/bin/codelewm --help
+          .ci/package-venv/bin/python -c "import codelewm; print(codelewm.__version__)"
+
   docs-check:
     name: Docs sanity
     runs-on: ubuntu-latest

@@ -109,7 +109,7 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #153 | train: add action-use objective and scaled sweep configs | model | p1 | l | RFC-0006 | Closed |
 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | release | p1 | l | RFC-0012 | Closed |
 | #159 | run: execute second-stage action-use remediation sweep | evaluation | p1 | l | RFC-0007 | Open |
-| #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Open |
+| #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Closed |
 | #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Open |
 | #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Open |
 | #126 | release: run final artifact freeze and checklist | release | p1 | l | RFC-0012 | Open |
@@ -168,7 +168,9 @@ result and release readiness.
   downloaded private artifacts, but the result remained negative.
 - #159 is the active evidence precondition for a positive claim path in #125 and
   #126.
-- #123 and #124 can proceed independently as package/provenance hardening, but
+- #123 closed the package build and manual publishing gate for wheel/sdist
+  artifacts.
+- #124 can proceed independently as provenance hardening, but
   #126 cannot close until #159 supplies claim-eligible evidence or an explicit
   negative-release boundary.
 

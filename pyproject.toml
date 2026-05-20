@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,8 @@ version = "0.0.0"
 description = "Latent transition models for Python code edit trajectories."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   {name = "CodeLeWM maintainers"}
 ]
@@ -22,7 +23,6 @@ classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -58,7 +58,8 @@ docs = [
   "pytest>=8"
 ]
 release = [
-  "build>=1.2"
+  "build>=1.2",
+  "twine>=5"
 ]
 
 [dependency-groups]
@@ -87,7 +88,8 @@ docs = [
   "pytest>=8"
 ]
 release = [
-  "build>=1.2"
+  "build>=1.2",
+  "twine>=5"
 ]
 
 [project.urls]
@@ -99,3 +101,6 @@ codelewm = "codelewm.harness.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["codelewm*"]
+
+[tool.setuptools.package-data]
+codelewm = ["py.typed"]
