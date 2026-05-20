@@ -29,6 +29,7 @@
 | Training run manifest | `codelewm.training_run.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
+| Latent probe report | `codelewm.eval.latent_probe_report.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Scorer quality report | `codelewm.harness.scorer_quality_report.v1` |
@@ -104,6 +105,12 @@ linked above. The model card may summarise but must not omit.
 
 By-category AUC table is required in the benchmark report; the
 card may summarize one or two highlights.
+
+### Latent Representation Probes
+
+Link the `codelewm.eval.latent_probe_report.v1` artifact. State
+`semantic_structure_status` exactly as emitted and do not name latent axes unless
+`dimension_claims_allowed=true`.
 
 ### Action-View Diagnostic
 

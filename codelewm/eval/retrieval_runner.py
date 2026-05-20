@@ -753,6 +753,16 @@ def _load_split_rows(
                     "edit_size_bucket": f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10}-"
                     f"{(int(metadata.get('edit_size', 0) or 0) // 10) * 10 + 9}",
                     "diff_shape": _metadata_diff_shape(metadata),
+                    "state_before_kind": str(metadata.get("state_before_kind") or ""),
+                    "state_after_kind": str(metadata.get("state_after_kind") or ""),
+                    "state_before_symbol": str(metadata.get("state_before_symbol") or ""),
+                    "state_after_symbol": str(metadata.get("state_after_symbol") or ""),
+                    "state_before_fallback_reason": str(
+                        metadata.get("state_before_fallback_reason") or ""
+                    ),
+                    "state_after_fallback_reason": str(
+                        metadata.get("state_after_fallback_reason") or ""
+                    ),
                 },
             )
         )

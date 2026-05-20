@@ -56,6 +56,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
@@ -408,6 +409,38 @@ Retrieval gate failures return `error_type=evaluation_gate_error`. Missing
 runtime packages return `error_type=optional_dependency_missing`; missing or
 tampered checkpoint manifests return `error_type=checkpoint_error`.
 
+### `codelewm eval latent-probe`
+
+Run frozen latent representation probes over train/validation/test splits:
+
+```bash
+codelewm eval latent-probe \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-latent-probe \
+  --json
+```
+
+The command writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  config.json                                normalized latent-probe config
+  reports/
+    latent_probe_report.json                 codelewm.eval.latent_probe_report.v1
+```
+
+The report probes `z_before`, `z_after`, and `z_pred_after` against the
+predeclared targets `edit_class`, `ast_node_kind`, `symbol_kind`,
+`edit_size_bucket`, `action_cluster`, and `source_family`. It compares probe
+accuracy and macro-F1 against majority, lexical, metadata-only, random-latent,
+no-action, and shuffled-action controls with bootstrap confidence intervals.
+Per-dimension association diagnostics are exploratory: semantic axis names are
+blocked unless future runs show stable axes across seeds and splits. The report
+therefore states `semantic_structure_status` as supported, unsupported, weakly
+indicated, or not evaluable without changing any model checkpoint.
+
 ### `codelewm eval surprise`
 
 Run model-backed patch-surprise evaluation over a packed dataset artifact:
@@ -683,7 +716,10 @@ use `schema_version=codelewm.eval.candidate_pool.v1` and must
 exclude `train`-split rows. Every headline retrieval report must
 include random, lexical, no-action, and shuffled-action baselines. v0.2
 action-contrast reports use
-`schema_version=codelewm.eval.action_contrast_pool_report.v1`.
+`schema_version=codelewm.eval.action_contrast_pool_report.v1`. Latent probe
+reports use `schema_version=codelewm.eval.latent_probe_report.v1` and keep
+dimension-level semantics claim-gated until axes are stable across seeds and
+splits.
 
 ### Run a patch-surprise evaluation
 
@@ -801,6 +837,8 @@ field list.
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
 | Action-contrast pool report | `codelewm.eval.action_contrast_pool_report.v1` |
+| Latent probe eval run | `codelewm.eval.latent_probe_run.v1` |
+| Latent probe report | `codelewm.eval.latent_probe_report.v1` |
 | Action ablation run | `codelewm.eval.action_ablation_run.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |

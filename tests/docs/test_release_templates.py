@@ -54,6 +54,7 @@ class ReleaseChecklistContentTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.checkpoint.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.latent_probe_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.harness.scorer_quality_report.v1",
@@ -203,6 +204,7 @@ class ModelCardTemplateTest(unittest.TestCase):
     def test_model_card_requires_retrieval_and_surprise_evidence_sections(self) -> None:
         self.assertIn("### Retrieval (headline)", self.text)
         self.assertIn("### Patch Surprise", self.text)
+        self.assertIn("### Latent Representation Probes", self.text)
         self.assertIn("### Action-View Diagnostic", self.text)
         self.assertIn("### Scorer / Reranker Quality", self.text)
 
@@ -212,6 +214,7 @@ class ModelCardTemplateTest(unittest.TestCase):
             "codelewm.training_run.v1",
             "codelewm.artifact_manifest.v1",
             "codelewm.eval.retrieval_report.v1",
+            "codelewm.eval.latent_probe_report.v1",
             "codelewm.eval.action_ablation_report.v1",
             "codelewm.eval.surprise_report.v1",
             "codelewm.harness.scorer_quality_report.v1",

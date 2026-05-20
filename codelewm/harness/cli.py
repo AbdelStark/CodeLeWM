@@ -24,9 +24,11 @@ from codelewm.data import (
 from codelewm.eval import (
     ActionAblationError,
     ActionViewPolicyError,
+    LatentProbeError,
     RetrievalEvalError,
     SurpriseEvalError,
     run_action_ablation_suite,
+    run_latent_probe_evaluation,
     run_retrieval_evaluation,
     run_surprise_evaluation,
 )
@@ -254,6 +256,52 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     retrieval.set_defaults(func=_eval_retrieval_command)
+    latent_probe = eval_subcommands.add_parser(
+        "latent-probe", help="run frozen latent representation probes"
+    )
+    latent_probe.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted training checkpoint path",
+    )
+    latent_probe.add_argument(
+        "--data",
+        type=Path,
+        required=True,
+        help="packed dataset directory or manifest.json",
+    )
+    latent_probe.add_argument(
+        "--out", type=Path, required=True, help="latent probe report artifact directory"
+    )
+    latent_probe.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    latent_probe.add_argument(
+        "--max-examples-per-split",
+        type=int,
+        default=1000,
+        help="maximum rows to probe from each train/val/test split",
+    )
+    latent_probe.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=200,
+        help="bootstrap samples used for accuracy confidence intervals",
+    )
+    latent_probe.add_argument(
+        "--seed", type=int, default=0, help="deterministic probe seed"
+    )
+    latent_probe.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing latent probe output files",
+    )
+    latent_probe.add_argument("--json", action="store_true", help="emit JSON output")
+    latent_probe.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    latent_probe.set_defaults(func=_eval_latent_probe_command)
     surprise = eval_subcommands.add_parser(
         "surprise", help="run patch-surprise evaluation"
     )
@@ -982,6 +1030,150 @@ def _eval_retrieval_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_latent_probe_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_latent_probe_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.latent_probe.start",
+                level="info",
+                run_id=run_id,
+                step="eval.latent_probe",
+                message="latent probe evaluation started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "data": str(args.data),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "max_examples_per_split": args.max_examples_per_split,
+                    "bootstrap_samples": args.bootstrap_samples,
+                    "seed": args.seed,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_latent_probe_evaluation(
+            checkpoint=args.checkpoint,
+            data=args.data,
+            out=args.out,
+            device=args.device,
+            max_examples_per_split=args.max_examples_per_split,
+            bootstrap_samples=args.bootstrap_samples,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.latent_probe.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.latent_probe",
+                message="latent probe evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "row_count": result.row_count,
+                    "split_counts": dict(result.split_counts),
+                    "claim_boundary": dict(result.claim_boundary),
+                    "parent_artifacts": list(result.parent_artifacts),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"latent probe optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.data),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_probe",
+            event="evaluation.latent_probe.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"latent probe checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_probe",
+            event="evaluation.latent_probe.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"latent probe artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training run, and dataset manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_probe",
+            event="evaluation.latent_probe.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except LatentProbeError as exc:
+        error, exit_code = _latent_probe_eval_error(args, exc)
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_probe",
+            event="evaluation.latent_probe.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"latent probe evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the latent probe inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_probe",
+            event="evaluation.latent_probe.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"latent_probe_report: {args.out / result.report_path}")
+        print(f"row_count: {result.row_count}")
+        print(f"semantic_structure_status: {result.claim_boundary.get('semantic_structure_status')}")
+    return 0
+
+
 def _eval_surprise_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _eval_surprise_command_tuple(args)
@@ -1655,6 +1847,35 @@ def _eval_retrieval_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     return tuple(command)
 
 
+def _eval_latent_probe_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "latent-probe",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--data",
+        str(args.data),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples-per-split",
+        str(args.max_examples_per_split),
+        "--bootstrap-samples",
+        str(args.bootstrap_samples),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
 def _eval_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     command = [
         "codelewm",
@@ -1797,6 +2018,40 @@ def _retrieval_eval_error(
             f"retrieval evaluation gate failed: {exc}",
             error_type="evaluation_gate_error",
             remediation="inspect the retrieval report inputs, baselines, and action-view policy",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        6,
+    )
+
+
+def _latent_probe_eval_error(
+    args: argparse.Namespace, exc: Exception
+) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if (
+        "output already exists" in normalized
+        or "must be a positive integer" in normalized
+        or "must be a non-negative integer" in normalized
+        or "--data" in normalized
+        or "device" in normalized
+    ):
+        return (
+            ScoreError(
+                f"latent probe request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or choose a clean output directory",
+                artifact=str(args.out),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"latent probe gate failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect probe labels, split coverage, and checkpoint artifacts",
             artifact=str(args.out),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         ),

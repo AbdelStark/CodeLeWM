@@ -82,6 +82,7 @@ glance.
 | Checkpoint | `codelewm.checkpoint.v1` | | | |
 | Index | `codelewm.transition_index.v1` | | | |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | | | |
+| Latent probe report | `codelewm.eval.latent_probe_report.v1` | | | |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` | | | |
 | Surprise report | `codelewm.eval.surprise_report.v1` | | | |
 | Scorer quality report | `codelewm.harness.scorer_quality_report.v1` | | | |
