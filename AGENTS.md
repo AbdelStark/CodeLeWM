@@ -8,8 +8,7 @@ changes.
 ## Current State
 
 As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, two completed scaled Hugging Face Jobs runs, and one
-active #159 second-stage action-use remediation job.
+first-results smoke loop, and three completed scaled Hugging Face Jobs runs.
 
 Implemented foundations:
 
@@ -59,23 +58,31 @@ Current evidence:
   `docs/cards/codelewm-action-use-model-2026-05-20.md` are the
   artifact-backed record for the #154 follow-up run.
 - The #159 remediation run `codelewm-action-use-retrieval-20260520-7895d18`
-  is active on HF Jobs job `6a0da3a08229e585f969c3f7` from source SHA
-  `7895d185e165a917af0956a313d8948c04b33638`. It uses
-  `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
-  on `a10g-small` with a `24h` timeout and private publication targets
-  `abdelstark/codelewm-public-shard`,
-  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
+  completed on job `6a0da3a08229e585f969c3f7` from source SHA
+  `7895d185e165a917af0956a313d8948c04b33638`, published private artifacts,
+  downloaded them with `hf download`, and verified retrieval, ablation,
+  surprise, scorer-quality, score, rerank, manifest, and secret-scan checks
+  locally.
+- `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md` are the
+  artifact-backed record for the #159 run.
 
 Current blocker:
 
-- The scaled pipeline is proven, but neither scaled checkpoint is a positive
+- The scaled pipeline is proven, but no scaled checkpoint is a positive
   action-conditioned quality result.
 - The #154 action-use margin run beats random, shuffled-action, and lexical
   baselines, but loses to no-action on headline retrieval: Recall@1 `0.363`
   and MRR `0.467875` versus no-action Recall@1 `0.469` and MRR `0.549624`.
-- Public model-quality claims remain blocked until the active #159 run is
-  downloaded from Hugging Face, verified locally, and either passes an explicit
-  action-use gate or is recorded as another negative/diagnostic artifact.
+- The #159 margin+retrieval run improves text-action retrieval to Recall@1
+  `0.597` and MRR `0.674500`, but no-action is still stronger at Recall@1
+  `0.650` and MRR `0.708037`. Its action-use claim gate is
+  `claim_allowed=false` with
+  `no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action`.
+- Public model-quality claims remain blocked. The project is complete as a
+  private negative/diagnostic artifact unless a new research iteration is
+  opened for a future positive claim.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -125,21 +132,20 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #159 monitor the active HF Jobs remediation run, download private artifacts
-   with `hf download` after success, verify manifests and local evals, then
-   close the claim gate as positive or explicitly negative/diagnostic.
+1. Close #159 and #150 with the #159 negative/diagnostic result after the docs
+   and issue tracker reference the verified downloaded artifacts.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
 config matrix includes the primary action-use margin A10G profile plus a
 margin+retrieval fallback. Issue #154 executed the primary profile and recorded
-a negative claim gate; #159 owns the next remediation sweep. Issue #123 closed
-the package build and manual publishing gate. Issue #124 closed the dependency
-audit and release provenance gate. Issue #125 closed the public docs refresh
-against the first-results, scaled systems, and negative action-use evidence.
-Issue #126 closed the private diagnostic release-freeze checkpoint in
-`docs/release/RELEASE_FREEZE_2026-05-20.md`; it does not permit public positive
-action-conditioning claims.
+a negative claim gate; #159 executed the next remediation sweep and also closed
+negative/diagnostic. Issue #123 closed the package build and manual publishing
+gate. Issue #124 closed the dependency audit and release provenance gate. Issue
+#125 closed the public docs refresh against the first-results, scaled systems,
+and negative action-use evidence. Issue #126 closed the private diagnostic
+release-freeze checkpoint in `docs/release/RELEASE_FREEZE_2026-05-20.md`; it
+does not permit public positive action-conditioning claims.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 
@@ -166,8 +172,7 @@ hf jobs stats <job-id>
 hf download ...
 ```
 
-Do not relaunch #159 while job `6a0da3a08229e585f969c3f7` is running unless the
-existing job fails and the issue records the failure phase. Do not mark the
-project complete unless the release-candidate artifacts can be downloaded from
-Hugging Face, verified locally, and either pass the action-use claim gate or
-explicitly document a negative/diagnostic claim boundary.
+Do not relaunch #159. Job `6a0da3a08229e585f969c3f7` completed and its
+downloaded artifacts documented a negative/diagnostic claim boundary. Any future
+positive claim requires a new issue, a new research hypothesis, and the same HF
+download, manifest, eval, secret-scan, checkpoint-trust, and visibility gates.

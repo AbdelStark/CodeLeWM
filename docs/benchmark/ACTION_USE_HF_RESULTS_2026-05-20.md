@@ -227,7 +227,7 @@ uv run codelewm secret-scan .artifacts/hf-download/codelewm-action-use-20260520-
 
 ## Next Gap
 
-Issue #159 tracks the second-stage action-use remediation sweep. The likely next
-remote profile is the checked-in margin+retrieval fallback config, unless
-side-by-side analysis of #138 and #154 shows a smaller data/eval correction is
-needed first.
+Issue #159 executed the second-stage margin+retrieval remediation sweep in
+`codelewm-action-use-retrieval-20260520-7895d18`. That run improved text-action
+retrieval but still lost to no-action, so the current project boundary remains
+negative/diagnostic.

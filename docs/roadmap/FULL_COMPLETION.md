@@ -2,10 +2,11 @@
 
 Last updated: 2026-05-20
 
-This roadmap tracks the remaining path from the current scaled systems result to
-a claim-eligible CodeLeWM research artifact. GitHub issues remain the source of
-truth for implementation state; this document explains the order, acceptance
-boundary, and remaining risk.
+This roadmap tracks the current completion boundary for CodeLeWM's first
+meaningful scaled training and evaluation artifact. GitHub issues remain the
+source of truth for implementation state; this document explains what is
+complete, what claim is blocked, and what a future positive-claim research
+iteration would need.
 
 The next executable `/goal` prompt lives in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`.
@@ -16,8 +17,7 @@ The repository is past pure specification and past local smoke evidence. The
 package contains data contracts, model components, manifest-backed training,
 evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
 observability, security gates, CI, release templates, a local first-results
-smoke loop, two completed scaled HF Jobs runs, and one active #159 remediation
-run.
+smoke loop, and three completed scaled HF Jobs runs.
 
 Completed evidence:
 
@@ -38,27 +38,33 @@ Completed evidence:
   dataset/model cards are the artifact-backed report for the #154 follow-up
   run.
 - The #159 second-stage remediation run
-  `codelewm-action-use-retrieval-20260520-7895d18` is running as HF Jobs job
+  `codelewm-action-use-retrieval-20260520-7895d18` completed as HF Jobs job
   `6a0da3a08229e585f969c3f7` from source
   `7895d185e165a917af0956a313d8948c04b33638` with
   `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`,
-  `a10g-small`, and a `24h` timeout. Its private publication targets are
+  `a10g-small`, and a `24h` timeout. It published private artifacts to
   `abdelstark/codelewm-public-shard`,
-  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
+  `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`,
+  then the artifacts were downloaded with `hf download` and verified locally.
+- `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md` and the
+  paired retrieval dataset/model cards are the artifact-backed report for #159.
 
 Current blocker:
 
-- Both scaled runs are meaningful systems evidence, but neither is a positive
+- All three scaled runs are meaningful systems evidence, but none is a positive
   action-conditioned model-quality result.
 - The #154 action-use run beats random, shuffled-action, and lexical baselines,
   but no-action is stronger on headline retrieval: text-action Recall@1
   `0.363`, MRR `0.467875`; no-action Recall@1 `0.469`, MRR `0.549624`.
+- The #159 margin+retrieval run improves text-action retrieval to Recall@1
+  `0.597`, MRR `0.674500`, but no-action is still stronger: Recall@1 `0.650`,
+  MRR `0.708037`. The claim gate is `claim_allowed=false`.
 - The private diagnostic release-freeze gate is closed by #126 and recorded in
   `docs/release/RELEASE_FREEZE_2026-05-20.md`.
-- The active project milestone is #159: monitor the remediation job, download
-  the published private artifacts after success, verify locally, and update the
-  claim boundary. Until #159 passes the action-use gate, public HF visibility
-  and public positive action-conditioning claims remain blocked.
+- The implementation milestone is complete as a private negative/diagnostic
+  artifact. Public HF visibility and public positive action-conditioning claims
+  remain blocked. A future positive claim should start as a new research issue,
+  not as release cleanup.
 
 Current landed CLI commands:
 
@@ -112,9 +118,9 @@ Minimum success criteria:
   locally from a clean checkout.
 
 For a positive public action-conditioning claim, text-action must beat the
-no-action baseline on the agreed headline metrics. If it does not, the project
-can still publish a negative/diagnostic artifact, but all release docs must keep
-that claim boundary explicit.
+no-action baseline on the agreed headline metrics. The current artifact set does
+not meet that bar, so all release docs must keep the negative/diagnostic
+boundary explicit.
 
 ## Completed Phases
 
@@ -157,8 +163,8 @@ Delivered:
 - no-action margin action-use objective
 - primary A10G action-use and margin+retrieval fallback configs
 
-Remaining: second-stage action-use remediation in #159 if the project still
-wants a positive claim.
+Remaining for a positive claim: a new research issue with a stronger hypothesis
+than the completed #159 margin+retrieval remediation.
 
 ### Phase 4: Evaluation, Indexing, And Harness
 
@@ -178,8 +184,8 @@ Delivered:
 - hard-negative sampler pools for same-before, near-before, same-file, and
   action-discriminative candidates
 
-Remaining: #159 second-stage verification if the project still wants a positive
-claim.
+Remaining for a positive claim: broader scorer calibration and a new
+action-conditioned training/eval intervention.
 
 ### Phase 5: First Results
 
@@ -209,8 +215,9 @@ Delivered:
 - downloaded-artifact verification
 - scaled benchmark report and cards
 
-Blocker: no-action baseline beats text-action on headline retrieval in both the
-#138 baseline run and the #154 no-action margin follow-up run.
+Blocker: no-action baseline beats text-action on headline retrieval in the
+#138 baseline run, the #154 no-action margin follow-up run, and the #159
+margin+retrieval remediation run.
 
 ## Remaining Phases
 
@@ -228,9 +235,10 @@ Deliverables:
 - follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
   evaluated through the `hf` CLI (#154, complete with a negative claim gate)
 - second-stage action-use remediation sweep using the margin+retrieval fallback
-  config, launched as run `codelewm-action-use-retrieval-20260520-7895d18` on
-  HF Jobs job `6a0da3a08229e585f969c3f7`; remaining work is monitoring,
-  download, verification, evaluation, docs/cards, and claim-gate closure (#159)
+  config, completed as run `codelewm-action-use-retrieval-20260520-7895d18` on
+  HF Jobs job `6a0da3a08229e585f969c3f7`; downloaded-artifact verification and
+  local eval/inference checks passed, but the claim gate remained negative
+  (#159)
 
 ### Phase 8: Publishing And Release
 
@@ -251,7 +259,7 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path; active HF job `6a0da3a08229e585f969c3f7` |
+| 1 | new | future positive action-use research iteration | Action-Use Research | only needed if the project wants a public positive model-quality claim |
 
 Completed backlog base:
 
@@ -267,9 +275,10 @@ Completed backlog base:
 - #154 executed the primary action-use HF Jobs follow-up run and verified the
   downloaded private artifacts; the run remained negative because no-action
   still beat text-action.
-- #159 launched run `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs
-  job `6a0da3a08229e585f969c3f7`; no result claim is available until private
-  artifacts are downloaded and verified after job success.
+- #159 executed run `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs
+  job `6a0da3a08229e585f969c3f7`; private artifacts were downloaded and
+  verified locally, and the result remained negative because no-action still
+  beat text-action.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
   manual publishing gates for the Python package.
 - #124 added release dependency audit, provenance JSON, CI gates, and release
@@ -279,8 +288,8 @@ Completed backlog base:
 - #126 froze the private diagnostic release artifact set, package/provenance
   evidence, and release checklist status without enabling public positive
   action-conditioning claims.
-- #150 tracks the remaining action-conditioned scaled-result and release
-  readiness milestone.
+- #150 tracks the action-conditioned scaled-result and release readiness
+  milestone; it can close with the explicit negative/diagnostic boundary.
 
 ## Tracking Issue Mapping
 
@@ -289,14 +298,15 @@ instead of creating duplicate trackers.
 
 - #3 Edit transition dataset: #152 complete; no active child.
 - #7 Training runtime: #153 complete; no active child.
-- #8 Retrieval and surprise evaluation: active child #159.
-- #9 Harness scorer and reranker: active child #159.
-- #10 Observability and artifact lineage: active child #159.
+- #8 Retrieval and surprise evaluation: #159 complete; no active child.
+- #9 Harness scorer and reranker: #159 complete; no active child.
+- #10 Observability and artifact lineage: #159 complete; no active child.
 - #11 Security and licensing boundaries: no active child.
 - #12 Public API and packaging: no active child.
-- #13 Release CI and governance: active child #150.
-- #150 Action-conditioned scaled result and release readiness: active child
-  #159.
+- #13 Release CI and governance: #150 can close with the negative/diagnostic
+  boundary.
+- #150 Action-conditioned scaled result and release readiness: #159 complete;
+  no active child.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -304,12 +314,12 @@ that subsystem.
 
 ## Residual Risks
 
-- The scaled result currently fails the core action-conditioning claim gate
-  because no-action beats text-action.
+- The scaled result fails the core action-conditioning claim gate because
+  no-action beats text-action.
 - The current public shard may still not contain enough action-discriminative
   pressure for text actions to matter, even with targeted hard negatives.
-- The no-action margin objective was proven insufficient by #154; the next
-  claim-seeking run needs the #159 second-stage remediation.
+- The no-action margin objective was proven insufficient by #154, and the
+  margin+retrieval remediation was proven insufficient by #159.
 - Scorer-quality evidence is still small and should remain a gate, not a broad
   calibration claim.
 - Same-file and action-cluster surprise decoy counts are lower than random and
@@ -317,5 +327,5 @@ that subsystem.
 - Root legacy scripts can confuse contributors; public docs now mark the
   package-native path as authoritative, but the final release should still avoid
   widening the compatibility surface.
-- Release repositories remain private because the #126 freeze is diagnostic and
-  the #159 positive-claim path is still unresolved.
+- Release repositories remain private because the current evidence boundary is
+  diagnostic and does not support public positive action-conditioning claims.

@@ -142,7 +142,7 @@ downloaded artifact root returned `ok=true` with zero findings.
 
 - Reproduce #154 action-use margin evaluation from a trusted checkpoint.
 - Diagnose no-action dominance against text-action retrieval.
-- Compare against a second-stage action-use remediation run from #159.
+- Compare against the completed #159 margin+retrieval remediation run.
 
 ## Out-of-Scope Use
 
@@ -157,7 +157,8 @@ downloaded artifact root returned `ok=true` with zero findings.
 - The no-action margin auxiliary did not improve the headline claim gate enough.
 - Scorer-quality has one labeled example and failed to rank the fixture true
   after-state first.
-- Repositories remain private pending release and claim review.
+- Repositories remain private; #159 also failed the positive action-use claim
+  gate.
 
 ## Sign-off
 

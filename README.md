@@ -74,11 +74,14 @@ The reproducible local first-results runner writes
 `docs/benchmark/FIRST_RESULTS.md` from actual local artifacts. The first scaled
 HF report lives at `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the
 action-use follow-up report lives at
-`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. Those runs prove the
-systems path, but neither supports a positive action-conditioned quality claim:
-text-action beats random, shuffled-action, and lexical baselines but loses to
-no-action on headline retrieval. The remaining research gap is the #159
-second-stage action-use remediation sweep, tracked by #150. Core harness
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`; the second-stage
+margin+retrieval remediation report lives at
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. Those runs
+prove the systems path, but none supports a positive action-conditioned quality
+claim: text-action beats random, shuffled-action, and lexical baselines but
+loses to no-action on headline retrieval. The remaining research gap is a new
+positive-claim intervention beyond the completed #159 remediation, not release
+cleanup. Core harness
 commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 `train.py`, `eval.py`, and the existing Hydra configs are inherited from the
 original LeWorldModel seed and are kept for compatibility while the package
@@ -104,14 +107,18 @@ Scaled evidence is recorded separately:
 
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
 - `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - `docs/cards/codelewm-scaled-model-2026-05-20.md`
 - `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
 - `docs/cards/codelewm-action-use-model-2026-05-20.md`
+- `docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md`
+- `docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md`
 
-Both scaled runs are valid systems evidence and valid negative action-use
-evidence. They do not support a public positive action-conditioning claim until
-text-action beats no-action on the agreed headline metrics.
+The scaled runs are valid systems evidence and valid negative action-use
+evidence. They do not support a public positive action-conditioning claim
+because text-action still does not beat no-action on the agreed headline
+metrics.
 
 ## Core Concepts
 

@@ -15,6 +15,13 @@ SCALED_RESULTS = ROOT / "docs" / "benchmark" / "SCALED_HF_RESULTS_2026-05-20.md"
 ACTION_USE_DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-action-use-dataset-2026-05-20.md"
 ACTION_USE_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-action-use-model-2026-05-20.md"
 ACTION_USE_RESULTS = ROOT / "docs" / "benchmark" / "ACTION_USE_HF_RESULTS_2026-05-20.md"
+ACTION_USE_RETRIEVAL_DATASET_CARD = (
+    ROOT / "docs" / "cards" / "codelewm-action-use-retrieval-dataset-2026-05-20.md"
+)
+ACTION_USE_RETRIEVAL_MODEL_CARD = (
+    ROOT / "docs" / "cards" / "codelewm-action-use-retrieval-model-2026-05-20.md"
+)
+ACTION_USE_RETRIEVAL_RESULTS = ROOT / "docs" / "benchmark" / "ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md"
 
 
 class FirstResultsArtifactCardTest(unittest.TestCase):
@@ -28,6 +35,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.action_use_dataset = ACTION_USE_DATASET_CARD.read_text(encoding="utf-8")
         self.action_use_model = ACTION_USE_MODEL_CARD.read_text(encoding="utf-8")
         self.action_use_report = ACTION_USE_RESULTS.read_text(encoding="utf-8")
+        self.action_use_retrieval_dataset = ACTION_USE_RETRIEVAL_DATASET_CARD.read_text(encoding="utf-8")
+        self.action_use_retrieval_model = ACTION_USE_RETRIEVAL_MODEL_CARD.read_text(encoding="utf-8")
+        self.action_use_retrieval_report = ACTION_USE_RETRIEVAL_RESULTS.read_text(encoding="utf-8")
 
     def test_cards_exist_and_are_not_templates(self) -> None:
         for path, text in ((DATASET_CARD, self.dataset), (MODEL_CARD, self.model)):
@@ -45,6 +55,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
             (ACTION_USE_DATASET_CARD, self.action_use_dataset),
             (ACTION_USE_MODEL_CARD, self.action_use_model),
             (ACTION_USE_RESULTS, self.action_use_report),
+            (ACTION_USE_RETRIEVAL_DATASET_CARD, self.action_use_retrieval_dataset),
+            (ACTION_USE_RETRIEVAL_MODEL_CARD, self.action_use_retrieval_model),
+            (ACTION_USE_RETRIEVAL_RESULTS, self.action_use_retrieval_report),
         ):
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file(), f"missing: {path}")
@@ -134,6 +147,27 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         )
         self.assertIn("- [ ] Text action beats the no-action baseline.", self.action_use_report)
         self.assertIn("Claim-readiness gate | true", self.action_use_dataset)
+
+    def test_action_use_retrieval_cards_match_verified_hf_report(self) -> None:
+        for marker in (
+            "codelewm-action-use-retrieval-20260520-7895d18",
+            "dataset-5695087296ce4a97",
+            "training_run-924cd056375f11ea",
+            "0cb4daf1500495579f5c59cc9fd8aa39f5f70e88f55c0c121320d023b43ddeda",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.action_use_retrieval_report)
+
+        self.assertIn("| Text action | 0.597 | 0.770 | 0.813 | 0.674500 |", self.action_use_retrieval_model)
+        self.assertIn("| No action | 0.650 | 0.774 | 0.816 | 0.708037 |", self.action_use_retrieval_model)
+        self.assertIn("## Action-Use Claim Gate", self.action_use_retrieval_report)
+        self.assertIn("claim_allowed=false", self.action_use_retrieval_report)
+        self.assertIn(
+            "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action",
+            self.action_use_retrieval_report,
+        )
+        self.assertIn("- [ ] Text action beats the no-action baseline.", self.action_use_retrieval_report)
+        self.assertIn("Claim-readiness gate | true", self.action_use_retrieval_dataset)
 
 
 if __name__ == "__main__":

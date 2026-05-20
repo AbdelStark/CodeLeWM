@@ -1,13 +1,14 @@
 # HF ml-intern `/goal` Prompt
 
 Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must finish the active #159 HF Jobs remediation lifecycle
-and close or explicitly defer the remaining action-use gap.
+`ml-intern` run that must keep the completed #159 HF Jobs remediation lifecycle
+and the remaining action-use claim boundary in sync across docs, issues, and
+future research planning.
 
 ```text
-/goal Complete CodeLeWM's remaining positive action-conditioned result path.
-The private diagnostic release-freeze artifact set is already frozen; only make
-a public positive claim if the evidence actually passes the claim gate.
+/goal Complete CodeLeWM's first scaled-result project boundary. Treat the
+current artifact set as private negative/diagnostic evidence unless new evidence
+actually passes the action-use claim gate.
 
 You are operating in the CodeLeWM repository. The project already has a working
 package runtime, HF Jobs automation, private Hugging Face publication, and
@@ -21,13 +22,16 @@ completed primary action-use follow-up is
 `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`.
 
 The current gap is precise: #154 executed and verified the primary no-action
-margin recipe, but the action-use claim gate is still negative. Text-action
-Recall@1 is `0.363` and MRR is `0.467875`; no-action Recall@1 is `0.469` and
-MRR is `0.549624`. The result is documented in
-`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. The positive-claim path
-is blocked until text-action beats no-action on the agreed headline metrics.
+margin recipe, and #159 executed and verified the second-stage margin+retrieval
+recipe. Both action-use claim gates are negative. The #159 run improved
+text-action to Recall@1 `0.597` and MRR `0.674500`, but no-action remained
+stronger with Recall@1 `0.650` and MRR `0.708037`. The results are documented
+in `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md` and
+`docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`. The
+positive-claim path is blocked until text-action beats no-action on the agreed
+headline metrics.
 
-Issue #159 has already been launched as
+Issue #159 has already completed as
 `codelewm-action-use-retrieval-20260520-7895d18` on HF Jobs job
 `6a0da3a08229e585f969c3f7` from source SHA
 `7895d185e165a917af0956a313d8948c04b33638`. It uses
@@ -35,8 +39,8 @@ Issue #159 has already been launched as
 on `a10g-small` with a `24h` timeout and private publication targets
 `abdelstark/codelewm-public-shard`,
 `abdelstark/codelewm-transition-model`, and `abdelstark/codelewm-runs`.
-Do not relaunch while this job is running; resume from the HF CLI lifecycle and
-only relaunch if the issue records the failure phase and repair.
+Do not relaunch this run. Use the HF CLI only to inspect, download, verify, or
+orchestrate a new future research issue with a different hypothesis.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
@@ -65,8 +69,11 @@ Before editing or launching compute, read:
 - docs/training/SCALED_TRAINING_RUNBOOK.md
 - docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md
 - docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md
+- docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md
 - docs/cards/codelewm-action-use-dataset-2026-05-20.md
 - docs/cards/codelewm-action-use-model-2026-05-20.md
+- docs/cards/codelewm-action-use-retrieval-dataset-2026-05-20.md
+- docs/cards/codelewm-action-use-retrieval-model-2026-05-20.md
 - docs/spec/05-observability.md
 - docs/spec/06-security.md
 - docs/spec/07-testing-strategy.md
@@ -105,10 +112,12 @@ builds the policy-compliant `hf jobs run` command with `--secrets HF_TOKEN`,
 Work in this order, skipping only issues already closed by merged PRs and
 verifying their artifacts before moving on:
 
-1. #159: monitor the active second-stage action-use remediation job, download
-   private artifacts after success, verify locally from the downloaded copy, and
-   close the issue with either a passing action-use claim gate or an explicit
-   negative/diagnostic boundary.
+1. #159 and #150: keep the tracker, roadmap, benchmark docs, cards, release
+   docs, and GitHub issues closed or ready to close with the explicit
+   negative/diagnostic boundary from the verified #159 artifacts.
+2. Future positive claim: only open a new research issue if you can state a
+   concrete intervention, config, metric gate, and HF artifact plan. Do not
+   relaunch the completed #154 or #159 configs by default.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
@@ -126,9 +135,9 @@ commit, push, open the PR, wait for checks when available, merge after passing,
 return to main, pull latest main, and continue. Do not mix unrelated issue work
 in the same PR.
 
-The #159 launch preflights have already run for the active job. If resuming the
-active job, do not spend GPU compute or launch another job first; verify the
-current state with:
+The #159 launch, remote run, publication, download, and local verification have
+already run. If auditing the state, do not spend GPU compute or launch another
+job first; verify the current state with:
 
 - `hf auth whoami`
 - `hf jobs ps`
@@ -136,8 +145,8 @@ current state with:
 - `hf jobs logs 6a0da3a08229e585f969c3f7`
 - `hf jobs stats 6a0da3a08229e585f969c3f7`
 
-Before spending any new GPU compute, verify the HF CLI and dry-run
-infrastructure:
+Before spending any new GPU compute for a future research issue, verify the HF
+CLI and dry-run infrastructure:
 
 hf auth whoami
 
@@ -155,14 +164,16 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-For #159, first compare the baseline and action-use reports if deciding whether
-to repair and relaunch after a failure:
+For future positive-claim work, first compare the baseline and action-use
+reports before deciding whether a new research issue is justified:
 
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
 
-If the active job failed and no code/config correction is needed, relaunch the
-checked-in fallback profile.
+Do not relaunch the completed #159 job. If a future issue justifies new GPU
+compute and no code/config correction is needed, use a new run ID and a new
+issue comment before launch.
 The current public shard source is `config/data/codelewm_public_shard_commitpackft_python.json`,
 which expects `bigcode/commitpackft:data/python/data.jsonl` under
 `.artifacts/hf-sources/commitpackft`. Preflight the source path first:
@@ -173,8 +184,8 @@ hf download bigcode/commitpackft \
   --local-dir .artifacts/hf-sources/commitpackft \
   --dry-run
 
-If relaunching after a recorded failure, start the replacement #159 run through
-the launcher:
+If launching a future research run after a recorded decision, start the run
+through the launcher:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -205,8 +216,8 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 
 Record the job ID, commit SHA, run ID, config paths, hardware flavor, timeout,
-repository targets, and command line in #159. If the job fails, preserve the job
-ID, log excerpt, failure phase, and config paths in the relevant issue before
+repository targets, and command line in the relevant issue. If the job fails,
+preserve the job ID, log excerpt, failure phase, and config paths before
 patching. Do not relaunch blindly.
 
 After the job succeeds, use `hf download` to fetch the published private
@@ -295,18 +306,18 @@ Do not call the result claim-eligible unless all of these are true:
 - the published private artifacts can be downloaded with `hf download` and
   verified locally from a clean checkout.
 
-Keep Hugging Face repositories private until #159 passes and a follow-up public
-visibility review is explicitly satisfied. If #159 remains negative, stop the
-positive-claim path, keep repositories private or frame the result explicitly as
-negative/diagnostic, and update #150 with the exact blocker, job ID if one ran,
-and next validation command.
+Keep Hugging Face repositories private until a future claim gate passes and a
+follow-up public visibility review is explicitly satisfied. Because #159 remains
+negative, the current positive-claim path is stopped; keep repositories private
+or frame the result explicitly as negative/diagnostic, and keep #150 updated
+with the exact blocker, job ID, and validation commands.
 
 Completion criteria:
 
-- #159 is closed by a merged PR or updated with an explicit blocker that
-  prevents a positive claim.
-- At least one second-stage HF Jobs run or explicitly justified no-run decision
-  is recorded in #159.
+- #159 and #150 are closed by a merged PR or updated with the explicit
+  negative/diagnostic blocker that prevents a positive claim.
+- The second-stage HF Jobs run is recorded in #159 with job ID, run ID, source
+  SHA, config paths, private repo paths, and validation commands.
 - Dataset, model, and results artifacts selected for release are published
   privately to the configured Hugging Face repositories.
 - Published artifacts are downloaded with `hf download` and verified locally.
