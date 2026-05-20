@@ -80,7 +80,7 @@ Scaled mode additionally requires checked-in configs:
 ```bash
 CODELEWM_HF_PIPELINE_MODE=scaled
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0
 CODELEWM_HF_RETRIEVAL_PRIOR_K=10
@@ -198,10 +198,12 @@ hf jobs stats <job-id>
 
 ## Remote Scaled Training And Publication
 
-The command below is the baseline scaled profile used by #138. For the follow-up
-action-use run in #154, keep the same HF CLI boundary but replace
-`CODELEWM_TRAIN_CONFIG` with the primary action-use config produced by #153 when
-it differs from the original A10G baseline.
+The command below is the primary #154 follow-up profile. It uses the #153
+no-action margin objective to target the observed failure mode from the first
+scaled run. The original
+`config/train/scaled/codelewm_scaled_gpu_a10g.yaml` baseline remains
+available only for regression comparison against #138; use the margin+retrieval
+fallback config only after recording the primary run's claim-gate result.
 
 ```bash
 CODELEWM_HF_JOBS_DRY_RUN=0 \
@@ -211,7 +213,7 @@ CODELEWM_HF_JOBS_TIMEOUT=24h \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -319,9 +321,11 @@ Completed gates that must be preserved:
 Active gates for the next meaningful remote run:
 
 - #151 has added no-action dominance diagnostics and a claim gate.
-- #152 must land action-discriminative shard diagnostics and hard negatives.
-- #153 must add the action-use objective/intervention and scaled sweep configs.
-- #154 must execute the follow-up HF Jobs run and verify downloaded artifacts.
+- #152 has added action-discriminative shard diagnostics and hard negatives.
+- #153 has added the action-use margin objective and scaled sweep configs.
+- #154 must execute the follow-up HF Jobs run with
+  `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` and
+  verify downloaded artifacts.
 - #123 through #126 remain release gates after the claim boundary is clear.
 
 Do not flip repositories public, update public positive claims, or mark a result

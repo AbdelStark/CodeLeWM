@@ -18,10 +18,13 @@ class ScaledTrainingRunbookTest(unittest.TestCase):
             "config/train/scaled/codelewm_scaled_cpu.yaml",
             "config/train/scaled/codelewm_scaled_mps.yaml",
             "config/train/scaled/codelewm_scaled_gpu_a10g.yaml",
+            "config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml",
+            "config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml",
             "config/data/codelewm_public_shard_commitpackft_python.json",
             "seed",
             "240119",
             "a10g-small",
+            "action_use_margin_weight=0.25",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.text)

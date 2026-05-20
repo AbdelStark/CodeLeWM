@@ -50,6 +50,10 @@ def main(argv: list[str] | None = None) -> int:
                     "precision": config.trainer.precision,
                     "batch_size": config.loader.batch_size,
                     "retrieval_loss_enabled": config.loss.enable_retrieval_loss,
+                    "retrieval_weight": config.loss.retrieval_weight,
+                    "action_use_margin_enabled": config.loss.enable_action_use_margin,
+                    "action_use_margin_weight": config.loss.action_use_margin_weight,
+                    "action_use_margin": config.loss.action_use_margin,
                 }
             )
     except TrainConfigError as exc:

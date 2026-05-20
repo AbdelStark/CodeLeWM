@@ -138,6 +138,7 @@ def torch_training_executor(
         seed=context.config.seed,
     )
     objective_config = _objective_config(context.config)
+    objective_payload = context.config.loss.to_dict()
     target_step = start_step + context.config.trainer.max_steps
     step = start_step
     last_terms: dict[str, float] = {}
@@ -230,6 +231,7 @@ def torch_training_executor(
             "val_rows": len(val_dataset),
             "action_view": context.config.wm.action_view,
         },
+        "objective": objective_payload,
         "runtime": {
             "device": str(selected_device),
             "precision": context.config.trainer.precision,
@@ -251,6 +253,7 @@ def torch_training_executor(
             "torch": str(runtime.__version__),
             "train_rows": len(train_dataset),
             "val_rows": len(val_dataset),
+            "objective": objective_payload,
             "checkpoint_schema_version": CHECKPOINT_SCHEMA_VERSION,
         },
     )
@@ -429,6 +432,9 @@ def _objective_config(config: TrainConfig) -> ObjectiveConfig:
         enable_retrieval_loss=config.loss.enable_retrieval_loss,
         retrieval_weight=config.loss.retrieval_weight,
         retrieval_temperature=config.loss.retrieval_temperature,
+        enable_action_use_margin=config.loss.enable_action_use_margin,
+        action_use_margin_weight=config.loss.action_use_margin_weight,
+        action_use_margin=config.loss.action_use_margin,
         sigreg_knots=config.loss.sigreg_knots,
         sigreg_num_proj=config.loss.sigreg_num_proj,
         sigreg_seed=config.seed,

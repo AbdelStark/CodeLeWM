@@ -26,6 +26,8 @@ SCALED_TRAIN_CONFIGS = (
     Path("config/train/scaled/codelewm_scaled_cpu.yaml"),
     Path("config/train/scaled/codelewm_scaled_mps.yaml"),
     Path("config/train/scaled/codelewm_scaled_gpu_a10g.yaml"),
+    Path("config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml"),
+    Path("config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml"),
 )
 
 _ACTION_VIEWS = frozenset({"text", "abstract"})
@@ -275,6 +277,9 @@ class TrainingLossConfig:
     enable_retrieval_loss: bool = False
     retrieval_weight: float = 0.0
     retrieval_temperature: float = 0.1
+    enable_action_use_margin: bool = False
+    action_use_margin_weight: float = 0.0
+    action_use_margin: float = 0.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
 
@@ -287,6 +292,9 @@ class TrainingLossConfig:
                 "enable_retrieval_loss",
                 "retrieval_weight",
                 "retrieval_temperature",
+                "enable_action_use_margin",
+                "action_use_margin_weight",
+                "action_use_margin",
                 "sigreg_knots",
                 "sigreg_num_proj",
             },
@@ -297,6 +305,19 @@ class TrainingLossConfig:
             enable_retrieval_loss=_optional_bool(payload, "enable_retrieval_loss", "loss", default=False),
             retrieval_weight=_optional_float(payload, "retrieval_weight", "loss", default=0.0),
             retrieval_temperature=_optional_float(payload, "retrieval_temperature", "loss", default=0.1),
+            enable_action_use_margin=_optional_bool(
+                payload,
+                "enable_action_use_margin",
+                "loss",
+                default=False,
+            ),
+            action_use_margin_weight=_optional_float(
+                payload,
+                "action_use_margin_weight",
+                "loss",
+                default=0.0,
+            ),
+            action_use_margin=_optional_float(payload, "action_use_margin", "loss", default=0.0),
             sigreg_knots=_optional_int(payload, "sigreg_knots", "loss", default=17),
             sigreg_num_proj=_optional_int(payload, "sigreg_num_proj", "loss", default=1024),
         )
@@ -308,6 +329,9 @@ class TrainingLossConfig:
                 enable_retrieval_loss=self.enable_retrieval_loss,
                 retrieval_weight=self.retrieval_weight,
                 retrieval_temperature=self.retrieval_temperature,
+                enable_action_use_margin=self.enable_action_use_margin,
+                action_use_margin_weight=self.action_use_margin_weight,
+                action_use_margin=self.action_use_margin,
                 sigreg_knots=self.sigreg_knots,
                 sigreg_num_proj=self.sigreg_num_proj,
             )
@@ -320,6 +344,9 @@ class TrainingLossConfig:
             enable_retrieval_loss=self.enable_retrieval_loss,
             retrieval_weight=self.retrieval_weight,
             retrieval_temperature=self.retrieval_temperature,
+            enable_action_use_margin=self.enable_action_use_margin,
+            action_use_margin_weight=self.action_use_margin_weight,
+            action_use_margin=self.action_use_margin,
             sigreg_knots=self.sigreg_knots,
             sigreg_num_proj=self.sigreg_num_proj,
         )
@@ -330,9 +357,36 @@ class TrainingLossConfig:
             "enable_retrieval_loss": self.enable_retrieval_loss,
             "retrieval_weight": self.retrieval_weight,
             "retrieval_temperature": self.retrieval_temperature,
+            "enable_action_use_margin": self.enable_action_use_margin,
+            "action_use_margin_weight": self.action_use_margin_weight,
+            "action_use_margin": self.action_use_margin,
             "sigreg_knots": self.sigreg_knots,
             "sigreg_num_proj": self.sigreg_num_proj,
         }
+
+    def to_compatibility_dict(self) -> dict[str, Any]:
+        payload = {
+            "sigreg_weight": self.sigreg_weight,
+            "enable_retrieval_loss": self.enable_retrieval_loss,
+            "retrieval_weight": self.retrieval_weight,
+            "retrieval_temperature": self.retrieval_temperature,
+            "sigreg_knots": self.sigreg_knots,
+            "sigreg_num_proj": self.sigreg_num_proj,
+        }
+        has_action_margin_surface = (
+            self.enable_action_use_margin
+            or self.action_use_margin_weight != 0.0
+            or self.action_use_margin != 0.0
+        )
+        if has_action_margin_surface:
+            payload.update(
+                {
+                    "enable_action_use_margin": self.enable_action_use_margin,
+                    "action_use_margin_weight": self.action_use_margin_weight,
+                    "action_use_margin": self.action_use_margin,
+                }
+            )
+        return payload
 
 
 @dataclass(frozen=True)

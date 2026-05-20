@@ -23,25 +23,42 @@ class ObjectiveConfig:
     retrieval_weight: float = 0.0
     retrieval_temperature: float = 0.1
     retrieval_weight_cap: float = 0.10
+    enable_action_use_margin: bool = False
+    action_use_margin_weight: float = 0.0
+    action_use_margin: float = 0.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
     sigreg_seed: int | None = None
 
     def __post_init__(self) -> None:
-        if self.sigreg_weight < 0.0:
-            raise ValueError("sigreg_weight must be non-negative")
-        if self.retrieval_weight < 0.0:
-            raise ValueError("retrieval_weight must be non-negative")
-        if self.retrieval_weight_cap <= 0.0:
-            raise ValueError("retrieval_weight_cap must be positive")
+        if not math.isfinite(self.sigreg_weight) or self.sigreg_weight < 0.0:
+            raise ValueError("sigreg_weight must be finite and non-negative")
+        if not math.isfinite(self.retrieval_weight) or self.retrieval_weight < 0.0:
+            raise ValueError("retrieval_weight must be finite and non-negative")
+        if not math.isfinite(self.retrieval_weight_cap) or self.retrieval_weight_cap <= 0.0:
+            raise ValueError("retrieval_weight_cap must be finite and positive")
         if self.retrieval_weight > self.retrieval_weight_cap:
             raise ValueError("retrieval_weight exceeds retrieval_weight_cap")
-        if self.retrieval_temperature <= 0.0:
-            raise ValueError("retrieval_temperature must be positive")
+        if not math.isfinite(self.retrieval_temperature) or self.retrieval_temperature <= 0.0:
+            raise ValueError("retrieval_temperature must be finite and positive")
         if self.enable_retrieval_loss and self.retrieval_weight <= 0.0:
             raise ValueError("enable_retrieval_loss requires nonzero retrieval_weight")
         if not self.enable_retrieval_loss and self.retrieval_weight != 0.0:
             raise ValueError("retrieval_weight requires enable_retrieval_loss=true")
+        if not math.isfinite(self.action_use_margin_weight) or self.action_use_margin_weight < 0.0:
+            raise ValueError("action_use_margin_weight must be finite and non-negative")
+        if self.action_use_margin_weight > 1.0:
+            raise ValueError("action_use_margin_weight must be at most 1.0")
+        if not math.isfinite(self.action_use_margin) or self.action_use_margin < 0.0:
+            raise ValueError("action_use_margin must be finite and non-negative")
+        if self.enable_action_use_margin and self.action_use_margin_weight <= 0.0:
+            raise ValueError("enable_action_use_margin requires nonzero action_use_margin_weight")
+        if self.enable_action_use_margin and self.action_use_margin <= 0.0:
+            raise ValueError("enable_action_use_margin requires nonzero action_use_margin")
+        if not self.enable_action_use_margin and self.action_use_margin_weight != 0.0:
+            raise ValueError("action_use_margin_weight requires enable_action_use_margin=true")
+        if not self.enable_action_use_margin and self.action_use_margin != 0.0:
+            raise ValueError("action_use_margin requires enable_action_use_margin=true")
         if self.sigreg_knots < 2:
             raise ValueError("sigreg_knots must be at least 2")
         if self.sigreg_num_proj <= 0:
@@ -58,6 +75,8 @@ class ObjectiveTerms:
     sigreg_weighted: Any
     retrieval: Any | None = None
     retrieval_weighted: Any | None = None
+    action_use_margin: Any | None = None
+    action_use_margin_weighted: Any | None = None
 
     def scalars(self) -> dict[str, float]:
         values = {
@@ -70,6 +89,10 @@ class ObjectiveTerms:
             values["loss/retrieval"] = _as_float(self.retrieval)
         if self.retrieval_weighted is not None:
             values["loss/retrieval_weighted"] = _as_float(self.retrieval_weighted)
+        if self.action_use_margin is not None:
+            values["loss/action_use_margin"] = _as_float(self.action_use_margin)
+        if self.action_use_margin_weighted is not None:
+            values["loss/action_use_margin_weighted"] = _as_float(self.action_use_margin_weighted)
         return values
 
 
@@ -94,6 +117,8 @@ def compute_transition_objective(
     total = prediction_mse + sigreg_weighted
     retrieval = None
     retrieval_weighted = None
+    action_use_margin = None
+    action_use_margin_weighted = None
     if config.enable_retrieval_loss:
         retrieval = compute_in_batch_retrieval_loss(
             z_pred_after,
@@ -102,11 +127,22 @@ def compute_transition_objective(
         )
         retrieval_weighted = retrieval * config.retrieval_weight
         total = total + retrieval_weighted
+    if config.enable_action_use_margin:
+        action_use_margin = compute_action_use_margin_loss(
+            z_before,
+            z_after,
+            z_pred_after,
+            margin=config.action_use_margin,
+        )
+        action_use_margin_weighted = action_use_margin * config.action_use_margin_weight
+        total = total + action_use_margin_weighted
     _check_finite(total, "loss/total")
     _check_finite(prediction_mse, "loss/prediction_mse")
     _check_finite(sigreg, "loss/sigreg")
     if retrieval is not None:
         _check_finite(retrieval, "loss/retrieval")
+    if action_use_margin is not None:
+        _check_finite(action_use_margin, "loss/action_use_margin")
     return ObjectiveTerms(
         total=total,
         prediction_mse=prediction_mse,
@@ -114,6 +150,8 @@ def compute_transition_objective(
         sigreg_weighted=sigreg_weighted,
         retrieval=retrieval,
         retrieval_weighted=retrieval_weighted,
+        action_use_margin=action_use_margin,
+        action_use_margin_weighted=action_use_margin_weighted,
     )
 
 
@@ -158,6 +196,49 @@ def compute_in_batch_retrieval_loss(z_pred_after: Any, z_after: Any, *, temperat
     stabilized = scores - scores.max(axis=1, keepdims=True)
     log_probs = stabilized - np.log(np.exp(stabilized).sum(axis=1, keepdims=True))
     return float(-np.diag(log_probs).mean())
+
+
+def compute_action_use_margin_loss(
+    z_before: Any,
+    z_after: Any,
+    z_pred_after: Any,
+    *,
+    margin: float,
+) -> Any:
+    """Penalize predictions that do not beat the no-action identity baseline."""
+
+    if not math.isfinite(margin) or margin <= 0.0:
+        raise ValueError("margin must be finite and positive")
+    _require_same_shape(z_before, z_after, "z_before", "z_after")
+    _require_same_shape(z_pred_after, z_after, "z_pred_after", "z_after")
+    _check_finite(z_before, "z_before")
+    _check_finite(z_after, "z_after")
+    _check_finite(z_pred_after, "z_pred_after")
+    if _is_torch_tensor(z_pred_after):
+        target = z_after.detach()
+        no_action_delta = z_before.detach() - target
+        pred_delta = z_pred_after - target
+        reduce_dims = tuple(range(1, pred_delta.ndim))
+        if reduce_dims:
+            no_action_dist = no_action_delta.pow(2).mean(dim=reduce_dims)
+            pred_dist = pred_delta.pow(2).mean(dim=reduce_dims)
+        else:
+            no_action_dist = no_action_delta.pow(2)
+            pred_dist = pred_delta.pow(2)
+        return torch.relu(pred_dist - no_action_dist + margin).mean()
+    before = np.asarray(z_before, dtype=float)
+    target = np.asarray(z_after, dtype=float)
+    pred = np.asarray(z_pred_after, dtype=float)
+    reduce_axes = tuple(range(1, pred.ndim))
+    no_action_delta = before - target
+    pred_delta = pred - target
+    if reduce_axes:
+        no_action_dist = np.square(no_action_delta).mean(axis=reduce_axes)
+        pred_dist = np.square(pred_delta).mean(axis=reduce_axes)
+    else:
+        no_action_dist = np.square(no_action_delta)
+        pred_dist = np.square(pred_delta)
+    return float(np.maximum(pred_dist - no_action_dist + margin, 0.0).mean())
 
 
 def stack_objective_embeddings(z_before: Any, z_after: Any, z_pred_after: Any) -> Any:

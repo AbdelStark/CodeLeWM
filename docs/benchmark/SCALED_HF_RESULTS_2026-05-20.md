@@ -74,8 +74,8 @@ retrieval, ablation, surprise, and scorer-quality also verified.
 This first scaled artifact predates
 `codelewm.data.action_discriminative_shard_report.v1`, so it does not contain a
 manifested action-discriminative shard report. That absence is now an explicit
-data-evidence blocker: the follow-up #152/#153/#154 run must regenerate the
-public shard build and pack artifacts and publish
+data-evidence blocker: the follow-up #154 run must use the #152/#153 code path
+to regenerate the public shard build and pack artifacts and publish
 `reports/action_discriminative_shard_report.json` before any positive
 action-use claim can be considered.
 

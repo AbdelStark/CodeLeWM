@@ -18,10 +18,11 @@ private artifacts and verified them after `hf download`, but it is not a
 positive action-conditioning result because text-action lost to no-action on the
 headline retrieval metrics.
 
-The remaining gap is action-use evidence: diagnostics and claim gates around
-no-action dominance, action-discriminative shard/hard-negative support, a
-training intervention that forces useful action conditioning, a follow-up HF
-Jobs run from a merged SHA, downloaded-artifact inference/evals, then release
+The remaining gap is action-use evidence from remote artifacts: diagnostics and
+claim gates around no-action dominance are implemented, the
+action-discriminative shard/hard-negative support is implemented, and the
+action-use margin training configs are implemented. The next step is a follow-up
+HF Jobs run from a merged SHA, downloaded-artifact inference/evals, then release
 packaging/provenance/docs/freeze gates.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
@@ -94,18 +95,17 @@ Do not treat local-only execution as completion. Local runs are preflight only.
 Work in this order, skipping only issues already closed by merged PRs and
 verifying their artifacts before moving on:
 
-1. #152: data: add action-discriminative shard diagnostics and hard negatives.
-2. #153: train: add action-use objective and scaled sweep configs.
-3. #154: run follow-up HF Jobs action-use training, private publication,
+1. #154: run follow-up HF Jobs action-use training, private publication,
    download verification, inference, and evals.
-4. #123: release: add uv build and package publishing gates.
-5. #124: release: add dependency audit and provenance evidence.
-6. #125: docs: refresh public docs against first-results evidence.
-7. #126: release: run final artifact freeze and checklist.
+2. #123: release: add uv build and package publishing gates.
+3. #124: release: add dependency audit and provenance evidence.
+4. #125: docs: refresh public docs against first-results evidence.
+5. #126: release: run final artifact freeze and checklist.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
-artifact cards, #138 first scaled HF execution, and #151 no-action claim gates.
+artifact cards, #138 first scaled HF execution, #151 no-action claim gates, #152
+action-discriminative diagnostics, and #153 action-use margin training configs.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -132,9 +132,9 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-Do not launch the real follow-up scaled job until #152 and #153 are
-merged or their issue bodies explicitly allow the run to proceed with known
-blockers recorded.
+Do not launch the real follow-up scaled job until #152 and #153 are closed by
+merged PRs on `main`. If the issue tracker disagrees with this prompt, trust the
+tracker and update the roadmap before spending compute.
 
 For the real follow-up HF Jobs run, use a merged SHA or `main` for
 `CODELEWM_HF_REF`, checked-in dataset and training configs, private publishing,
@@ -149,9 +149,8 @@ hf download bigcode/commitpackft \
   --local-dir .artifacts/hf-sources/commitpackft \
   --dry-run
 
-Start the run through the launcher, replacing the train config with the new
-primary action-use config from #153 if it differs from the original A10G
-baseline:
+Start the run through the launcher with the primary action-use margin config
+from #153:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -161,7 +160,7 @@ CODELEWM_HF_PUBLISH=1 \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=<checked-in-action-use-scaled-train-config> \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \

@@ -16,8 +16,9 @@ Implemented foundations:
   dedup policy, CodeState extraction, action extraction, staging and pack
   helpers, dataset manifests, and a public CommitPackFT Python shard config.
 - `codelewm.model`: transition interfaces, action encoders, predictor modules,
-  transition energy, objective helpers, retrieval-loss gate, checkpoint
-  compatibility manifests, and checkpoint trust gates.
+  transition energy, objective helpers, retrieval-loss gate, no-action margin
+  action-use objective, checkpoint compatibility manifests, and checkpoint trust
+  gates.
 - `codelewm.training`: manifest-backed training runner, resume compatibility,
   default and scaled configs, CPU smoke executor, and a package-native torch
   executor over packed CodeLeWM transition batches.
@@ -107,14 +108,17 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #152 add action-discriminative shard diagnostics and hard negatives.
-2. #153 add action-use objective and scaled sweep configs.
-3. #154 run the follow-up HF Jobs action-use training, publication, download,
+1. #154 run the follow-up HF Jobs action-use training, publication, download,
    inference, and eval cycle through the `hf` CLI.
-4. #123 add package build and publishing gates.
-5. #124 add dependency audit and provenance evidence.
-6. #125 refresh public docs against the scaled evidence and claim boundary.
-7. #126 run the final artifact freeze and release checklist.
+2. #123 add package build and publishing gates.
+3. #124 add dependency audit and provenance evidence.
+4. #125 refresh public docs against the scaled evidence and claim boundary.
+5. #126 run the final artifact freeze and release checklist.
+
+Issues #152 and #153 are completed preconditions for the next HF Jobs run: the
+dataset pipeline now emits action-discriminative diagnostics and the training
+config matrix includes the primary action-use margin A10G profile plus a
+margin+retrieval fallback.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 

@@ -45,6 +45,7 @@ from .checkpoint import (
 from .objective import (
     ObjectiveConfig,
     ObjectiveTerms,
+    compute_action_use_margin_loss,
     compute_in_batch_retrieval_loss,
     compute_prediction_mse,
     compute_retrieval_score_matrix,
@@ -100,6 +101,7 @@ __all__ = [
     "TransitionBatch",
     "build_checkpoint_metadata",
     "build_torch_transition_model",
+    "compute_action_use_margin_loss",
     "compute_config_hash",
     "compute_in_batch_retrieval_loss",
     "compute_prediction_mse",

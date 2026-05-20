@@ -52,7 +52,11 @@ trainer:
   precision: bf16-mixed
 loss:
   sigreg_weight: 0.09
+  enable_retrieval_loss: false
   retrieval_weight: 0.0
+  enable_action_use_margin: false
+  action_use_margin_weight: 0.0
+  action_use_margin: 0.0
 ```
 
 Runtime contract:
@@ -70,6 +74,7 @@ The manifest stores:
 - checkpoint files;
 - validation metrics;
 - collapse reports;
+- objective/intervention settings in executor metadata;
 - device and dtype.
 
 Determinism:

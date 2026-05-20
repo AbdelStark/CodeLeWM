@@ -1,0 +1,57 @@
+# Hugging Face Jobs A10G action-use retrieval fallback profile.
+# Budget: 60k steps, batch 64, bf16 mixed precision, expected 12-24h on
+# a10g-small (24 GiB); memory target <= 24 GiB; artifact target 2-8 GiB.
+# Objective: no-action margin plus a small in-batch retrieval term for a
+# one-seed fallback if the primary margin-only run still loses the claim gate.
+schema_version: codelewm.train_config.v1
+name: codelewm_scaled_action_use_margin_retrieval_gpu_a10g
+seed: 240119
+
+data:
+  train: data/codelewm_public_shard_v0_3/hdf5/train.hdf5
+  val: data/codelewm_public_shard_v0_3/hdf5/val.hdf5
+  manifest: data/codelewm_public_shard_v0_3/manifest.json
+
+wm:
+  history_size: 1
+  num_preds: 1
+  embed_dim: 256
+  action_view: text
+  state_sequence_length: 1024
+  action_sequence_length: 256
+
+trainer:
+  max_steps: 60000
+  accelerator: gpu
+  devices: 1
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+
+loader:
+  batch_size: 64
+  num_workers: 4
+  shuffle: true
+  pin_memory: true
+  persistent_workers: true
+
+optimizer:
+  type: AdamW
+  lr: 0.0001
+  weight_decay: 0.001
+
+loss:
+  sigreg_weight: 0.09
+  enable_retrieval_loss: true
+  retrieval_weight: 0.05
+  retrieval_temperature: 0.1
+  enable_action_use_margin: true
+  action_use_margin_weight: 0.25
+  action_use_margin: 0.02
+  sigreg_knots: 17
+  sigreg_num_proj: 1024
+
+output:
+  run_dir: runs/codelewm_scaled_action_use_margin_retrieval_gpu_a10g
+  checkpoint_dir: runs/codelewm_scaled_action_use_margin_retrieval_gpu_a10g/checkpoints
+  metrics_path: runs/codelewm_scaled_action_use_margin_retrieval_gpu_a10g/metrics.jsonl
+  manifest_path: runs/codelewm_scaled_action_use_margin_retrieval_gpu_a10g/training_manifest.json
