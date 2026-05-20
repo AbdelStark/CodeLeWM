@@ -16,7 +16,7 @@ The repository is past pure specification and past local smoke evidence. The
 package contains data contracts, model components, manifest-backed training,
 evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
 observability, security gates, CI, release templates, a local first-results
-smoke loop, and one completed scaled HF Jobs run.
+smoke loop, and two completed scaled HF Jobs runs.
 
 Completed evidence:
 
@@ -24,6 +24,8 @@ Completed evidence:
   `docs/benchmark/FIRST_RESULTS.md`.
 - HF Jobs run `codelewm-scaled-20260520-9699b53` completed on job
   `6a0d43c92dc5b1243da50bba`.
+- Follow-up HF Jobs run `codelewm-action-use-20260520-6650183` completed on job
+  `6a0d7a763aba298b21d147a9` with the no-action margin objective.
 - Private HF repositories contain the dataset pack, model checkpoint, and run
   evidence under the documented run paths.
 - The private artifacts were downloaded with `hf download`, verified locally,
@@ -31,17 +33,21 @@ Completed evidence:
   rerank checks.
 - `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md` and the scaled dataset/model
   cards are the artifact-backed report for that run.
+- `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md` and the action-use
+  dataset/model cards are the artifact-backed report for the #154 follow-up
+  run.
 
 Current blocker:
 
-- The scaled run is a meaningful systems result but not a positive
+- Both scaled runs are meaningful systems evidence, but neither is a positive
   action-conditioned model-quality result.
-- Text-action beats random, shuffled-action, and lexical baselines, but
-  no-action is stronger on headline retrieval: text-action Recall@1 `0.371`,
-  MRR `0.472984`; no-action Recall@1 `0.459`, MRR `0.546116`.
-- The next project milestone is not another infrastructure pass. It is an
-  action-use remediation pass that produces a claim-eligible follow-up run or an
-  explicit negative/diagnostic release boundary.
+- The #154 action-use run beats random, shuffled-action, and lexical baselines,
+  but no-action is stronger on headline retrieval: text-action Recall@1
+  `0.363`, MRR `0.467875`; no-action Recall@1 `0.469`, MRR `0.549624`.
+- The next project milestone is the second-stage action-use remediation tracked
+  by #159, followed by package/provenance/docs/freeze release gates. If #159
+  remains negative, the release path must be explicitly negative/diagnostic
+  rather than a positive model-quality claim.
 
 Current landed CLI commands:
 
@@ -140,7 +146,8 @@ Delivered:
 - no-action margin action-use objective
 - primary A10G action-use and margin+retrieval fallback configs
 
-Remaining: #154 remote follow-up run to prove or falsify the action-use recipe.
+Remaining: second-stage action-use remediation in #159 if the project still
+wants a positive claim.
 
 ### Phase 4: Evaluation, Indexing, And Harness
 
@@ -160,7 +167,8 @@ Delivered:
 - hard-negative sampler pools for same-before, near-before, same-file, and
   action-discriminative candidates
 
-Remaining: #154 follow-up verification.
+Remaining: #159 second-stage verification if the project still wants a positive
+claim.
 
 ### Phase 5: First Results
 
@@ -190,7 +198,8 @@ Delivered:
 - downloaded-artifact verification
 - scaled benchmark report and cards
 
-Blocker: no-action baseline beats text-action on headline retrieval.
+Blocker: no-action baseline beats text-action on headline retrieval in both the
+#138 baseline run and the #154 no-action margin follow-up run.
 
 ## Remaining Phases
 
@@ -206,7 +215,9 @@ Deliverables:
 - action-discriminative shard diagnostics and hard negatives (#152, complete)
 - action-use objective/intervention and scaled sweep configs (#153, complete)
 - follow-up HF Jobs run launched, monitored, downloaded, verified, inferred, and
-  evaluated through the `hf` CLI (#154)
+  evaluated through the `hf` CLI (#154, complete with a negative claim gate)
+- second-stage action-use remediation sweep, likely using the margin+retrieval
+  fallback config unless analysis shows a smaller correction is required (#159)
 
 ### Phase 8: Publishing And Release
 
@@ -225,7 +236,7 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #154 | run: execute follow-up HF Jobs action-use training and verify artifacts | Action-Use Remediation | release docs, artifact freeze |
+| 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path |
 | 2 | #123 | release: add uv build and package publishing gates | Publishing And Release | release |
 | 3 | #124 | release: add dependency audit and provenance evidence | Publishing And Release | release |
 | 4 | #125 | docs: refresh public docs against first-results evidence | Publishing And Release | release |
@@ -242,6 +253,9 @@ Completed backlog base:
   claim gates.
 - #152 added action-discriminative shard diagnostics and hard-negative metadata.
 - #153 added the no-action margin objective and A10G action-use sweep configs.
+- #154 executed the primary action-use HF Jobs follow-up run and verified the
+  downloaded private artifacts; the run remained negative because no-action
+  still beat text-action.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -252,14 +266,14 @@ instead of creating duplicate trackers.
 
 - #3 Edit transition dataset: #152 complete; no active child.
 - #7 Training runtime: #153 complete; no active child.
-- #8 Retrieval and surprise evaluation: active child #154.
-- #9 Harness scorer and reranker: active child #154.
-- #10 Observability and artifact lineage: active children #154 and #126.
+- #8 Retrieval and surprise evaluation: active child #159.
+- #9 Harness scorer and reranker: active child #159.
+- #10 Observability and artifact lineage: active children #159 and #126.
 - #11 Security and licensing boundaries: active children #124 and #126.
 - #12 Public API and packaging: active children #123 and #125.
 - #13 Release CI and governance: active children #150 and #123 through #126.
 - #150 Action-conditioned scaled result and release readiness: active children
-  #154 and release gates #123 through #126.
+  #159 and release gates #123 through #126.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -271,8 +285,8 @@ that subsystem.
   because no-action beats text-action.
 - The current public shard may still not contain enough action-discriminative
   pressure for text actions to matter, even with targeted hard negatives.
-- The new no-action margin objective is unproven until #154 runs the follow-up
-  HF job and downloaded-artifact evals.
+- The no-action margin objective was proven insufficient by #154; the next
+  claim-seeking run needs the #159 second-stage remediation.
 - Scorer-quality evidence is still small and should remain a gate, not a broad
   calibration claim.
 - Same-file and action-cluster surprise decoy counts are lower than random and

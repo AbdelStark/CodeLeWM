@@ -413,7 +413,7 @@ def run_action_ablation_suite(
 
     retrieval_manifest_path = Path(retrieval_artifact)
     training_manifest_path = Path(training_artifact)
-    output_dir = Path(out)
+    output_dir = Path(out).resolve()
     report_path = output_dir / "reports" / "action_view_ablation_report.json"
     artifact_manifest_path = output_dir / "manifest.json"
     if not overwrite and (report_path.exists() or artifact_manifest_path.exists()):

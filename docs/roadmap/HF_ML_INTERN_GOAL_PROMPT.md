@@ -1,29 +1,32 @@
 # HF ml-intern `/goal` Prompt
 
 Use this prompt from the repository root. It is written for a headless
-`ml-intern` run that must close the remaining action-use gap and orchestrate the
-remote training/publication loop through the Hugging Face CLI.
+`ml-intern` run that must either close the remaining action-use gap with a
+second-stage HF Jobs run or complete the release as explicitly negative
+diagnostic evidence.
 
 ```text
-/goal Complete CodeLeWM's remaining path to a claim-eligible first scaled
-training result and release-ready artifact set. Use Hugging Face Hub
-infrastructure for remote execution, private artifact publication, download
-verification, inference, and evaluation.
+/goal Complete CodeLeWM's remaining path to a release-ready first scaled
+artifact set, with a positive action-conditioned claim only if the evidence
+actually passes the claim gate.
 
-You are operating in the CodeLeWM repository. The current gap is not smoke
-infrastructure and not first HF Jobs automation. Issues #118, #119, #120, #121,
-#122, #137, and #138 are closed. The completed scaled run
-`codelewm-scaled-20260520-9699b53` / job `6a0d43c92dc5b1243da50bba` published
-private artifacts and verified them after `hf download`, but it is not a
-positive action-conditioning result because text-action lost to no-action on the
-headline retrieval metrics.
+You are operating in the CodeLeWM repository. The project already has a working
+package runtime, HF Jobs automation, private Hugging Face publication, and
+downloaded-artifact verification.
 
-The remaining gap is action-use evidence from remote artifacts: diagnostics and
-claim gates around no-action dominance are implemented, the
-action-discriminative shard/hard-negative support is implemented, and the
-action-use margin training configs are implemented. The next step is a follow-up
-HF Jobs run from a merged SHA, downloaded-artifact inference/evals, then release
-packaging/provenance/docs/freeze gates.
+Do not redo closed infrastructure work. The completed scaled systems run is
+`codelewm-scaled-20260520-9699b53` / job `6a0d43c92dc5b1243da50bba`. The
+completed primary action-use follow-up is
+`codelewm-action-use-20260520-6650183` / job
+`6a0d7a763aba298b21d147a9`, source `6650183`, train config
+`config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml`.
+
+The current gap is precise: #154 executed and verified the primary no-action
+margin recipe, but the action-use claim gate is still negative. Text-action
+Recall@1 is `0.363` and MRR is `0.467875`; no-action Recall@1 is `0.469` and
+MRR is `0.549624`. The result is documented in
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. The positive-claim path
+is blocked until text-action beats no-action on the agreed headline metrics.
 
 Start by grounding in the current repo and issue tracker. Do not assume this
 prompt's issue status is current. Run:
@@ -32,15 +35,12 @@ prompt's issue status is current. Run:
 - `git branch --show-current`
 - `git fetch origin`
 - `gh issue view 150`
-- `gh issue view 151`
-- `gh issue view 152`
-- `gh issue view 153`
 - `gh issue view 154`
+- `gh issue view 159`
 - `gh issue view 123`
 - `gh issue view 124`
 - `gh issue view 125`
 - `gh issue view 126`
-- `gh issue view 138`
 - `gh pr list --state open --search "repo:AbdelStark/CodeLeWM"`
 
 Before editing or launching compute, read:
@@ -54,6 +54,9 @@ Before editing or launching compute, read:
 - docs/operations/HF_ML_INTERN_TRAINING.md
 - docs/training/SCALED_TRAINING_RUNBOOK.md
 - docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md
+- docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md
+- docs/cards/codelewm-action-use-dataset-2026-05-20.md
+- docs/cards/codelewm-action-use-model-2026-05-20.md
 - docs/spec/05-observability.md
 - docs/spec/06-security.md
 - docs/spec/07-testing-strategy.md
@@ -69,8 +72,8 @@ Before editing or launching compute, read:
 Security rule: Do not print, commit, paste, or summarize token values. Do not
 log token values either. Treat `.env` as local secret state. Load it only as
 defaults. Prefer shell overrides for one run. Do not disable secret scans,
-license gates, checkpoint trust gates, manifest verification, or
-private-publication defaults.
+license gates, checkpoint trust gates, manifest verification, or private
+publication defaults.
 
 Primary execution rule: orchestrate Hugging Face work with the `hf` CLI. Use the
 checked-in scripts where they encode CodeLeWM policy, but the remote job
@@ -85,27 +88,29 @@ CLI commands:
 - `hf jobs stats <job-id>`
 - `hf download`
 
-Use `hf jobs uv run` only for small ad hoc HF-hosted probes. Use
-`scripts/hf-launch-codelewm-job` for the project pipeline because it builds the
-policy-compliant `hf jobs run` command with `--secrets HF_TOKEN`, `--env`,
-`--label`, `--timeout`, `--flavor`, and `--detach`.
-
-Do not treat local-only execution as completion. Local runs are preflight only.
+Use `scripts/hf-launch-codelewm-job` for project pipeline launches because it
+builds the policy-compliant `hf jobs run` command with `--secrets HF_TOKEN`,
+`--env`, `--label`, `--timeout`, `--flavor`, and `--detach`.
 
 Work in this order, skipping only issues already closed by merged PRs and
 verifying their artifacts before moving on:
 
-1. #154: run follow-up HF Jobs action-use training, private publication,
-   download verification, inference, and evals.
+1. #159: run the second-stage action-use remediation sweep if the project is
+   still pursuing a positive claim. Prefer the checked-in fallback config
+   `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`
+   unless side-by-side analysis of #138 and #154 shows a smaller correction is
+   required first.
 2. #123: release: add uv build and package publishing gates.
 3. #124: release: add dependency audit and provenance evidence.
-4. #125: docs: refresh public docs against first-results evidence.
+4. #125: docs: refresh public docs against verified scaled evidence and the
+   final claim boundary.
 5. #126: release: run final artifact freeze and checklist.
 
 Historical closed gates to preserve, not redo: #118 source acquisition, #119
 scaled configs/runbook, #120 action-view ablation, #121 scorer quality, #122
-artifact cards, #138 first scaled HF execution, #151 no-action claim gates, #152
-action-discriminative diagnostics, and #153 action-use margin training configs.
+artifact cards, #137 HF Jobs automation, #138 first scaled HF execution, #151
+no-action claim gates, #152 action-discriminative diagnostics, #153 action-use
+margin training configs, and #154 primary action-use HF execution.
 
 For each unfinished issue, use one branch and one PR. Re-read the issue body and
 linked spec/RFC, inspect current code before editing, implement the smallest
@@ -132,15 +137,14 @@ The dry-run launcher must show an `hf jobs run` command. Confirm it includes
 mode, repo/ref env vars, dataset/model/results repo env vars when configured,
 and the chosen pipeline mode.
 
-Do not launch the real follow-up scaled job until #152 and #153 are closed by
-merged PRs on `main`. If the issue tracker disagrees with this prompt, trust the
-tracker and update the roadmap before spending compute.
+For #159, first compare the baseline and action-use reports:
 
-For the real follow-up HF Jobs run, use a merged SHA or `main` for
-`CODELEWM_HF_REF`, checked-in dataset and training configs, private publishing,
-HF CLI source prefetch, and a detached job. The current public shard source is
-`config/data/codelewm_public_shard_commitpackft_python.json`, which expects
-`bigcode/commitpackft:data/python/data.jsonl` under
+- `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
+
+If no code/config correction is needed, launch the checked-in fallback profile.
+The current public shard source is `config/data/codelewm_public_shard_commitpackft_python.json`,
+which expects `bigcode/commitpackft:data/python/data.jsonl` under
 `.artifacts/hf-sources/commitpackft`. Preflight the source path first:
 
 hf download bigcode/commitpackft \
@@ -149,8 +153,7 @@ hf download bigcode/commitpackft \
   --local-dir .artifacts/hf-sources/commitpackft \
   --dry-run
 
-Start the run through the launcher with the primary action-use margin config
-from #153:
+Start the #159 run through the launcher:
 
 CODELEWM_HF_JOBS_DRY_RUN=0 \
 CODELEWM_HF_PIPELINE_MODE=scaled \
@@ -160,7 +163,7 @@ CODELEWM_HF_PUBLISH=1 \
 CODELEWM_HF_PUBLISH_DRY_RUN=0 \
 CODELEWM_HF_REF=<merged-sha-or-main> \
 CODELEWM_DATASET_BUILD_CONFIG=config/data/codelewm_public_shard_commitpackft_python.json \
-CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml \
+CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml \
 CODELEWM_HF_SCORER_QUALITY_CONFIG=config/first_results/scorer_quality.json \
 CODELEWM_HF_RETRIEVAL_PRIOR_WEIGHT=1.0 \
 CODELEWM_HF_INDEX_BATCH_SIZE=64 \
@@ -180,78 +183,85 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 
 Record the job ID, commit SHA, run ID, config paths, hardware flavor, timeout,
-repository targets, and command line in #154. If the job fails, preserve the job
+repository targets, and command line in #159. If the job fails, preserve the job
 ID, log excerpt, failure phase, and config paths in the relevant issue before
 patching. Do not relaunch blindly.
 
 After the job succeeds, use `hf download` to fetch the published private
 artifacts into a clean local artifact directory. Do not validate against the
-job's working directory. Validate the downloaded artifacts:
+job's working directory. Validate the downloaded checkpoint and artifacts:
 
 hf download "$CODELEWM_HF_RESULTS_REPO_ID" \
   --repo-type dataset \
-  --local-dir .artifacts/hf-download/results
+  --include "runs/<run-id>/**" \
+  --local-dir .artifacts/hf-download/<run-id>/results
 
 hf download "$CODELEWM_HF_MODEL_REPO_ID" \
-  "checkpoints/<run-id>" \
   --repo-type model \
-  --local-dir .artifacts/hf-download/model
+  --include "checkpoints/<run-id>/**" \
+  --local-dir .artifacts/hf-download/<run-id>/model
+
+hf download "$CODELEWM_HF_DATASET_REPO_ID" \
+  --repo-type dataset \
+  --include "runs/<run-id>/pack/**" \
+  --local-dir .artifacts/hf-download/<run-id>/dataset
 
 uv run codelewm manifest verify \
-  --manifest .artifacts/hf-download/results/runs/<run-id>/pack/manifest.json \
-  --json
-
-uv run codelewm manifest verify \
-  --manifest .artifacts/hf-download/results/runs/<run-id>/train/manifest.json \
-  --parent-manifest .artifacts/hf-download/results/runs/<run-id>/pack/manifest.json \
+  --manifest .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/manifest.json \
+  --parent-manifest .artifacts/hf-download/<run-id>/dataset/runs/<run-id>/pack/manifest.json \
   --json
 
 uv run codelewm eval retrieval \
-  --checkpoint .artifacts/hf-download/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
-  --data .artifacts/hf-download/results/runs/<run-id>/pack \
-  --out .artifacts/hf-download/retrieval \
+  --checkpoint .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
+  --data .artifacts/hf-download/<run-id>/dataset/runs/<run-id>/pack \
+  --out .artifacts/hf-download/<run-id>/local-checks/retrieval \
+  --device cpu \
+  --seed 0 \
   --overwrite \
   --json
 
 uv run codelewm eval ablation \
-  --retrieval-artifact .artifacts/hf-download/retrieval/manifest.json \
-  --training-artifact .artifacts/hf-download/results/runs/<run-id>/train/manifest.json \
-  --out .artifacts/hf-download/ablation \
+  --retrieval-artifact .artifacts/hf-download/<run-id>/local-checks/retrieval/manifest.json \
+  --training-artifact .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/manifest.json \
+  --out .artifacts/hf-download/<run-id>/local-checks/ablation \
   --overwrite \
   --json
 
 uv run codelewm eval surprise \
-  --checkpoint .artifacts/hf-download/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
-  --data .artifacts/hf-download/results/runs/<run-id>/pack \
-  --out .artifacts/hf-download/surprise \
+  --checkpoint .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
+  --data .artifacts/hf-download/<run-id>/dataset/runs/<run-id>/pack \
+  --out .artifacts/hf-download/<run-id>/local-checks/surprise \
+  --device cpu \
+  --seed 0 \
   --overwrite \
   --json
 
 uv run codelewm eval scorer-quality \
   --config config/first_results/scorer_quality.json \
-  --checkpoint .artifacts/hf-download/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
-  --out .artifacts/hf-download/scorer-quality \
-  --index .artifacts/hf-download/results/runs/<run-id>/index \
+  --checkpoint .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/checkpoints/checkpoint.pt \
+  --out .artifacts/hf-download/<run-id>/local-checks/scorer_quality \
+  --device cpu \
+  --index .artifacts/hf-download/<run-id>/results/runs/<run-id>/index \
   --retrieval-prior-weight 1.0 \
-  --parent-manifest .artifacts/hf-download/results/runs/<run-id>/train/manifest.json \
-  --parent-manifest .artifacts/hf-download/results/runs/<run-id>/index/manifest.json \
+  --retrieval-prior-k 10 \
+  --parent-manifest .artifacts/hf-download/<run-id>/model/checkpoints/<run-id>/manifest.json \
+  --parent-manifest .artifacts/hf-download/<run-id>/results/runs/<run-id>/index/manifest.json \
   --overwrite \
   --json
 
-Then run scorer and reranker smoke checks from the downloaded checkpoint and, if
-the transition index is published, from the downloaded index. Use real examples
-from the downloaded result bundle when available; otherwise use checked-in
-fixtures and label them as fixture checks.
+Then run scorer and reranker smoke checks from the downloaded checkpoint and
+downloaded index. Use real examples from the downloaded result bundle when
+available; otherwise use checked-in fixtures and label them as fixture checks.
 
-Update benchmark docs, dataset card, model card, and release evidence only with
-artifact-backed numbers. Every claim must name the command, data source, commit
-SHA, run ID, job ID when applicable, and artifact path that produced it.
+Update benchmark docs, dataset card, model card, roadmap, release checklist, and
+the #150 tracker only with artifact-backed numbers. Every claim must name the
+command, data source, commit SHA, run ID, job ID when applicable, and artifact
+path that produced it.
 
-Do not call the result meaningful or claim-eligible unless all of these are
-true:
+Do not call the result claim-eligible unless all of these are true:
 
 - the action-use claim gate from #151 passes;
-- text-action improves over no-action on the agreed headline metrics;
+- text-action improves over no-action on Recall@1 and MRR;
 - text-action still improves over random, shuffled-action, and lexical
   baselines;
 - action-view ablation includes completed baseline rows and explicit blocked
@@ -264,26 +274,25 @@ true:
   verified locally from a clean checkout.
 
 Keep Hugging Face repositories private until #126 is complete and the public
-visibility gate is explicitly satisfied. If any prerequisite is missing or the
-result is negative, stop the public-claim path, keep repositories private, and
-open or update an evidence-backed GitHub issue with the exact blocker, job ID
-when applicable, and next validation command.
+visibility gate is explicitly satisfied. If #159 remains negative, stop the
+positive-claim path, keep repositories private or frame the release explicitly
+as negative/diagnostic, and update #150 with the exact blocker, job ID, and next
+validation command.
 
 Completion criteria:
 
-- #151, #152, #153, #154, #123, #124, #125, and #126 are closed by merged PRs,
-  or any remaining one is updated with an explicit blocker that prevents
-  completion.
-- At least one follow-up scaled HF Jobs run has a recorded job ID, commit SHA,
-  run ID, config paths, hardware flavor, timeout, and repo targets.
-- Dataset, model, and results artifacts are published privately to the
-  configured Hugging Face repositories.
+- #159, #123, #124, #125, and #126 are closed by merged PRs, or any remaining
+  one is updated with an explicit blocker that prevents completion.
+- At least one second-stage HF Jobs run or explicitly justified no-run decision
+  is recorded in #159.
+- Dataset, model, and results artifacts selected for release are published
+  privately to the configured Hugging Face repositories.
 - Published artifacts are downloaded with `hf download` and verified locally.
 - Retrieval, action-view ablation, surprise, score, and rerank checks run from
   the downloaded checkpoint/artifacts.
 - Dataset/model cards and benchmark docs reflect only verified artifacts.
-- The final response reports the HF job ID, published repo paths, validation
-  commands, metrics summary, caveats, and any remaining release blockers.
+- The final response reports the HF job ID if one ran, published repo paths,
+  validation commands, metrics summary, caveats, and remaining release blockers.
 ```
 
 Launch command:

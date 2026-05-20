@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -28,6 +30,16 @@ from codelewm.observability import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+@contextmanager
+def _chdir(path: Path):
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
 
 
 class ScorerQualityTest(unittest.TestCase):
@@ -131,6 +143,33 @@ class ScorerQualityTest(unittest.TestCase):
             if row["status"] == "scored"
         ]
         self.assertTrue(all(row["retrieval_prior"] is not None for row in scored))
+
+    def test_runner_accepts_relative_output_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config = _write_quality_fixture(root)
+            checkpoint = root / "checkpoint.bin"
+            checkpoint.write_bytes(b"fixture checkpoint")
+
+            with _chdir(root):
+                result = run_scorer_quality_evaluation(
+                    config=config.relative_to(root),
+                    checkpoint=checkpoint.relative_to(root),
+                    out="quality-relative",
+                    allow_unsafe_checkpoint=True,
+                    command=("codelewm", "eval", "scorer-quality"),
+                )
+                manifest = read_artifact_manifest(root / "quality-relative" / "manifest.json")
+                checked_files = validate_artifact_checksums(
+                    manifest,
+                    root=root / "quality-relative",
+                )
+
+        self.assertEqual(result.report_path, "reports/scorer_quality_report.json")
+        self.assertEqual(
+            {path.name for path in checked_files},
+            {"config.json", "scorer_quality_report.json"},
+        )
 
     def test_cli_writes_json_result(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

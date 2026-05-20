@@ -72,15 +72,17 @@ verification are all present.
 
 The reproducible local first-results runner writes
 `docs/benchmark/FIRST_RESULTS.md` from actual local artifacts. The first scaled
-HF report lives at `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`. That scaled
-run proves the systems path, but it is not a positive action-conditioned
-quality claim: text-action beats random, shuffled-action, and lexical baselines
-but loses to no-action on headline retrieval. The remaining research gap is an
-action-use remediation pass tracked by #150 through #154. Core harness commands
-can write local JSONL logs with redaction via `--log-jsonl`. Root `train.py`,
-`eval.py`, and the existing Hydra configs are inherited from the original
-LeWorldModel seed and are kept for compatibility while the package runtime
-continues to replace them.
+HF report lives at `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`; the
+action-use follow-up report lives at
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. Those runs prove the
+systems path, but neither supports a positive action-conditioned quality claim:
+text-action beats random, shuffled-action, and lexical baselines but loses to
+no-action on headline retrieval. The remaining research gap is the #159
+second-stage action-use remediation sweep, tracked by #150. Core harness
+commands can write local JSONL logs with redaction via `--log-jsonl`. Root
+`train.py`, `eval.py`, and the existing Hydra configs are inherited from the
+original LeWorldModel seed and are kept for compatibility while the package
+runtime continues to replace them.
 
 ## Core Concepts
 

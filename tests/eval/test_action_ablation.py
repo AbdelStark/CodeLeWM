@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 from codelewm.eval import (
@@ -30,6 +32,16 @@ from codelewm.training import TRAINING_RUN_MANIFEST_SCHEMA_VERSION, load_train_c
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_SHA = "d" * 40
 CREATED_AT = "2026-05-19T00:00:00Z"
+
+
+@contextmanager
+def _chdir(path: Path):
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
 
 
 class ActionAblationReportTest(unittest.TestCase):
@@ -114,6 +126,33 @@ class ActionAblationRunnerTest(unittest.TestCase):
         self.assertEqual(report.completed_count, 7)
         self.assertGreaterEqual(report.blocked_count, 4)
         self.assertFalse(report.claim_gate.claim_allowed)
+
+    def test_runner_accepts_relative_output_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            retrieval_manifest = _write_retrieval_artifact(root)
+            training_manifest = _write_training_artifact(root)
+
+            with _chdir(root):
+                result = run_action_ablation_suite(
+                    retrieval_artifact=retrieval_manifest.relative_to(root),
+                    training_artifact=training_manifest.relative_to(root),
+                    out="ablation-relative",
+                    command=("codelewm", "eval", "ablation"),
+                )
+                artifact_manifest = read_artifact_manifest(
+                    root / "ablation-relative" / "manifest.json"
+                )
+                checked_files = validate_artifact_checksums(
+                    artifact_manifest,
+                    root=root / "ablation-relative",
+                )
+
+        self.assertEqual(result.report_path, "reports/action_view_ablation_report.json")
+        self.assertEqual(
+            {path.name for path in checked_files},
+            {"action_view_ablation_report.json"},
+        )
 
     def test_cli_writes_json_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
