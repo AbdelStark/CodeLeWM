@@ -50,6 +50,7 @@ class FirstResultsReportTest(unittest.TestCase):
             "## Reproducibility Chain",
             "## Manifest Verification",
             "## Retrieval Evaluation",
+            "### Action-Use Claim Gate",
             "## Action-View Ablation",
             "## Patch-Surprise Evaluation",
             "## Scorer And Reranker Quality",
@@ -83,6 +84,8 @@ class FirstResultsReportTest(unittest.TestCase):
     def test_report_keeps_smoke_evidence_separate_from_research_claims(self) -> None:
         self.assertIn("Evidence tier: smoke fixture, not scaled research evidence", self.text)
         self.assertIn("Text-action does not beat all required baselines on this fixture", self.text)
+        self.assertIn("Positive action-conditioning claim allowed: `false`", self.text)
+        self.assertIn("Action-use claim gate allows a positive action-conditioning claim", self.text)
         self.assertIn("- [ ] This report supports a scaled research claim", self.text)
         self.assertIn("- [x] Every selected artifact manifest verifies", self.text)
         self.assertIn("- [x] Secret scan passes", self.text)

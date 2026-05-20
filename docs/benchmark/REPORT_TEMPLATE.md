@@ -75,6 +75,21 @@ the dataset; the absence-justification column is required.
 If a row is empty and the absence-justification cell is empty, the
 release gate refuses to publish this report.
 
+### Action-use claim gate
+
+Every headline report must include a machine-readable
+`action_use_claim_gate` with text-action versus baseline deltas. Positive
+action-conditioning claims are allowed only when
+`action_use_claim_gate.claim_allowed=true`.
+
+| Field | Value |
+| ----- | ----- |
+| Gate schema | `codelewm.eval.action_use_claim_gate.v1` |
+| Claim allowed | `<true|false>` |
+| Failure reasons | `<none | no_action_dominance:... | missing_baseline:...>` |
+| No-action Recall@1 delta | `<text_action - no_action>` |
+| No-action MRR delta | `<text_action - no_action>` |
+
 ### Slices
 
 | Slice | Recall@1 | Recall@5 | Recall@10 | MRR | Sample count |

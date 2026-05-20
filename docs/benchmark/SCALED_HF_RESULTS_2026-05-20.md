@@ -103,6 +103,31 @@ Downloaded local rerun on CPU reproduced the same headline Recall@1 `0.371`,
 Recall@5 `0.586`, Recall@10 `0.672`, and median rank `3`; MRR was
 `0.473175`.
 
+## Action-Use Claim Gate
+
+The #151 gate evaluates this run as `claim_allowed=false`. The blocker is
+specifically no-action dominance: text-action is not strictly above no-action on
+Recall@1 or MRR.
+
+| Baseline | Recall@1 delta | Recall@5 delta | Recall@10 delta | MRR delta | Median-rank improvement | Text beats baseline? |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Random | 0.370 | 0.582 | 0.664 | 0.465866 | 499 | yes |
+| Shuffled action | 0.370 | 0.580 | 0.661 | 0.465466 | 507 | yes |
+| Lexical | 0.326 | 0.456 | 0.482 | 0.379239 | 149 | yes |
+| No action | -0.088 | -0.055 | -0.040 | -0.073132 | -1 | no |
+
+Machine-readable gate fields expected in follow-up retrieval artifacts:
+
+```json
+{
+  "schema_version": "codelewm.eval.action_use_claim_gate.v1",
+  "claim_allowed": false,
+  "failure_reasons": [
+    "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action"
+  ]
+}
+```
+
 ## Action-View Ablation
 
 | Field | Value |

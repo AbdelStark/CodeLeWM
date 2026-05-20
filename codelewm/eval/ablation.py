@@ -25,7 +25,14 @@ from .action_policy import (
     build_action_view_report_policy,
     validate_action_view_report_policy,
 )
-from .retrieval import RetrievalMetrics, RetrievalReport, read_retrieval_report
+from .retrieval import (
+    ActionUseClaimGate,
+    RetrievalMetrics,
+    RetrievalReport,
+    build_action_use_claim_gate,
+    read_retrieval_report,
+    validate_action_use_claim_gate,
+)
 
 
 ACTION_ABLATION_REPORT_SCHEMA_VERSION = "codelewm.eval.action_ablation_report.v1"
@@ -131,6 +138,7 @@ class ActionAblationReport:
     rows: tuple[ActionAblationRow, ...]
     source_artifacts: Mapping[str, str]
     required_baselines: tuple[str, ...] = _REQUIRED_BASELINES
+    claim_gate: ActionUseClaimGate | None = None
     notes: tuple[str, ...] = ()
     schema_version: str = ACTION_ABLATION_REPORT_SCHEMA_VERSION
 
@@ -165,6 +173,8 @@ class ActionAblationReport:
             raise ActionAblationError(
                 "patch_action_diagnostic must be tagged diagnostic_upper_bound=true"
             )
+        if self.claim_gate is not None:
+            validate_action_use_claim_gate(self.claim_gate)
         _ensure_json_native(self.source_artifacts, "source_artifacts")
         _ensure_json_native(self.notes, "notes")
 
@@ -192,6 +202,7 @@ class ActionAblationReport:
                 "blocked": self.blocked_count,
                 "failed": self.failed_count,
             },
+            "claim_gate": None if self.claim_gate is None else self.claim_gate.to_dict(),
             "notes": list(self.notes),
         }
 
@@ -216,6 +227,11 @@ class ActionAblationReport:
                 _require_mapping(
                     payload.get("source_artifacts", {}), "source_artifacts"
                 )
+            ),
+            claim_gate=None
+            if payload.get("claim_gate") is None
+            else ActionUseClaimGate.from_dict(
+                _require_mapping(payload["claim_gate"], "claim_gate")
             ),
             notes=tuple(str(note) for note in payload.get("notes", ())),
         )
@@ -366,12 +382,18 @@ def build_action_ablation_report(
                 )
             )
 
+    claim_gate = build_action_use_claim_gate(
+        retrieval_report.metrics,
+        retrieval_report.baselines,
+        additional_failure_reasons=_claim_gate_failure_reasons(rows),
+    )
     return ActionAblationReport(
         rows=tuple(rows),
         source_artifacts={
             "retrieval": retrieval_artifact_id,
             "training": training_artifact_id,
         },
+        claim_gate=claim_gate,
         notes=(
             "Rows marked blocked are explicit missing-run records, not dropped rows.",
             "Patch-action rows are diagnostic upper bounds only.",
@@ -452,6 +474,7 @@ def run_action_ablation_suite(
             "completed": report.completed_count,
             "blocked": report.blocked_count,
             "failed": report.failed_count,
+            "claim_gate": None if report.claim_gate is None else report.claim_gate.to_dict(),
         },
     )
     write_artifact_manifest(artifact_manifest, artifact_manifest_path)
@@ -471,6 +494,16 @@ def read_action_ablation_report(path: Path | str) -> ActionAblationReport:
     if not isinstance(payload, Mapping):
         raise ActionAblationError("action ablation report must be a JSON object")
     return ActionAblationReport.from_dict(payload)
+
+
+def _claim_gate_failure_reasons(rows: Sequence[ActionAblationRow]) -> tuple[str, ...]:
+    reasons: list[str] = []
+    for row in rows:
+        if row.family == "action_view" and row.status != "completed":
+            reasons.append(f"blocked_action_view_row:{row.name}")
+        if row.family == "collapse" and row.status == "failed":
+            reasons.append(f"collapse_diagnostics_failed:{row.name}")
+    return tuple(reasons)
 
 
 def _completed_row(

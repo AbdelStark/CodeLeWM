@@ -365,6 +365,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
     }
     retrieval_metrics = retrieval["metrics"]
     baselines = retrieval["baselines"]
+    claim_gate = retrieval.get("action_use_claim_gate") or ablation.get("claim_gate")
     baseline_rows = []
     beats_all = True
     for name in ("random", "lexical", "no_action", "shuffled_action"):
@@ -389,6 +390,23 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "Text-action beats all required baselines on Recall@1 and MRR."
         if beats_all
         else "Text-action does not beat all required baselines on this fixture."
+    )
+    claim_allowed = bool(claim_gate and claim_gate.get("claim_allowed"))
+    claim_failure_reasons = tuple((claim_gate or {}).get("failure_reasons", ()))
+    claim_gate_lines = (
+        [
+            f"- Claim gate schema: `{claim_gate['schema_version']}`.",
+            f"- Positive action-conditioning claim allowed: `{str(claim_allowed).lower()}`.",
+            "- Failure reasons: "
+            + (
+                "`" + "`, `".join(claim_failure_reasons) + "`"
+                if claim_failure_reasons
+                else "none"
+            )
+            + ".",
+        ]
+        if claim_gate
+        else ["- Action-use claim gate: unavailable for this artifact."]
     )
 
     artifact_rows = []
@@ -552,10 +570,15 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         *baseline_rows,
         "| Patch-action diagnostic | n/a | n/a | n/a | n/a | not run for this headline smoke report |",
         "",
+        "### Action-Use Claim Gate",
+        "",
+        *claim_gate_lines,
+        "",
         "## Action-View Ablation",
         "",
         f"- Report schema: `{ablation['schema_version']}`.",
         f"- Completed rows: `{ablation['summary']['completed']}`; blocked rows: `{ablation['summary']['blocked']}`; failed rows: `{ablation['summary']['failed']}`.",
+        f"- Ablation claim gate allowed: `{str(bool((ablation.get('claim_gate') or {}).get('claim_allowed'))).lower()}`.",
         "- Missing abstract-action, retrieval-loss, patch-action diagnostic, and alternate SIGReg runs are explicit blocked rows rather than dropped rows.",
         "",
         "| Row | Family | Status | Recall@1 | MRR | Reason |",
@@ -602,6 +625,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "## Claim Checklist",
         "",
         f"- [{'x' if beats_all else ' '}] Text-action beats random, lexical, no-action, and shuffled-action baselines on Recall@1 and MRR.",
+        f"- [{'x' if claim_allowed else ' '}] Action-use claim gate allows a positive action-conditioning claim.",
         "- [x] Headline retrieval uses `action_text`.",
         "- [x] Action-view ablation records missing variants as blocked rows.",
         "- [x] Scorer/reranker quality report records ranking metrics, calibration slices, failures, and caveats.",
