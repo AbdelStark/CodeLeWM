@@ -38,8 +38,8 @@ class UsageGuideContentTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertIn(command, self.text)
 
-    def test_usage_doc_documents_planned_commands(self) -> None:
-        for planned in (
+    def test_usage_doc_documents_landed_commands(self) -> None:
+        for command in (
             "codelewm dataset build",
             "codelewm dataset pack",
             "codelewm train",
@@ -49,8 +49,8 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm eval scorer-quality",
             "codelewm index",
         ):
-            with self.subTest(planned=planned):
-                self.assertIn(planned, self.text)
+            with self.subTest(command=command):
+                self.assertIn(command, self.text)
 
     def test_usage_doc_lists_python_api_example_for_load_scorer(self) -> None:
         self.assertIn("load_scorer", self.text)
@@ -83,9 +83,30 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.harness.scorer_quality_run.v1",
             "codelewm.transition_index.v1",
             "codelewm.secret_scan.v1",
+            "codelewm.release_provenance.v1",
         ):
             with self.subTest(schema=schema):
                 self.assertIn(schema, self.text)
+
+    def test_usage_doc_keeps_evidence_boundary_explicit(self) -> None:
+        for marker in (
+            "## Evidence Boundary",
+            "docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md",
+            "docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md",
+            "text-action still loses to no-action",
+            "positive action-conditioned quality claim",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
+
+    def test_usage_doc_marks_legacy_root_scripts_as_compatibility_only(self) -> None:
+        for marker in (
+            "## Legacy Compatibility Scripts",
+            "Root `train.py`, root `eval.py`",
+            "not the CodeLeWM first-results or scaled-artifact path",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.text)
 
     def test_usage_doc_links_security_and_changelog_anchors(self) -> None:
         self.assertIn("docs/spec/06-security.md", self.text)
@@ -117,9 +138,15 @@ class UsageGuideLinkConsistencyTest(unittest.TestCase):
     def test_public_api_spec_lists_the_same_command_surface(self) -> None:
         spec_text = PUBLIC_API_SPEC.read_text(encoding="utf-8")
 
-        for command in ("codelewm score", "codelewm rerank"):
+        for command in ("codelewm score", "codelewm rerank", "codelewm eval ablation"):
             with self.subTest(command=command):
                 self.assertIn(command, spec_text)
+
+    def test_public_api_spec_marks_legacy_root_scripts_as_compatibility_only(self) -> None:
+        spec_text = PUBLIC_API_SPEC.read_text(encoding="utf-8")
+
+        self.assertIn("Root `train.py`, root `eval.py`", spec_text)
+        self.assertIn("not the public CodeLeWM artifact path", spec_text)
 
 
 if __name__ == "__main__":

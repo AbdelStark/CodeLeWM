@@ -111,7 +111,7 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #159 | run: execute second-stage action-use remediation sweep | evaluation | p1 | l | RFC-0007 | Open |
 | #123 | release: add uv build and package publishing gates | release | p1 | m | RFC-0011 | Closed |
 | #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Closed |
-| #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Open |
+| #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Closed |
 | #126 | release: run final artifact freeze and checklist | release | p1 | l | RFC-0012 | Open |
 
 ## Tracking Issues
@@ -166,12 +166,13 @@ result and release readiness.
   scaled run.
 - #154 executed the primary action-use margin follow-up and verified the
   downloaded private artifacts, but the result remained negative.
-- #159 is the active evidence precondition for a positive claim path in #125 and
-  #126.
+- #159 is the active evidence precondition for a positive claim path in #126.
 - #123 closed the package build and manual publishing gate for wheel/sdist
   artifacts.
 - #124 closed the dependency-audit and release-provenance gate for package
   release candidates.
+- #125 closed the public docs refresh against the current artifact evidence and
+  legacy-script boundary.
 - #126 cannot close until #159 supplies claim-eligible evidence or an explicit
   negative-release boundary.
 

@@ -80,6 +80,29 @@ about its boundary: it validates the local artifact path, but the tiny fixture i
 too small to support a research claim about learned action-conditioned
 structure.
 
+## Evidence Boundary
+
+The public docs use three evidence tiers:
+
+- Local smoke evidence:
+  `docs/benchmark/FIRST_RESULTS.md`,
+  `docs/cards/codelewm-first-results-dataset-2026-05-19.md`, and
+  `docs/cards/codelewm-first-results-model-2026-05-19.md`.
+- Scaled HF systems evidence:
+  `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-scaled-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-scaled-model-2026-05-20.md`.
+- Negative action-use HF evidence:
+  `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`,
+  `docs/cards/codelewm-action-use-dataset-2026-05-20.md`, and
+  `docs/cards/codelewm-action-use-model-2026-05-20.md`.
+
+The scaled runs prove the Hugging Face Jobs, private publication,
+downloaded-artifact verification, and evaluation path. They do not prove a
+positive action-conditioned quality claim: text-action still loses to no-action
+on headline retrieval. Public claim wording must keep that boundary until a
+later artifact passes the action-use claim gate.
+
 ### `codelewm score`
 
 Score a single candidate after-state against a before-state and
@@ -87,10 +110,10 @@ instruction:
 
 ```bash
 codelewm score \
-  --before tests/fixtures/before.py \
-  --instruction "increment value" \
-  --candidate tests/fixtures/after.py \
-  --checkpoint runs/v0_1/checkpoint.pt \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --candidate config/first_results/scorer_quality_candidates/true_after.py \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
   --json
 ```
 
@@ -99,7 +122,7 @@ Sample JSON output:
 ```json
 {
   "schema_version": "codelewm.score.v1",
-  "candidate": "tests/fixtures/after.py",
+  "candidate": "config/first_results/scorer_quality_candidates/true_after.py",
   "transition_energy": 0.42,
   "retrieval_prior": null,
   "risk_penalty": null,
@@ -141,10 +164,10 @@ Rerank candidate after-states or candidate patches:
 
 ```bash
 codelewm rerank \
-  --before tests/fixtures/before.py \
-  --instruction "increment value" \
-  --candidates tests/fixtures/candidates/ \
-  --checkpoint runs/v0_1/checkpoint.pt \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --candidates config/first_results/scorer_quality_candidates \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
   --json
 ```
 
@@ -502,9 +525,9 @@ Use the index as an explicit retrieval-prior input to scoring or reranking:
 
 ```bash
 codelewm rerank \
-  --before before.py \
-  --instruction "increment value" \
-  --candidates candidates/ \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --candidates config/first_results/scorer_quality_candidates \
   --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
   --index .artifacts/tiny-index \
   --retrieval-prior-weight 0.1 \
@@ -593,13 +616,13 @@ from pathlib import Path
 from codelewm.harness import load_scorer
 
 scorer = load_scorer(
-    Path("runs/v0_1/checkpoint.pt"),
-    device="cuda",
+    Path(".artifacts/first-results/train/checkpoints/checkpoint.pt"),
+    device="cpu",
 )
 result = scorer.score_files(
-    before=Path("before.py"),
-    instruction="add timeout handling to the retry loop",
-    candidate=Path("after.py"),
+    before=Path("tests/fixtures/codestate/class_method_before.py"),
+    instruction="rewrite the accumulator update explicitly",
+    candidate=Path("config/first_results/scorer_quality_candidates/true_after.py"),
 )
 print(result.to_dict())
 ```
@@ -616,10 +639,10 @@ changing `ScoreResult`.
 from pathlib import Path
 from codelewm.harness import load_scorer
 
-result = load_scorer(Path("runs/v0_1/checkpoint.pt")).rerank_files(
-    before=Path("before.py"),
-    instruction="add timeout handling to the retry loop",
-    candidates=Path("candidates/"),
+result = load_scorer(Path(".artifacts/first-results/train/checkpoints/checkpoint.pt")).rerank_files(
+    before=Path("tests/fixtures/codestate/class_method_before.py"),
+    instruction="rewrite the accumulator update explicitly",
+    candidates=Path("config/first_results/scorer_quality_candidates"),
 )
 for item in result.results:
     if hasattr(item, "final_score"):
@@ -689,14 +712,17 @@ from codelewm.observability import (
     validate_artifact_checksums,
 )
 
-manifest = read_artifact_manifest("runs/v0_1/manifest.json")
-validate_artifact_checksums(manifest, root="runs/v0_1")
+manifest = read_artifact_manifest(".artifacts/first-results/train/manifest.json")
+validate_artifact_checksums(manifest, root=".artifacts/first-results/train")
 ```
 
 The same verifier is exposed through the landed CLI:
 
 ```bash
-codelewm manifest verify --manifest runs/v0_1/manifest.json --json
+codelewm manifest verify \
+  --manifest .artifacts/first-results/train/manifest.json \
+  --parent-manifest .artifacts/first-results/pack/manifest.json \
+  --json
 ```
 
 ### Scan for secrets in local reports
@@ -704,7 +730,7 @@ codelewm manifest verify --manifest runs/v0_1/manifest.json --json
 ```python
 from codelewm.security import scan_paths
 
-report = scan_paths(["runs/v0_1/", "logs/"])
+report = scan_paths([".artifacts/first-results", "docs/benchmark/FIRST_RESULTS.md"])
 if not report.ok:
     for finding in report.findings:
         print(finding.path, finding.line, finding.pattern, finding.redacted)
@@ -722,7 +748,7 @@ files:
 ```
 <artifact_dir>/
   manifest.json           codelewm.artifact_manifest.v1
-  config.yaml             pinned config for the run
+  config.json             pinned config for the run
   reports/                schema-versioned JSON reports
 ```
 
@@ -735,11 +761,11 @@ The training run additionally writes:
   config.json               cfg.to_dict() for the run
   metrics.jsonl             codelewm.training_metrics.v1 events
   checkpoints/
-    checkpoint.state
-    checkpoint.state.manifest.json  codelewm.checkpoint.v1
+    checkpoint.pt
+    checkpoint.pt.manifest.json  codelewm.checkpoint.v1
   reports/
     metrics_report.json     codelewm.training_metrics.v1 summary
-    collapse.json           codelewm.collapse_report.v1
+    torch_training_report.json
 ```
 
 See `docs/spec/05-observability.md` and
@@ -777,6 +803,7 @@ field list.
 | Harness error report | `codelewm.error.v1` |
 | Structured log event | `codelewm.log_event.v1` |
 | Secret scan report | `codelewm.secret_scan.v1` |
+| Release provenance report | `codelewm.release_provenance.v1` |
 
 `CHANGELOG.md` carries the same table and is the authoritative
 location for schema-version history once a release ships.
@@ -799,6 +826,13 @@ untrusted. The CLI and Python API are designed so that:
 
 Read `docs/spec/06-security.md` before writing code that loads
 checkpoints, parses user configs, or publishes reports.
+
+## Legacy Compatibility Scripts
+
+Root `train.py`, root `eval.py`, and inherited Hydra configs under
+`config/train/data`, `config/train/model`, `config/eval`, and
+`config/*/launcher` remain for LeWorldModel compatibility. They are not the CodeLeWM first-results or scaled-artifact path. Use the package commands above,
+`scripts/first-results`, and `scripts/hf-*` for CodeLeWM evidence.
 
 ## Next Steps
 

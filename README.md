@@ -84,6 +84,35 @@ commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 original LeWorldModel seed and are kept for compatibility while the package
 runtime continues to replace them.
 
+## Quickstart
+
+Run the local artifact-backed smoke path:
+
+```bash
+uv sync --group dev --group data --group train
+uv run scripts/first-results --overwrite
+uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
+```
+
+This regenerates `docs/benchmark/FIRST_RESULTS.md` and writes
+`.artifacts/first-results/manifest_inventory.json`. It proves the package-native
+dataset, pack, train, eval, index, scorer-quality, manifest, and secret-scan
+path from a clean checkout. It does not prove model quality because the fixture
+is intentionally tiny.
+
+Scaled evidence is recorded separately:
+
+- `docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
+- `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
+- `docs/cards/codelewm-scaled-model-2026-05-20.md`
+- `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
+- `docs/cards/codelewm-action-use-model-2026-05-20.md`
+
+Both scaled runs are valid systems evidence and valid negative action-use
+evidence. They do not support a public positive action-conditioning claim until
+text-action beats no-action on the agreed headline metrics.
+
 ## Core Concepts
 
 ### Edit Transition
@@ -278,9 +307,9 @@ uv sync --extra train
 uv sync --extra eval
 ```
 
-The package exposes a `codelewm` console script. Most command families are still
-landing behind spec-tracked implementation issues, so the current CLI is a stable
-entry point rather than the final user workflow.
+The package exposes a `codelewm` console script with landed dataset, train,
+eval, index, score, rerank, manifest, and secret-scan command families. Run
+`uv run codelewm --help` for the current surface.
 
 ## Validate
 
@@ -314,6 +343,10 @@ docs/operations/HF_ML_INTERN_TRAINING.md HF Jobs training and publication runboo
 docs/data/PUBLIC_SOURCE_ACQUISITION.md public-safe data acquisition contract
 docs/training/SCALED_TRAINING_RUNBOOK.md scaled CPU/MPS/A10G training profiles
 docs/benchmark/FIRST_RESULTS.md first reproducible smoke results report
+docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md scaled HF systems evidence
+docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md negative action-use HF evidence
+docs/cards/                     filled dataset/model cards and release templates
+docs/release/                   package, provenance, and release checklist gates
 codelewm/data/                  source loading, filtering, CodeState, packing
 codelewm/model/                 model contracts, actions, objective, checkpoints
 codelewm/training/              configs, manifest runner, CPU smoke, torch executor
@@ -321,12 +354,16 @@ codelewm/eval/                  retrieval, surprise, action policy, collapse gat
 codelewm/observability/         manifests, JSONL log events, redaction
 codelewm/harness/               CLI, scorer, reranker, and output schemas
 codelewm/security/              license policy and non-execution helpers
+codelewm/release/               dependency audit and release provenance helpers
 codelewm/results/               first-results orchestration and report rendering
 scripts/first-results           reproducible first-results runner
 scripts/hf-*                    Hugging Face Jobs launch, pipeline, and publish helpers
+scripts/release-provenance      package release provenance report generator
 tests/                          unit and integration coverage
-config/                         inherited LeWorldModel Hydra configs
-train.py, eval.py               inherited LeWorldModel entry points
+config/first_results/           local smoke config bundle
+config/train/scaled/            scaled CPU/MPS/HF A10G training profiles
+config/                         inherited LeWorldModel Hydra configs plus CodeLeWM configs
+train.py, eval.py               inherited compatibility entry points, not the CodeLeWM path
 jepa.py, module.py, utils.py    compatibility wrappers
 ```
 

@@ -12,17 +12,27 @@ codelewm = "codelewm.harness.cli:main"
 Commands:
 
 ```bash
-codelewm dataset build --config config/data/commitpackft.yaml --out data/codelewm_v0_1
-codelewm dataset pack --manifest data/codelewm_v0_1/manifest.json --out data/codelewm_v0_1/hdf5
-codelewm train --config config/train/codelewm_tiny.yaml
-codelewm eval retrieval --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/retrieval
-codelewm eval surprise --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out reports/v0_1/surprise
-codelewm index --checkpoint runs/v0_1/checkpoints/checkpoint.pt --data data/codelewm_v0_1/hdf5 --out indexes/v0_1
-codelewm score --before before.py --instruction instruction.txt --candidate after.py --checkpoint runs/v0_1/checkpoint.pt
-codelewm rerank --before before.py --instruction instruction.txt --candidates patches/ --checkpoint runs/v0_1/checkpoint.pt
-codelewm secret-scan runs/v0_1/ logs/
-codelewm manifest verify --manifest runs/v0_1/manifest.json
+codelewm dataset build --config config/first_results/dataset_build.json --out .artifacts/first-results/build --json
+codelewm dataset pack --manifest .artifacts/first-results/build/manifest.json --out .artifacts/first-results/pack --json
+codelewm train --config config/first_results/train_tiny.json --out .artifacts/first-results/train --executor torch --device cpu --json
+codelewm eval retrieval --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/retrieval --device cpu --json
+codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/manifest.json --training-artifact .artifacts/first-results/train/manifest.json --out .artifacts/first-results/ablation --json
+codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --json
+codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --json
+codelewm eval scorer-quality --config config/first_results/scorer_quality.json --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/first-results/scorer_quality --index .artifacts/first-results/index --retrieval-prior-weight 1.0 --json
+codelewm score --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidate config/first_results/scorer_quality_candidates/true_after.py --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
+codelewm rerank --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidates config/first_results/scorer_quality_candidates --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
+codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
+codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json
 ```
+
+The reproducible local orchestration command is
+`uv run scripts/first-results --overwrite`; it is the shortest way to exercise
+the full package-native smoke path. Scaled evidence is documented in
+`docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md` and
+`docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`. Both scaled runs are
+negative for positive action-conditioning claims because text-action does not
+beat no-action on headline retrieval.
 
 `codelewm dataset build` is the public raw-shard to transition-artifact
 path. It accepts JSON configs in the base environment and YAML configs when
@@ -285,14 +295,18 @@ a nearest-neighbor distance penalty over the local transition index. Lower
 reported but does not alter ordering. See
 `docs/spec/06-security.md#checkpoint-trust`.
 
-All commands support:
+Root `train.py`, root `eval.py`, and inherited Hydra configs remain
+compatibility surfaces for the LeWorldModel seed. They are not the public CodeLeWM artifact path. Public docs, tests, and release gates use the package
+commands above plus `scripts/first-results` and `scripts/hf-*`.
+
+Common flags are command-specific. Use `codelewm <command> --help` for the exact
+surface. Landed automation paths use these conventions:
 
 ```bash
 --json
---seed <int>
+--overwrite
 --device cpu|cuda|mps|auto
---log-level debug|info|warning|error
---artifact-dir <path>
+--log-jsonl <path>
 ```
 
 ## Python API
@@ -302,11 +316,11 @@ from pathlib import Path
 from codelewm.harness import load_scorer
 from codelewm.model import AbstractActionEncoderConfig, TextActionEncoderConfig
 
-scorer = load_scorer(Path("runs/v0_1/checkpoint.pt"), device="cuda")
+scorer = load_scorer(Path(".artifacts/first-results/train/checkpoints/checkpoint.pt"), device="cpu")
 result = scorer.score_files(
-    before=Path("before.py"),
+    before=Path("tests/fixtures/codestate/class_method_before.py"),
     instruction="add timeout handling to the retry loop",
-    candidate=Path("after.py"),
+    candidate=Path("config/first_results/scorer_quality_candidates/true_after.py"),
 )
 ```
 
@@ -317,10 +331,9 @@ ablation runs. Both project action encodings to the v0.1 latent dimension.
 Training is exposed through the package runner:
 
 ```python
-from codelewm.training import load_train_config, train, train_torch
+from codelewm.training import load_train_config, train_torch
 
-cfg = load_train_config("config/train/codelewm_tiny.yaml")
-manifest = train(cfg, executor=executor)
+cfg = load_train_config("config/first_results/train_tiny.json")
 torch_manifest = train_torch(cfg, device="cpu")
 ```
 
@@ -443,8 +456,7 @@ Every generated artifact directory contains:
 
 ```text
 manifest.json
-MANIFEST.sha256
-config.yaml
+config.json
 reports/
 ```
 

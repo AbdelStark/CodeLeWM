@@ -29,13 +29,17 @@ earliest one minor release after the deprecation notice.
   `docs/training/SCALED_TRAINING_RUNBOOK.md`.
 - Action-view ablation reports through `codelewm eval ablation` and
   `codelewm.eval.action_ablation_report.v1`.
+- Release package gates for wheel/sdist builds, metadata checks, clean wheel
+  install smoke, dependency audit, and `codelewm.release_provenance.v1`
+  provenance reports.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ### Changed
 
-- Nothing yet.
+- Public README, usage, API, roadmap, and release docs now separate smoke
+  evidence, scaled systems evidence, and negative action-use evidence.
 
 ### Deprecated
 
@@ -98,6 +102,7 @@ their workflow depends on.
 | Harness error report          | `codelewm.error.v1`                             |
 | Transition index              | `codelewm.transition_index.v1`                  |
 | Structured log event          | `codelewm.log_event.v1`                         |
+| Release provenance report     | `codelewm.release_provenance.v1`                |
 | Transition record             | `codelewm.transition.v1`                        |
 
 A schema version bump (for example `codelewm.score.v1` to

@@ -184,6 +184,11 @@ glance.
 - [ ] **Public API docs reflect the release.** Evidence:
       `docs/usage/USAGE.md` and `docs/spec/02-public-api.md`
       describe the surface shipping in this tag.
+- [ ] **Public docs preserve the evidence boundary.** Evidence:
+      README, usage docs, benchmark report, and cards distinguish
+      local smoke evidence, scaled systems evidence, and negative
+      action-use evidence; positive action-conditioning language is
+      absent unless the claim gate passes.
 - [ ] **Deprecation notices listed.** Evidence: any public surface
       removed by this release appeared in `CHANGELOG.md` under
       "Deprecated" in the previous minor release; migration notes
