@@ -87,6 +87,28 @@ class RetrievalBaselineTest(unittest.TestCase):
         self.assertEqual(text_action, (1, 1))
         self.assertEqual(shuffled_action, (2, 2))
 
+    def test_shuffled_action_preserves_variable_candidate_row_lengths(self) -> None:
+        candidate_ids = (
+            ("target-0", "wrong-0"),
+            ("target-1", "wrong-1", "wrong-2"),
+            ("target-2", "wrong-3"),
+        )
+        target_ids = ("target-0", "target-1", "target-2")
+        score_rows = (
+            (0.9, 0.1),
+            (0.8, 0.2, 0.3),
+            (0.1, 0.9),
+        )
+
+        ranks = shuffled_action_baseline_ranks(
+            score_rows,
+            candidate_ids,
+            target_ids,
+            seed=0,
+        )
+
+        self.assertEqual(ranks, (2, 1, 1))
+
     def test_required_headline_baselines_validate_report_contract(self) -> None:
         baselines = build_baseline_metrics(
             {
