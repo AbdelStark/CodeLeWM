@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodeLeWM | JEPA for Code Edits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" defer></script>
+<style>
+:root{
+  --bg:#0a0c0a;
+  --bg-2:#0f1310;
+  --panel-solid:#0f1411;
+  --line:#1f2a22;
+  --line-2:#2a3a2e;
+  --ink:#dde8de;
+  --ink-dim:#8a9a8c;
+  --ink-faint:#5b6b5d;
+  --paper:#f0ebe0;
+  --paper-2:#e6dfd0;
+  --acid:#9aff5e;
+  --acid-dim:#6db838;
+  --acid-glow:rgba(154,255,94,.18);
+  --amber:#ffb454;
+  --rose:#ff6b8b;
+  --azure:#7cc4ff;
+  --violet:#c8a4ff;
+  --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif:'Newsreader', Georgia, 'Times New Roman', serif;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font:400 14px/1.5 var(--mono);
+  -webkit-font-smoothing:antialiased;
+}
+a{ color:var(--acid); text-decoration:none; }
+a:hover{ text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; }
+em{ font-style:normal; color:var(--acid); }
+strong,b{ color:var(--paper); font-weight:500; }
+code{
+  font:500 12px/1 var(--mono);
+  color:var(--acid-dim);
+  background:#0c1210;
+  padding:2px 6px;
+  border:1px solid var(--line);
+}
+body::after{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:100;
+  opacity:.04;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.wrap,.container{ max-width:980px; margin:0 auto; padding:0 24px; }
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+@media (max-width:760px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+.topnav{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,12,10,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topnav .wrap{
+  display:flex; gap:18px; align-items:center;
+  padding:12px 24px;
+  font:500 11px/1 var(--mono);
+  letter-spacing:.08em;
+}
+.topnav a{ color:var(--ink-dim); transition:color .15s; }
+.topnav a:hover{ color:var(--acid); }
+.topnav .brand{ color:var(--paper); margin-right:auto; letter-spacing:.14em; }
+.hero{ padding:96px 0 60px; border-bottom:1px solid var(--line); }
+.hero-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:48px; align-items:start; }
+@media (max-width:760px){ .hero-grid{ grid-template-columns:1fr; } }
+.ident{
+  font:500 11px/1 var(--mono);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--acid);
+  margin-bottom:24px;
+}
+.title{
+  font:700 88px/.95 var(--mono);
+  letter-spacing:-.035em;
+  color:var(--paper);
+  margin:0 0 24px;
+}
+.title sub{
+  font:500 24px/1 var(--mono);
+  color:var(--ink-faint);
+  vertical-align:super;
+  margin-left:8px;
+}
+.deck{
+  font:400 20px/1.5 var(--serif);
+  color:var(--ink);
+  max-width:560px;
+}
+.deck em{ font-style:normal; color:var(--acid); }
+.stat-panel{ border:1px solid var(--line-2); background:var(--bg-2); padding:18px; }
+.stat-label{
+  font:500 10px/1 var(--mono);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--acid);
+  margin-bottom:14px;
+}
+.stat-row{
+  display:flex; justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px dashed var(--line);
+  font:500 12px/1.4 var(--mono);
+}
+.stat-row:last-child{ border-bottom:none; }
+.stat-row .k{ color:var(--ink-faint); letter-spacing:.04em; }
+.stat-row .v{ color:var(--ink); text-align:right; }
+.stat-row .v b{ color:var(--paper); }
+.links{ display:flex; flex-wrap:wrap; gap:8px; margin-top:24px; }
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 12px;
+  border:1px solid var(--line-2);
+  font:500 11px/1 var(--mono);
+  letter-spacing:.06em;
+  color:var(--ink);
+  transition: border-color .15s, color .15s;
+}
+.pill:hover{ border-color:var(--acid); color:var(--acid); }
+.pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--acid); box-shadow:0 0 8px var(--acid); }
+.s{
+  position:relative;
+  padding:80px 0 60px;
+  border-bottom:1px solid var(--line);
+}
+.s::before{
+  content: attr(data-num);
+  position:absolute; top:30px; right:24px;
+  font:700 180px/1 var(--mono);
+  color:var(--bg-2);
+  letter-spacing:-.04em;
+  pointer-events:none; z-index:0;
+}
+.s > .container{ position:relative; z-index:1; }
+.section-head{ display:flex; gap:14px; align-items:center; margin-bottom:24px; }
+.section-num{
+  font:700 11px/1 var(--mono);
+  color:var(--acid);
+  letter-spacing:.18em;
+  padding:6px 8px;
+  border:1px solid var(--acid);
+  background:var(--acid-glow);
+}
+.section-kind{
+  font:500 10px/1 var(--mono);
+  color:var(--ink-faint);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+}
+.s-title{
+  font:500 36px/1.15 var(--mono);
+  color:var(--paper);
+  letter-spacing:-.01em;
+  margin:0 0 14px;
+}
+.s-title em{ font-style:normal; color:var(--acid); }
+.s-deck{
+  font:400 17px/1.6 var(--serif);
+  color:var(--ink-dim);
+  max-width:720px;
+  margin:0 0 32px;
+}
+.panel{
+  border:1px solid var(--line-2);
+  background:var(--bg-2);
+  padding:18px;
+  margin:14px 0;
+}
+.panel.acid{ border-color:var(--acid); }
+.panel-h{
+  font:500 10px/1 var(--mono);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--acid);
+  margin-bottom:12px;
+}
+.callout{
+  padding:14px 16px;
+  margin:18px 0;
+  border-left:3px solid var(--acid);
+  background:#0c1210;
+  font:400 14px/1.55 var(--serif);
+  color:var(--ink);
+}
+.callout.warn{ border-left-color:var(--amber); background:#15110a; }
+.callout.warn .lbl{ color:var(--amber); }
+.callout .lbl{
+  display:block;
+  font:500 10px/1 var(--mono);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--acid);
+  margin-bottom:6px;
+}
+.card{
+  border:1px solid var(--line);
+  background:var(--bg-2);
+  padding:18px;
+  position:relative;
+}
+.card .num{
+  font:500 10px/1 var(--mono);
+  color:var(--ink-faint);
+  letter-spacing:.18em;
+  position:absolute; top:14px; right:14px;
+}
+.card h5{
+  font:500 14px/1.3 var(--mono);
+  color:var(--paper);
+  letter-spacing:.02em;
+  margin:0 0 8px;
+  padding-right:32px;
+}
+.card p{
+  font:400 13.5px/1.55 var(--serif);
+  color:var(--ink-dim);
+  margin:0;
+}
+.spec-table{
+  width:100%;
+  border-collapse:collapse;
+  font:400 12.5px/1.4 var(--mono);
+}
+.spec-table th, .spec-table td{
+  padding:8px 12px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+.spec-table th{
+  font-weight:500;
+  color:var(--acid);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:10px;
+  border-bottom:1px solid var(--line-2);
+}
+.spec-table td{ color:var(--ink); }
+.spec-table td b{ color:var(--paper); }
+.spec-table tr:hover{ background:var(--bg-2); }
+.code{
+  position:relative;
+  padding:18px 18px 14px;
+  margin:14px 0;
+  background:var(--panel-solid);
+  border:1px solid var(--line-2);
+  border-left:3px solid var(--acid);
+  font:400 12px/1.55 var(--mono);
+  color:var(--ink);
+  overflow-x:auto;
+  white-space:pre;
+}
+.code[data-file]::before{
+  content: attr(data-file);
+  display:block;
+  font:500 9.5px/1 var(--mono);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px dashed var(--line);
+}
+.tk-k{ color:#c8a4ff; }
+.tk-s{ color:#ffb454; }
+.tk-n{ color:#7cc4ff; }
+.tk-c{ color:var(--ink-faint); font-style:italic; }
+.tk-f{ color:var(--acid); }
+.tk-t{ color:#9aff5e; }
+.tk-o{ color:var(--ink-dim); }
+.eq{
+  margin:18px 0;
+  padding:14px;
+  background:var(--bg-2);
+  border-left:2px solid var(--ink-faint);
+  font-size:15px;
+  overflow-x:auto;
+}
+.eq.named{ padding-top:30px; position:relative; }
+.eq-label{
+  position:absolute; top:8px; left:14px;
+  font:500 9.5px/1 var(--mono);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--acid);
+}
+.note{
+  padding:12px 14px;
+  margin-bottom:10px;
+  background:var(--bg-2);
+  border-left:2px solid var(--line-2);
+  font:400 13px/1.55 var(--serif);
+  color:var(--ink);
+}
+.note .ln{
+  display:inline-block;
+  width:20px; height:20px;
+  text-align:center; line-height:20px;
+  font:500 10px/20px var(--mono);
+  background:var(--acid);
+  color:var(--bg);
+  margin-right:8px;
+}
+.note b{ color:var(--paper); }
+.demo{
+  margin:18px 0;
+  background:var(--bg-2);
+  border:1px solid var(--line-2);
+  padding:18px;
+}
+.demo-controls{
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+  margin-bottom:14px;
+  font:500 11px/1 var(--mono);
+}
+.demo-controls button{
+  padding:8px 12px;
+  background:transparent;
+  border:1px solid var(--line-2);
+  color:var(--ink);
+  font:500 11px/1 var(--mono);
+  letter-spacing:.08em;
+  cursor:pointer;
+  transition: border-color .15s, color .15s;
+}
+.demo-controls button:hover{ border-color:var(--acid); color:var(--acid); }
+.demo-controls button b{ color:var(--acid); margin-left:4px; }
+.slider-group{ display:flex; flex-direction:column; gap:4px; flex:1; min-width:160px; }
+.slider-label{
+  font:500 10px/1 var(--mono);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+}
+.slider{ appearance:none; width:100%; height:2px; background:var(--line-2); outline:none; }
+.slider::-webkit-slider-thumb{ appearance:none; width:12px; height:12px; background:var(--acid); border:none; cursor:pointer; }
+.slider::-moz-range-thumb{ width:12px; height:12px; background:var(--acid); border:none; cursor:pointer; }
+.demo svg, .demo canvas{ width:100%; height:auto; background:var(--bg); border:1px solid var(--line); }
+.demo-readout{
+  display:flex; gap:24px;
+  margin-top:12px;
+  font:500 11px/1 var(--mono);
+  color:var(--ink-dim);
+}
+.demo-readout b{ color:var(--paper); }
+.quiz-q{ border:1px solid var(--line-2); padding:18px; margin:14px 0; background:#0c1210; }
+.quiz-q .qn{ font-size:10px; color:var(--acid); letter-spacing:.14em; }
+.quiz-q .qt{ font:500 17px/1.4 var(--serif); color:var(--paper); margin:6px 0 14px; }
+.quiz-opts{ display:grid; gap:8px; }
+.quiz-opt{
+  display:block;
+  padding:10px 14px;
+  background:var(--bg-2);
+  border:1px solid var(--line);
+  font:400 13px/1.4 var(--mono);
+  color:var(--ink);
+  text-align:left;
+  cursor:pointer;
+  transition: border-color .15s;
+}
+.quiz-opt:hover{ border-color:var(--ink-dim); }
+.quiz-opt.right{ border-color:var(--acid); background:var(--acid-glow); color:var(--acid); }
+.quiz-opt.wrong{ border-color:var(--rose); background:#2a1118; color:var(--rose); }
+.quiz-exp{
+  margin-top:10px; padding:10px;
+  font:400 12.5px/1.5 var(--serif);
+  color:var(--ink-dim);
+  border-left:2px solid var(--acid);
+  background:#0a0e0b;
+  display:none;
+}
+.quiz-exp.show{ display:block; }
+.quiz-exp b{ color:var(--paper); }
+footer.btm{
+  padding:40px 0;
+  text-align:center;
+  font:500 11px/1.6 var(--mono);
+  color:var(--ink-faint);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+footer.btm b{ color:var(--acid); }
+footer.btm a{ color:var(--ink-faint); }
+footer.btm a:hover{ color:var(--acid); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <a href="#" class="brand">CODELEWM / EXPLAINER</a>
+    <a href="#tldr">TL;DR</a>
+    <a href="#arch">architecture</a>
+    <a href="#state">code state</a>
+    <a href="#actions">actions</a>
+    <a href="#objective">objective</a>
+    <a href="#harness">harness</a>
+    <a href="#fail">failure modes</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="ident">latent world models / representation learning</div>
+        <h1 class="title">CodeLeWM<sub>v0.1</sub></h1>
+        <p class="deck">A Joint-Embedding Predictive Architecture (JEPA) applied to the discrete, structured world of <em>Python code edits</em>.</p>
+        <div class="links">
+          <a class="pill" href="#reproduce"><span class="dot"></span>reproduce</a>
+        </div>
+      </div>
+      <aside class="stat-panel">
+        <div class="stat-label">at a glance</div>
+        <div class="stat-row"><span class="k">architecture</span><span class="v"><b>JEPA</b></span></div>
+        <div class="stat-row"><span class="k">domain</span><span class="v"><b>code edits</b></span></div>
+        <div class="stat-row"><span class="k">state input</span><span class="v"><b>1024-tok CodeState</b></span></div>
+        <div class="stat-row"><span class="k">latent dim</span><span class="v"><b>256</b></span></div>
+        <div class="stat-row"><span class="k">primary task</span><span class="v"><b>patch retrieval</b></span></div>
+        <div class="stat-row"><span class="k">falsification</span><span class="v"><b>patch surprise AUC</b></span></div>
+        <div class="stat-row"><span class="k">status</span><span class="v"><b>pre-alpha</b></span></div>
+      </aside>
+    </div>
+  </div>
+</header>
+
+<section class="s" id="tldr" data-num="01">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <span class="section-kind">orientation</span>
+    </div>
+    <h2 class="s-title">What it <em>actually</em> is, in one screen.</h2>
+    <p class="s-deck">If you read nothing else, read this. The project framework compresses into four claims and one equation.</p>
+
+    <div class="grid-4" style="margin-bottom:24px">
+      <div class="card">
+        <span class="num">C1</span>
+        <h5>Predicts latents, not tokens</h5>
+        <p>It does not generate code. It learns to predict the 256-d latent representation of an after-state from the before-state and an action.</p>
+      </div>
+      <div class="card">
+        <span class="num">C2</span>
+        <h5>Scorer and reranker</h5>
+        <p>The downstream artifact is a local, trust-checkable scoring tool. It ranks candidate patches based on how well they match the expected transition.</p>
+      </div>
+      <div class="card">
+        <span class="num">C3</span>
+        <h5>Energy-based ranking</h5>
+        <p>Transitions are scored by L2 distance between the predicted latent and the candidate's encoded latent. Lower energy is better.</p>
+      </div>
+      <div class="card">
+        <span class="num">C4</span>
+        <h5>Explicitly falsifiable</h5>
+        <p>The model contains strict kill criteria. If embeddings collapse or the action signal is ignored, training halts with a diagnostic report.</p>
+      </div>
+    </div>
+
+    <div class="eq named">
+      <span class="eq-label">transition energy</span>
+      $$ E(s_{\text{b}}, a, s_{\text{a}}) = || P(E_{\theta}(s_{\text{b}}), A_{\phi}(a)) - E_{\theta}(s_{\text{a}}) ||^2 $$
+    </div>
+
+    <div class="callout">
+      <span class="lbl">the contribution</span>
+      Validates whether a compact JEPA can learn action-conditioned structure over domains that violate continuity and smooth action manifolds. It measures representation quality through retrieval metrics rather than generation aesthetics.
+    </div>
+  </div>
+</section>
+
+<section class="s" id="arch" data-num="02">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <span class="section-kind">architecture</span>
+    </div>
+    <h2 class="s-title">The model is <em>three functions</em>.</h2>
+    <p class="s-deck">Click any block to inspect its shape and role. The structure is inherited directly from LeWorldModel.</p>
+
+    <div class="demo">
+      <svg viewBox="0 0 880 360" id="archSvg">
+        <!-- Before State -->
+        <g class="node" data-id="state_before">
+          <rect x="40" y="40" width="160" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="120" y="75" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">CodeState (Before)</text>
+        </g>
+        <path d="M200 70 L280 70" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Encoder E -->
+        <g class="node" data-id="encoder">
+          <rect x="280" y="40" width="120" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="340" y="75" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">Encoder E</text>
+        </g>
+        <path d="M400 70 L480 70" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- z_b -->
+        <text x="440" y="60" text-anchor="middle" fill="#9aff5e" font-family="JetBrains Mono" font-size="14">z_b</text>
+
+        <!-- Action -->
+        <g class="node" data-id="action">
+          <rect x="40" y="150" width="160" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="120" y="185" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">EditAction</text>
+        </g>
+        <path d="M200 180 L280 180" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Action Encoder A -->
+        <g class="node" data-id="action_encoder">
+          <rect x="280" y="150" width="120" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="340" y="185" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">Encoder A</text>
+        </g>
+        <path d="M400 180 L480 180" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- a -->
+        <text x="440" y="170" text-anchor="middle" fill="#9aff5e" font-family="JetBrains Mono" font-size="14">a</text>
+
+        <!-- Predictor P -->
+        <g class="node" data-id="predictor">
+          <rect x="480" y="95" width="120" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="540" y="130" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">Predictor P</text>
+        </g>
+        <path d="M600 125 L680 125" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- z_pred -->
+        <text x="640" y="115" text-anchor="middle" fill="#9aff5e" font-family="JetBrains Mono" font-size="14">z_pred</text>
+
+        <!-- After State -->
+        <g class="node" data-id="state_after">
+          <rect x="40" y="260" width="160" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="120" y="295" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">CodeState (After)</text>
+        </g>
+        <path d="M200 290 L280 290" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Encoder E (shared) -->
+        <g class="node" data-id="encoder_shared">
+          <rect x="280" y="260" width="120" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="340" y="295" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">Encoder E</text>
+        </g>
+        <path d="M400 290 L680 290" stroke="#5b6b5d" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- z_a -->
+        <text x="540" y="280" text-anchor="middle" fill="#9aff5e" font-family="JetBrains Mono" font-size="14">z_a</text>
+
+        <!-- Compare -->
+        <g class="node" data-id="compare">
+          <rect x="680" y="175" width="100" height="60" fill="#0f1411" stroke="#2a3a2e" rx="4"/>
+          <text x="730" y="210" text-anchor="middle" fill="#dde8de" font-family="JetBrains Mono" font-size="13">L2 Distance</text>
+        </g>
+        <path d="M680 125 L730 125 L730 175" stroke="#5b6b5d" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+        <path d="M680 290 L730 290 L730 235" stroke="#5b6b5d" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#5b6b5d"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <div id="archDetails" class="panel" style="min-height:180px;margin-top:18px">
+      <div class="panel-h">click a block to inspect</div>
+      <p style="color:var(--ink-dim);font:400 14px/1.5 var(--serif)">Pick any module above to view the implementation details.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const DETAILS = {
+    state_before: { title: 'CodeState', kind: 'tensor', shape: '[B, 1024]', file: 'codelewm/data/codestate.py', desc: 'Deterministic context capsule of the Python code prior to the edit.' },
+    encoder: { title: 'CodeStateEncoder', kind: 'module', shape: '1024 -> 256', file: 'codelewm/model/modules.py', desc: 'Transformer mapping discrete tokens to a single pooled 256-d latent vector. Weights are shared between before and after states.' },
+    action: { title: 'EditAction', kind: 'tensor', shape: '[B, 256] or [B, 192]', file: 'codelewm/data/actions.py', desc: 'The instruction. Can be natural language text (headline) or an abstract AST structural script (ablation).' },
+    action_encoder: { title: 'ActionEncoder', kind: 'module', shape: 'N -> 256', file: 'codelewm/model/modules.py', desc: 'Transformer projecting the action token sequence onto the same 256-d manifold as the state latents.' },
+    predictor: { title: 'CodeLatentPredictor', kind: 'module', shape: '(256, 256) -> 256', file: 'codelewm/model/predictor.py', desc: 'Learns to predict the latent representation of the after-state. It never decodes back to tokens.' },
+    state_after: { title: 'CodeState', kind: 'tensor', shape: '[B, 1024]', file: 'codelewm/data/codestate.py', desc: 'The true after-state during training, or a candidate patch during inference.' },
+    encoder_shared: { title: 'CodeStateEncoder (Shared)', kind: 'module', shape: '1024 -> 256', file: 'codelewm/model/modules.py', desc: 'Identical weights to the before-state encoder. Produces the target latent.' },
+    compare: { title: 'Transition Energy', kind: 'scalar', shape: '[B, 1]', file: 'codelewm/model/objective.py', desc: 'The squared L2 distance between the prediction and the target. Lower energy equals a better match.' }
+  };
+  document.querySelectorAll('#archSvg .node').forEach(g => {
+    g.style.cursor = 'pointer';
+    g.addEventListener('click', () => {
+      const id = g.dataset.id;
+      const d = DETAILS[id];
+      if (!d) return;
+      document.querySelectorAll('#archSvg .node rect').forEach(r => r.setAttribute('stroke','#2a3a2e'));
+      g.querySelector('rect').setAttribute('stroke','#9aff5e');
+      document.getElementById('archDetails').innerHTML = `
+        <div class="panel-h">${d.kind} :: ${d.title}</div>
+        <table class="spec-table" style="margin-top:8px">
+          <tr><th>shape</th><td>${d.shape}</td></tr>
+          <tr><th>file</th><td><code>${d.file}</code></td></tr>
+        </table>
+        <p style="margin-top:12px;font:400 14px/1.55 var(--serif);color:var(--ink)">${d.desc}</p>
+      `;
+    });
+  });
+})();
+</script>
+
+<section class="s" id="state" data-num="03">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <span class="section-kind">data model</span>
+    </div>
+    <h2 class="s-title">The <em>CodeState</em> capsule.</h2>
+    <p class="s-deck">A whole repository is too noisy and leaks across splits. Instead, CodeLeWM builds a deterministic 1024-token bounded context capsule for every state.</p>
+
+    <div class="grid-2">
+      <pre class="code" data-file="CodeState Format"><span class="tk-o">&lt;</span><span class="tk-k">LANG</span> <span class="tk-f">python</span><span class="tk-o">&gt;</span>
+<span class="tk-o">&lt;</span><span class="tk-k">PATH</span> <span class="tk-f">package/module.py</span><span class="tk-o">&gt;</span>
+<span class="tk-o">&lt;</span><span class="tk-k">SYMBOL</span> <span class="tk-f">HTTPClient.post</span><span class="tk-o">&gt;</span>
+<span class="tk-o">&lt;</span><span class="tk-k">IMPORTS</span><span class="tk-o">&gt;</span>
+  <span class="tk-k">from</span> typing <span class="tk-k">import</span> Iterable
+<span class="tk-o">&lt;</span><span class="tk-k">ENCLOSING_CLASS</span><span class="tk-o">&gt;</span>
+  <span class="tk-k">class</span> HTTPClient:
+      base_url: <span class="tk-t">str</span>
+<span class="tk-o">&lt;</span><span class="tk-k">SIBLING_SIGNATURES</span><span class="tk-o">&gt;</span>
+  <span class="tk-k">def</span> get(self, path: <span class="tk-t">str</span>) -> Response: ...
+<span class="tk-o">&lt;</span><span class="tk-k">PRIMARY</span><span class="tk-o">&gt;</span>
+  <span class="tk-k">def</span> post(self, path: <span class="tk-t">str</span>, body: <span class="tk-t">dict</span>) -> Response:
+      <span class="tk-c"># The actual changed code goes here</span>
+      <span class="tk-k">return</span> self._send(<span class="tk-s">"POST"</span>, path, body)</pre>
+
+      <div>
+        <div class="note">
+          <span class="ln">1</span>
+          <b>Segment IDs.</b> Sections are not free-text. They map to stable segment IDs (1..6) injected as parallel int16 tensors.
+        </div>
+        <div class="note">
+          <span class="ln">2</span>
+          <b>Changed Hunk Mask.</b> An explicit boolean hint tensor tells the encoder exactly which tokens belong to the modified region.
+        </div>
+        <div class="note">
+          <span class="ln">3</span>
+          <b>Structured Truncation.</b> If the state exceeds 1024 tokens, it drops sibling signatures first, then docstrings, and never clips the primary return statement. If it still fails, the row is dropped entirely.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="actions" data-num="04">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <span class="section-kind">ablation</span>
+    </div>
+    <h2 class="s-title">Three ways to see an <em>action</em>.</h2>
+    <p class="s-deck">Code edits have no natural continuous control vector. The dataset provides three strict views to ensure the model learns dynamics, not just textual overlap.</p>
+
+    <table class="spec-table">
+      <tr>
+        <th>View</th>
+        <th>Source</th>
+        <th>Role</th>
+        <th>Constraint</th>
+      </tr>
+      <tr>
+        <td><b>action_text</b></td>
+        <td>Commit message, instruction, prompt</td>
+        <td>HEADLINE inference</td>
+        <td>Noisy, natural language. The realistic production path.</td>
+      </tr>
+      <tr>
+        <td><b>action_abstract</b></td>
+        <td>AST/CST diff</td>
+        <td>Structural ablation</td>
+        <td>No inserted text allowed. Tests if dynamics learning requires content or just structural shape.</td>
+      </tr>
+      <tr>
+        <td><b>action_patch</b></td>
+        <td>Unified diff spans</td>
+        <td>Diagnostic bounds</td>
+        <td>Forbidden for headline metrics. Leaks the literal after-text to establish the upper bound of possible retrieval performance.</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section class="s" id="objective" data-num="05">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <span class="section-kind">dynamics</span>
+    </div>
+    <h2 class="s-title">Policing <em>collapse</em>.</h2>
+    <p class="s-deck">Without continuous pixels to ground it, a latent prediction model loves to collapse to a constant. SIGReg is the counter-force. Use the slider to find the sweet spot.</p>
+
+    <div class="demo">
+      <div class="demo-controls">
+        <div class="slider-group">
+          <label class="slider-label">λ = <span id="lamVal">0.09</span> (log scale)</label>
+          <input type="range" id="lamSlider" min="-300" max="200" value="-104" class="slider">
+        </div>
+      </div>
+      <div class="eq named">
+        <span class="eq-label">live loss</span>
+        $$ \mathcal{L}(\lambda) = \mathcal{L}_{\text{pred}} + <span id="lamInline">0.09</span> \cdot \text{SIGReg}(z_{\text{b}}, z_{\text{a}}, z_{\text{p}}) $$
+      </div>
+      <svg id="lamPlot" viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="demo-readout">
+        <span>regime: <b id="lamRegime">--</b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const slider = document.getElementById('lamSlider');
+  const lamVal = document.getElementById('lamVal');
+  const lamInline = document.getElementById('lamInline');
+  const plot = document.getElementById('lamPlot');
+  const regime = document.getElementById('lamRegime');
+
+  function lossPred(logLam){
+    const lam = Math.pow(10, logLam);
+    if (lam < 0.01) return 0.02; // collapse
+    if (lam < 0.5) return 0.05 + 0.3 * Math.exp(-4*lam);
+    return 0.1 + 0.04 * lam; // over-reg
+  }
+  function lossReg(logLam){
+    const lam = Math.pow(10, logLam);
+    return Math.max(0.05, 0.4 / (1 + lam));
+  }
+  function quality(logLam){
+    return 1 - lossPred(logLam) - 0.2 * Math.abs(logLam + 0.5); // peak around lam=0.1
+  }
+
+  function draw(){
+    const logLam = +slider.value / 100;
+    const lam = Math.pow(10, logLam);
+    lamVal.textContent = lam.toFixed(3);
+    lamInline.textContent = lam.toFixed(3);
+
+    let pathPred = 'M', pathReg = 'M', pathQ = 'M';
+    for (let i = 0; i <= 100; i++){
+      const x = (i / 100) * 800;
+      const logL = -3 + (i / 100) * 5;
+      pathPred += `${x},${260 - lossPred(logL)*400} L`;
+      pathReg += `${x},${260 - lossReg(logL)*400} L`;
+      pathQ += `${x},${260 - quality(logL)*200} L`;
+    }
+    pathPred = pathPred.slice(0, -2);
+    pathReg = pathReg.slice(0, -2);
+    pathQ = pathQ.slice(0, -2);
+
+    const xCur = ((logLam + 3) / 5) * 800;
+
+    plot.innerHTML = `
+      <line x1="0" y1="260" x2="800" y2="260" stroke="#2a3a2e" stroke-width="1"/>
+      <path d="${pathPred}" fill="none" stroke="#ff6b8b" stroke-width="1.5"/>
+      <path d="${pathReg}" fill="none" stroke="#7cc4ff" stroke-width="1.5"/>
+      <path d="${pathQ}" fill="none" stroke="#9aff5e" stroke-width="2"/>
+      <line x1="${xCur}" y1="0" x2="${xCur}" y2="260" stroke="#9aff5e" stroke-width="1" stroke-dasharray="2,4"/>
+      <text x="20" y="20" fill="#ff6b8b" font-family="JetBrains Mono" font-size="11">MSE (Prediction)</text>
+      <text x="140" y="20" fill="#7cc4ff" font-family="JetBrains Mono" font-size="11">SIGReg</text>
+      <text x="220" y="20" fill="#9aff5e" font-family="JetBrains Mono" font-size="11">Representation Quality</text>
+    `;
+
+    if (lam < 0.02) regime.textContent = 'Collapse zone (rank ratio < 0.2)';
+    else if (lam < 0.06) regime.textContent = 'Under-regularized';
+    else if (lam < 0.25) regime.textContent = 'Sweet spot (stable entropy)';
+    else regime.textContent = 'Over-regularized';
+
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([document.querySelector('.eq.named')]);
+    }
+  }
+
+  slider.addEventListener('input', draw);
+  draw();
+})();
+</script>
+
+<section class="s" id="harness" data-num="06">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <span class="section-kind">inference loop</span>
+    </div>
+    <h2 class="s-title">The model as a <em>planner</em>.</h2>
+    <p class="s-deck">An LLM proposes; the world model disposes. Given an optimization goal, candidate patches are encoded into latents and ranked by their distance to a <em>predicted target</em> — no code is run, no tokens are decoded.</p>
+
+    <div class="grid-3" style="margin-bottom:24px">
+      <div class="card">
+        <span class="num">01</span>
+        <h5>LLM proposes</h5>
+        <p>An external coding LLM (or any search procedure) emits <em>N</em> candidate patches for the same before-state and goal headline. Diversity matters more than perfection.</p>
+      </div>
+      <div class="card">
+        <span class="num">02</span>
+        <h5>WM imagines</h5>
+        <p>The predictor <code>P(z_b, a_goal)</code> emits a <em>goal latent</em> — what the after-state <i>should</i> look like in 256-d if the goal were achieved. This is the imagined consequence.</p>
+      </div>
+      <div class="card">
+        <span class="num">03</span>
+        <h5>Argmin energy</h5>
+        <p>Each candidate after-state is encoded and compared to the goal latent. The lowest-energy edit wins. Planning collapses to a nearest-neighbor lookup in semantic space.</p>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-controls">
+        <div class="slider-group">
+          <label class="slider-label">goal direction θ = <span id="goalThetaVal">35°</span></label>
+          <input type="range" id="goalTheta" min="0" max="359" value="35" class="slider">
+        </div>
+        <div class="slider-group">
+          <label class="slider-label">goal magnitude <span id="goalRadVal">140</span></label>
+          <input type="range" id="goalRad" min="60" max="180" value="140" class="slider">
+        </div>
+        <button id="resampleBtn">resample candidates <b>↻</b></button>
+      </div>
+      <svg id="harnessPlot" viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="demo-readout">
+        <span>winner: <b id="harnessWin">--</b></span>
+        <span>E* = <b id="harnessE">--</b></span>
+        <span>Δ vs runner-up: <b id="harnessDelta">--</b></span>
+        <span>goal: <b id="harnessGoal">reduce side-effects</b></span>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px">
+      <pre class="code" data-file="codelewm/harness/plan.py"><span class="tk-k">def</span> <span class="tk-f">plan_edit</span>(before, goal_text, n=<span class="tk-n">8</span>):
+    <span class="tk-c"># 1. ground state + intent in latent space</span>
+    z_b      = E(before)
+    a        = ActionEncoder(goal_text)
+    z_target = P(z_b, a)                <span class="tk-c"># imagined consequence</span>
+
+    <span class="tk-c"># 2. ask the proposer for diverse candidates</span>
+    candidates = llm.sample_patches(
+        before, goal_text, n=n, temperature=<span class="tk-n">0.9</span>
+    )
+
+    <span class="tk-c"># 3. score by latent proximity — never execute</span>
+    scored = []
+    <span class="tk-k">for</span> patch <span class="tk-k">in</span> candidates:
+        after = apply_patch(patch, before)   <span class="tk-c"># parse only</span>
+        <span class="tk-k">if</span> <span class="tk-k">not</span> parses(after): <span class="tk-k">continue</span>
+        z_a   = E(after)
+        E_t   = ((z_target - z_a) ** <span class="tk-n">2</span>).sum()
+        scored.append((E_t, patch))
+
+    <span class="tk-k">return</span> <span class="tk-f">sorted</span>(scored)[<span class="tk-n">0</span>]              <span class="tk-c"># argmin energy</span></pre>
+
+      <div>
+        <div class="callout">
+          <span class="lbl">why this can work</span>
+          The encoder is trained to compress code into a representation that <em>predicts</em> action-conditioned transitions. To do that under SIGReg pressure, it has to abandon textual surface and surface high-level semantics: control flow, side-effect profile, error-handling discipline, API shape. Those are precisely the axes a planner needs.
+        </div>
+        <div class="callout">
+          <span class="lbl">multi-objective planning</span>
+          Because <code>P</code> emits full latents — not scalar rewards — multiple goal vectors can be evaluated in one pass. <em>Maintainability</em>, <em>performance</em>, <em>defect-likelihood</em>: each is a separate direction in the same 256-d manifold. The harness can Pareto-rank, weight, or constrain along any of them.
+        </div>
+        <div class="callout warn">
+          <span class="lbl">what this is not</span>
+          The world model does not <i>generate</i> patches. It does not <i>execute</i> them. It is a frozen, trust-checkable distance function — a learned judge over the discrete world of code edits.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const slider   = document.getElementById('goalTheta');
+  const radSlider= document.getElementById('goalRad');
+  const valLabel = document.getElementById('goalThetaVal');
+  const radLabel = document.getElementById('goalRadVal');
+  const plot     = document.getElementById('harnessPlot');
+  const resample = document.getElementById('resampleBtn');
+  const winLabel = document.getElementById('harnessWin');
+  const eLabel   = document.getElementById('harnessE');
+  const dLabel   = document.getElementById('harnessDelta');
+  const gLabel   = document.getElementById('harnessGoal');
+
+  const TEMPLATE = [
+    { id: 'C1', label: 'early-return guard',     color: '#9aff5e' },
+    { id: 'C2', label: 'raise ValueError',       color: '#ffb454' },
+    { id: 'C3', label: 'log + retry loop',       color: '#7cc4ff' },
+    { id: 'C4', label: 'wrap in try/except',     color: '#c8a4ff' },
+    { id: 'C5', label: 'silent fallback to None',color: '#ff6b8b' },
+    { id: 'C6', label: 'inline assertion',       color: '#dde8de' }
+  ];
+
+  function goalNameFor(theta){
+    if (theta < 45)  return 'reduce side-effects';
+    if (theta < 90)  return 'tighten error contract';
+    if (theta < 135) return 'improve readability';
+    if (theta < 180) return 'minimize patch surface';
+    if (theta < 225) return 'preserve API shape';
+    if (theta < 270) return 'add observability';
+    if (theta < 315) return 'increase robustness';
+    return 'reduce side-effects';
+  }
+
+  let seed = 11;
+  function rand(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+
+  let candidates = [];
+  function resampleAll(){
+    const cx = 400, cy = 180;
+    candidates = TEMPLATE.map(c => ({
+      ...c,
+      x: cx + (rand() - 0.5) * 460,
+      y: cy + (rand() - 0.5) * 240
+    }));
+  }
+  resampleAll();
+
+  function draw(){
+    const theta = +slider.value;
+    const r     = +radSlider.value;
+    valLabel.textContent = theta + '°';
+    radLabel.textContent = r;
+    gLabel.textContent   = goalNameFor(theta);
+
+    const rad = theta * Math.PI / 180;
+    const cx = 400, cy = 180;
+    const tx = cx + Math.cos(rad) * r;
+    const ty = cy + Math.sin(rad) * r;
+
+    const scored = candidates.map(c => {
+      const dx = c.x - tx, dy = c.y - ty;
+      return { ...c, E: (dx*dx + dy*dy) / 1000 };
+    }).sort((a, b) => a.E - b.E);
+
+    const winner = scored[0];
+    const runner = scored[1];
+
+    winLabel.textContent = winner.id + ' · ' + winner.label;
+    eLabel.textContent   = winner.E.toFixed(2);
+    dLabel.textContent   = (runner.E - winner.E).toFixed(2);
+
+    let svg = '';
+    svg += '<rect x="0" y="0" width="800" height="360" fill="#0a0c0a"/>';
+    for (let gx = 0; gx <= 800; gx += 40) {
+      svg += '<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="360" stroke="#141a14" stroke-width="0.5"/>';
+    }
+    for (let gy = 0; gy <= 360; gy += 40) {
+      svg += '<line x1="0" y1="'+gy+'" x2="800" y2="'+gy+'" stroke="#141a14" stroke-width="0.5"/>';
+    }
+    svg += '<text x="14" y="20" fill="#5b6b5d" font-family="JetBrains Mono" font-size="10" letter-spacing="0.14em">LATENT SPACE · PROJECTION ℝ²⁵⁶ → ℝ²</text>';
+    svg += '<text x="14" y="346" fill="#5b6b5d" font-family="JetBrains Mono" font-size="10" letter-spacing="0.14em">● z_b  ◎ z_target  ● candidate after-states</text>';
+
+    svg += '<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#dde8de"/>';
+    svg += '<text x="'+(cx + 12)+'" y="'+(cy + 4)+'" fill="#dde8de" font-family="JetBrains Mono" font-size="11">z_b</text>';
+
+    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+tx+'" y2="'+ty+'" stroke="#9aff5e" stroke-width="1.5" stroke-dasharray="5,4"/>';
+    svg += '<circle cx="'+tx+'" cy="'+ty+'" r="14" fill="none" stroke="#9aff5e" stroke-width="1.5" stroke-dasharray="3,3"/>';
+    svg += '<circle cx="'+tx+'" cy="'+ty+'" r="4" fill="#9aff5e"/>';
+    svg += '<text x="'+(tx + 16)+'" y="'+(ty - 8)+'" fill="#9aff5e" font-family="JetBrains Mono" font-size="11">z_target = P(z_b, a_goal)</text>';
+
+    candidates.forEach(c => {
+      const isWin = c.id === winner.id;
+      svg += '<line x1="'+tx+'" y1="'+ty+'" x2="'+c.x+'" y2="'+c.y+'" stroke="'+(isWin ? '#9aff5e' : '#2a3a2e')+'" stroke-width="'+(isWin ? 1.5 : 0.6)+'" stroke-dasharray="'+(isWin ? 'none' : '2,3')+'"/>';
+    });
+    candidates.forEach(c => {
+      const isWin = c.id === winner.id;
+      svg += '<circle cx="'+c.x+'" cy="'+c.y+'" r="'+(isWin ? 9 : 5)+'" fill="'+c.color+'" stroke="'+(isWin ? '#9aff5e' : 'none')+'" stroke-width="2" opacity="'+(isWin ? 1 : 0.85)+'"/>';
+      svg += '<text x="'+(c.x + 12)+'" y="'+(c.y + 4)+'" fill="'+(isWin ? '#dde8de' : '#8a9a8c')+'" font-family="JetBrains Mono" font-size="'+(isWin ? 11 : 10)+'" font-weight="'+(isWin ? 500 : 400)+'">'+c.id+'</text>';
+    });
+
+    svg += '<g transform="translate(560, 14)">';
+    svg += '<rect x="0" y="0" width="226" height="98" fill="#0f1411" stroke="#2a3a2e"/>';
+    svg += '<text x="10" y="16" fill="#9aff5e" font-family="JetBrains Mono" font-size="9" letter-spacing="0.18em">ENERGY RANKING</text>';
+    scored.slice(0, 5).forEach((c, i) => {
+      const isWin = i === 0;
+      svg += '<circle cx="18" cy="'+(30 + i*14)+'" r="3.5" fill="'+c.color+'"/>';
+      svg += '<text x="28" y="'+(34 + i*14)+'" fill="'+(isWin ? '#dde8de' : '#8a9a8c')+'" font-family="JetBrains Mono" font-size="10" font-weight="'+(isWin ? 500 : 400)+'">#'+(i+1)+' '+c.id+' · '+c.label.slice(0,18)+'</text>';
+      svg += '<text x="200" y="'+(34 + i*14)+'" fill="'+(isWin ? '#9aff5e' : '#5b6b5d')+'" font-family="JetBrains Mono" font-size="10" text-anchor="end">'+c.E.toFixed(2)+'</text>';
+    });
+    svg += '</g>';
+
+    plot.innerHTML = svg;
+  }
+
+  slider.addEventListener('input', draw);
+  radSlider.addEventListener('input', draw);
+  resample.addEventListener('click', () => { resampleAll(); draw(); });
+  draw();
+})();
+</script>
+
+<section class="s" id="fail" data-num="07">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <span class="section-kind">honesty</span>
+    </div>
+    <h2 class="s-title">Explicit <em>falsification</em>.</h2>
+    <p class="s-deck">A model is useless if its failures are silent. CodeLeWM defines strict kill criteria and diagnostic bounds. If it fails these, training halts.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <span class="num">KILL-B</span>
+        <h5>Action Insensitivity</h5>
+        <p>If the model performs identically when the action is shuffled or replaced with zeros, it has collapsed to a prior. The text-action metric must beat the shuffled-action baseline by a strict margin.</p>
+      </div>
+      <div class="card">
+        <span class="num">KILL-C</span>
+        <h5>Embedding Collapse</h5>
+        <p>The system constantly computes the effective rank of the embeddings and nearest-neighbor entropy. If the effective rank ratio stays below 0.20 for two intervals, a KillReport is emitted.</p>
+      </div>
+      <div class="card">
+        <span class="num">KILL-E</span>
+        <h5>Patch Surprise Failure</h5>
+        <p>Retrieval against random code is easy. The model must score true patches lower (better) than plausible decoys (mutations, same-file wrong edits). Target AUC is > 0.70.</p>
+      </div>
+      <div class="card">
+        <span class="num">LEAK</span>
+        <h5>Data Leakage</h5>
+        <p>A 64-bit SimHash enforces strict deduplication. Repository-level splits ensure no functions from the same repo exist in both train and test pools.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="reproduce" data-num="08">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">08</span>
+      <span class="section-kind">reproduce</span>
+    </div>
+    <h2 class="s-title">Run it <em>yourself</em>.</h2>
+    <p class="s-deck">The entire pipeline is manifest-backed. Every step records checksums and provenance.</p>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="0">1. Data</button>
+        <button class="tab-btn" data-tab="1">2. Train</button>
+        <button class="tab-btn" data-tab="2">3. Eval</button>
+        <button class="tab-btn" data-tab="3">4. Score</button>
+      </div>
+      <div class="tab-panes">
+        <div class="tab-pane active" data-tab="0">
+<pre class="code" data-file="$ bash"><span class="tk-c"># Build deterministic context capsules</span>
+uv run codelewm dataset build \
+  --config config/first_results/dataset_build.json \
+  --out .artifacts/build
+
+<span class="tk-c"># Pack into HDF5 tensors</span>
+uv run codelewm dataset pack \
+  --manifest .artifacts/build/manifest.json \
+  --out .artifacts/pack</pre>
+        </div>
+        <div class="tab-pane" data-tab="1">
+<pre class="code" data-file="$ bash"><span class="tk-c"># Train the transition model</span>
+uv run codelewm train \
+  --config config/train/codelewm_tiny.yaml \
+  --executor torch \
+  --device cuda \
+  --out .artifacts/train</pre>
+        </div>
+        <div class="tab-pane" data-tab="2">
+<pre class="code" data-file="$ bash"><span class="tk-c"># Evaluate patch retrieval metrics</span>
+uv run codelewm eval retrieval \
+  --checkpoint .artifacts/train/checkpoints/checkpoint.pt \
+  --data .artifacts/pack \
+  --out .artifacts/eval
+
+<span class="tk-c"># Verify lineage of all artifacts</span>
+uv run codelewm manifest verify \
+  --manifest .artifacts/eval/manifest.json</pre>
+        </div>
+        <div class="tab-pane" data-tab="3">
+<pre class="code" data-file="$ bash"><span class="tk-c"># Score candidate patches without code execution</span>
+uv run codelewm eval scorer-quality \
+  --config config/first_results/scorer_quality.json \
+  --checkpoint .artifacts/train/checkpoints/checkpoint.pt \
+  --out .artifacts/scorer</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      const container = btn.closest('.tabs');
+      container.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      container.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+    });
+  });
+})();
+</script>
+
+<section class="s" id="quiz" data-num="09">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">09</span>
+      <span class="section-kind">mastery check</span>
+    </div>
+    <h2 class="s-title">Self-<em>quiz</em>.</h2>
+    <p class="s-deck">Verify your understanding of the CodeLeWM architecture and philosophy.</p>
+
+    <div id="quiz-container"></div>
+  </div>
+</section>
+
+<script>
+const QUIZ = [
+  {
+    q: "Why does CodeLeWM use a pooled 256-d latent rather than sequence-to-sequence tokens?",
+    opts: [
+      "To maximize textual overlap between action and code.",
+      "To act as a high-capacity code generator.",
+      "To force the encoder to do real summarization and test true latent dynamics.",
+      "Because 256 dimensions perfectly matches the vocabulary size."
+    ],
+    a: 2,
+    exp: "<b>Why C.</b> By pooling the entire 1024-token state into 256 dimensions, the predictor cannot 'cheat' by simply attending to text tokens. It forces representation learning."
+  },
+  {
+    q: "What role does the Action_Patch view play in headline evaluations?",
+    opts: [
+      "It is the default view used for all production inference.",
+      "It is forbidden for headline evaluation because it leaks the answer.",
+      "It provides the abstract structural shape of the edit.",
+      "It is used to train the SIGReg regularizer."
+    ],
+    a: 1,
+    exp: "<b>Why B.</b> The patch view contains the literal after-text. If used, the predictor could trivially copy it, so it is strictly limited to computing a diagnostic upper bound."
+  },
+  {
+    q: "How does CodeLeWM handle execution and testing of candidate patches?",
+    opts: [
+      "It runs a full test suite on every candidate.",
+      "It executes the code in a sandboxed Docker container.",
+      "It imports the Python file to inspect its AST dynamically.",
+      "It never imports or executes candidate code. It only parses it."
+    ],
+    a: 3,
+    exp: "<b>Why D.</b> CodeLeWM maintains a strict non-execution invariant for security and performance. The candidate is only ever parsed into an AST for the CodeState context."
+  }
+];
+
+(function buildQuiz(){
+  const c = document.getElementById('quiz-container');
+  QUIZ.forEach((item, i) => {
+    const box = document.createElement('div');
+    box.className = 'quiz-q';
+    box.innerHTML =
+      '<div class="qn">Q' + String(i+1).padStart(2,'0') + '</div>' +
+      '<div class="qt">' + item.q + '</div>' +
+      '<div class="quiz-opts">' +
+        item.opts.map((o, j) =>
+          '<button class="quiz-opt" data-q="' + i + '" data-o="' + j + '">' +
+            '<b style="color:var(--acid);margin-right:8px">' + String.fromCharCode(65+j) + '</b>' + o +
+          '</button>'
+        ).join('') +
+      '</div>' +
+      '<div class="quiz-exp" id="exp-' + i + '">' + item.exp + '</div>';
+    c.appendChild(box);
+  });
+
+  c.querySelectorAll('.quiz-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = +btn.dataset.q, o = +btn.dataset.o;
+      const correct = QUIZ[q].a;
+      const opts = c.querySelectorAll('.quiz-opt[data-q="'+q+'"]');
+      opts.forEach(b => { b.classList.remove('right','wrong'); b.disabled = true; });
+      opts[correct].classList.add('right');
+      if (o !== correct) opts[o].classList.add('wrong');
+      document.getElementById('exp-'+q).classList.add('show');
+    });
+  });
+})();
+</script>
+
+<footer class="btm">
+  <div class="container">
+    <p>CodeLeWM · Latent World Model for Python Edits</p>
+  </div>
+</footer>
+
+</body>
+</html>
