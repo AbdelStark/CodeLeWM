@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from codelewm.data.action_diagnostics import build_action_discriminative_shard_report
 from codelewm.data.pack import (
     DATASET_SCHEMA_VERSION,
     ArtifactInfo,
@@ -43,6 +44,7 @@ class DatasetPackResult:
     artifact_manifest: ArtifactManifest
     dataset_manifest: DatasetManifest
     pack_report: Mapping[str, Any]
+    action_discriminative_report: Mapping[str, Any]
 
     def to_report(self) -> dict[str, Any]:
         return {
@@ -59,6 +61,12 @@ class DatasetPackResult:
                 split: str(self.output_dir / "hdf5" / f"{split}.hdf5")
                 for split in _SPLITS
             },
+            "action_discriminative_shard_report": str(
+                self.output_dir / "reports" / "action_discriminative_shard_report.json"
+            ),
+            "action_discriminative_claim_ready": bool(
+                self.action_discriminative_report["claim_readiness"]["positive_action_use_claim_ready"]
+            ),
         }
 
 
@@ -118,6 +126,9 @@ def pack_dataset_from_manifest(
         )
         artifacts.extend(_relative_artifact(artifact, output_dir) for artifact in parquet_artifacts)
 
+    action_discriminative_report = build_action_discriminative_shard_report(transitions)
+    action_discriminative_report_path = output_dir / "reports" / "action_discriminative_shard_report.json"
+    _write_json(action_discriminative_report, action_discriminative_report_path)
     pack_report = _pack_report_payload(
         parent_manifest=parent_manifest,
         input_dataset_manifest=input_dataset_manifest,
@@ -130,6 +141,12 @@ def pack_dataset_from_manifest(
         (
             _artifact_info(config_path, root=output_dir, kind="config", rows=0),
             _artifact_info(pack_report_path, root=output_dir, kind="pack_report", rows=len(transitions)),
+            _artifact_info(
+                action_discriminative_report_path,
+                root=output_dir,
+                kind="action_discriminative_shard_report",
+                rows=len(transitions),
+            ),
         )
     )
 
@@ -143,6 +160,7 @@ def pack_dataset_from_manifest(
             "input_artifact_id": parent_manifest.artifact_id,
             "input_manifest": str(manifest_path),
             "input_dataset_manifest": _relative_to_parent(input_dataset_manifest_path, parent_root),
+            "action_discriminative_shard_report": action_discriminative_report,
         },
         license_gate_report=inherited_license_gate if isinstance(inherited_license_gate, Mapping) else None,
     )
@@ -169,6 +187,11 @@ def pack_dataset_from_manifest(
             "split_counts": dict(dataset_manifest.split_counts),
             "source_counts": dict(dataset_manifest.source_counts),
             "pack_report": "reports/pack_report.json",
+            "action_discriminative_shard_report": "reports/action_discriminative_shard_report.json",
+            "action_discriminative_claim_ready": bool(
+                action_discriminative_report["claim_readiness"]["positive_action_use_claim_ready"]
+            ),
+            "action_discriminative_hard_negative_pools": action_discriminative_report["hard_negative_pools"],
         },
     )
     write_artifact_manifest(artifact_manifest, output_dir / "manifest.json")
@@ -177,6 +200,7 @@ def pack_dataset_from_manifest(
         artifact_manifest=artifact_manifest,
         dataset_manifest=dataset_manifest,
         pack_report=pack_report,
+        action_discriminative_report=action_discriminative_report,
     )
 
 

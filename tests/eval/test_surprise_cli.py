@@ -8,7 +8,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from codelewm.data import build_dataset_from_config_path, pack_dataset_from_manifest
+from codelewm.data import (
+    ACTION_DISCRIMINATIVE_SHARD_REPORT_SCHEMA_VERSION,
+    build_dataset_from_config_path,
+    pack_dataset_from_manifest,
+)
 from codelewm.eval import (
     SURPRISE_DECOY_CATEGORIES,
     SURPRISE_EVAL_RUN_SCHEMA_VERSION,
@@ -74,6 +78,10 @@ class SurpriseCliTest(unittest.TestCase):
         self.assertEqual(set(report["metrics"]["decoy_counts"]), set(SURPRISE_DECOY_CATEGORIES))
         self.assertGreater(report["metrics"]["decoy_counts"]["mutation"], 0)
         self.assertEqual(set(report["metadata"]["category_slices"]), set(SURPRISE_DECOY_CATEGORIES))
+        self.assertEqual(
+            report["metadata"]["action_discriminative_shard_report"]["schema_version"],
+            ACTION_DISCRIMINATIVE_SHARD_REPORT_SCHEMA_VERSION,
+        )
         self.assertIn("random", report["metadata"]["category_caveats"])
         self.assertIn("same_file", report["metadata"]["category_caveats"])
         self.assertIn("action_cluster", report["metadata"]["category_caveats"])

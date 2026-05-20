@@ -41,6 +41,7 @@ The table matches the source acquisition and license gate evidence for
 | Source acquisition report | `codelewm.source_acquisition.v1` |
 | Public license gate | `codelewm.public_license_gate.v1` |
 | Dataset pack report | `codelewm.dataset_pack_report.v1` |
+| Action-discriminative shard report | `codelewm.data.action_discriminative_shard_report.v1` |
 
 ## Row Counts
 

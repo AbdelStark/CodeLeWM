@@ -112,6 +112,17 @@ action-conditioning claims are allowed only when
 | Excluded splits | `train` |
 | Hardness metric | `<weak action cluster | edit-size bucket | ...>` |
 
+### Action-discriminative shard report
+
+| Field | Value |
+| ----- | ----- |
+| Schema | `codelewm.data.action_discriminative_shard_report.v1` |
+| Claim-ready shard coverage | `<true | false>` |
+| Held-out rows | `<integer>` |
+| Same-file / near-before pairs | `<integer>` |
+| Action-cluster pairs | `<integer>` |
+| Unavailable hard-negative pools | `<list>` |
+
 ## Action-View Ablation
 
 Every expected variant must appear as `completed`, `blocked`, or

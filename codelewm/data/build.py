@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from codelewm.data.actions import ActionExtractionConfig, extract_edit_action
+from codelewm.data.action_diagnostics import build_action_discriminative_shard_report
 from codelewm.data.codestate import CodeStateConfig, extract_codestate_pair
 from codelewm.data.filters import FilterPolicy, filter_raw_edit_records
 from codelewm.data.masks import build_masked_codestate, stable_token_id
@@ -314,6 +315,7 @@ class DatasetBuildResult:
     artifact_manifest: ArtifactManifest
     dataset_manifest: DatasetManifest
     row_counts: Mapping[str, Any]
+    action_discriminative_report: Mapping[str, Any]
 
     def to_report(self) -> dict[str, Any]:
         return {
@@ -327,6 +329,12 @@ class DatasetBuildResult:
             "source_counts": dict(self.dataset_manifest.source_counts),
             "license_gate_report": self.dataset_manifest.metadata.get("license_gate_report"),
             "source_acquisition_report": self.dataset_manifest.metadata.get("source_acquisition_report"),
+            "action_discriminative_shard_report": str(
+                self.output_dir / "reports" / "action_discriminative_shard_report.json"
+            ),
+            "action_discriminative_claim_ready": bool(
+                self.action_discriminative_report["claim_readiness"]["positive_action_use_claim_ready"]
+            ),
         }
 
 
@@ -408,6 +416,7 @@ def build_dataset(
     source_acquisition_report_path = reports_dir / "source_acquisition_report.json"
     split_dedup_report_path = reports_dir / "split_dedup_report.json"
     row_counts_path = reports_dir / "row_counts.json"
+    action_discriminative_report_path = reports_dir / "action_discriminative_shard_report.json"
     shareable_config = _shareable_config_dict(config)
 
     _write_json(shareable_config, config_path)
@@ -423,6 +432,11 @@ def build_dataset(
         kept_transitions=len(transitions),
     )
     _write_json(row_counts, row_counts_path)
+    action_discriminative_report = build_action_discriminative_shard_report(
+        transitions,
+        near_before_hamming_threshold=config.dedup.near_duplicate_hamming_threshold,
+    )
+    _write_json(action_discriminative_report, action_discriminative_report_path)
     source_acquisition_report = _source_acquisition_report(
         config=config,
         source_summaries=source_summaries,
@@ -454,6 +468,12 @@ def build_dataset(
             rows=split_dedup.report.total_before,
         ),
         _artifact_info(row_counts_path, root=output_dir, kind="row_counts_report", rows=len(transitions)),
+        _artifact_info(
+            action_discriminative_report_path,
+            root=output_dir,
+            kind="action_discriminative_shard_report",
+            rows=len(transitions),
+        ),
         _artifact_info(config_path, root=output_dir, kind="config", rows=0),
     )
     metadata = {
@@ -464,6 +484,7 @@ def build_dataset(
         "split_dedup_report": split_dedup.report.to_dict(),
         "row_counts": row_counts,
         "source_acquisition_report": source_acquisition_report,
+        "action_discriminative_shard_report": action_discriminative_report,
     }
     dataset_manifest = build_dataset_manifest(
         transitions,
@@ -484,6 +505,7 @@ def build_dataset(
         source_acquisition_report_path.resolve(),
         split_dedup_report_path.resolve(),
         row_counts_path.resolve(),
+        action_discriminative_report_path.resolve(),
     )
     artifact_manifest = build_artifact_manifest(
         artifact_kind="dataset",
@@ -499,6 +521,11 @@ def build_dataset(
             "source_counts": dict(dataset_manifest.source_counts),
             "license_gate_report": dataset_manifest.metadata.get("license_gate_report"),
             "source_acquisition_report": dataset_manifest.metadata.get("source_acquisition_report"),
+            "action_discriminative_shard_report": "reports/action_discriminative_shard_report.json",
+            "action_discriminative_claim_ready": bool(
+                action_discriminative_report["claim_readiness"]["positive_action_use_claim_ready"]
+            ),
+            "action_discriminative_hard_negative_pools": action_discriminative_report["hard_negative_pools"],
         },
     )
     write_artifact_manifest(artifact_manifest, output_dir / "manifest.json")
@@ -507,6 +534,7 @@ def build_dataset(
         artifact_manifest=artifact_manifest,
         dataset_manifest=dataset_manifest,
         row_counts=row_counts,
+        action_discriminative_report=action_discriminative_report,
     )
 
 

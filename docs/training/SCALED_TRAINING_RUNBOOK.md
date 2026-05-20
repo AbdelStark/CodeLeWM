@@ -76,8 +76,12 @@ data/codelewm_public_shard_v0_3/
 Before using that path, build and pack the shard through `codelewm dataset
 build` and `codelewm dataset pack`. The build artifact must include
 `reports/source_acquisition_report.json` with `release_allowed=true`, a source
-mix, counted exclusions, and redacted private source paths. Do not publish raw
-restricted data; publish only the manifest-backed artifacts allowed by the
+mix, counted exclusions, and redacted private source paths. The build and pack
+artifacts must also include
+`reports/action_discriminative_shard_report.json`; the follow-up action-use run
+must record whether that report's shard-level claim-readiness gate is true and
+which hard-negative pools are available. Do not publish raw restricted data;
+publish only the manifest-backed artifacts allowed by the
 license gate.
 
 ## Bounded Local Rehearsal

@@ -63,6 +63,7 @@ their workflow depends on.
 | ----------------------------- | ----------------------------------------------- |
 | Dataset manifest              | `codelewm.dataset.v1`                           |
 | Source acquisition report     | `codelewm.source_acquisition.v1`                |
+| Action-discriminative shard report | `codelewm.data.action_discriminative_shard_report.v1` |
 | Artifact manifest             | `codelewm.artifact_manifest.v1`                 |
 | Manifest verification report  | `codelewm.manifest_verify.v1`                   |
 | Checkpoint manifest           | `codelewm.checkpoint.v1`                        |

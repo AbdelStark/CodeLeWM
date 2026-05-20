@@ -88,8 +88,13 @@ a deterministic random sample of up to 1,000 validation/test after-states.
 Hard-negative sampler reports use
 `schema_version=codelewm.eval.hard_negative_sampler_report.v1` and include
 selected negative IDs, target/train rejection counts, and aggregate composition
-counts for source, edit-size bucket, action-cluster, similarity, and fallback
-selection.
+counts for same-before different-after, near-before different-after, same-file,
+source, edit-size bucket, action-cluster, similarity, action-discriminative, and
+fallback selection.
+Action-discriminative shard reports use
+`schema_version=codelewm.data.action_discriminative_shard_report.v1` and are
+manifested by dataset build and pack artifacts as
+`reports/action_discriminative_shard_report.json`.
 Headline retrieval reports are invalid unless the `baselines` mapping includes
 `random`, `lexical`, `no_action`, and `shuffled_action` metrics.
 

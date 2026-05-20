@@ -107,15 +107,14 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #151 add no-action dominance diagnostics and claim gates.
-2. #152 add action-discriminative shard diagnostics and hard negatives.
-3. #153 add action-use objective and scaled sweep configs.
-4. #154 run the follow-up HF Jobs action-use training, publication, download,
+1. #152 add action-discriminative shard diagnostics and hard negatives.
+2. #153 add action-use objective and scaled sweep configs.
+3. #154 run the follow-up HF Jobs action-use training, publication, download,
    inference, and eval cycle through the `hf` CLI.
-5. #123 add package build and publishing gates.
-6. #124 add dependency audit and provenance evidence.
-7. #125 refresh public docs against the scaled evidence and claim boundary.
-8. #126 run the final artifact freeze and release checklist.
+4. #123 add package build and publishing gates.
+5. #124 add dependency audit and provenance evidence.
+6. #125 refresh public docs against the scaled evidence and claim boundary.
+7. #126 run the final artifact freeze and release checklist.
 
 Tracking issue #150 owns the action-conditioned scaled-result milestone.
 

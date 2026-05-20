@@ -38,6 +38,7 @@ caveats section.
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Source acquisition report | `codelewm.source_acquisition.v1` |
 | Public license gate | `codelewm.public_license_gate.v1` |
+| Action-discriminative shard report | `codelewm.data.action_discriminative_shard_report.v1` |
 | Transition record | `codelewm.transition.v1` |
 
 ## Row Counts

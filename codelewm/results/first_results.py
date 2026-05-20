@@ -357,6 +357,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
     license_gate = inventory["reports"]["license_gate"]
     index = inventory["reports"]["index"]
     dataset = inventory["reports"]["packed_dataset"]
+    action_diag = inventory["reports"]["action_discriminative_shard"]
     checkpoint = inventory["reports"]["checkpoint"]
     secret_scan = inventory.get("secret_scan") or {
         "ok": False,
@@ -555,6 +556,8 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "",
         f"- Packed rows: `{dataset['row_count']}`; splits: `{json.dumps(dataset['split_counts'], sort_keys=True)}`.",
         f"- License gate: release_allowed `{str(license_gate['release_allowed']).lower()}`, included rows `{license_gate['included_rows']}`, excluded rows `{license_gate['excluded_rows']}`, blocked rows `{license_gate['blocked_rows']}`.",
+        f"- Action-discriminative shard report: `{action_diag['schema_version']}`; claim-ready `{str(action_diag['claim_readiness']['positive_action_use_claim_ready']).lower()}`; held-out rows `{action_diag['claim_readiness']['checks']['heldout_rows']}`.",
+        f"- Available hard-negative pools: `{', '.join(_available_hard_negative_pools(action_diag)) or 'none'}`.",
         f"- Training executor: `{training['metadata']['executor']['executor']}` on `{training['metadata']['executor']['device']}` for `{training['step_count']}` steps.",
         f"- Final loss: total `{_fmt(final_metrics['loss/total'])}`, prediction MSE `{_fmt(final_metrics['loss/prediction_mse'])}`, SIGReg `{_fmt(final_metrics['loss/sigreg'])}`.",
         f"- Collapse diagnostics: effective rank `{_fmt(final_metrics['collapse/effective_rank'])}`, variance min `{_fmt(final_metrics['collapse/per_dim_variance_min'])}`, nearest-neighbor entropy `{_fmt(final_metrics['collapse/nearest_neighbor_entropy'])}`.",
@@ -626,6 +629,7 @@ def render_first_results_report(inventory: Mapping[str, Any]) -> str:
         "",
         f"- [{'x' if beats_all else ' '}] Text-action beats random, lexical, no-action, and shuffled-action baselines on Recall@1 and MRR.",
         f"- [{'x' if claim_allowed else ' '}] Action-use claim gate allows a positive action-conditioning claim.",
+        f"- [{'x' if action_diag['claim_readiness']['positive_action_use_claim_ready'] else ' '}] Dataset shard has action-discriminative hard-negative coverage.",
         "- [x] Headline retrieval uses `action_text`.",
         "- [x] Action-view ablation records missing variants as blocked rows.",
         "- [x] Scorer/reranker quality report records ranking metrics, calibration slices, failures, and caveats.",
@@ -760,6 +764,9 @@ def _collect_inventory(
                 "split_counts": packed_dataset["split_counts"],
                 "source_counts": packed_dataset["source_counts"],
             },
+            "action_discriminative_shard": _read_json(
+                output_root / "pack" / "reports" / "action_discriminative_shard_report.json"
+            ),
             "training": _read_json(output_root / "train" / "training_manifest.json"),
             "checkpoint": _read_json(
                 output_root / "train" / "checkpoints" / "checkpoint.pt.manifest.json"
@@ -959,6 +966,17 @@ def _baseline_label(name: str) -> str:
         "no_action": "No-action",
         "shuffled_action": "Shuffled-action",
     }[name]
+
+
+def _available_hard_negative_pools(report: Mapping[str, Any]) -> list[str]:
+    pools = report.get("hard_negative_pools", {})
+    if not isinstance(pools, Mapping):
+        return []
+    return [
+        str(name)
+        for name, payload in sorted(pools.items())
+        if isinstance(payload, Mapping) and payload.get("available")
+    ]
 
 
 def _fmt(value: Any) -> str:

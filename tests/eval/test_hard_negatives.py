@@ -137,6 +137,58 @@ class HardNegativeSamplerTest(unittest.TestCase):
         self.assertEqual(payload["composition"]["same_action_cluster"], 1)
         self.assertEqual(loaded.to_dict(), payload)
 
+    def test_sampler_reports_action_discriminative_hard_negative_features(self) -> None:
+        query = _row(
+            "target",
+            split="test",
+            metadata={
+                "state_before_hash": "before-a",
+                "state_after_hash": "after-target",
+                "state_before_simhash": "0000000000000000",
+                "action_cluster": "guard",
+            },
+        )
+        candidates = [
+            query,
+            _row(
+                "same-before",
+                split="test",
+                metadata={
+                    "state_before_hash": "before-a",
+                    "state_after_hash": "after-other",
+                    "state_before_simhash": "0000000000000000",
+                    "action_cluster": "guard",
+                },
+            ),
+            _row(
+                "near-before",
+                split="test",
+                path="pkg/other.py",
+                metadata={
+                    "state_before_hash": "before-b",
+                    "state_after_hash": "after-third",
+                    "state_before_simhash": "0000000000000001",
+                    "action_cluster": "guard",
+                },
+            ),
+        ]
+
+        sample = sample_hard_negatives(
+            query,
+            candidates,
+            config=HardNegativeSamplerConfig(
+                max_negatives=2,
+                seed=13,
+                near_before_hamming_threshold=1,
+            ),
+        )
+
+        self.assertEqual(sample.negative_ids, ("same-before", "near-before"))
+        self.assertEqual(sample.composition["same_before_different_after"], 1)
+        self.assertEqual(sample.composition["near_before_different_after"], 1)
+        self.assertEqual(sample.composition["same_file"], 1)
+        self.assertEqual(sample.composition["action_discriminative"], 2)
+
 
 def _row(
     transition_id: str,
@@ -144,6 +196,7 @@ def _row(
     split: str,
     source: str = "synthetic",
     edit_size: int = 1,
+    path: str = "pkg/mod.py",
     metadata: dict[str, object] | None = None,
 ) -> CandidatePoolEntry:
     return CandidatePoolEntry(
@@ -151,7 +204,7 @@ def _row(
         split=split,
         source=source,
         repo="example/repo",
-        path="pkg/mod.py",
+        path=path,
         edit_size=edit_size,
         metadata={} if metadata is None else metadata,
     )

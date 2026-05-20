@@ -8,7 +8,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from codelewm.data import build_dataset_from_config_path, pack_dataset_from_manifest
+from codelewm.data import (
+    ACTION_DISCRIMINATIVE_SHARD_REPORT_SCHEMA_VERSION,
+    build_dataset_from_config_path,
+    pack_dataset_from_manifest,
+)
 from codelewm.eval import RETRIEVAL_EVAL_RUN_SCHEMA_VERSION, RETRIEVAL_REPORT_SCHEMA_VERSION
 from codelewm.observability import read_artifact_manifest, validate_artifact_checksums
 from codelewm.training import load_train_config, train_torch
@@ -71,6 +75,15 @@ class RetrievalCliTest(unittest.TestCase):
         self.assertIn("hard-1k", report["slices"])
         self.assertEqual(report["metadata"]["action_view_policy"]["action_view"], "text")
         self.assertFalse(report["metadata"]["action_view_policy"]["diagnostic_upper_bound"])
+        self.assertEqual(
+            report["metadata"]["action_discriminative_shard_report"]["schema_version"],
+            ACTION_DISCRIMINATIVE_SHARD_REPORT_SCHEMA_VERSION,
+        )
+        self.assertFalse(
+            report["metadata"]["action_discriminative_shard_report"]["claim_readiness"][
+                "positive_action_use_claim_ready"
+            ]
+        )
         self.assertTrue(all(entry["split"] != "train" for entry in report["candidate_pool"]["entries"]))
         self.assertEqual(artifact_manifest.artifact_kind, "eval_report")
         self.assertEqual(

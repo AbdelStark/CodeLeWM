@@ -69,6 +69,25 @@ retrieval, ablation, surprise, and scorer-quality also verified.
 | Train / val / test | 18,019 / 1,291 / 1,335 |
 | License gate | `release_allowed=true`, `blocked_rows=0` |
 
+## Action-Discriminative Shard Coverage
+
+This first scaled artifact predates
+`codelewm.data.action_discriminative_shard_report.v1`, so it does not contain a
+manifested action-discriminative shard report. That absence is now an explicit
+data-evidence blocker: the follow-up #152/#153/#154 run must regenerate the
+public shard build and pack artifacts and publish
+`reports/action_discriminative_shard_report.json` before any positive
+action-use claim can be considered.
+
+Required follow-up fields:
+
+- `claim_readiness.positive_action_use_claim_ready`
+- `hard_negative_pools.same_before_different_after.pair_count`
+- `hard_negative_pools.near_before_different_after.pair_count`
+- `hard_negative_pools.same_file.pair_count`
+- `hard_negative_pools.action_cluster.pair_count`
+- `unavailable_hard_negative_pools`
+
 ## Training
 
 | Field | Value |

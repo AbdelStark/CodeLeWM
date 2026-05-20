@@ -186,6 +186,7 @@ The command writes:
     source_acquisition_report.json
     split_dedup_report.json
     row_counts.json
+    action_discriminative_shard_report.json
 ```
 
 `manifest.json` is the verifier target:
@@ -206,6 +207,11 @@ rows loaded per source, card-fillable source mix, the public path redaction
 policy, and the embedded license gate result. Shareable build artifacts redact
 absolute or home-relative source paths while preserving relative checked-in
 paths and SHA-256 digests for operator reconciliation.
+`reports/action_discriminative_shard_report.json` has schema
+`codelewm.data.action_discriminative_shard_report.v1`. It records action
+coverage, edit-size buckets, same-file/near-before hard-negative opportunities,
+duplicate before-state pressure, and a shard-level readiness gate for positive
+action-use claims.
 
 ### `codelewm dataset pack`
 
@@ -243,6 +249,7 @@ manifest before writing output. The packed output includes:
     test/
   reports/
     pack_report.json
+    action_discriminative_shard_report.json
 ```
 
 Verify lineage by passing the build manifest as the parent:
@@ -346,7 +353,9 @@ The JSON stdout summary uses `codelewm.eval.retrieval_run.v1`. The report
 includes `Recall@1`, `Recall@5`, `Recall@10`, MRR, median rank, easy and hard
 candidate counts, random/lexical/no-action/shuffled-action baselines,
 hard-negative slices, and action-view policy metadata. Headline reports require
-`action_text`; patch-action reports remain diagnostic only.
+`action_text`; patch-action reports remain diagnostic only. If the packed
+dataset exposes an action-discriminative shard report, retrieval metadata embeds
+it so hard-negative availability is visible in the eval artifact.
 
 Verify lineage by passing both parent manifests:
 
@@ -739,6 +748,7 @@ field list.
 | ------- | -------------- |
 | Dataset build report | `codelewm.dataset_build_report.v1` |
 | Dataset pack report | `codelewm.dataset_pack_report.v1` |
+| Action-discriminative shard report | `codelewm.data.action_discriminative_shard_report.v1` |
 | Dataset manifest | `codelewm.transition.v1` |
 | Artifact manifest | `codelewm.artifact_manifest.v1` |
 | Manifest verifier report | `codelewm.manifest_verify.v1` |
