@@ -70,6 +70,17 @@ class ActionAblationReportTest(unittest.TestCase):
         self.assertEqual(
             rows["patch_action_diagnostic"].action_view_policy["action_view"], "patch"
         )
+        self.assertIsNotNone(report.claim_gate)
+        assert report.claim_gate is not None
+        self.assertFalse(report.claim_gate.claim_allowed)
+        self.assertIn(
+            "blocked_action_view_row:abstract_action",
+            report.claim_gate.failure_reasons,
+        )
+        self.assertIn(
+            "blocked_action_view_row:patch_action_diagnostic",
+            report.claim_gate.failure_reasons,
+        )
 
         round_tripped = read_action_ablation_report(_write_report_tmp(report.to_dict()))
         self.assertEqual(round_tripped.to_dict(), report.to_dict())
@@ -102,6 +113,7 @@ class ActionAblationRunnerTest(unittest.TestCase):
         )
         self.assertEqual(report.completed_count, 7)
         self.assertGreaterEqual(report.blocked_count, 4)
+        self.assertFalse(report.claim_gate.claim_allowed)
 
     def test_cli_writes_json_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

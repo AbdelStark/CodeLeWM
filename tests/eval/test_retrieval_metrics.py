@@ -6,10 +6,13 @@ import unittest
 from pathlib import Path
 
 from codelewm.eval import (
+    ACTION_USE_CLAIM_GATE_SCHEMA_VERSION,
     CANDIDATE_POOL_SCHEMA_VERSION,
     RETRIEVAL_REPORT_SCHEMA_VERSION,
     CandidatePoolEntry,
+    RetrievalMetrics,
     RetrievalEvalError,
+    build_action_use_claim_gate,
     build_easy_candidate_pool,
     build_fixture_candidate_pool,
     build_retrieval_report,
@@ -124,6 +127,9 @@ class RetrievalReportTest(unittest.TestCase):
         self.assertEqual(payload["schema_version"], RETRIEVAL_REPORT_SCHEMA_VERSION)
         self.assertEqual(payload["candidate_pool"]["entry_count"], 2)
         self.assertIn("random", payload["baselines"])
+        self.assertIn("baseline_deltas", payload)
+        self.assertIn("action_use_claim_gate", payload)
+        self.assertFalse(payload["action_use_claim_gate"]["claim_allowed"])
         self.assertIn("source:synthetic", payload["slices"])
         self.assertEqual(loaded.to_dict(), report.to_dict())
 
@@ -151,6 +157,91 @@ class RetrievalReportTest(unittest.TestCase):
 
         with self.assertRaisesRegex(RetrievalEvalError, "entry_count"):
             validate_retrieval_report_payload(payload)
+
+
+class ActionUseClaimGateTest(unittest.TestCase):
+    def test_gate_passes_when_text_action_beats_required_baselines(self) -> None:
+        metrics = compute_retrieval_metrics((1, 2, 2), candidate_counts=(3, 3, 3))
+        baselines = {
+            "random": compute_retrieval_metrics((2, 3, 3), candidate_counts=(3, 3, 3)),
+            "lexical": compute_retrieval_metrics((2, 3, 3), candidate_counts=(3, 3, 3)),
+            "no_action": compute_retrieval_metrics((2, 3, 3), candidate_counts=(3, 3, 3)),
+            "shuffled_action": compute_retrieval_metrics((2, 3, 3), candidate_counts=(3, 3, 3)),
+        }
+
+        gate = build_action_use_claim_gate(metrics, baselines)
+
+        self.assertEqual(gate.schema_version, ACTION_USE_CLAIM_GATE_SCHEMA_VERSION)
+        self.assertTrue(gate.claim_allowed)
+        self.assertEqual(gate.failure_reasons, ())
+        self.assertGreater(gate.baseline_deltas["no_action"].recall_at_1_delta, 0.0)
+        self.assertTrue(gate.baseline_deltas["no_action"].text_action_beats_baseline)
+
+    def test_gate_fails_scaled_run_numbers_on_no_action_dominance(self) -> None:
+        metrics = RetrievalMetrics(
+            query_count=1000,
+            candidate_count_min=1000,
+            candidate_count_max=1000,
+            recall_at_1=0.371,
+            recall_at_5=0.586,
+            recall_at_10=0.672,
+            mrr=0.472984,
+            median_rank=3.0,
+        )
+        baselines = {
+            "random": RetrievalMetrics(
+                query_count=1000,
+                candidate_count_min=1000,
+                candidate_count_max=1000,
+                recall_at_1=0.001,
+                recall_at_5=0.004,
+                recall_at_10=0.008,
+                mrr=0.007118,
+                median_rank=502.0,
+            ),
+            "lexical": RetrievalMetrics(
+                query_count=1000,
+                candidate_count_min=1000,
+                candidate_count_max=1000,
+                recall_at_1=0.045,
+                recall_at_5=0.130,
+                recall_at_10=0.190,
+                mrr=0.093745,
+                median_rank=152.0,
+            ),
+            "no_action": RetrievalMetrics(
+                query_count=1000,
+                candidate_count_min=1000,
+                candidate_count_max=1000,
+                recall_at_1=0.459,
+                recall_at_5=0.641,
+                recall_at_10=0.712,
+                mrr=0.546116,
+                median_rank=2.0,
+            ),
+            "shuffled_action": RetrievalMetrics(
+                query_count=1000,
+                candidate_count_min=1000,
+                candidate_count_max=1000,
+                recall_at_1=0.001,
+                recall_at_5=0.006,
+                recall_at_10=0.011,
+                mrr=0.007518,
+                median_rank=510.0,
+            ),
+        }
+
+        gate = build_action_use_claim_gate(metrics, baselines)
+
+        self.assertFalse(gate.claim_allowed)
+        self.assertIn(
+            "no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action",
+            gate.failure_reasons,
+        )
+        no_action_delta = gate.baseline_deltas["no_action"]
+        self.assertAlmostEqual(no_action_delta.recall_at_1_delta, -0.088)
+        self.assertAlmostEqual(no_action_delta.mrr_delta, -0.073132)
+        self.assertFalse(no_action_delta.text_action_beats_baseline)
 
 
 def _row(transition_id: str, *, split: str) -> CandidatePoolEntry:

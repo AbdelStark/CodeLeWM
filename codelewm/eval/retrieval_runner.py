@@ -244,6 +244,13 @@ def run_retrieval_evaluation(
             "candidate_count_min": report.metrics.candidate_count_min,
             "candidate_count_max": report.metrics.candidate_count_max,
             "metrics": report.metrics.to_dict(),
+            "baseline_deltas": {
+                name: delta.to_dict()
+                for name, delta in sorted(report.baseline_deltas.items())
+            },
+            "action_use_claim_gate": None
+            if report.action_use_claim_gate is None
+            else report.action_use_claim_gate.to_dict(),
             "required_baselines": sorted(report.baselines),
         },
     )
@@ -264,6 +271,9 @@ def run_retrieval_evaluation(
             "query_count": report.metrics.query_count,
             "candidate_count_min": report.metrics.candidate_count_min,
             "candidate_count_max": report.metrics.candidate_count_max,
+            "action_use_claim_gate": None
+            if report.action_use_claim_gate is None
+            else report.action_use_claim_gate.to_dict(),
         },
     )
 

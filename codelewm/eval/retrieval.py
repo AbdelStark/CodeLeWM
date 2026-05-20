@@ -16,11 +16,14 @@ from typing import Any
 
 RETRIEVAL_METRICS_SCHEMA_VERSION = "codelewm.eval.retrieval_metrics.v1"
 RETRIEVAL_REPORT_SCHEMA_VERSION = "codelewm.eval.retrieval_report.v1"
+ACTION_USE_BASELINE_DELTA_SCHEMA_VERSION = "codelewm.eval.action_use_baseline_delta.v1"
+ACTION_USE_CLAIM_GATE_SCHEMA_VERSION = "codelewm.eval.action_use_claim_gate.v1"
 CANDIDATE_POOL_SCHEMA_VERSION = "codelewm.eval.candidate_pool.v1"
 HARD_NEGATIVE_SAMPLE_SCHEMA_VERSION = "codelewm.eval.hard_negative_sample.v1"
 HARD_NEGATIVE_SAMPLER_REPORT_SCHEMA_VERSION = "codelewm.eval.hard_negative_sampler_report.v1"
 TRAIN_SPLITS = frozenset({"train"})
 REQUIRED_HEADLINE_BASELINES = ("random", "lexical", "no_action", "shuffled_action")
+ACTION_USE_REQUIRED_METRICS = ("recall_at_1", "mrr")
 _LEXICAL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 
 
@@ -70,6 +73,89 @@ class RetrievalMetrics:
         )
         validate_retrieval_metrics(metrics)
         return metrics
+
+
+@dataclass(frozen=True)
+class ActionUseBaselineDelta:
+    """Metric deltas between text-action retrieval and one baseline."""
+
+    baseline: str
+    recall_at_1_delta: float
+    recall_at_5_delta: float
+    recall_at_10_delta: float
+    mrr_delta: float
+    median_rank_improvement: float
+    text_action_beats_baseline: bool
+    schema_version: str = ACTION_USE_BASELINE_DELTA_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        validate_action_use_baseline_delta(self)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "baseline": self.baseline,
+            "recall_at_1_delta": self.recall_at_1_delta,
+            "recall_at_5_delta": self.recall_at_5_delta,
+            "recall_at_10_delta": self.recall_at_10_delta,
+            "mrr_delta": self.mrr_delta,
+            "median_rank_improvement": self.median_rank_improvement,
+            "text_action_beats_baseline": self.text_action_beats_baseline,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ActionUseBaselineDelta":
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            baseline=str(payload["baseline"]),
+            recall_at_1_delta=float(payload["recall_at_1_delta"]),
+            recall_at_5_delta=float(payload["recall_at_5_delta"]),
+            recall_at_10_delta=float(payload["recall_at_10_delta"]),
+            mrr_delta=float(payload["mrr_delta"]),
+            median_rank_improvement=float(payload["median_rank_improvement"]),
+            text_action_beats_baseline=bool(payload["text_action_beats_baseline"]),
+        )
+
+
+@dataclass(frozen=True)
+class ActionUseClaimGate:
+    """Machine-readable gate for positive action-conditioning claims."""
+
+    claim_allowed: bool
+    checked_baselines: tuple[str, ...]
+    required_metrics: tuple[str, ...]
+    baseline_deltas: Mapping[str, ActionUseBaselineDelta]
+    failure_reasons: tuple[str, ...] = ()
+    schema_version: str = ACTION_USE_CLAIM_GATE_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        validate_action_use_claim_gate(self)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "claim_allowed": self.claim_allowed,
+            "checked_baselines": list(self.checked_baselines),
+            "required_metrics": list(self.required_metrics),
+            "baseline_deltas": {
+                name: delta.to_dict() for name, delta in sorted(self.baseline_deltas.items())
+            },
+            "failure_reasons": list(self.failure_reasons),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ActionUseClaimGate":
+        return cls(
+            schema_version=str(payload["schema_version"]),
+            claim_allowed=bool(payload["claim_allowed"]),
+            checked_baselines=tuple(str(name) for name in payload["checked_baselines"]),
+            required_metrics=tuple(str(name) for name in payload["required_metrics"]),
+            baseline_deltas={
+                str(name): ActionUseBaselineDelta.from_dict(_require_mapping(delta, "baseline_deltas"))
+                for name, delta in payload.get("baseline_deltas", {}).items()
+            },
+            failure_reasons=tuple(str(reason) for reason in payload.get("failure_reasons", ())),
+        )
 
 
 @dataclass(frozen=True)
@@ -317,6 +403,7 @@ class RetrievalReport:
     baselines: Mapping[str, RetrievalMetrics] = field(default_factory=dict)
     slices: Mapping[str, RetrievalMetrics] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    action_use_claim_gate: ActionUseClaimGate | None = None
     schema_version: str = RETRIEVAL_REPORT_SCHEMA_VERSION
 
     @property
@@ -350,6 +437,13 @@ class RetrievalReport:
             "metrics": self.metrics.to_dict(),
             "candidate_pool": None if self.candidate_pool is None else self.candidate_pool.to_dict(),
             "baselines": {name: metrics.to_dict() for name, metrics in sorted(self.baselines.items())},
+            "baseline_deltas": {
+                name: delta.to_dict()
+                for name, delta in sorted(self.baseline_deltas.items())
+            },
+            "action_use_claim_gate": None
+            if self.action_use_claim_gate is None
+            else self.action_use_claim_gate.to_dict(),
             "slices": {name: metrics.to_dict() for name, metrics in sorted(self.slices.items())},
             "metadata": dict(self.metadata),
         }
@@ -359,24 +453,40 @@ class RetrievalReport:
         candidate_pool_payload = payload.get("candidate_pool")
         metrics = RetrievalMetrics.from_dict(payload["metrics"])
         _validate_top_level_metrics(payload, metrics)
+        baselines = {
+            str(name): RetrievalMetrics.from_dict(metrics)
+            for name, metrics in payload.get("baselines", {}).items()
+        }
+        gate_payload = payload.get("action_use_claim_gate")
+        action_use_claim_gate = (
+            None
+            if gate_payload is None
+            else ActionUseClaimGate.from_dict(_require_mapping(gate_payload, "action_use_claim_gate"))
+        )
         report = cls(
             schema_version=str(payload["schema_version"]),
             metrics=metrics,
             candidate_pool=None
             if candidate_pool_payload is None
             else CandidatePool.from_dict(candidate_pool_payload),
-            baselines={
-                str(name): RetrievalMetrics.from_dict(metrics)
-                for name, metrics in payload.get("baselines", {}).items()
-            },
+            baselines=baselines,
             slices={
                 str(name): RetrievalMetrics.from_dict(metrics)
                 for name, metrics in payload.get("slices", {}).items()
             },
             metadata=dict(payload.get("metadata", {})),
+            action_use_claim_gate=action_use_claim_gate
+            if action_use_claim_gate is not None
+            else _default_action_use_claim_gate(metrics, baselines),
         )
         validate_retrieval_report(report)
         return report
+
+    @property
+    def baseline_deltas(self) -> Mapping[str, ActionUseBaselineDelta]:
+        if self.action_use_claim_gate is None:
+            return {}
+        return self.action_use_claim_gate.baseline_deltas
 
 
 def compute_retrieval_metrics(
@@ -749,12 +859,15 @@ def build_retrieval_report(
 ) -> RetrievalReport:
     """Build and validate a retrieval report from query ranks."""
 
+    metrics = compute_retrieval_metrics(ranks, candidate_counts=candidate_counts)
+    baseline_metrics = _coerce_metrics_mapping(baselines)
     report = RetrievalReport(
-        metrics=compute_retrieval_metrics(ranks, candidate_counts=candidate_counts),
+        metrics=metrics,
         candidate_pool=candidate_pool,
-        baselines=_coerce_metrics_mapping(baselines),
+        baselines=baseline_metrics,
         slices=_coerce_metrics_mapping(slices),
         metadata={} if metadata is None else dict(metadata),
+        action_use_claim_gate=_default_action_use_claim_gate(metrics, baseline_metrics),
     )
     validate_retrieval_report(report)
     return report
@@ -818,6 +931,135 @@ def validate_retrieval_metrics(metrics: RetrievalMetrics) -> RetrievalMetrics:
     return metrics
 
 
+def build_action_use_baseline_deltas(
+    metrics: RetrievalMetrics,
+    baselines: Mapping[str, RetrievalMetrics],
+) -> dict[str, ActionUseBaselineDelta]:
+    """Compute text-action minus baseline retrieval deltas."""
+
+    return {
+        name: ActionUseBaselineDelta(
+            baseline=name,
+            recall_at_1_delta=metrics.recall_at_1 - baseline.recall_at_1,
+            recall_at_5_delta=metrics.recall_at_5 - baseline.recall_at_5,
+            recall_at_10_delta=metrics.recall_at_10 - baseline.recall_at_10,
+            mrr_delta=metrics.mrr - baseline.mrr,
+            median_rank_improvement=baseline.median_rank - metrics.median_rank,
+            text_action_beats_baseline=(
+                metrics.recall_at_1 > baseline.recall_at_1
+                and metrics.mrr > baseline.mrr
+            ),
+        )
+        for name, baseline in baselines.items()
+    }
+
+
+def build_action_use_claim_gate(
+    metrics: RetrievalMetrics,
+    baselines: Mapping[str, RetrievalMetrics],
+    *,
+    required_baselines: Sequence[str] = REQUIRED_HEADLINE_BASELINES,
+    required_metrics: Sequence[str] = ACTION_USE_REQUIRED_METRICS,
+    additional_failure_reasons: Sequence[str] = (),
+) -> ActionUseClaimGate:
+    """Build the positive action-conditioning claim gate for retrieval evidence."""
+
+    required = tuple(str(name) for name in required_baselines)
+    required_metric_names = tuple(str(name) for name in required_metrics)
+    unsupported_metrics = tuple(
+        name for name in required_metric_names if name not in ACTION_USE_REQUIRED_METRICS
+    )
+    if unsupported_metrics:
+        raise RetrievalEvalError(
+            "unsupported action-use claim metrics: " + ", ".join(unsupported_metrics)
+        )
+
+    deltas = build_action_use_baseline_deltas(metrics, baselines)
+    failure_reasons: list[str] = []
+    for name in required:
+        if name not in baselines:
+            failure_reasons.append(f"missing_baseline:{name}")
+            continue
+        delta = deltas[name]
+        if not delta.text_action_beats_baseline:
+            if name == "no_action":
+                failure_reasons.append(
+                    "no_action_dominance:"
+                    "text_action_recall_at_1_or_mrr_not_strictly_above_no_action"
+                )
+            else:
+                failure_reasons.append(f"baseline_not_beaten:{name}")
+    for reason in additional_failure_reasons:
+        reason_text = str(reason)
+        if not reason_text:
+            raise RetrievalEvalError("action-use claim failure reasons must not be empty")
+        failure_reasons.append(reason_text)
+    return ActionUseClaimGate(
+        claim_allowed=not failure_reasons,
+        checked_baselines=required,
+        required_metrics=required_metric_names,
+        baseline_deltas=deltas,
+        failure_reasons=tuple(failure_reasons),
+    )
+
+
+def validate_action_use_baseline_delta(delta: ActionUseBaselineDelta) -> ActionUseBaselineDelta:
+    """Validate one action-use baseline delta."""
+
+    if delta.schema_version != ACTION_USE_BASELINE_DELTA_SCHEMA_VERSION:
+        raise RetrievalEvalError(
+            "unsupported action-use baseline delta schema; "
+            f"expected {ACTION_USE_BASELINE_DELTA_SCHEMA_VERSION!r}, got {delta.schema_version!r}"
+        )
+    if not delta.baseline:
+        raise RetrievalEvalError("action-use baseline delta name must not be empty")
+    for name in (
+        "recall_at_1_delta",
+        "recall_at_5_delta",
+        "recall_at_10_delta",
+        "mrr_delta",
+        "median_rank_improvement",
+    ):
+        value = float(getattr(delta, name))
+        if not math.isfinite(value):
+            raise RetrievalEvalError(f"{name} must be finite")
+    return delta
+
+
+def validate_action_use_claim_gate(gate: ActionUseClaimGate) -> ActionUseClaimGate:
+    """Validate action-use claim gate payloads."""
+
+    if gate.schema_version != ACTION_USE_CLAIM_GATE_SCHEMA_VERSION:
+        raise RetrievalEvalError(
+            "unsupported action-use claim gate schema; "
+            f"expected {ACTION_USE_CLAIM_GATE_SCHEMA_VERSION!r}, got {gate.schema_version!r}"
+        )
+    if not gate.checked_baselines:
+        raise RetrievalEvalError("action-use claim gate must check at least one baseline")
+    if not gate.required_metrics:
+        raise RetrievalEvalError("action-use claim gate must list required metrics")
+    for name in gate.checked_baselines:
+        if not name:
+            raise RetrievalEvalError("action-use claim gate checked baseline names must not be empty")
+    for name in gate.required_metrics:
+        if name not in ACTION_USE_REQUIRED_METRICS:
+            raise RetrievalEvalError(f"unsupported action-use required metric: {name}")
+    for name, delta in gate.baseline_deltas.items():
+        if not name:
+            raise RetrievalEvalError("action-use baseline delta map names must not be empty")
+        if name != delta.baseline:
+            raise RetrievalEvalError("action-use baseline delta map key must match delta.baseline")
+        validate_action_use_baseline_delta(delta)
+    for reason in gate.failure_reasons:
+        if not reason:
+            raise RetrievalEvalError("action-use claim gate failure reasons must not be empty")
+    if gate.claim_allowed and gate.failure_reasons:
+        raise RetrievalEvalError("claim_allowed cannot be true when failure_reasons are present")
+    if not gate.claim_allowed and not gate.failure_reasons:
+        raise RetrievalEvalError("claim_allowed=false requires at least one failure reason")
+    return gate
+
+
 def validate_retrieval_report(report: RetrievalReport) -> RetrievalReport:
     """Validate a retrieval report object."""
 
@@ -833,6 +1075,8 @@ def validate_retrieval_report(report: RetrievalReport) -> RetrievalReport:
         if not name:
             raise RetrievalEvalError("baseline and slice names must not be empty")
         validate_retrieval_metrics(metrics)
+    if report.action_use_claim_gate is not None:
+        validate_action_use_claim_gate(report.action_use_claim_gate)
     _require_json_native(report.metadata, "retrieval report metadata")
     return report
 
@@ -866,6 +1110,15 @@ def _coerce_metrics_mapping(
     for name, item in value.items():
         metrics[str(name)] = item if isinstance(item, RetrievalMetrics) else compute_retrieval_metrics(item)
     return metrics
+
+
+def _default_action_use_claim_gate(
+    metrics: RetrievalMetrics,
+    baselines: Mapping[str, RetrievalMetrics],
+) -> ActionUseClaimGate | None:
+    if not baselines:
+        return None
+    return build_action_use_claim_gate(metrics, baselines)
 
 
 def _coerce_pool_entry(value: Any) -> CandidatePoolEntry:
@@ -1100,6 +1353,12 @@ def _validate_top_level_metrics(payload: Mapping[str, Any], metrics: RetrievalMe
         expected = float(getattr(metrics, key))
         if not math.isclose(observed, expected, rel_tol=0.0, abs_tol=1e-12):
             raise RetrievalEvalError(f"retrieval report top-level {key} does not match metrics")
+
+
+def _require_mapping(value: Any, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise RetrievalEvalError(f"{name} must be a JSON object")
+    return value
 
 
 def _require_json_native(value: Any, name: str) -> None:

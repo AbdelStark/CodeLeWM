@@ -98,6 +98,9 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
 
         self.assertIn("| Text action | 0.371 | 0.586 | 0.672 | 0.472984 |", self.scaled_model)
         self.assertIn("| No action | 0.459 | 0.641 | 0.712 | 0.546116 |", self.scaled_model)
+        self.assertIn("## Action-Use Claim Gate", self.scaled_report)
+        self.assertIn("claim_allowed=false", self.scaled_report)
+        self.assertIn("no_action_dominance:text_action_recall_at_1_or_mrr_not_strictly_above_no_action", self.scaled_report)
         self.assertIn("Text action beats the no-action baseline.", self.scaled_report)
         self.assertIn("- [ ] Text action beats the no-action baseline.", self.scaled_report)
         self.assertIn("| `commitpackft` | 56,025 | 23,015 | 33,010 |", self.scaled_dataset)
