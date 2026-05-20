@@ -5,6 +5,12 @@
 > evidence, and license evidence — claims without backing manifests
 > are blocked.
 
+Filled release-freeze instances:
+
+- `docs/release/RELEASE_FREEZE_2026-05-20.md` records the #126 private
+  diagnostic artifact freeze. It blocks public positive action-conditioning
+  claims and public HF visibility while #159 remains unresolved.
+
 - Release tag: `<v0.x.y | v1.x.y>`
 - Release date (UTC): `<YYYY-MM-DD>`
 - Source git SHA: `<40-char SHA matching every manifest.source_git_sha>`
@@ -48,7 +54,7 @@
       `<venv>/bin/codelewm --help` prints the expected command surface.
 - [ ] **Publishing remains manually gated.** Evidence: no CI job uploads to
       TestPyPI/PyPI; a maintainer runs `uv run twine upload` only after this
-      checklist and #126 are complete.
+      checklist, #126, and the public visibility gate are complete.
 
 ## Tests
 

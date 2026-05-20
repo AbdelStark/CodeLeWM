@@ -44,11 +44,12 @@ Current blocker:
 - The #154 action-use run beats random, shuffled-action, and lexical baselines,
   but no-action is stronger on headline retrieval: text-action Recall@1
   `0.363`, MRR `0.467875`; no-action Recall@1 `0.469`, MRR `0.549624`.
+- The private diagnostic release-freeze gate is closed by #126 and recorded in
+  `docs/release/RELEASE_FREEZE_2026-05-20.md`.
 - The next project milestone is the second-stage action-use remediation tracked
-  by #159, followed by public-docs and artifact-freeze release gates. The
-  package build, manual publishing, dependency audit, and provenance gates are
-  closed by #123 and #124. If #159 remains negative, the release path must be
-  explicitly negative/diagnostic rather than a positive model-quality claim.
+  by #159 if the project still wants a positive model-quality claim. Until #159
+  passes the action-use gate, public HF visibility and public positive
+  action-conditioning claims remain blocked.
 
 Current landed CLI commands:
 
@@ -230,7 +231,8 @@ Deliverables:
 - dependency audit and provenance evidence (#124, complete)
 - public docs refreshed against the scaled evidence and claim boundary (#125,
   complete)
-- final artifact freeze, release checklist, and release notes (#126)
+- final artifact freeze, release checklist, and release notes (#126, complete
+  as a private diagnostic freeze)
 
 ## Ordered Backlog
 
@@ -239,7 +241,6 @@ Keep this table in implementation order and update it when issue scope changes.
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
 | 1 | #159 | run: execute second-stage action-use remediation sweep | Action-Use Remediation | positive claim path |
-| 2 | #126 | release: run final artifact freeze and checklist | Public Research Release | v1.0 |
 
 Completed backlog base:
 
@@ -261,6 +262,9 @@ Completed backlog base:
   checklist evidence for the package supply-chain path.
 - #125 refreshed README, usage, public API, roadmap, and release docs against
   current artifact evidence and the negative action-use claim boundary.
+- #126 froze the private diagnostic release artifact set, package/provenance
+  evidence, and release checklist status without enabling public positive
+  action-conditioning claims.
 - #150 tracks the remaining action-conditioned scaled-result and release
   readiness milestone.
 
@@ -273,12 +277,12 @@ instead of creating duplicate trackers.
 - #7 Training runtime: #153 complete; no active child.
 - #8 Retrieval and surprise evaluation: active child #159.
 - #9 Harness scorer and reranker: active child #159.
-- #10 Observability and artifact lineage: active children #159 and #126.
-- #11 Security and licensing boundaries: active child #126.
+- #10 Observability and artifact lineage: active child #159.
+- #11 Security and licensing boundaries: no active child.
 - #12 Public API and packaging: no active child.
-- #13 Release CI and governance: active children #150 and #126.
-- #150 Action-conditioned scaled result and release readiness: active children
-  #159 and release gate #126.
+- #13 Release CI and governance: active child #150.
+- #150 Action-conditioned scaled result and release readiness: active child
+  #159.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -299,5 +303,5 @@ that subsystem.
 - Root legacy scripts can confuse contributors; public docs now mark the
   package-native path as authoritative, but the final release should still avoid
   widening the compatibility surface.
-- Release repositories must remain private until claim wording, provenance,
-  package gates, manifest verification, and secret scans all pass.
+- Release repositories remain private because the #126 freeze is diagnostic and
+  the #159 positive-claim path is still unresolved.
