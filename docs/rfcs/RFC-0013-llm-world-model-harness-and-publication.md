@@ -107,14 +107,18 @@ The adapter must support:
 - provider options;
 - structured retries;
 - redacted logs.
+- explicit Anthropic BYOK routing and registration through OpenRouter when
+  requested by local environment variables.
 
 The OpenRouter SDK is beta and may introduce breaking changes before a major
 version bump. Runtime implementation must pin the SDK version and record it in
 candidate-pack artifacts.
 
-Direct provider secrets are out of scope for the OpenRouter adapter. If local
-experiments use an Anthropic provider key, it should be configured through
-OpenRouter BYOK or handled by a separate direct-Anthropic adapter issue.
+Direct provider chat adapters remain out of scope. If local experiments use an
+Anthropic provider key, it must be configured through the explicit OpenRouter
+BYOK registration helper. Chat requests still authenticate to OpenRouter with
+`OPENROUTER_API_KEY`, and candidate-pack metadata must record only redacted BYOK
+state.
 
 OpenRouter debug logging is out of scope for publishable runs. The adapter may
 support local debug mode later, but any enabled debug mode must be rejected by
@@ -126,12 +130,13 @@ and secret-scanned.
 New schemas:
 
 - `codelewm.openrouter_candidate_request.v1`
+- `codelewm.openrouter_byok_register.v1`
 - `codelewm.llm_candidate_pack.v1`
 - `codelewm.harness.demo_report.v1`
 - `codelewm.downstream_rerank_benchmark.v1`
 - `codelewm.downstream_rerank_report.v1`
 
-All five must be JSON-native, schema-versioned, manifest-backed, checksum
+All runtime artifacts must be JSON-native, schema-versioned, manifest-backed, checksum
 verifiable, and secret-scanned before publication.
 
 The candidate pack must record prompt metadata, model slug, provider routing
@@ -154,6 +159,9 @@ Stream A, LLM + world-model harness demo:
 - #187 adds the OpenRouter candidate generator.
 - #188 adds candidate-pack schema and safe patch capture.
 - #189 builds the end-to-end demo report.
+- #206 adds explicit OpenRouter BYOK registration, the local
+  `uv run scripts/llm-world-model-demo` task, and public README polish.
+- #207/#208 track one live, claim-safe OpenRouter BYOK harness artifact.
 
 Stream B, downstream candidate-reranking benchmark:
 
@@ -162,12 +170,19 @@ Stream B, downstream candidate-reranking benchmark:
 - #191 builds the public-safe labeled candidate set and claim-blocked fixture
   benchmark pack.
 - #192 runs the downstream comparison and claim gate.
+- #209/#210/#211 track the scaled 100-example benchmark and claim gate.
 
 Stream C, preliminary results publication:
 
 - #185 tracks the stream.
 - #193 publishes the preliminary negative-results report.
 - #194 prepares the artifact index and announcement package.
+
+Stream D, next model hypothesis:
+
+- #212 tracks the next positive-model research hypothesis.
+- #178 remains the CWM comparison spike that can feed that hypothesis only if it
+  yields reusable baselines, datasets, or evaluation criteria.
 
 ## Testing Strategy
 

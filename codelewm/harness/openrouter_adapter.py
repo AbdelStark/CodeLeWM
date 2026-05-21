@@ -6,6 +6,8 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import urllib.error
+import urllib.request
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
@@ -23,16 +25,20 @@ from .scorer import ScoreError, _apply_unified_diff
 OPENROUTER_CANDIDATE_REQUEST_SCHEMA_VERSION = "codelewm.openrouter_candidate_request.v1"
 LLM_CANDIDATE_PACK_SCHEMA_VERSION = "codelewm.llm_candidate_pack.v1"
 LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION = "codelewm.llm_candidate_pack_artifact.v1"
+OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION = "codelewm.openrouter_byok_register.v1"
 OPENROUTER_ADAPTER_VERSION = "codelewm.openrouter_adapter.v0.1"
 OPENROUTER_SDK_PACKAGE = "openrouter"
 OPENROUTER_SDK_VERSION_PIN = "0.9.1"
+OPENROUTER_BYOK_API_URL = "https://openrouter.ai/api/v1/byok"
 DEFAULT_OPENROUTER_MODEL = "anthropic/claude-4.5-sonnet"
+DEFAULT_OPENROUTER_BYOK_PROVIDER = "anthropic"
+DEFAULT_OPENROUTER_BYOK_KEY_ENV = "ANTHROPIC_API_KEY"
 DEFAULT_PROMPT_TEMPLATE_ID = "codelewm.openrouter.patch_candidates.v1"
 DEFAULT_OUTPUT_POLICY = "unified_diff"
 MAX_CAPTURE_PATCH_CHARS = 200_000
 MAX_SERIALIZED_TEXT_CHARS = 50_000
 ALLOWED_PROVIDER_OPTION_KEYS = frozenset(
-    {"order", "sort", "allow_fallbacks", "require_parameters", "zdr"}
+    {"order", "only", "sort", "allow_fallbacks", "require_parameters", "zdr"}
 )
 
 
@@ -85,6 +91,116 @@ class CandidatePackArtifactResult:
 
 
 @dataclass(frozen=True)
+class OpenRouterBYOKRegisterResult:
+    """Summary returned after creating or dry-running an OpenRouter BYOK key."""
+
+    provider: str
+    credential_name: str | None
+    key_env: str
+    allowed_models: tuple[str, ...]
+    is_fallback: bool
+    workspace_id_set: bool
+    dry_run: bool
+    registered: bool
+    response_metadata: Mapping[str, Any] = field(default_factory=dict)
+    schema_version: str = OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "provider": self.provider,
+            "credential_name": self.credential_name,
+            "key_env": self.key_env,
+            "allowed_models": list(self.allowed_models),
+            "is_fallback": self.is_fallback,
+            "workspace_id_set": self.workspace_id_set,
+            "dry_run": self.dry_run,
+            "registered": self.registered,
+            "response_metadata": redact_value(dict(self.response_metadata)),
+        }
+
+
+@dataclass(frozen=True)
+class OpenRouterBYOKConfig:
+    """Redacted request-time BYOK routing and optional registration settings."""
+
+    enabled: bool = False
+    provider: str = DEFAULT_OPENROUTER_BYOK_PROVIDER
+    key_env: str = DEFAULT_OPENROUTER_BYOK_KEY_ENV
+    require: bool = False
+    register: bool = False
+    registration_dry_run: bool = False
+    credential_name: str | None = None
+    allowed_models: tuple[str, ...] = ()
+    workspace_id_set: bool = False
+    is_fallback: bool = False
+
+    def __post_init__(self) -> None:
+        if self.enabled and not self.provider:
+            raise OpenRouterAdapterError(
+                "CODELEWM_OPENROUTER_BYOK_PROVIDER must not be empty",
+                error_type="config_error",
+            )
+        if self.enabled and not self.key_env:
+            raise OpenRouterAdapterError(
+                "CODELEWM_OPENROUTER_BYOK_KEY_ENV must not be empty",
+                error_type="config_error",
+            )
+
+    @classmethod
+    def from_env(
+        cls,
+        env: Mapping[str, str],
+        *,
+        model: str,
+    ) -> "OpenRouterBYOKConfig":
+        enabled = _parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK", default=False)
+        provider = env.get(
+            "CODELEWM_OPENROUTER_BYOK_PROVIDER",
+            DEFAULT_OPENROUTER_BYOK_PROVIDER,
+        ).strip()
+        key_env = env.get(
+            "CODELEWM_OPENROUTER_BYOK_KEY_ENV",
+            DEFAULT_OPENROUTER_BYOK_KEY_ENV,
+        ).strip()
+        allowed_models = _parse_csv_env(env.get("CODELEWM_OPENROUTER_BYOK_ALLOWED_MODELS"))
+        if enabled and not allowed_models:
+            allowed_models = (model,)
+        return cls(
+            enabled=enabled,
+            provider=provider,
+            key_env=key_env,
+            require=_parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_REQUIRE", default=enabled),
+            register=_parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_REGISTER", default=False),
+            registration_dry_run=_parse_bool_env(
+                env,
+                "CODELEWM_OPENROUTER_BYOK_DRY_RUN",
+                default=False,
+            ),
+            credential_name=_empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_NAME")),
+            allowed_models=allowed_models,
+            workspace_id_set=bool(_empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID"))),
+            is_fallback=_parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_IS_FALLBACK", default=False),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        if not self.enabled:
+            return {"enabled": False}
+        return {
+            "enabled": self.enabled,
+            "provider": self.provider,
+            "key_env": self.key_env,
+            "require": self.require,
+            "register": self.register,
+            "registration_dry_run": self.registration_dry_run,
+            "credential_name": self.credential_name,
+            "allowed_models": list(self.allowed_models),
+            "workspace_id_set": self.workspace_id_set,
+            "is_fallback": self.is_fallback,
+        }
+
+
+@dataclass(frozen=True)
 class OpenRouterCandidateRequest:
     """Schema-versioned request for OpenRouter candidate generation."""
 
@@ -102,6 +218,7 @@ class OpenRouterCandidateRequest:
     output_policy: str = DEFAULT_OUTPUT_POLICY
     http_referer: str | None = None
     app_title: str | None = "CodeLeWM"
+    byok: OpenRouterBYOKConfig = field(default_factory=OpenRouterBYOKConfig)
     schema_version: str = OPENROUTER_CANDIDATE_REQUEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -154,19 +271,23 @@ class OpenRouterCandidateRequest:
                 error_type="config_error",
                 remediation="set CODELEWM_LLM_PROVIDER=openrouter",
             )
+        model = env.get("CODELEWM_LLM_MODEL", DEFAULT_OPENROUTER_MODEL)
+        byok = OpenRouterBYOKConfig.from_env(env, model=model)
+        provider_options = _with_byok_provider_options(_parse_provider_options_env(env), byok)
         return cls(
             task_id=task_id,
             instruction=instruction,
             context_bundle=context_bundle or {},
-            model=env.get("CODELEWM_LLM_MODEL", DEFAULT_OPENROUTER_MODEL),
+            model=model,
             max_candidates=_parse_int_env(env, "CODELEWM_LLM_MAX_CANDIDATES", default=4),
             timeout_seconds=_parse_int_env(env, "CODELEWM_LLM_TIMEOUT_SECONDS", default=120),
             temperature=_parse_float_env(env, "CODELEWM_LLM_TEMPERATURE", default=0.2),
-            provider_options=_parse_provider_options_env(env),
+            provider_options=provider_options,
             dry_run=_parse_bool_env(env, "CODELEWM_LLM_DRY_RUN", default=True),
             retry_limit=_parse_int_env(env, "CODELEWM_LLM_RETRY_LIMIT", default=2),
             http_referer=_empty_to_none(env.get("OPENROUTER_HTTP_REFERER")),
             app_title=_empty_to_none(env.get("OPENROUTER_APP_TITLE")) or "CodeLeWM",
+            byok=byok,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -186,6 +307,7 @@ class OpenRouterCandidateRequest:
             "output_policy": self.output_policy,
             "http_referer": self.http_referer,
             "app_title": self.app_title,
+            "byok": self.byok.to_dict(),
         }
 
 
@@ -281,6 +403,7 @@ class LLMCandidatePack:
             "provider_routing": {
                 "requested_model": self.request.model,
                 "requested_provider_options": redact_value(dict(self.request.provider_options)),
+                "byok": self.request.byok.to_dict(),
                 "response_metadata": redact_value(dict(self.provider_metadata)),
             },
             "generation_config": {
@@ -378,6 +501,18 @@ def generate_candidate_pack(
             remediation="unset OPENROUTER_DEBUG before running CodeLeWM live generation",
         )
 
+    byok_registration: OpenRouterBYOKRegisterResult | None = None
+    if request.byok.enabled and request.byok.register:
+        byok_registration = register_openrouter_byok_credential(
+            env=env,
+            provider=request.byok.provider,
+            key_env=request.byok.key_env,
+            name=request.byok.credential_name,
+            allowed_models=request.byok.allowed_models,
+            is_fallback=request.byok.is_fallback,
+            dry_run=request.byok.registration_dry_run,
+        )
+
     sdk_version = _openrouter_sdk_version()
     try:
         from openrouter import OpenRouter  # type: ignore[import-not-found]
@@ -409,6 +544,11 @@ def generate_candidate_pack(
                 )
             response_text = _extract_response_text(response)
             response_metadata = _extract_response_metadata(response)
+            if byok_registration is not None:
+                response_metadata = {
+                    **dict(response_metadata),
+                    "byok_registration": byok_registration.to_dict(),
+                }
             break
         except Exception as exc:  # pragma: no cover - live provider failure path
             errors.append(
@@ -434,6 +574,130 @@ def generate_candidate_pack(
         provider_metadata=response_metadata,
         sdk_version=sdk_version,
         created_at=_utc_now_iso(),
+    )
+
+
+def register_openrouter_byok_credential(
+    *,
+    env: Mapping[str, str] | None = None,
+    provider: str | None = None,
+    key_env: str | None = None,
+    name: str | None = None,
+    allowed_models: Sequence[str] | None = None,
+    workspace_id: str | None = None,
+    is_fallback: bool | None = None,
+    dry_run: bool | None = None,
+    timeout_seconds: int = 30,
+) -> OpenRouterBYOKRegisterResult:
+    """Create an OpenRouter BYOK provider credential without returning raw keys."""
+
+    env = os.environ if env is None else env
+    provider = (
+        provider or env.get("CODELEWM_OPENROUTER_BYOK_PROVIDER") or DEFAULT_OPENROUTER_BYOK_PROVIDER
+    ).strip()
+    key_env = (
+        key_env or env.get("CODELEWM_OPENROUTER_BYOK_KEY_ENV") or DEFAULT_OPENROUTER_BYOK_KEY_ENV
+    ).strip()
+    name = _empty_to_none(name) or _empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_NAME"))
+    workspace_id = _empty_to_none(workspace_id) or _empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID"))
+    if allowed_models is None:
+        allowed_models = _parse_csv_env(env.get("CODELEWM_OPENROUTER_BYOK_ALLOWED_MODELS"))
+    allowed_models_tuple = tuple(str(model).strip() for model in allowed_models if str(model).strip())
+    if is_fallback is None:
+        is_fallback = _parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_IS_FALLBACK", default=False)
+    if dry_run is None:
+        dry_run = _parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_DRY_RUN", default=False)
+
+    if provider != DEFAULT_OPENROUTER_BYOK_PROVIDER:
+        raise OpenRouterAdapterError(
+            "only Anthropic BYOK registration is supported in this adapter",
+            error_type="config_error",
+            remediation="set CODELEWM_OPENROUTER_BYOK_PROVIDER=anthropic",
+        )
+    if not key_env:
+        raise OpenRouterAdapterError("BYOK key env name must not be empty", error_type="config_error")
+
+    result = OpenRouterBYOKRegisterResult(
+        provider=provider,
+        credential_name=name,
+        key_env=key_env,
+        allowed_models=allowed_models_tuple,
+        is_fallback=bool(is_fallback),
+        workspace_id_set=workspace_id is not None,
+        dry_run=bool(dry_run),
+        registered=False,
+    )
+    if dry_run:
+        return result
+
+    openrouter_key = env.get("OPENROUTER_API_KEY")
+    provider_key = env.get(key_env)
+    if not openrouter_key:
+        raise OpenRouterAdapterError(
+            "OPENROUTER_API_KEY is required to create an OpenRouter BYOK credential",
+            error_type="missing_openrouter_api_key",
+            remediation="set OPENROUTER_API_KEY or run with --dry-run",
+        )
+    if not provider_key:
+        raise OpenRouterAdapterError(
+            f"{key_env} is required to create an Anthropic BYOK credential",
+            error_type="missing_provider_api_key",
+            remediation=f"set {key_env} or run with --dry-run",
+        )
+
+    body: dict[str, Any] = {
+        "provider": provider,
+        "key": provider_key,
+        "name": name or "CodeLeWM Anthropic BYOK",
+        "is_fallback": bool(is_fallback),
+    }
+    if allowed_models_tuple:
+        body["allowed_models"] = list(allowed_models_tuple)
+    if workspace_id is not None:
+        body["workspace_id"] = workspace_id
+    request = urllib.request.Request(
+        OPENROUTER_BYOK_API_URL,
+        data=json.dumps(body, allow_nan=False).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {openrouter_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = _read_http_error_detail(exc)
+        raise OpenRouterAdapterError(
+            f"OpenRouter BYOK registration failed with HTTP {exc.code}: {detail}",
+            error_type="byok_registration_error",
+            remediation="verify the OpenRouter management key, Anthropic key, provider, and workspace settings",
+        ) from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise OpenRouterAdapterError(
+            "OpenRouter BYOK registration failed",
+            error_type="byok_registration_error",
+            remediation="check network access and OpenRouter BYOK API availability",
+        ) from exc
+
+    data = payload.get("data") if isinstance(payload, Mapping) else None
+    if isinstance(data, Mapping):
+        response_metadata = dict(data)
+    elif isinstance(payload, Mapping):
+        response_metadata = dict(payload)
+    else:
+        response_metadata = {"response_type": type(payload).__name__}
+    return OpenRouterBYOKRegisterResult(
+        provider=provider,
+        credential_name=name or "CodeLeWM Anthropic BYOK",
+        key_env=key_env,
+        allowed_models=allowed_models_tuple,
+        is_fallback=bool(is_fallback),
+        workspace_id_set=workspace_id is not None,
+        dry_run=False,
+        registered=True,
+        response_metadata=redact_value(response_metadata),
     )
 
 
@@ -936,6 +1200,48 @@ def _parse_provider_options_env(env: Mapping[str, str]) -> Mapping[str, Any]:
     return dict(parsed)
 
 
+def _with_byok_provider_options(
+    provider_options: Mapping[str, Any],
+    byok: OpenRouterBYOKConfig,
+) -> Mapping[str, Any]:
+    merged = dict(provider_options)
+    if not byok.enabled:
+        return merged
+    provider = byok.provider
+    merged["order"] = _dedupe_strings((provider, *_string_sequence(merged.get("order"))))
+    if byok.require:
+        merged["only"] = _dedupe_strings((provider, *_string_sequence(merged.get("only"))))
+        merged["allow_fallbacks"] = False
+    _validate_provider_options(merged)
+    return merged
+
+
+def _dedupe_strings(values: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            ordered.append(value)
+            seen.add(value)
+    return ordered
+
+
+def _string_sequence(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if not isinstance(value, Sequence):
+        return ()
+    return tuple(item for item in value if isinstance(item, str))
+
+
+def _parse_csv_env(value: str | None) -> tuple[str, ...]:
+    if value in (None, ""):
+        return ()
+    return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
 def _parse_int_env(env: Mapping[str, str], key: str, *, default: int) -> int:
     value = env.get(key)
     if value in (None, ""):
@@ -972,6 +1278,16 @@ def _openrouter_sdk_version() -> str:
         return importlib.metadata.version(OPENROUTER_SDK_PACKAGE)
     except importlib.metadata.PackageNotFoundError:
         return "not_installed"
+
+
+def _read_http_error_detail(exc: urllib.error.HTTPError) -> str:
+    try:
+        raw = exc.read().decode("utf-8", errors="replace")
+    except OSError:
+        return "response body unavailable"
+    if not raw:
+        return "empty response body"
+    return redact_text(raw[:1000])
 
 
 def _utc_now_iso() -> str:

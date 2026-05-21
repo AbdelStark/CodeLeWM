@@ -20,6 +20,11 @@ The post-v0.2 work is split into three streams:
 3. Preliminary results publication package: issue #185, with child issues #193
    and #194.
 
+The public usability pass for BYOK and the local demo task is #206. New open
+follow-up streams are live harness evidence (#207/#208), scaled downstream
+benchmarking (#209/#210/#211), and the next positive-model research hypothesis
+(#212, with CWM comparison in #178).
+
 Each stream must land as one issue per branch and PR. The demo stream may run
 before the benchmark stream proves usefulness, but it must emit claim-safe
 reports.
@@ -60,12 +65,32 @@ Optional environment variables:
 | `CODELEWM_LLM_PROVIDER_OPTIONS_JSON` | JSON object forwarded as OpenRouter provider routing options. |
 | `CODELEWM_LLM_RETRY_LIMIT` | Bounded retry count for retryable provider failures. |
 
-The OpenRouter adapter must not read a raw `ANTHROPIC_API_KEY`. To use
-Anthropic models through the public adapter, set `CODELEWM_LLM_MODEL` to an
-Anthropic OpenRouter slug and authenticate with `OPENROUTER_API_KEY`. If a raw
-Anthropic provider key is required, configure it as OpenRouter BYOK outside the
-repo or open a separate direct-Anthropic adapter issue. Do not silently mix the
-two auth modes.
+OpenRouter BYOK variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Optional raw Anthropic provider key used only by explicit BYOK registration. Never print, commit, or summarize. |
+| `CODELEWM_OPENROUTER_BYOK` | Enables redacted Anthropic BYOK routing metadata for OpenRouter requests. |
+| `CODELEWM_OPENROUTER_BYOK_PROVIDER` | Provider slug for the first BYOK path; currently `anthropic`. |
+| `CODELEWM_OPENROUTER_BYOK_KEY_ENV` | Environment variable name that holds the raw provider key. |
+| `CODELEWM_OPENROUTER_BYOK_REQUIRE` | Routes requests to the BYOK provider only and disables fallback when true. |
+| `CODELEWM_OPENROUTER_BYOK_REGISTER` | Runs the BYOK registration helper before a live demo run when true. |
+| `CODELEWM_OPENROUTER_BYOK_DRY_RUN` | Validates BYOK registration without sending provider secrets; set to `0` only for real registration. |
+| `CODELEWM_OPENROUTER_BYOK_NAME` | Human-readable OpenRouter BYOK credential name. |
+| `CODELEWM_OPENROUTER_BYOK_ALLOWED_MODELS` | Comma-separated BYOK model allowlist. |
+| `CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID` | Optional OpenRouter workspace UUID. |
+| `CODELEWM_OPENROUTER_BYOK_IS_FALLBACK` | Registers the provider key as fallback capacity when true. |
+
+The public chat path still authenticates with `OPENROUTER_API_KEY`. A raw
+`ANTHROPIC_API_KEY` may be read only by the explicit BYOK registration helper
+or when `CODELEWM_OPENROUTER_BYOK_REGISTER=1`; it must never be serialized into
+candidate packs, logs, reports, manifests, or docs. Request metadata records
+only redacted BYOK state such as `enabled`, provider slug, key env name,
+allowlist, and whether a workspace id was set.
+
+BYOK registration emits `codelewm.openrouter_byok_register.v1`. Non-dry-run
+registration sends the raw provider key only to OpenRouter's BYOK API and
+returns a redacted summary.
 
 `OPENROUTER_DEBUG` must be treated as unsafe for publishable runs because SDK
 debug logging may include request or response content. Live publishable runs
@@ -98,8 +123,9 @@ remote call. `.env`, token-bearing files, local checkpoint files, private HF
 download roots, and ignored artifact directories are excluded by default.
 
 `provider_options` is passed through to OpenRouter only after JSON validation.
-Allowed keys for v0.3 are `order`, `sort`, `allow_fallbacks`, `require_parameters`,
-and `zdr`. Unknown keys must fail validation instead of being silently forwarded.
+Allowed keys for v0.3 are `order`, `only`, `sort`, `allow_fallbacks`,
+`require_parameters`, and `zdr`. Unknown keys must fail validation instead of
+being silently forwarded.
 
 `output_policy` must request unified diffs unless the issue explicitly enables
 after-state files. The prompt must instruct the model to return exactly

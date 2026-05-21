@@ -43,6 +43,10 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_SOURCE_DATASET_REPO_ID=bigcode/commitpackft",
             "CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl",
             "CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft",
+            "OPENROUTER_API_KEY=openrouter_xxx",
+            "ANTHROPIC_API_KEY=anthropic_provider_key_here",
+            "CODELEWM_OPENROUTER_BYOK=0",
+            "CODELEWM_LLM_DEMO_ROOT=.artifacts/llm-world-model-demo",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -122,6 +126,9 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         self.assertIn("Open or select a new issue", text)
         self.assertIn("OpenRouter Python SDK", text)
         self.assertIn("downstream rerank report", text)
+        self.assertIn("#207/#208", text)
+        self.assertIn("#209/#210/#211", text)
+        self.assertIn("#212", text)
         self.assertIn("No active completion issue remains", text)
 
     def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:

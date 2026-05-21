@@ -23,6 +23,8 @@ codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoin
 codelewm eval scorer-quality --config config/first_results/scorer_quality.json --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/first-results/scorer_quality --index .artifacts/first-results/index --retrieval-prior-weight 1.0 --json
 codelewm score --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidate config/first_results/scorer_quality_candidates/true_after.py --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
 codelewm rerank --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidates config/first_results/scorer_quality_candidates --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
+codelewm llm-demo --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/llm-demo --allow-unsafe-checkpoint --json
+codelewm openrouter byok-register --provider anthropic --key-env ANTHROPIC_API_KEY --allowed-model anthropic/claude-4.5-sonnet --dry-run --json
 codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
 codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json
 ```
@@ -329,6 +331,48 @@ The command emits `codelewm.downstream_rerank_eval_run.v1` on stdout and writes
 baseline availability status, confidence intervals when the sample count
 permits, and the downstream claim gate. Retrieval-prior baselines are reported
 as blocked unless an index produces finite retrieval-prior scores.
+
+`codelewm llm-demo` runs the LLM plus world-model showcase path:
+
+```bash
+codelewm llm-demo \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
+  --out .artifacts/llm-demo \
+  --allow-unsafe-checkpoint \
+  --json
+```
+
+It builds an OpenRouter request from environment variables, captures generated
+candidate patches as `codelewm.llm_candidate_pack.v1`, writes a manifest-backed
+candidate-pack artifact, scores/reranks candidates without executing them, and
+writes `codelewm.harness.demo_report.v1`. The command emits
+`codelewm.harness.demo_run.v1` on stdout. Fixture mode remains the default with
+`CODELEWM_LLM_DRY_RUN=1`; live mode requires `OPENROUTER_API_KEY`. Use
+`uv run scripts/llm-world-model-demo` for the end-to-end local task that creates
+a tiny input file, ensures a first-results checkpoint exists, runs the demo,
+verifies manifests, and secret-scans the output.
+
+`codelewm openrouter byok-register` creates or dry-runs an OpenRouter BYOK
+provider credential from local environment secrets:
+
+```bash
+codelewm openrouter byok-register \
+  --provider anthropic \
+  --key-env ANTHROPIC_API_KEY \
+  --allowed-model anthropic/claude-4.5-sonnet \
+  --dry-run \
+  --json
+```
+
+The command emits `codelewm.openrouter_byok_register.v1`. Non-dry-run mode
+requires `OPENROUTER_API_KEY` plus the raw provider key named by `--key-env`.
+The raw provider key is sent only to OpenRouter's BYOK API and is never printed
+or serialized in the returned JSON. When `CODELEWM_OPENROUTER_BYOK=1`, request
+metadata records redacted BYOK routing state and, with
+`CODELEWM_OPENROUTER_BYOK_REQUIRE=1`, restricts OpenRouter provider routing to
+the configured provider.
 
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent

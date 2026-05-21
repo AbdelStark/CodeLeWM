@@ -1,14 +1,17 @@
 # Next Goal Prompt
 
-Use this prompt only if opening a new post-#192 research issue. The v0.2 HF
+Use this prompt only if opening a new post-#206 research issue. The v0.2 HF
 execution prompt in `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical
 context for the completed negative v0.2 sweep. The #186 through #194 harness,
-publication, and downstream benchmark stream is complete.
+publication, and downstream benchmark stream is complete, and #206 completed
+the BYOK/local-demo/readme usability pass.
 
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
-Open or select a new issue with a falsifiable post-#192 hypothesis before
-making code changes. Work one issue per branch and PR.
+Open or select a new issue from the updated backlog before making code changes:
+#208 for live OpenRouter BYOK harness evidence, #210/#211 for the scaled
+downstream reranking benchmark, or #178/#212 for the next positive-model
+research hypothesis. Work one issue per branch and PR.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
@@ -25,15 +28,17 @@ negative/diagnostic evidence: v0.2 text-action reached Recall@1 0.263 and MRR
 probes and downstream gates also failed.
 
 The OpenRouter LLM candidate harness contract, adapter, candidate-pack capture,
-fixture demo, downstream schema/claim-gate contract, public-safe downstream
-benchmark pack, and downstream rerank report are complete through #192. The public LLM adapter uses the
-OpenRouter Python SDK with OPENROUTER_API_KEY and model slugs such as
-anthropic/claude-4.5-sonnet. Do not silently read raw provider keys in the
-OpenRouter adapter. If direct Anthropic API key support is required, open a
-separate adapter issue or configure provider keys as OpenRouter BYOK outside the
-repo.
+fixture demo, BYOK registration helper, local `uv run scripts/llm-world-model-demo`
+task, downstream schema/claim-gate contract, public-safe downstream benchmark
+pack, and downstream rerank report are complete through #206. The public LLM
+adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and model slugs
+such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit: only
+`codelewm openrouter byok-register` or
+`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read `ANTHROPIC_API_KEY`, and no
+reports may serialize raw provider keys.
 
 No active completion issue remains for the current public evidence boundary.
+The open streams are #207/#208, #209/#210/#211, and #212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
 not require network or paid LLM calls. Any live OpenRouter mode must redact

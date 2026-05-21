@@ -51,6 +51,8 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm eval downstream-pack",
             "codelewm eval downstream-rerank",
             "codelewm index",
+            "codelewm llm-demo",
+            "codelewm openrouter byok-register",
         ):
             with self.subTest(command=command):
                 self.assertIn(command, self.text)
@@ -88,6 +90,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.harness.scorer_quality_report.v1",
             "codelewm.harness.scorer_quality_run.v1",
             "codelewm.llm_candidate_pack.v1",
+            "codelewm.openrouter_byok_register.v1",
             "codelewm.harness.demo_report.v1",
             "codelewm.harness.demo_run.v1",
             "codelewm.downstream_rerank_benchmark.v1",
@@ -163,7 +166,13 @@ class UsageGuideLinkConsistencyTest(unittest.TestCase):
     def test_public_api_spec_lists_the_same_command_surface(self) -> None:
         spec_text = PUBLIC_API_SPEC.read_text(encoding="utf-8")
 
-        for command in ("codelewm score", "codelewm rerank", "codelewm eval ablation"):
+        for command in (
+            "codelewm score",
+            "codelewm rerank",
+            "codelewm eval ablation",
+            "codelewm llm-demo",
+            "codelewm openrouter byok-register",
+        ):
             with self.subTest(command=command):
                 self.assertIn(command, spec_text)
 

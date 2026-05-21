@@ -98,6 +98,7 @@ class ChangelogContentTest(unittest.TestCase):
             "codelewm.harness.scorer_quality_config.v1",
             "codelewm.harness.scorer_quality_report.v1",
             "codelewm.harness.scorer_quality_run.v1",
+            "codelewm.openrouter_byok_register.v1",
             "codelewm.downstream_rerank_benchmark_config.v1",
             "codelewm.downstream_benchmark_pack_run.v1",
             "codelewm.downstream_benchmark_readiness.v1",

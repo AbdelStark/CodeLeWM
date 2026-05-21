@@ -135,6 +135,21 @@ negative-results publication.
 | #192 | eval: run downstream reranking comparison and claim gate | evaluation | p1 | l | RFC-0013 | Closed |
 | #193 | docs: publish preliminary negative-results report | docs | p1 | m | RFC-0013 | Closed |
 | #194 | docs: prepare public artifact index and announcement package | docs | p1 | m | RFC-0013 | Closed |
+| #206 | harness: add OpenRouter BYOK demo task and public README polish | harness/docs | p1 | m | RFC-0013 | Closed |
+
+## Milestone: v1.2
+
+Post-demo evidence streams. These are open follow-ups, not prerequisites for
+the current negative/diagnostic public boundary.
+
+| # | Title | Area | Priority | Effort | RFC | Status |
+|---|-------|------|----------|--------|-----|--------|
+| #207 | [Tracking] v1.2 live LLM plus world-model harness evidence | harness/results | p1 | l | RFC-0013 | Open |
+| #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | harness/results | p1 | m | RFC-0013 | Open |
+| #209 | [Tracking] v1.2 scaled downstream reranking benchmark | evaluation/data | p1 | l | RFC-0013 | Open |
+| #210 | data: build public-safe 100-example downstream reranking set | data/evaluation | p1 | l | RFC-0013 | Open |
+| #211 | eval: run scaled downstream reranking comparison and claim gate | evaluation/harness | p1 | m | RFC-0013 | Open |
+| #212 | [Tracking] v1.2 next positive-model research hypothesis | model/evaluation | p2 | l | follow-up | Open |
 
 ## Tracking Issues
 
@@ -225,6 +240,10 @@ publication package.
   claims, and only if it beats no-action and LLM-order baselines with at least
   100 labeled examples. The publication stream is allowed to publish current
   negative/diagnostic results but not positive model-quality claims.
+- #206 completes the public BYOK/local-demo usability pass. #207/#208 track one
+  live diagnostic harness artifact; #209/#210/#211 track the scaled downstream
+  gate; #212 tracks the next model hypothesis and should use #178 only if CWM
+  comparison yields reusable baselines or criteria.
 
 ## Cross-Reference Map
 

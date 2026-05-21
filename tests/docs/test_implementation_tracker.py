@@ -16,7 +16,7 @@ _TABLE_ROW_RE = re.compile(
     r"\s*(?P<area>[^|]+?)\s+\|"
     r"\s*(?P<priority>[^|]+?)\s+\|"
     r"\s*(?P<effort>[^|]+?)\s+\|"
-    r"\s*(?P<rfc>RFC-\d{4})\s+\|"
+    r"\s*(?P<rfc>RFC-\d{4}|follow-up)\s+\|"
     r"\s*(?P<status>[^|]+?)\s+\|"
     r"\s*$"
 )
@@ -43,6 +43,8 @@ class ImplementationTrackerStructureTest(unittest.TestCase):
             "## How This Tracker Is Maintained",
             "## Milestone: v0.1",
             "## Milestone: v1.0",
+            "## Milestone: v1.1",
+            "## Milestone: v1.2",
             "## Tracking Issues",
             "## Cross-Cutting Dependencies",
         ):
@@ -52,7 +54,7 @@ class ImplementationTrackerStructureTest(unittest.TestCase):
     def test_tracker_milestone_tables_have_canonical_header(self) -> None:
         header = "| # | Title | Area | Priority | Effort | RFC | Status |"
 
-        self.assertEqual(self.text.count(header), 3, "three milestone tables expected")
+        self.assertEqual(self.text.count(header), 4, "four milestone tables expected")
 
 
 class ImplementationTrackerContentTest(unittest.TestCase):
@@ -69,12 +71,14 @@ class ImplementationTrackerContentTest(unittest.TestCase):
             with self.subTest(number=number):
                 self.assertNotIn(number, seen_numbers, f"#{number} listed twice")
                 seen_numbers.add(number)
-                self.assertIn(match.group("priority"), {"p0", "p1"})
+                self.assertIn(match.group("priority"), {"p0", "p1", "p2"})
                 self.assertIn(match.group("effort"), {"s", "m", "l"})
                 self.assertIn(match.group("status"), {"Open", "Closed"})
 
     def test_every_referenced_rfc_file_exists(self) -> None:
-        rfc_numbers = sorted({match.group("rfc") for match in self.rows})
+        rfc_numbers = sorted(
+            {match.group("rfc") for match in self.rows if match.group("rfc").startswith("RFC-")}
+        )
 
         self.assertGreater(len(rfc_numbers), 0)
         for rfc_number in rfc_numbers:
