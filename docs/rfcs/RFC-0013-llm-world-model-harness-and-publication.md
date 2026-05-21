@@ -172,7 +172,22 @@ Stream A, LLM + world-model harness demo:
   path instead of the deterministic hashing fixture scorer.
 - #222 makes the local demo script terminal-first by default while preserving
   raw JSON output for non-interactive automation.
-- #207/#208 track one live, claim-safe OpenRouter BYOK harness artifact.
+- #207/#208 were superseded by the more meaningful v1.3 harness demo stream
+  after the local terminal demo proved the comment-style toy task was too weak
+  for the public showcase.
+
+Stream A2, meaningful harness demo:
+
+- #224 tracks the stream.
+- #225 locks the roadmap, backlog, and agent context for the meaningful demo.
+- #226 adds scenario fixtures and a scenario selector for real code-edit tasks.
+- #227 upgrades the prompt path for task-solving candidate patches.
+- #228 adds static patch analysis to candidate packs and demo reports.
+- #229 renders scorer traces and compact diff previews in terminal and HTML
+  reports.
+- #230 adds opt-in sandbox checks behind the security boundary.
+- #231 publishes one live OpenRouter/BYOK meaningful demo artifact set as
+  diagnostic workflow evidence.
 
 Stream B, downstream candidate-reranking benchmark:
 

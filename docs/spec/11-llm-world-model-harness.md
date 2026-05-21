@@ -20,10 +20,12 @@ The post-v0.2 work is split into three streams:
 3. Preliminary results publication package: issue #185, with child issues #193
    and #194.
 
-The public usability pass for BYOK and the local demo task is #206. New open
-follow-up streams are live harness evidence (#207/#220/#208), scaled downstream
-benchmarking (#209/#210/#211), and the next positive-model research hypothesis
-(#212, with CWM comparison in #178).
+The public usability pass for BYOK and the local demo task is #206. The first
+live artifact direction (#207/#208) was superseded after the terminal demo
+proved the toy comment task was too weak for a public showcase. The current
+open follow-up streams are the meaningful harness demo (#224 through #231),
+scaled downstream benchmarking (#209/#210/#211), and the next positive-model
+research hypothesis (#212, with CWM comparison in #178).
 
 Each stream must land as one issue per branch and PR. The demo stream may run
 before the benchmark stream proves usefulness, but it must emit claim-safe
@@ -262,6 +264,45 @@ The local `scripts/llm-world-model-demo` entry point should default to a visual
 terminal walkthrough over the same JSON artifacts. Raw JSON command summaries
 remain available through explicit non-interactive mode.
 
+## Meaningful Demo Scenarios
+
+The v1.3 harness demo must move beyond comment-preserving toy edits. The
+default scenario should be a small public-safe code task that is meaningful to
+inspect as code, such as a bug fix, edge-case handling change, API behavior
+adjustment, or behavior-preserving refactor. Documentation/comment-only edits
+are allowed only for scenarios explicitly about documentation.
+
+Scenario metadata must be manifestable and include:
+
+- stable scenario id and title;
+- task instruction;
+- included context paths and exclusion policy;
+- before-state files or fixture root;
+- expected static constraints, such as touched files or symbols;
+- optional check command id when the scenario supports sandboxed checks;
+- prompt template id;
+- publication and claim-boundary notes.
+
+The demo script must support selecting a scenario through CLI and environment
+configuration while preserving deterministic dry-run fixtures. Dry-run mode must
+not require OpenRouter, network access, provider keys, or sandbox execution.
+
+Candidate generation for meaningful scenarios should ask for diverse,
+task-solving unified diffs. The prompt should reject comment-only, whitespace
+only, and no-op candidates unless the scenario explicitly permits them.
+
+Candidate packs and demo reports should include static patch analysis for each
+candidate: changed files, hunk counts, parse/apply status, touched symbols when
+available, AST-level edit hints when available, and risk flags. Static analysis
+must follow the same non-execution boundary as scoring. Invalid candidates are
+kept as structured errors and remain visible in the report.
+
+Terminal and HTML reports should expose enough of the meaningful task to be
+understandable without opening raw JSON: scenario title, task instruction
+summary, candidate summaries, compact diff previews or changed-symbol
+summaries, CodeLeWM score/rank, no-action delta, scorer backend/checkpoint
+metadata, optional check metadata, artifact gates, and claim gate.
+
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank
 errors, and claim-gate failures.
@@ -337,6 +378,9 @@ The default harness does not execute candidate code. Candidate parsing and patch
 application run as static transformations over isolated files. If a future issue
 adds test execution, it must be opt-in, run in a disposable checkout, and record
 the command allowlist, timeout, environment, and failure mode in the report.
+The v1.3 sandbox-check issue (#230) is the only planned execution exception.
+It must keep execution disabled by default and must reject arbitrary user
+commands; scenarios may refer only to allowlisted command ids.
 
 Remote LLM calls can receive repository context. The context builder must be
 explicit about included files, truncation, ignored paths, and secret scanning.
