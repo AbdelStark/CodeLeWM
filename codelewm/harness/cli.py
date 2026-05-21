@@ -227,6 +227,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
+    llm_demo.add_argument(
+        "--require-learned-scorer",
+        action="store_true",
+        help="fail instead of using the deterministic fixture scorer when the checkpoint is not a learned torch model",
+    )
     llm_demo.add_argument("--overwrite", action="store_true", help="replace existing output")
     llm_demo.add_argument("--json", action="store_true", help="emit JSON output")
     llm_demo.add_argument(
@@ -913,6 +918,7 @@ def _llm_demo_command(args: argparse.Namespace) -> int:
                     "index": None if args.index is None else str(args.index),
                     "retrieval_prior_weight": args.retrieval_prior_weight,
                     "retrieval_prior_k": args.retrieval_prior_k,
+                    "require_learned_scorer": args.require_learned_scorer,
                     "instruction_sha256": _sha256_text(instruction),
                 },
             ),
@@ -930,6 +936,7 @@ def _llm_demo_command(args: argparse.Namespace) -> int:
             retrieval_prior_k=args.retrieval_prior_k,
             parent_manifests=tuple(args.parent_manifest or ()),
             allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            require_learned_scorer=args.require_learned_scorer,
             overwrite=args.overwrite,
             command=(
                 "codelewm",

@@ -153,6 +153,7 @@ the current negative/diagnostic public boundary.
 | #214 | harness: render visual LLM world-model demo report | harness/docs | p1 | m | RFC-0013 | Closed |
 | #216 | harness: require OpenRouter management key for BYOK registration | harness | p1 | s | RFC-0013 | Closed |
 | #218 | harness: surface OpenRouter provider errors and accept fenced live diffs | harness | p1 | s | RFC-0013 | Closed |
+| #220 | harness: use learned world-model inference in LLM demo | harness/model/runtime | p1 | m | RFC-0013 | Open |
 
 ## Tracking Issues
 
@@ -225,6 +226,9 @@ publication package.
   using `OPENROUTER_API_KEY`.
 - #218 surfaces redacted OpenRouter provider-routing failures such as missing
   ZDR endpoints and accepts markdown-fenced unified diffs from live LLM output.
+- #220 makes the LLM demo use the trusted package-native torch checkpoint
+  scorer instead of the deterministic hashing fixture scorer, while preserving
+  explicit fixture fallback for non-model tests.
 - #172 executed the v0.2 action-swap run
   `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on HF Jobs job
   `6a0dea258229e585f969c808`; artifacts were downloaded with `hf download`,

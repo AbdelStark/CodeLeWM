@@ -195,9 +195,12 @@ uv run scripts/llm-world-model-demo
 
 The task loads `.env` if present, keeps `CODELEWM_LLM_DRY_RUN=1` by default,
 generates fixture candidates, writes the candidate pack, runs the world-model
-reranker, verifies the demo manifest against the candidate-pack parent
-manifest, secret-scans the output, and writes a self-contained visual report at
-`.artifacts/llm-world-model-demo/run/demo.html`.
+reranker with a trusted package-native torch checkpoint, verifies the demo
+manifest against the candidate-pack parent manifest, secret-scans the output,
+and writes a self-contained visual report at
+`.artifacts/llm-world-model-demo/run/demo.html`. The script passes
+`--require-learned-scorer`, so it fails instead of silently using the fixture
+hashing scorer when the checkpoint is not a learned torch transition model.
 
 Run the underlying deterministic fixture command directly:
 
@@ -205,12 +208,14 @@ Run the underlying deterministic fixture command directly:
 CODELEWM_LLM_PROVIDER=openrouter \
 CODELEWM_LLM_DRY_RUN=1 \
 CODELEWM_LLM_MAX_CANDIDATES=2 \
-uv run codelewm llm-demo \
+uv run --group train codelewm llm-demo \
   --before tests/fixtures/codestate/class_method_before.py \
   --instruction "rewrite the accumulator update explicitly" \
   --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
   --out .artifacts/llm-demo \
   --context-path src/example.py \
+  --device cpu \
+  --require-learned-scorer \
   --json
 ```
 

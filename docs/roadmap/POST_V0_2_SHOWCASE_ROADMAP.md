@@ -64,11 +64,14 @@ Issues:
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
 | D1 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Open |
+| D2 | #220 | harness: use learned world-model inference in LLM demo | Open |
 
 Success for the stream:
 
 - `CODELEWM_LLM_DRY_RUN=0 uv run scripts/llm-world-model-demo` runs with
   `OPENROUTER_API_KEY` and explicit BYOK settings where desired;
+- demo reports show `codelewm.torch_transition_scorer.v1` from a trusted
+  package-native checkpoint, not the deterministic hashing fixture scorer;
 - candidate-pack and demo-report artifacts pass manifest verification and
   `codelewm secret-scan`;
 - public docs record the live run as a workflow artifact, not evidence that
@@ -167,10 +170,11 @@ Recommended order:
 8. #191
 9. #192
 10. #206
-11. #208
-12. #210
-13. #211
-14. #178 / #212
+11. #220
+12. #208
+13. #210
+14. #211
+15. #178 / #212
 
 Rationale: lock the contract first, publish the current result honestly, build
 the demo, prove one live workflow artifact, and only then spend effort on
@@ -182,8 +186,9 @@ scaled downstream labels or a new model hypothesis.
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. Select one open stream before making changes:
-#208 for live OpenRouter BYOK harness evidence, #210/#211 for scaled downstream
-reranking, or #178/#212 for the next positive-model research hypothesis.
+#220/#208 for live OpenRouter BYOK harness evidence, #210/#211 for scaled
+downstream reranking, or #178/#212 for the next positive-model research
+hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,

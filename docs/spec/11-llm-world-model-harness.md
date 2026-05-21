@@ -21,7 +21,7 @@ The post-v0.2 work is split into three streams:
    and #194.
 
 The public usability pass for BYOK and the local demo task is #206. New open
-follow-up streams are live harness evidence (#207/#208), scaled downstream
+follow-up streams are live harness evidence (#207/#220/#208), scaled downstream
 benchmarking (#209/#210/#211), and the next positive-model research hypothesis
 (#212, with CWM comparison in #178).
 
@@ -240,6 +240,12 @@ The demo report composes:
 - candidate parser and patch-application errors;
 - optional static/test check metadata;
 - claim gate.
+
+When the demo is configured with a package-native torch checkpoint, the
+world-model scorer must deserialize the trusted checkpoint after the checkpoint
+manifest gate and report `codelewm.torch_transition_scorer.v1`. Fixture hashing
+scorers are allowed only for explicit fixture tests or local smoke paths that do
+not claim learned-model inference.
 
 Demo success requires:
 

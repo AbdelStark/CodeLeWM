@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -11,6 +12,7 @@ import numpy as np
 
 from codelewm.harness import (
     SCORE_RESULT_SCHEMA_VERSION,
+    ScoreError,
     ScoreResult,
     TransitionIndexEntry,
     build_transition_index,
@@ -18,6 +20,7 @@ from codelewm.harness import (
     write_transition_index,
 )
 from codelewm.harness.scorer import _hashed_vector
+from codelewm.model.checkpoint import build_checkpoint_metadata, write_checkpoint_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -139,6 +142,92 @@ class ScoreApiTest(unittest.TestCase):
         self.assertEqual(payload["retrieval_prior"], 0.0)
         self.assertEqual(payload["final_score"], payload["transition_energy"])
         self.assertIn("retrieval prior computed from local transition index", payload["warnings"][-1])
+
+    def test_require_learned_backend_rejects_manifested_non_torch_checkpoint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = root / "checkpoint.bin"
+            checkpoint.write_bytes(b"fixture checkpoint")
+            write_checkpoint_manifest(
+                metadata=build_checkpoint_metadata(
+                    {"fixture": True},
+                    model_class="CodeTransitionModel",
+                ),
+                checkpoint_path=checkpoint,
+                manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+            )
+
+            with self.assertRaises(ScoreError) as raised:
+                load_scorer(checkpoint, require_learned_backend=True)
+
+        self.assertEqual(raised.exception.error_type, "checkpoint_error")
+        self.assertIn("learned scorer backend was required", str(raised.exception))
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("torch") is not None and importlib.util.find_spec("einops") is not None,
+        "torch scoring runtime is unavailable",
+    )
+    def test_load_scorer_uses_learned_torch_backend_for_trusted_checkpoint(self) -> None:
+        import torch
+
+        from codelewm.model import (
+            TorchCodeTransitionModelConfig,
+            build_torch_transition_model,
+            compute_config_hash,
+        )
+        from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE, TORCH_CHECKPOINT_SCHEMA_VERSION
+
+        compatibility = {
+            "wm": {
+                "action_view": "text",
+                "embed_dim": 256,
+                "state_sequence_length": 1024,
+                "action_sequence_length": 256,
+                "action_fusion": "conditional_transformer",
+            },
+            "loss": {"enable_inverse_action_reconstruction": False},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = root / "checkpoint.pt"
+            model = build_torch_transition_model(
+                TorchCodeTransitionModelConfig(
+                    vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+                    dropout=0.0,
+                )
+            )
+            torch.save(
+                {
+                    "schema_version": TORCH_CHECKPOINT_SCHEMA_VERSION,
+                    "step": 7,
+                    "model_state_dict": model.state_dict(),
+                    "compatibility_config": compatibility,
+                    "compatibility_config_hash": compute_config_hash(compatibility),
+                    "metrics": {"fixture": 1.0},
+                },
+                checkpoint,
+            )
+            write_checkpoint_manifest(
+                metadata=build_checkpoint_metadata(
+                    compatibility,
+                    action_view="text",
+                    model_class="TorchCodeTransitionModel",
+                ),
+                checkpoint_path=checkpoint,
+                manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+            )
+
+            scorer = load_scorer(checkpoint, device="cpu", require_learned_backend=True)
+            result = scorer.score_texts(
+                before="value = 1\n",
+                instruction="increment value",
+                candidate="value = 2\n",
+            )
+
+        self.assertEqual(result.model_id, "codelewm.torch_transition_scorer.v1")
+        self.assertGreaterEqual(result.transition_energy, 0.0)
+        self.assertTrue(any("checkpoint_step=7" == warning for warning in result.warnings))
+        self.assertFalse(any("lightweight scorer backend" in warning for warning in result.warnings))
 
 
 if __name__ == "__main__":

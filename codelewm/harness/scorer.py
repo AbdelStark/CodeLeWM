@@ -3,22 +3,39 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import math
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
 import numpy as np
 
+from codelewm.data.codestate import (
+    CodeStateExtractionError,
+    changed_line_numbers,
+    extract_codestate,
+)
+from codelewm.data.masks import build_masked_codestate, stable_token_id
 from codelewm.model.checkpoint import sha256_file
-from codelewm.model.transition import transition_energy
+from codelewm.model.transition import (
+    ABSTRACT_ACTION_SEQUENCE_LENGTH,
+    STATE_SEQUENCE_LENGTH,
+    TEXT_ACTION_SEQUENCE_LENGTH,
+    ActionBatch,
+    ActionView,
+    CodeStateBatch,
+    transition_energy,
+)
 from codelewm.security import (
     CheckpointTrustError,
     parse_python_source_text,
     require_trusted_checkpoint,
 )
+from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE, TORCH_CHECKPOINT_SCHEMA_VERSION
 
 from .transition_index import (
     TransitionIndex,
@@ -31,6 +48,7 @@ SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
 RERANK_RESULT_SCHEMA_VERSION = "codelewm.rerank.v1"
 ERROR_REPORT_SCHEMA_VERSION = "codelewm.error.v1"
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
+_DATA_TOKEN_RE = re.compile(r"\w+|[^\w\s]")
 HarnessErrorType = Literal[
     "missing_file",
     "invalid_syntax",
@@ -271,6 +289,208 @@ class HashingTransitionScoringBackend:
 
 
 @dataclass(frozen=True)
+class TorchCheckpointTransitionScoringBackend:
+    """Learned torch checkpoint scorer for before/instruction/candidate triples."""
+
+    model: Any
+    runtime: Any
+    device: Any
+    action_view: ActionView
+    action_sequence_length: int
+    vocab_size: int = DEFAULT_TRAINING_VOCAB_SIZE
+    checkpoint_step: int | None = None
+    model_id: str = "codelewm.torch_transition_scorer.v1"
+
+    @property
+    def warnings(self) -> tuple[str, ...]:
+        step = "unknown" if self.checkpoint_step is None else str(self.checkpoint_step)
+        return (
+            "learned torch transition model runtime loaded from checkpoint",
+            f"checkpoint_step={step}",
+            f"action_view={self.action_view}",
+        )
+
+    @classmethod
+    def load(cls, checkpoint: Path | str, *, device: str = "auto") -> "TorchCheckpointTransitionScoringBackend":
+        checkpoint_path = Path(checkpoint)
+        runtime = _require_torch_runtime_for_scoring()
+        selected_device = _resolve_torch_device(device, runtime)
+        try:
+            payload = runtime.load(checkpoint_path, map_location=selected_device, weights_only=True)
+        except TypeError:  # pragma: no cover - older torch compatibility.
+            payload = runtime.load(checkpoint_path, map_location=selected_device)
+        except Exception as exc:  # pragma: no cover - torch error classes vary by version.
+            raise ScoreError(
+                f"torch checkpoint could not be loaded: {exc}",
+                error_type="checkpoint_error",
+                remediation="provide a valid package-native CodeLeWM torch checkpoint",
+                artifact=str(checkpoint_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise ScoreError(
+                "checkpoint payload must be a mapping",
+                error_type="checkpoint_error",
+                remediation="provide a package-native CodeLeWM torch checkpoint",
+                artifact=str(checkpoint_path),
+            )
+        if payload.get("schema_version") != TORCH_CHECKPOINT_SCHEMA_VERSION:
+            raise ScoreError(
+                f"checkpoint schema_version is unsupported: {payload.get('schema_version')!r}",
+                error_type="checkpoint_error",
+                remediation="provide a codelewm.torch_checkpoint.v1 checkpoint",
+                artifact=str(checkpoint_path),
+            )
+        compatibility = payload.get("compatibility_config")
+        if not isinstance(compatibility, Mapping):
+            raise ScoreError(
+                "checkpoint compatibility_config must be a mapping",
+                error_type="checkpoint_error",
+                remediation="provide a checkpoint written by codelewm train --executor torch",
+                artifact=str(checkpoint_path),
+            )
+        model = _build_torch_model_from_compatibility(compatibility, artifact=str(checkpoint_path))
+        try:
+            model.load_state_dict(payload["model_state_dict"])
+        except (KeyError, RuntimeError, ValueError) as exc:
+            raise ScoreError(
+                f"checkpoint model state could not be loaded: {exc}",
+                error_type="checkpoint_error",
+                remediation="inspect the checkpoint compatibility config and model state",
+                artifact=str(checkpoint_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        model.to(selected_device)
+        model.eval()
+        return cls(
+            model=model,
+            runtime=runtime,
+            device=selected_device,
+            action_view=model.config.action_view,
+            action_sequence_length=model.config.action_sequence_length,
+            vocab_size=model.config.vocab_size,
+            checkpoint_step=_optional_int(payload.get("step")),
+        )
+
+    def transition_energy(self, before: str, instruction: str, candidate: str) -> float:
+        before_changed, after_changed = changed_line_numbers(before, candidate)
+        before_batch = self._state_batch_from_source(
+            before,
+            path="before.py",
+            changed_lines=before_changed,
+            field_name="before",
+        )
+        after_batch = self._state_batch_from_source(
+            candidate,
+            path="candidate.py",
+            changed_lines=after_changed,
+            field_name="candidate",
+        )
+        action_batch = self._action_batch_from_text(instruction)
+        try:
+            with self.runtime.no_grad():
+                z_before = self.model.encode_state(before_batch)
+                action_emb = self.model.encode_action(action_batch)
+                z_after = self.model.encode_state(after_batch)
+                z_pred_after = self.model.predict_after(z_before, action_emb)
+                energy = self.model.transition_energy(z_pred_after, z_after, reduction="sum")
+        except (RuntimeError, ValueError, NotImplementedError) as exc:
+            raise ScoreError(
+                f"torch transition scoring failed: {exc}",
+                error_type="scoring_error",
+                remediation="retry with --device cpu or inspect the checkpoint/runtime compatibility",
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        value = float(energy.detach().cpu().item())
+        if not math.isfinite(value):
+            raise ScoreError("torch transition energy must be finite")
+        return value
+
+    def _state_batch_from_source(
+        self,
+        source: str,
+        *,
+        path: str,
+        changed_lines: set[int],
+        field_name: str,
+    ) -> CodeStateBatch:
+        try:
+            state = extract_codestate(
+                source,
+                path=path,
+                changed_lines=changed_lines,
+                field_name=field_name,
+            )
+            sequence = build_masked_codestate(state).token_sequence
+        except CodeStateExtractionError as exc:
+            raise ScoreError(
+                f"{field_name} source is not parse-valid Python: {exc}",
+                error_type="invalid_syntax",
+                remediation="provide parse-valid Python source text",
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        except ValueError as exc:
+            raise ScoreError(
+                f"{field_name} source could not be tokenized for the torch scorer: {exc}",
+                error_type="scoring_error",
+                remediation="inspect the source length, syntax, and CodeState extraction policy",
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        input_ids = _pad_int_array(
+            _bucket_token_ids(sequence.input_ids, vocab_size=self.vocab_size),
+            STATE_SEQUENCE_LENGTH,
+            name=f"{field_name}.input_ids",
+        )
+        attention_mask = _pad_bool_array(
+            sequence.attention_mask
+            if sequence.attention_mask is not None
+            else tuple(True for _ in sequence.input_ids),
+            STATE_SEQUENCE_LENGTH,
+            name=f"{field_name}.attention_mask",
+        )
+        segment_ids = _pad_int_array(
+            sequence.segment_ids
+            if sequence.segment_ids is not None
+            else tuple(0 for _ in sequence.input_ids),
+            STATE_SEQUENCE_LENGTH,
+            name=f"{field_name}.segment_ids",
+        )
+        changed_hunk_mask = _pad_bool_array(
+            sequence.changed_hunk_mask
+            if sequence.changed_hunk_mask is not None
+            else tuple(False for _ in sequence.input_ids),
+            STATE_SEQUENCE_LENGTH,
+            name=f"{field_name}.changed_hunk_mask",
+        )
+        return CodeStateBatch(
+            input_ids=self.runtime.as_tensor(input_ids, device=self.device).long(),
+            attention_mask=self.runtime.as_tensor(attention_mask, device=self.device).bool(),
+            segment_ids=self.runtime.as_tensor(segment_ids, device=self.device).long(),
+            changed_hunk_mask=self.runtime.as_tensor(changed_hunk_mask, device=self.device).bool(),
+        )
+
+    def _action_batch_from_text(self, instruction: str) -> ActionBatch:
+        tokens = _torch_tokenize_text(instruction)
+        if not tokens:
+            raise ScoreError("instruction must not be empty")
+        input_ids = _pad_int_array(
+            _bucket_token_ids(tuple(stable_token_id(token) for token in tokens), vocab_size=self.vocab_size),
+            self.action_sequence_length,
+            name="action.input_ids",
+        )
+        attention_mask = _pad_bool_array(
+            tuple(True for _ in tokens),
+            self.action_sequence_length,
+            name="action.attention_mask",
+        )
+        return ActionBatch(
+            input_ids=self.runtime.as_tensor(input_ids, device=self.device).long(),
+            attention_mask=self.runtime.as_tensor(attention_mask, device=self.device).bool(),
+            action_view=self.action_view,
+        )
+
+
+@dataclass(frozen=True)
 class CodeLeWMScorer:
     """Python API wrapper for scoring candidate after-state files."""
 
@@ -394,6 +614,7 @@ def load_scorer(
     device: str = "auto",
     backend: TransitionScoringBackend | None = None,
     allow_unsafe: bool = False,
+    require_learned_backend: bool = False,
     checkpoint_manifest: Path | str | None = None,
     index: Path | str | None = None,
     retrieval_prior_weight: float = 0.0,
@@ -417,9 +638,10 @@ def load_scorer(
             remediation="provide an existing checkpoint file",
             artifact=str(checkpoint_path),
         )
+    trusted_manifest = None
     if not allow_unsafe:
         try:
-            require_trusted_checkpoint(checkpoint_path, manifest_path=checkpoint_manifest)
+            trusted_manifest = require_trusted_checkpoint(checkpoint_path, manifest_path=checkpoint_manifest)
         except CheckpointTrustError as exc:
             raise ScoreError(
                 f"checkpoint trust check failed: {exc}",
@@ -443,10 +665,21 @@ def load_scorer(
             remediation="pass --index or set retrieval_prior_weight to 0",
         )
     transition_index = _load_transition_index(index)
+    selected_backend = (
+        _default_scoring_backend(
+            checkpoint_path,
+            device=device,
+            trusted_manifest=trusted_manifest,
+            allow_unsafe=allow_unsafe,
+            require_learned_backend=require_learned_backend,
+        )
+        if backend is None
+        else backend
+    )
     return CodeLeWMScorer(
         checkpoint=checkpoint_path,
         checkpoint_sha256=sha256_file(checkpoint_path),
-        backend=HashingTransitionScoringBackend() if backend is None else backend,
+        backend=selected_backend,
         device=device,
         transition_index=transition_index,
         retrieval_prior_weight=retrieval_weight,
@@ -500,6 +733,177 @@ def validate_rerank_result_payload(payload: dict[str, Any]) -> RerankResult:
     """Return a validated rerank result payload."""
 
     return RerankResult.from_dict(payload)
+
+
+def _default_scoring_backend(
+    checkpoint: Path,
+    *,
+    device: str,
+    trusted_manifest: Any | None,
+    allow_unsafe: bool,
+    require_learned_backend: bool,
+) -> TransitionScoringBackend:
+    model_class = None if trusted_manifest is None else trusted_manifest.metadata.model_class
+    is_torch_manifest = model_class == "TorchCodeTransitionModel"
+    should_load_torch = is_torch_manifest or (allow_unsafe and require_learned_backend)
+    if should_load_torch:
+        try:
+            return TorchCheckpointTransitionScoringBackend.load(checkpoint, device=device)
+        except ScoreError:
+            if is_torch_manifest or require_learned_backend:
+                raise
+    if require_learned_backend:
+        detail = "missing checkpoint manifest" if trusted_manifest is None else f"model_class={model_class!r}"
+        raise ScoreError(
+            f"learned scorer backend was required, but the checkpoint is not a torch transition checkpoint ({detail})",
+            error_type="checkpoint_error",
+            remediation="provide a trusted TorchCodeTransitionModel checkpoint manifest or disable the learned-backend requirement",
+            artifact=str(checkpoint),
+        )
+    return HashingTransitionScoringBackend()
+
+
+def _require_torch_runtime_for_scoring() -> Any:
+    if importlib.util.find_spec("torch") is None:
+        raise ScoreError(
+            "learned scoring requires torch",
+            error_type="optional_dependency_missing",
+            remediation="install the training runtime with `uv sync --group train --group dev`",
+        )
+    if importlib.util.find_spec("einops") is None:
+        raise ScoreError(
+            "learned scoring requires einops",
+            error_type="optional_dependency_missing",
+            remediation="install the training runtime with `uv sync --group train --group dev`",
+        )
+    import torch
+
+    return torch
+
+
+def _resolve_torch_device(device: str, runtime: Any) -> Any:
+    if device not in {"cpu", "cuda", "mps", "auto"}:
+        raise ScoreError(
+            "device must be cpu, cuda, mps, or auto",
+            error_type="config_error",
+            remediation="choose one of cpu, cuda, mps, or auto",
+        )
+    if device == "auto":
+        if runtime.cuda.is_available():
+            return runtime.device("cuda")
+        return runtime.device("cpu")
+    if device == "cuda" and not runtime.cuda.is_available():
+        raise ScoreError(
+            "CUDA device requested but torch.cuda is unavailable",
+            error_type="config_error",
+            remediation="choose --device cpu, --device mps, or run on a CUDA host",
+        )
+    if device == "mps" and not (
+        hasattr(runtime.backends, "mps") and runtime.backends.mps.is_available()
+    ):
+        raise ScoreError(
+            "MPS device requested but torch.backends.mps is unavailable",
+            error_type="config_error",
+            remediation="choose --device cpu or run on an Apple Silicon host with MPS support",
+        )
+    return runtime.device(device)
+
+
+def _build_torch_model_from_compatibility(compatibility: Mapping[str, Any], *, artifact: str) -> Any:
+    from codelewm.model import TorchCodeTransitionModelConfig, build_torch_transition_model
+
+    wm = compatibility.get("wm")
+    if not isinstance(wm, Mapping):
+        raise ScoreError(
+            "checkpoint compatibility_config.wm must be a mapping",
+            error_type="checkpoint_error",
+            remediation="provide a checkpoint written by codelewm train --executor torch",
+            artifact=artifact,
+        )
+    action_view = str(wm.get("action_view", "text"))
+    if action_view not in {"text", "abstract"}:
+        raise ScoreError(
+            "patch action is diagnostic only and cannot be a learned scoring model",
+            error_type="checkpoint_error",
+            remediation="provide a text or abstract action checkpoint",
+            artifact=artifact,
+        )
+    try:
+        config = TorchCodeTransitionModelConfig(
+            action_view=action_view,  # type: ignore[arg-type]
+            latent_dim=int(wm.get("embed_dim", 256)),
+            state_sequence_length=int(wm.get("state_sequence_length", STATE_SEQUENCE_LENGTH)),
+            action_sequence_length=int(
+                wm.get(
+                    "action_sequence_length",
+                    TEXT_ACTION_SEQUENCE_LENGTH
+                    if action_view == "text"
+                    else ABSTRACT_ACTION_SEQUENCE_LENGTH,
+                )
+            ),
+            vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+            dropout=0.0,
+            action_fusion=str(wm.get("action_fusion", "conditional_transformer")),
+            enable_inverse_action_head=bool(
+                wm.get("enable_inverse_action_head")
+                or (
+                    isinstance(compatibility.get("loss"), Mapping)
+                    and compatibility["loss"].get("enable_inverse_action_reconstruction")
+                )
+            ),
+        )
+        return build_torch_transition_model(config)
+    except (RuntimeError, ValueError, TypeError) as exc:
+        raise ScoreError(
+            f"torch transition model could not be built from checkpoint compatibility config: {exc}",
+            error_type="checkpoint_error",
+            remediation="inspect the checkpoint compatibility_config",
+            artifact=artifact,
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ) from exc
+
+
+def _torch_tokenize_text(text: str) -> tuple[str, ...]:
+    return tuple(_DATA_TOKEN_RE.findall(text.strip()))
+
+
+def _bucket_token_ids(values: Sequence[int], *, vocab_size: int) -> tuple[int, ...]:
+    if vocab_size <= 1:
+        raise ScoreError("vocab_size must be greater than 1", error_type="checkpoint_error")
+    return tuple(((int(value) - 1) % (vocab_size - 1)) + 1 for value in values if int(value) > 0)
+
+
+def _pad_int_array(values: Sequence[int], length: int, *, name: str) -> np.ndarray:
+    if len(values) > length:
+        raise ScoreError(
+            f"{name} length {len(values)} exceeds fixed width {length}",
+            error_type="scoring_error",
+            remediation="shorten the source or instruction so it fits the CodeLeWM scorer contract",
+        )
+    output = np.zeros((1, length), dtype=np.int64)
+    output[0, : len(values)] = tuple(int(value) for value in values)
+    return output
+
+
+def _pad_bool_array(values: Sequence[bool], length: int, *, name: str) -> np.ndarray:
+    if len(values) > length:
+        raise ScoreError(
+            f"{name} length {len(values)} exceeds fixed width {length}",
+            error_type="scoring_error",
+            remediation="shorten the source or instruction so it fits the CodeLeWM scorer contract",
+        )
+    output = np.zeros((1, length), dtype=bool)
+    output[0, : len(values)] = tuple(bool(value) for value in values)
+    return output
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _load_transition_index(index: Path | str | None) -> TransitionIndex | None:

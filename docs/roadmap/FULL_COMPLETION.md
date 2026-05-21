@@ -311,6 +311,7 @@ Deliverables:
 - end-to-end LLM + CodeLeWM demo report (#189)
 - OpenRouter BYOK helper, local `uv run scripts/llm-world-model-demo` task,
   and public README polish (#206)
+- learned torch checkpoint inference in the LLM demo scorer path (#220, open)
 
 Claim boundary: this can prove the workflow, but not model usefulness.
 
@@ -367,10 +368,11 @@ Keep this table in implementation order and update it when issue scope changes.
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | complete |
 | 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | complete |
 | 10 | #206 | harness: add OpenRouter BYOK demo task and public README polish | Harness Demo | complete |
-| 11 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Live Harness Evidence | #207 |
-| 12 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
-| 13 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
-| 14 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
+| 11 | #220 | harness: use learned world-model inference in LLM demo | Live Harness Evidence | #207 |
+| 12 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Live Harness Evidence | #220 |
+| 13 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
+| 14 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
+| 15 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
 
 Completed backlog base:
 
@@ -437,7 +439,8 @@ instead of creating duplicate trackers.
   through #192 are closed.
 - #185 Preliminary results publication package: complete; children #193 and
   #194 are closed.
-- #207 Live LLM plus world-model harness evidence: open; child #208 remains.
+- #207 Live LLM plus world-model harness evidence: open; child #220 is the
+  learned-scorer precondition for #208.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178
