@@ -172,13 +172,12 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #189 harness: build end-to-end LLM plus CodeLeWM demo report.
-2. #190 benchmark: define downstream task schema and claim gates.
-3. #191 benchmark: build public-safe labeled candidate reranking set.
-4. #192 eval: run downstream reranking comparison and claim gate.
+1. #190 benchmark: define downstream task schema and claim gates.
+2. #191 benchmark: build public-safe labeled candidate reranking set.
+3. #192 eval: run downstream reranking comparison and claim gate.
 
-Issues #186, #187, #188, #193, and #194 are completed preconditions for the
-demo stream and publication package.
+Issues #186, #187, #188, #189, #193, and #194 are completed preconditions for
+the downstream benchmark stream and publication package.
 
 The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
 `anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that

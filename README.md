@@ -55,8 +55,8 @@ The current package includes:
   `codelewm dataset pack`, `codelewm train`, `codelewm eval retrieval`,
   `codelewm eval ablation`, `codelewm eval surprise`,
   `codelewm eval scorer-quality`, `codelewm index`, `codelewm score`, and
-  `codelewm rerank` commands, and structured
-  dataset/train/eval/score/rerank/error schemas;
+  `codelewm rerank`, and `codelewm llm-demo` commands, and structured
+  dataset/train/eval/score/rerank/demo/error schemas;
 - `codelewm.security`: license decision policy helpers, public artifact license
   gates, and non-execution parsing guards;
 - `docs/spec/` and `docs/rfcs/`: the accepted system contracts.
@@ -85,10 +85,10 @@ gates. The preliminary public summary lives at
 `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`, with the public HF artifact
 index in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md` and reusable
 announcement copy in `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`.
-The next milestone is the LLM + world-model harness specified in
+The current milestone is the LLM + world-model harness specified in
 `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`: use an LLM to propose candidate
-patches, use CodeLeWM to score/rerank them, and only claim usefulness after a
-scaled downstream benchmark passes. Core harness
+patches, use CodeLeWM to score/rerank them through `codelewm llm-demo`, and only
+claim usefulness after a scaled downstream benchmark passes. Core harness
 commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 `train.py`, `eval.py`, and the existing Hydra configs are inherited from the
 original LeWorldModel seed and are kept for compatibility while the package
@@ -140,9 +140,9 @@ The next showcase is tracked as v1.1 work:
 - #184 downstream candidate-reranking benchmark;
 - #185 preliminary results publication package.
 
-The planned public LLM path uses the OpenRouter Python SDK with
+The public LLM path uses the OpenRouter Python SDK with
 `OPENROUTER_API_KEY` and a configurable model slug such as
-`anthropic/claude-4.5-sonnet`. The OpenRouter adapter should not silently read a
+`anthropic/claude-4.5-sonnet`. The OpenRouter adapter does not silently read a
 raw `ANTHROPIC_API_KEY`; use OpenRouter BYOK or a separate direct-provider
 adapter if that becomes necessary.
 

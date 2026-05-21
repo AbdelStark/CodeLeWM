@@ -491,7 +491,9 @@ class ArtifactManifest:
     schema_version: str
     artifact_id: str
     artifact_kind: Literal[
+        "candidate_pack",
         "dataset",
+        "demo_report",
         "checkpoint",
         "training_run",
         "index",
