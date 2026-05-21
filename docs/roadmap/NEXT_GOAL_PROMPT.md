@@ -11,8 +11,7 @@ superseded by the meaningful harness demo stream.
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 Open or select a new issue from the updated backlog before making code changes:
-#227 through #231 for the meaningful LLM + world-model harness demo, #245
-for visual model observability and the Textual TUI stream,
+#227 through #231 for the meaningful LLM + world-model harness demo,
 #210/#211 for the scaled downstream reranking benchmark, or #178/#212 for the
 next positive-model research hypothesis. Work one issue per branch and PR.
 
@@ -22,6 +21,7 @@ docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
 docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md,
 docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md,
+docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md,
@@ -61,14 +61,14 @@ diagnostics; #240 closed manifest-backed run timelines; #242 closed the shared
 JSON/rich/HTML visual view model; #241 closed optional Textual TUI mode and
 deterministic TUI snapshots; #243 closed manifest-backed demo diagnostic links.
 Issue #244 closed the diagnostics-driven candidate-contrast action training
-plan. The remaining queue is final visual artifact publication. The latest live
-meaningful demo worked end to end, but it also
+plan. Issue #245 published the public visual observability artifact set. The
+latest live meaningful demo worked end to end, but it also
 showed the current scorer can rank an incomplete patch above semantically
 stronger candidates; treat that as a diagnostic failure mode to inspect, not as
 a positive model result.
 
 No active completion issue remains for the current public evidence boundary.
-The open streams are #224/#227-#231, #235 with #245, #209/#210/#211, and #212.
+The open streams are #224/#227-#231, #209/#210/#211, and #212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
 not require network or paid LLM calls. Any live OpenRouter mode must redact

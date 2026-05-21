@@ -260,11 +260,11 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - shared visual view model for JSON/rich/HTML demo parity complete through #242.
 - model/latent/tensor diagnostic links in demo reports complete through #243.
 - diagnostics-driven candidate-contrast experiment plan complete through #244.
+- public visual observability artifact set complete through #245.
 
 Open next streams:
 
 - meaningful harness demo: #224, with #227-#231 open;
-- visual model observability and Textual TUI harness: #235, with #245 open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
 
@@ -276,6 +276,7 @@ Live planning:
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 - `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`
+- `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
 - `docs/roadmap/NEXT_GOAL_PROMPT.md`

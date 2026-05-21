@@ -401,7 +401,7 @@ Deliverables:
 - optional Textual TUI for interactive demo inspection (#241, complete)
 - model/latent diagnostics linked from demo reports (#243, complete)
 - diagnostics-driven model improvement experiment plan (#244, complete)
-- published visual observability harness artifact set (#245)
+- published visual observability harness artifact set (#245, complete)
 
 Claim boundary: visualizations and TUI surfaces are diagnostics. They can make
 the model easier to inspect, but they still cannot prove semantic latent axes or
@@ -445,7 +445,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 29 | #241 | harness: build optional Textual TUI for demo inspection | Visual Observability/TUI | complete |
 | 30 | #243 | harness: connect model and latent diagnostics to demo reports | Visual Observability/TUI | complete |
 | 31 | #244 | research: define diagnostics-driven code model improvement experiment | Visual Observability/TUI | complete |
-| 32 | #245 | run: publish visual observability harness artifact set | Visual Observability/TUI | #237/#238/#239/#240/#241/#242/#243/#244 |
+| 32 | #245 | run: publish visual observability harness artifact set | Visual Observability/TUI | complete |
 | 33 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
 | 34 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
 | 35 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
@@ -520,8 +520,7 @@ instead of creating duplicate trackers.
   live artifact issue #231.
 - #224 Meaningful LLM plus world-model harness demo: open; #226 is complete,
   and children #227 through #231 remain.
-- #235 Visual model observability and TUI harness: open; #236 through #244 are
-  complete, and child #245 remains.
+- #235 Visual model observability and TUI harness: complete through #245.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178

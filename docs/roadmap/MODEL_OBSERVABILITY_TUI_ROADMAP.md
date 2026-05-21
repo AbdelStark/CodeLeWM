@@ -96,7 +96,7 @@ automation surface and must keep:
 | 6 | #241 | Textual TUI | Closed: optional interactive TUI that loads fixture/live reports without affecting base CLI imports. |
 | 7 | #243 | Diagnostics in demo reports | Closed: demo reports link checkpoint, latent, timeline, and tensor artifacts consistently. |
 | 8 | #244 | Diagnostics-driven model experiment | Closed: candidate-contrast action training plan with HF recipe, metrics, baselines, and claim gates. |
-| 9 | #245 | Visual artifact publication | Publish one manifest-backed visual observability artifact set as diagnostic evidence. |
+| 9 | #245 | Visual artifact publication | Closed: published one public manifest-backed visual observability artifact set as diagnostic evidence. |
 
 ## Artifact Contracts
 
@@ -212,8 +212,11 @@ Additional expected gates:
 
 ## Success Signal
 
-The stream is complete when #245 publishes one artifact set that lets a reader
-answer:
+The stream is complete. Issue #245 published
+`docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md` and the public HF
+bundle
+`visual-observability/codelewm-visual-observability-20260521-6a8ac81`, which
+lets a reader answer:
 
 - What scenario and candidate patches were evaluated?
 - Which model/checkpoint/scorer produced the scores?
@@ -245,13 +248,13 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then continue with #245
-under #235. Issues #237, #238, #239, #240, #241, #242, #243, and #244 are
+(#227-#231) when the selected issue depends on them. Issues #237, #238, #239,
+#240, #241, #242, #243, #244, and #245 are
 closed and provide the optional TensorBoard-compatible export, trusted
 checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces,
 run-timeline artifacts, optional Textual TUI, schema-versioned visual view
 model with manifest-backed diagnostic links, and candidate-contrast experiment
-plan.
+plan, plus the public visual observability artifact set.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

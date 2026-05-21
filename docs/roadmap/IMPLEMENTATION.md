@@ -197,7 +197,7 @@ claims by itself.
 | #242 | harness: keep rich terminal and JSON report parity with the TUI | harness/docs/observability | p1 | m | RFC-0013 | Closed |
 | #243 | harness: connect model and latent diagnostics to demo reports | harness/model/evaluation/observability | p1 | m | RFC-0013 | Closed |
 | #244 | research: define diagnostics-driven code model improvement experiment | model/evaluation/results | p1 | l | follow-up | Closed |
-| #245 | run: publish visual observability harness artifact set | results/harness/observability | p1 | m | RFC-0013 | Open |
+| #245 | run: publish visual observability harness artifact set | results/harness/observability | p1 | m | RFC-0013 | Closed |
 
 ## Tracking Issues
 
@@ -316,8 +316,9 @@ harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
   terminal, and HTML outputs. #241 adds the optional Textual TUI and
   deterministic TUI snapshot. #243 connects manifest-backed model/latent/tensor
   diagnostic links into demo reports and visual surfaces. #244 defines the
-  diagnostics-driven candidate-contrast action training experiment. The
-  remaining queue is one visual artifact publication.
+  diagnostics-driven candidate-contrast action training experiment. #245
+  publishes the public visual observability artifact set documented in
+  `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`.
 - #209/#210/#211 track the scaled downstream gate; #212 tracks the next model
   hypothesis and should use #178 only if CWM comparison yields reusable
   baselines or criteria.
