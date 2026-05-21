@@ -313,6 +313,23 @@ leakage, readiness, and secret-scan reports, and never imports or executes
 candidate code. The checked-in fixture has one labeled task and is explicitly
 blocked by the 100-example readiness gate.
 
+`codelewm eval downstream-rerank` consumes the benchmark pack and writes the
+downstream comparison:
+
+```bash
+codelewm eval downstream-rerank \
+  --benchmark-manifest .artifacts/downstream-rerank-fixture/manifest.json \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/downstream-rerank-report \
+  --json
+```
+
+The command emits `codelewm.downstream_rerank_eval_run.v1` on stdout and writes
+`codelewm.downstream_rerank_report.v1` with required baselines, slices,
+baseline availability status, confidence intervals when the sample count
+permits, and the downstream claim gate. Retrieval-prior baselines are reported
+as blocked unless an index produces finite retrieval-prior scores.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2

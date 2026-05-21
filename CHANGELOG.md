@@ -108,6 +108,7 @@ their workflow depends on.
 | Downstream benchmark readiness | `codelewm.downstream_benchmark_readiness.v1`    |
 | Downstream source license policy | `codelewm.downstream_source_license_policy.v1` |
 | Downstream split leakage report | `codelewm.downstream_split_leakage_report.v1`   |
+| Downstream rerank eval run    | `codelewm.downstream_rerank_eval_run.v1`        |
 | Downstream rerank report      | `codelewm.downstream_rerank_report.v1`          |
 | Downstream rerank claim gate  | `codelewm.downstream_rerank_claim_gate.v1`      |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |

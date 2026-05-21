@@ -46,7 +46,7 @@ Success for the stream:
 
 ## Stream B: Downstream Candidate-Reranking Benchmark
 
-Tracker: #184.
+Tracker: #184. Status: Closed.
 
 Purpose: decide whether the harness is useful beyond a demo. The benchmark must
 compare CodeLeWM against LLM order, random, lexical, no-action, retrieval-prior,
@@ -58,7 +58,7 @@ Issues:
 | --- | --- | --- | --- |
 | B1 | #190 | benchmark: define downstream task schema and claim gates | Closed |
 | B2 | #191 | benchmark: build public-safe labeled candidate reranking set | Closed |
-| B3 | #192 | eval: run downstream reranking comparison and claim gate | Open |
+| B3 | #192 | eval: run downstream reranking comparison and claim gate | Closed |
 
 Minimum scaled benchmark gate:
 
@@ -118,26 +118,26 @@ build the demo and only then spend effort on scaled downstream labels.
 
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
-Start with issue #192 and work one issue per branch and PR.
+The #186 through #194 stream is complete. Start a new issue for any future
+positive-claim research hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
-docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, and issue #192.
+docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
 
-The harness and downstream benchmark inputs are complete through #191. The
+The harness and downstream benchmark stream is complete through #192. The
 public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
 model slugs such as anthropic/claude-4.5-sonnet. Do not silently read raw
 provider keys in the OpenRouter adapter.
 
-Keep the claim boundary explicit: the current v0.2 checkpoint is public
-negative/diagnostic evidence. The harness demo can show workflow value, but it
-must not claim CodeLeWM improves coding until the downstream benchmark gate in
-#192 passes from manifest-backed artifacts.
+Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
+fixture report are public negative/diagnostic evidence. The harness demo can
+show workflow value, but it must not claim CodeLeWM improves coding until a
+future scaled downstream benchmark gate passes from manifest-backed artifacts.
 
-Run the strongest local validation for each issue, commit, push, open a PR,
-wait for checks, merge when clean, return to main, pull latest main, and
-finish #192.
+Run the strongest local validation for any future issue, commit, push, open a
+PR, wait for checks, merge when clean, return to main, and pull latest main.
 ```
