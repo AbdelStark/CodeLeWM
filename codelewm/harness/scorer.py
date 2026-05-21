@@ -7,6 +7,7 @@ import importlib.util
 import json
 import math
 import re
+import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -388,12 +389,18 @@ class TorchCheckpointTransitionScoringBackend:
         )
         action_batch = self._action_batch_from_text(instruction)
         try:
-            with self.runtime.no_grad():
-                z_before = self.model.encode_state(before_batch)
-                action_emb = self.model.encode_action(action_batch)
-                z_after = self.model.encode_state(after_batch)
-                z_pred_after = self.model.predict_after(z_before, action_emb)
-                energy = self.model.transition_energy(z_pred_after, z_after, reduction="sum")
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The PyTorch API of nested tensors is in prototype stage.*",
+                    category=UserWarning,
+                )
+                with self.runtime.no_grad():
+                    z_before = self.model.encode_state(before_batch)
+                    action_emb = self.model.encode_action(action_batch)
+                    z_after = self.model.encode_state(after_batch)
+                    z_pred_after = self.model.predict_after(z_before, action_emb)
+                    energy = self.model.transition_energy(z_pred_after, z_after, reduction="sum")
         except (RuntimeError, ValueError, NotImplementedError) as exc:
             raise ScoreError(
                 f"torch transition scoring failed: {exc}",
