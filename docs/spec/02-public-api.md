@@ -17,6 +17,7 @@ codelewm dataset pack --manifest .artifacts/first-results/build/manifest.json --
 codelewm train --config config/first_results/train_tiny.json --out .artifacts/first-results/train --executor torch --device cpu --json
 codelewm eval retrieval --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/retrieval --device cpu --json
 codelewm eval latent-probe --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/latent_probe --device cpu --json
+codelewm eval latent-matrix --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/latent_matrix --device cpu --json
 codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/manifest.json --training-artifact .artifacts/first-results/train/manifest.json --out .artifacts/first-results/ablation --json
 codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --json
 codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --json
@@ -218,6 +219,30 @@ It includes majority, lexical, metadata-only, random-latent, no-action, and
 shuffled-action controls, bootstrap confidence intervals, and per-dimension
 association diagnostics. Positive semantic-axis names are blocked unless future
 runs demonstrate stability across seeds and splits.
+
+`codelewm eval latent-matrix` is the public latent-geometry diagnostic path:
+
+```bash
+codelewm eval latent-matrix \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-latent-matrix \
+  --latent-probe-report .artifacts/tiny-latent-probe/reports/latent_probe_report.json \
+  --json
+```
+
+It verifies the same dataset, training-run, and checkpoint manifests as
+retrieval and latent-probe evaluation, then writes
+`reports/latent_matrix_report.json` with schema
+`codelewm.eval.latent_matrix_report.v1`. The report covers `z_before`,
+`z_after`, and `z_pred_after` latent matrices, including row/dimension counts,
+split and source coverage, finite-value checks, per-dimension statistics,
+effective rank, norm summaries, mean pairwise cosine, bounded covariance and
+correlation previews suitable for heatmaps, inline dimension-label association
+diagnostics, and optional links to `codelewm.eval.latent_probe_report.v1`
+controls. It never serializes raw latent vectors by default. Semantic-axis,
+action-conditioned-quality, and downstream-coding-usefulness claim gates remain
+closed unless future multi-seed/split evidence and downstream benchmarks pass.
 
 `codelewm eval surprise` is the public training-run plus packed-dataset to
 patch-surprise-report path:

@@ -62,6 +62,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm model inspect-checkpoint` | landed | `codelewm.model_checkpoint_inspection_run.v1`, `codelewm.model_checkpoint_inspection.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval latent-matrix` | landed | `codelewm.eval.latent_matrix_run.v1`, `codelewm.eval.latent_matrix_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval downstream-pack` | landed | `codelewm.downstream_benchmark_pack_run.v1`, `codelewm.downstream_rerank_benchmark.v1`, `codelewm.downstream_benchmark_readiness.v1`, `codelewm.artifact_manifest.v1`, `codelewm.secret_scan.v1`, `codelewm.error.v1` |
@@ -638,6 +639,40 @@ blocked unless future runs show stable axes across seeds and splits. The report
 therefore states `semantic_structure_status` as supported, unsupported, weakly
 indicated, or not evaluable without changing any model checkpoint.
 
+### `codelewm eval latent-matrix`
+
+Run latent geometry diagnostics over train/validation/test splits:
+
+```bash
+codelewm eval latent-matrix \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --data .artifacts/tiny-pack \
+  --out .artifacts/tiny-latent-matrix \
+  --latent-probe-report .artifacts/tiny-latent-probe/reports/latent_probe_report.json \
+  --json
+```
+
+The command writes:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  config.json                                normalized latent-matrix config
+  reports/
+    latent_matrix_report.json                codelewm.eval.latent_matrix_report.v1
+```
+
+The report covers `z_before`, `z_after`, and `z_pred_after` latent matrices. It
+records shape, dimension count, sample count, split/source coverage, finite
+status, per-dimension mean/std/variance/norm statistics, effective rank,
+effective-rank ratio, mean pairwise cosine, covariance/correlation summaries,
+and bounded heatmap-ready covariance/correlation previews. It also records
+inline dimension-label association summaries and can link an existing
+`codelewm.eval.latent_probe_report.v1` for probe metrics, controls, confidence
+intervals, and axis diagnostics. Raw latent vectors are not serialized by
+default. Semantic-axis, action-conditioned-quality, and downstream usefulness
+claim gates remain closed.
+
 ### `codelewm eval surprise`
 
 Run model-backed patch-surprise evaluation over a packed dataset artifact:
@@ -1107,6 +1142,8 @@ field list.
 | Action-contrast pool report | `codelewm.eval.action_contrast_pool_report.v1` |
 | Latent probe eval run | `codelewm.eval.latent_probe_run.v1` |
 | Latent probe report | `codelewm.eval.latent_probe_report.v1` |
+| Latent matrix eval run | `codelewm.eval.latent_matrix_run.v1` |
+| Latent matrix report | `codelewm.eval.latent_matrix_report.v1` |
 | Action ablation run | `codelewm.eval.action_ablation_run.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |

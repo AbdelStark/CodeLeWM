@@ -169,7 +169,7 @@ Issues:
 | G0 | #236 | docs: lock visual model observability and TUI roadmap | Closed |
 | G1 | #237 | observability: add TensorBoard event export for training and checkpoints | Closed |
 | G2 | #238 | model: add checkpoint tensor and layer inspection reports | Closed |
-| G3 | #239 | eval: add latent representation matrix diagnostics | Open |
+| G3 | #239 | eval: add latent representation matrix diagnostics | Closed |
 | G4 | #240 | observability: add run timeline and monitoring reports | Open |
 | G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Open |
 | G6 | #241 | harness: build optional Textual TUI for demo inspection | Open |
@@ -291,8 +291,9 @@ downstream labels or a new model hypothesis.
 The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. #220 and #222 proved learned scoring and terminal-first
 demo UX, but #207/#208 were superseded because the comment-style toy task is
-not the right public artifact. Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #239 through #245 for the
+not the right public artifact. #239 closed the latent-matrix diagnostic surface.
+Select one open stream before making changes:
+#227 through #231 for the meaningful harness demo, #240 through #245 for the
 visual model observability and TUI stream, #210/#211 for scaled downstream
 reranking, or #178/#212 for the next positive-model research hypothesis.
 

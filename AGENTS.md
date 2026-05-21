@@ -26,13 +26,15 @@ Implemented foundations:
   executor over packed CodeLeWM transition batches.
 - `codelewm.eval`: retrieval metrics, hard-negative pools, required baselines,
   action-view policy, collapse diagnostics, action ablation, surprise reports,
-  scorer-quality reports, downstream reranking benchmark pack contracts, and
-  downstream reranking reports.
+  latent-probe reports, latent-matrix diagnostics, scorer-quality reports,
+  downstream reranking benchmark pack contracts, and downstream reranking
+  reports.
 - `codelewm.harness`: package CLI entry point with `dataset build`, `dataset
-  pack`, `train`, `eval retrieval`, `eval ablation`, `eval surprise`, `eval
-  scorer-quality`, `eval downstream-pack`, `eval downstream-rerank`, `llm-demo`,
-  `openrouter byok-register`, `index`, `score`, `rerank`, `manifest verify`,
-  and `secret-scan`.
+  pack`, `train`, `eval retrieval`, `eval latent-probe`,
+  `eval latent-matrix`, `eval ablation`, `eval surprise`,
+  `eval scorer-quality`, `eval downstream-pack`, `eval downstream-rerank`,
+  `llm-demo`, `openrouter byok-register`, `index`, `score`, `rerank`,
+  `manifest verify`, and `secret-scan`.
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
@@ -214,11 +216,12 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #239 through #245 for visual model observability and the Textual TUI stream
+2. #240 through #245 for visual model observability and the Textual TUI stream
    under tracker #235. Issues #237 and #238 are complete and added optional
    TensorBoard-compatible training/checkpoint event export plus trusted
-   checkpoint tensor inspection. Continue with
-   latent matrix diagnostics (#239), run timelines (#240),
+   checkpoint tensor inspection. Issue #239 adds manifest-backed latent matrix
+   diagnostics with bounded heatmap-ready covariance/correlation previews and
+   closed semantic-axis claim gates. Continue with run timelines (#240),
    non-interactive report parity (#242), optional Textual TUI (#241), demo
    diagnostic links (#243), diagnostics-driven model experiment planning
    (#244), and final visual artifact publication (#245).
@@ -249,12 +252,15 @@ manifest-backed `codelewm.training.tensorboard_export.v1` metadata plus
 TensorBoard-compatible event files for finite metrics and bounded model/latent
 histograms. Issue #238 added `codelewm model inspect-checkpoint`, which writes
 manifest-backed `codelewm.model_checkpoint_inspection.v1` tensor/layer reports
-after checkpoint trust-gate verification. #235 does not supersede #224; it
+after checkpoint trust-gate verification. Issue #239 added
+`codelewm eval latent-matrix`, which writes manifest-backed
+`codelewm.eval.latent_matrix_report.v1` diagnostics for latent shapes,
+per-dimension statistics, effective rank, covariance/correlation summaries,
+probe associations, and semantic-axis claim gates. #235 does not supersede #224; it
 extends the project after the meaningful-demo scenario path by adding optional
 TensorBoard-compatible event exports, checkpoint tensor/layer inspection,
-latent representation matrix diagnostics, run timeline artifacts, shared report
-view models, an optional Textual TUI, and diagnostics-driven model-improvement
-planning. Visualization dependencies must remain optional and must not affect
+run timeline artifacts, shared report view models, an optional Textual TUI, and
+diagnostics-driven model-improvement planning. Visualization dependencies must remain optional and must not affect
 base imports, JSON reports, fixture tests, or non-interactive CLI usage.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
