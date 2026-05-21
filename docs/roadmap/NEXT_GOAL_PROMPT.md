@@ -11,14 +11,16 @@ superseded by the meaningful harness demo stream.
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 Open or select a new issue from the updated backlog before making code changes:
-#227 through #231 for the meaningful LLM + world-model harness demo, #210/#211
-for the scaled downstream reranking benchmark, or #178/#212 for the next
-positive-model research hypothesis. Work one issue per branch and PR.
+#227 through #231 for the meaningful LLM + world-model harness demo, #237
+through #245 for visual model observability and the Textual TUI stream,
+#210/#211 for the scaled downstream reranking benchmark, or #178/#212 for the
+next positive-model research hypothesis. Work one issue per branch and PR.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
+docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md,
@@ -50,8 +52,19 @@ registration requires an OpenRouter management key such as
 `OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use
 `OPENROUTER_API_KEY`. No reports may serialize raw provider keys.
 
+The #235 visual model observability and TUI tracker is now the single stream
+for TensorBoard-compatible model-generation traces, checkpoint tensor/layer
+inspection, latent representation matrix diagnostics, run timelines, shared
+JSON/rich/HTML report view models, optional Textual TUI mode, demo diagnostic
+links, diagnostics-driven model experiment planning, and final visual artifact
+publication. The latest live meaningful demo worked end to end, but it also
+showed the current scorer can rank an incomplete patch above semantically
+stronger candidates; treat that as a diagnostic failure mode to inspect, not as
+a positive model result.
+
 No active completion issue remains for the current public evidence boundary.
-The open streams are #224/#227-#231, #209/#210/#211, and #212.
+The open streams are #224/#227-#231, #235/#237-#245, #209/#210/#211, and
+#212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
 not require network or paid LLM calls. Any live OpenRouter mode must redact
@@ -67,6 +80,12 @@ edge-case handling task, API behavior change, or behavior-preserving refactor,
 not a comment/no-op edit. Candidate code remains untrusted; sandbox checks are
 disabled unless #230's explicit allowlist/timeout/disposable-checkout contract
 is implemented and selected.
+
+For visual observability/TUI work, keep TensorBoard-compatible export and
+Textual dependencies optional. Base imports, fixture tests, JSON reports, and
+non-interactive rich terminal output must keep working without those optional
+groups. Model, tensor, latent, and TUI artifacts remain diagnostic until scaled
+representation and downstream benchmark gates pass.
 
 After each issue, run the strongest relevant local validation, commit, push,
 open a PR, wait for available checks, merge when clean, return to main, pull

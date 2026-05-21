@@ -189,6 +189,22 @@ Stream A2, meaningful harness demo:
 - #231 publishes one live OpenRouter/BYOK meaningful demo artifact set as
   diagnostic workflow evidence.
 
+Stream A3, visual model observability and TUI harness:
+
+- #235 tracks the stream.
+- #236 locks the roadmap, backlog, and agent context for visual model
+  observability and TUI work.
+- #237 adds TensorBoard-compatible training/checkpoint event export.
+- #238 adds checkpoint tensor and layer inspection reports.
+- #239 adds latent representation matrix diagnostics.
+- #240 adds run timeline and monitoring reports.
+- #242 preserves non-interactive rich terminal, HTML, and JSON report parity.
+- #241 adds optional Textual TUI mode for interactive demo inspection.
+- #243 connects model and latent diagnostics to demo reports.
+- #244 defines a diagnostics-driven model improvement experiment.
+- #245 publishes one visual observability harness artifact set as diagnostic
+  evidence.
+
 Stream B, downstream candidate-reranking benchmark:
 
 - #184 tracks the stream.

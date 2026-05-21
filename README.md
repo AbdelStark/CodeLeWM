@@ -249,10 +249,13 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - downstream reranking fixture and claim gate complete through #190-#192;
 - BYOK/demo/readme polish complete through #206.
 - meaningful scenario selection complete through #226.
+- visual model observability and TUI roadmap locked through #236.
 
 Open next streams:
 
 - meaningful harness demo: #224, with #227-#231 open;
+- visual model observability and Textual TUI harness: #235, with #237-#245
+  open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
 
@@ -262,6 +265,7 @@ scaled downstream gate passes on at least 100 labeled examples.
 Live planning:
 
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
+- `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
 - `docs/roadmap/NEXT_GOAL_PROMPT.md`
