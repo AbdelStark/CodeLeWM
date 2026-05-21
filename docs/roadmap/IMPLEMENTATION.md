@@ -198,6 +198,8 @@ claims by itself.
 | #243 | harness: connect model and latent diagnostics to demo reports | harness/model/evaluation/observability | p1 | m | RFC-0013 | Closed |
 | #244 | research: define diagnostics-driven code model improvement experiment | model/evaluation/results | p1 | l | follow-up | Closed |
 | #245 | run: publish visual observability harness artifact set | results/harness/observability | p1 | m | RFC-0013 | Closed |
+| #256 | [Tracking] production cleanup and optimization pass | core/docs | p1 | m | RFC-0012 | Closed |
+| #257 | core: fix audit-backed cleanup findings | core/evaluation/observability/docs | p1 | m | RFC-0009 | Closed |
 
 ## Tracking Issues
 
@@ -224,7 +226,8 @@ intervention, closed with the negative/diagnostic #172 boundary; #183
 [Tracking] v0.3 LLM + world-model harness demo; #184 [Tracking] v0.3
 downstream candidate-reranking benchmark; #185 [Tracking] preliminary results
 publication package; #224 [Tracking] v1.3 meaningful LLM plus world-model
-harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
+harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness;
+#256 [Tracking] production cleanup and optimization pass.
 
 ## Cross-Cutting Dependencies
 
@@ -319,6 +322,10 @@ harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
   diagnostics-driven candidate-contrast action training experiment. #245
   publishes the public visual observability artifact set documented in
   `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`.
+- #256/#257 define the first audit-backed production cleanup pass: concrete
+  static-dead-code cleanup, warning-free collapse diagnostics, and stale
+  architecture/roadmap context refresh without removing legacy compatibility
+  surfaces outside the deprecation policy.
 - #209/#210/#211 track the scaled downstream gate; #212 tracks the next model
   hypothesis and should use #178 only if CWM comparison yields reusable
   baselines or criteria.

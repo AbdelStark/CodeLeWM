@@ -50,6 +50,9 @@ earliest one minor release after the deprecation notice.
 
 - Public README, usage, API, roadmap, and release docs now separate smoke
   evidence, scaled systems evidence, and negative action-use evidence.
+- Architecture and roadmap docs now describe the implemented package-native
+  runtime and the #256 production-cleanup tracker instead of stale bootstrap
+  language.
 
 ### Deprecated
 
@@ -61,7 +64,10 @@ earliest one minor release after the deprecation notice.
 
 ### Fixed
 
-- Nothing yet.
+- Collapse diagnostics no longer emit NumPy covariance runtime warnings for
+  ordinary finite embeddings.
+- The run-timeline context manager no longer trips static dead-code checks for
+  intentionally unused exception metadata.
 
 ### Security
 

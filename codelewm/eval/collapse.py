@@ -123,7 +123,7 @@ def compute_collapse_report(embeddings: Any) -> CollapseReport:
 
     variances = values.var(axis=0)
     centered = values - values.mean(axis=0, keepdims=True)
-    covariance = centered.T @ centered / max(values.shape[0] - 1, 1)
+    covariance = _covariance_matrix(centered)
     eigvals = np.clip(np.linalg.eigvalsh(covariance), 0.0, None)
     eig_sum = float(eigvals.sum())
     if eig_sum <= 0.0:
@@ -247,6 +247,11 @@ def _pairwise_cosine_mean(values: np.ndarray) -> float:
     cosine = normalized @ normalized.T
     mask = ~np.eye(values.shape[0], dtype=bool)
     return float(cosine[mask].mean())
+
+
+def _covariance_matrix(centered_values: np.ndarray) -> np.ndarray:
+    denominator = max(centered_values.shape[0] - 1, 1)
+    return np.einsum("ni,nj->ij", centered_values, centered_values) / denominator
 
 
 def _nearest_neighbor_entropy(values: np.ndarray) -> float:

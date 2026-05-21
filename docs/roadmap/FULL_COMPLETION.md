@@ -382,7 +382,7 @@ downstream benchmark gate passes.
 
 ### Phase 13: Visual Model Observability And TUI Harness
 
-Status: in progress under tracker #235.
+Status: complete as diagnostic observability infrastructure.
 
 Goal: make model behavior, latent representations, candidate ranking, and run
 state inspectable enough to debug meaningful harness failures. The latest live
@@ -541,8 +541,8 @@ that subsystem.
   action-swap/inverse-action intervention was proven insufficient by #172.
 - The latest meaningful live demo worked as a workflow but exposed a scorer
   quality risk: the learned model can rank a semantically incomplete patch above
-  better candidates. #235 tracks the observability needed to inspect and plan a
-  falsifiable fix before another model run.
+  better candidates. #235 closed the observability surfaces needed to inspect
+  that failure, and #244 defines the next falsifiable model experiment.
 - The v0.2 latent-probe gate does not support semantic latent-axis claims.
 - The v0.2 downstream scorer-quality path remains blocked as scaled evidence
   because it has one labeled example instead of the required 100.
@@ -553,6 +553,9 @@ that subsystem.
 - Root legacy scripts can confuse contributors; public docs now mark the
   package-native path as authoritative, but the final release should still avoid
   widening the compatibility surface.
+- #256/#257 track the audit-backed production cleanup pass. The first scoped
+  slice fixes concrete dead-code and numeric-warning findings while preserving
+  the legacy compatibility boundary.
 - HF repositories are public diagnostic artifact repositories; the current
   evidence boundary still does not support public positive action-conditioning
   claims.
