@@ -369,7 +369,7 @@ optional sandbox checks, and one live diagnostic artifact set.
 Deliverables:
 
 - roadmap, backlog, and agent-context lock (#225)
-- meaningful scenario fixtures and selector (#226)
+- meaningful scenario fixtures and selector (#226, complete)
 - task-solving prompt path for unified-diff candidates (#227)
 - static patch analysis in candidate packs and demo reports (#228)
 - terminal/HTML scorer traces and compact diff previews (#229)
@@ -401,7 +401,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 13 | #207/#208 | live comment-style harness artifact path | Live Harness Evidence | superseded by #224/#231 |
 | 14 | #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | Meaningful Harness Demo | open |
 | 15 | #225 | docs: lock meaningful harness demo roadmap and backlog | Meaningful Harness Demo | complete |
-| 16 | #226 | harness: add meaningful demo scenarios and selector | Meaningful Harness Demo | #225 |
+| 16 | #226 | harness: add meaningful demo scenarios and selector | Meaningful Harness Demo | complete |
 | 17 | #227 | harness: upgrade demo prompt for task-solving patches | Meaningful Harness Demo | #226 |
 | 18 | #228 | harness: add static patch analysis to demo candidates | Meaningful Harness Demo | #227 |
 | 19 | #229 | harness: show scorer traces and diff previews in the demo | Meaningful Harness Demo | #228 |
@@ -479,8 +479,8 @@ instead of creating duplicate trackers.
 - #207 Live LLM plus world-model harness evidence: closed as superseded; #208
   is also closed as superseded by the meaningful harness demo tracker #224 and
   live artifact issue #231.
-- #224 Meaningful LLM plus world-model harness demo: open; children #226
-  through #231 remain after the #225 roadmap lock.
+- #224 Meaningful LLM plus world-model harness demo: open; #226 is complete,
+  and children #227 through #231 remain.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178

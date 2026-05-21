@@ -59,14 +59,15 @@ uv run scripts/llm-world-model-demo
 ```
 
 The task loads `.env` if present, stays in `CODELEWM_LLM_DRY_RUN=1` by default,
-generates candidate diffs through the OpenRouter adapter fixture path, writes
-`codelewm.llm_candidate_pack.v1`, runs `codelewm llm-demo` with a trusted
-package-native torch checkpoint and `--require-learned-scorer`, verifies
-manifests, secret-scans publishable outputs, and writes a visual report at
+materializes the `bugfix-edge-case` scenario, generates candidate diffs through
+the OpenRouter adapter fixture path, writes `codelewm.llm_candidate_pack.v1`,
+runs `codelewm llm-demo` with a trusted package-native torch checkpoint and
+`--require-learned-scorer`, verifies manifests, secret-scans publishable
+outputs, and writes a visual report at
 `.artifacts/llm-world-model-demo/run/demo.html`. If the local first-results
 checkpoint is missing, the script regenerates it before scoring. The default
-output is a terminal walkthrough of candidate generation, learned world-model
-inference, artifact gates, and claim status.
+output is a terminal walkthrough of scenario selection, candidate generation,
+learned world-model inference, artifact gates, and claim status.
 
 Expected success signal:
 
@@ -80,6 +81,10 @@ html report: .artifacts/llm-world-model-demo/run/demo.html
 
 For non-interactive JSON output, use `uv run scripts/llm-world-model-demo --json`
 or `CODELEWM_LLM_DEMO_OUTPUT=json`.
+
+Select another built-in scenario with `--scenario <id>` or
+`CODELEWM_LLM_DEMO_SCENARIO=<id>`. List available scenarios with
+`uv run scripts/llm-world-model-demo --list-scenarios`.
 
 Live OpenRouter mode is explicit:
 
@@ -243,10 +248,11 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - preliminary publication package complete through #193-#194;
 - downstream reranking fixture and claim gate complete through #190-#192;
 - BYOK/demo/readme polish complete through #206.
+- meaningful scenario selection complete through #226.
 
 Open next streams:
 
-- live OpenRouter BYOK harness evidence: #207/#208;
+- meaningful harness demo: #224, with #227-#231 open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
 

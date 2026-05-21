@@ -250,6 +250,11 @@ class OpenRouterCandidateRequest:
             raise OpenRouterAdapterError("instruction must not be empty", error_type="schema_error")
         if not self.model:
             raise OpenRouterAdapterError("model must not be empty", error_type="schema_error")
+        if not self.prompt_template_id:
+            raise OpenRouterAdapterError(
+                "prompt_template_id must not be empty",
+                error_type="schema_error",
+            )
         if self.max_candidates < 1:
             raise OpenRouterAdapterError("max_candidates must be >= 1", error_type="schema_error")
         if self.timeout_seconds < 1:
@@ -302,6 +307,10 @@ class OpenRouterCandidateRequest:
             provider_options=provider_options,
             dry_run=_parse_bool_env(env, "CODELEWM_LLM_DRY_RUN", default=True),
             retry_limit=_parse_int_env(env, "CODELEWM_LLM_RETRY_LIMIT", default=2),
+            prompt_template_id=env.get(
+                "CODELEWM_LLM_PROMPT_TEMPLATE_ID",
+                DEFAULT_PROMPT_TEMPLATE_ID,
+            ),
             http_referer=_empty_to_none(env.get("OPENROUTER_HTTP_REFERER")),
             app_title=_empty_to_none(env.get("OPENROUTER_APP_TITLE")) or "CodeLeWM",
             byok=byok,
@@ -906,6 +915,12 @@ def _generate_dry_run_candidate_pack(
 
 def _dry_run_patch(request: OpenRouterCandidateRequest, *, index: int) -> str:
     first_path = next(iter(sorted(request.context_bundle)), "candidate.py")
+    first_content = request.context_bundle.get(first_path, "")
+    if (
+        "normalize_label" in first_content
+        and "return value.strip().lower().replace" in first_content
+    ):
+        return _bugfix_edge_case_dry_run_patch(first_path, index=index)
     marker = _sha256_text(f"{request.task_id}:{request.instruction}:{index}")[:12]
     return (
         f"### Candidate candidate_{index:03d}\n"
@@ -913,6 +928,43 @@ def _dry_run_patch(request: OpenRouterCandidateRequest, *, index: int) -> str:
         f"+++ b/{first_path}\n"
         "@@ -1,0 +1,1 @@\n"
         f"+# CodeLeWM dry-run candidate {index}: {marker}\n"
+    )
+
+
+def _bugfix_edge_case_dry_run_patch(path: str, *, index: int) -> str:
+    replacements = (
+        (
+            "    normalized = \"-\".join(value.strip().lower().split())\n"
+            "    if not normalized:\n"
+            "        return \"untitled\"\n"
+            "    return normalized\n"
+        ),
+        (
+            "    parts = value.strip().lower().split()\n"
+            "    if not parts:\n"
+            "        return \"untitled\"\n"
+            "    return \"-\".join(parts)\n"
+        ),
+        (
+            "    text = \"-\".join(value.strip().lower().split())\n"
+            "    return text or \"untitled\"\n"
+        ),
+        (
+            "    words = value.strip().lower().split()\n"
+            "    return \"-\".join(words) if words else \"untitled\"\n"
+        ),
+    )
+    replacement = replacements[(index - 1) % len(replacements)]
+    added_lines = "".join(f"+{line}\n" for line in replacement.splitlines())
+    return (
+        f"### Candidate candidate_{index:03d}\n"
+        f"--- a/{path}\n"
+        f"+++ b/{path}\n"
+        "@@ -1,2 +1,"
+        f"{1 + len(replacement.splitlines())} @@\n"
+        " def normalize_label(value: str) -> str:\n"
+        "-    return value.strip().lower().replace(\" \", \"-\")\n"
+        f"{added_lines}"
     )
 
 

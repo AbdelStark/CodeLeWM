@@ -194,16 +194,25 @@ uv run scripts/llm-world-model-demo
 ```
 
 The task loads `.env` if present, keeps `CODELEWM_LLM_DRY_RUN=1` by default,
-generates fixture candidates, writes the candidate pack, runs the world-model
-reranker with a trusted package-native torch checkpoint, verifies the demo
-manifest against the candidate-pack parent manifest, secret-scans the output,
-and writes a self-contained visual report at
+materializes the `bugfix-edge-case` scenario, generates fixture candidates,
+writes the candidate pack, runs the world-model reranker with a trusted
+package-native torch checkpoint, verifies the demo manifest against the
+candidate-pack parent manifest, secret-scans the output, and writes a
+self-contained visual report at
 `.artifacts/llm-world-model-demo/run/demo.html`. The script passes
 `--require-learned-scorer`, so it fails instead of silently using the fixture
 hashing scorer when the checkpoint is not a learned torch transition model.
 Default output is a visual terminal walkthrough. Use
 `uv run scripts/llm-world-model-demo --json` or
 `CODELEWM_LLM_DEMO_OUTPUT=json` for the raw JSON command summaries.
+
+Scenario selection is explicit:
+
+```bash
+uv run scripts/llm-world-model-demo --list-scenarios
+uv run scripts/llm-world-model-demo --scenario bugfix-edge-case
+CODELEWM_LLM_DEMO_SCENARIO=bugfix-edge-case uv run scripts/llm-world-model-demo
+```
 
 Run the underlying deterministic fixture command directly:
 
