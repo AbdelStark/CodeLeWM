@@ -125,7 +125,7 @@ negative-results publication.
 |---|-------|------|----------|--------|-----|--------|
 | #183 | [Tracking] v0.3 LLM + world-model harness demo | harness | p1 | l | RFC-0013 | Open |
 | #184 | [Tracking] v0.3 downstream candidate-reranking benchmark | evaluation | p1 | l | RFC-0013 | Open |
-| #185 | [Tracking] preliminary results publication package | docs | p1 | m | RFC-0013 | Open |
+| #185 | [Tracking] preliminary results publication package | docs | p1 | m | RFC-0013 | Closed |
 | #186 | spec: lock OpenRouter LLM candidate harness contract | harness | p1 | m | RFC-0013 | Open |
 | #187 | harness: add OpenRouter candidate generation adapter | harness | p1 | m | RFC-0013 | Open |
 | #188 | harness: add candidate pack schema and safe patch capture | harness | p1 | m | RFC-0013 | Open |
@@ -133,8 +133,8 @@ negative-results publication.
 | #190 | benchmark: define downstream task schema and claim gates | evaluation | p1 | m | RFC-0013 | Open |
 | #191 | benchmark: build public-safe labeled candidate reranking set | evaluation | p1 | l | RFC-0013 | Open |
 | #192 | eval: run downstream reranking comparison and claim gate | evaluation | p1 | l | RFC-0013 | Open |
-| #193 | docs: publish preliminary negative-results report | docs | p1 | m | RFC-0013 | Open |
-| #194 | docs: prepare public artifact index and announcement package | docs | p1 | m | RFC-0013 | Open |
+| #193 | docs: publish preliminary negative-results report | docs | p1 | m | RFC-0013 | Closed |
+| #194 | docs: prepare public artifact index and announcement package | docs | p1 | m | RFC-0013 | Closed |
 
 ## Tracking Issues
 

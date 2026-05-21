@@ -287,7 +287,7 @@ Deliverables:
 
 ### Phase 9: LLM + World-Model Harness Demo
 
-Status: open.
+Status: complete as a claim-safe preliminary publication package.
 
 Goal: showcase the intended use case without claiming model improvement. An LLM
 generates candidate patches through the OpenRouter Python SDK, CodeLeWM
@@ -331,6 +331,12 @@ Deliverables:
 - preliminary negative-results report (#193)
 - public artifact index and announcement package (#194)
 
+Publication artifacts:
+
+- `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
+- `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md`
+- `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`
+
 ## Ordered Backlog
 
 Keep this table in implementation order and update it when issue scope changes.
@@ -338,8 +344,8 @@ Keep this table in implementation order and update it when issue scope changes.
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
 | 1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Harness Demo | #187, #188, #189 |
-| 2 | #193 | docs: publish preliminary negative-results report | Publication | #194 |
-| 3 | #194 | docs: prepare public artifact index and announcement package | Publication | public sharing |
+| 2 | #193 | docs: publish preliminary negative-results report | Publication | complete |
+| 3 | #194 | docs: prepare public artifact index and announcement package | Publication | complete |
 | 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | #189 |
 | 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | #189 |
 | 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | #192 |
