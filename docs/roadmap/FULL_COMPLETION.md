@@ -86,9 +86,9 @@ Current blocker:
   downstream coding-usefulness claims remain blocked. Future positive-claim
   work requires a new research hypothesis beyond the completed v0.2
   intervention.
-- The next logical milestone is not another training run. The next milestone is
-  the v1.1 LLM + world-model harness and downstream benchmark: #183, #184, and
-  #185 track the streams, with child issues #186 through #194.
+- The v1.1 LLM + world-model harness and downstream benchmark milestone is
+  complete as a claim-safe diagnostic workflow: #183, #184, and #185 tracked
+  the streams, with child issues #186 through #194.
 
 Current landed CLI commands:
 
@@ -306,7 +306,8 @@ Claim boundary: this can prove the workflow, but not model usefulness.
 
 ### Phase 10: Downstream Candidate-Reranking Benchmark
 
-Status: open.
+Status: complete as a diagnostic fixture and claim-gated benchmark path. This
+still does not support a coding-usefulness claim.
 
 Goal: turn the harness into a falsifiable downstream benchmark with enough
 labeled examples to support or block coding-usefulness claims.
@@ -322,7 +323,7 @@ over no-action and LLM-order baselines on the agreed headline metrics.
 
 ### Phase 11: Preliminary Results Publication
 
-Status: open.
+Status: complete as negative/diagnostic public evidence.
 
 Goal: publish the current project state as verified infrastructure and a
 negative/diagnostic result, not as a positive model-quality claim.

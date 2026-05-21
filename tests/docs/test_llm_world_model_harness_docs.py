@@ -92,8 +92,9 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "What We Can Publish Now",
             "Blog / README Summary",
             "We cannot publish it as",
-            "LLM + world-model harness",
-            "The downstream benchmark must pass #192",
+            "Harness Boundary",
+            "The #192 downstream gate is complete and remains claim-blocked",
+            "A future positive claim requires a new issue",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

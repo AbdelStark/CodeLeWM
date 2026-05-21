@@ -113,8 +113,8 @@ Current blocker:
   opened for a future positive claim.
 - The completed v0.2 research specification lives in
   `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md` and was tracked by #167.
-- The next public milestone is the LLM + world-model harness and downstream
-  reranking benchmark. It is specified by
+- The post-v0.2 LLM + world-model harness and downstream reranking benchmark
+  milestone is complete as a diagnostic workflow. It is specified by
   `docs/spec/11-llm-world-model-harness.md`,
   `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`, and
   `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.

@@ -16,8 +16,9 @@ result is still publishable because it is useful negative evidence: the pipeline
 works, the artifacts are public and verified, and the no-action baseline remains
 stronger than the action-conditioned variants we tested.
 
-The next milestone is a downstream harness where an LLM proposes candidate
-patches and CodeLeWM scores or reranks them.
+The post-v0.2 harness milestone is now complete as diagnostic workflow
+evidence: an LLM can propose candidate patches, CodeLeWM can score or rerank
+them, and the downstream claim gate remains closed on the one-example fixture.
 
 ## Validated
 
@@ -135,13 +136,14 @@ and weak lexical controls, but they do not beat the no-action baseline on the
 agreed headline metrics. The current latent-probe and downstream scorer-quality
 evidence also block semantic-axis and coding-usefulness claims.
 
-The next test is downstream candidate reranking: let an LLM generate multiple
-candidate patches, then ask whether CodeLeWM can improve the ordering over
+The next positive-claim test is a scaled downstream candidate-reranking
+benchmark: let an LLM generate multiple candidate patches across at least 100
+labeled examples, then ask whether CodeLeWM improves the ordering over
 LLM-order and no-action baselines.
 
-## Next Test
+## Harness Boundary
 
-The next public milestone is the LLM + world-model harness:
+The completed public harness flow is:
 
 ```text
 task + bounded repo context
@@ -156,8 +158,11 @@ This is the right showcase because it tests the use case CodeLeWM was designed
 for: not generating code directly, but scoring candidate transitions proposed
 by another system.
 
-The demo is tracked by #183 and the scaled downstream benchmark is tracked by
-#184. Public preliminary-results packaging is tracked by #185.
+The demo was tracked by #183, the downstream benchmark fixture by #184, and the
+public preliminary-results package by #185. Those streams are complete through
+#186 through #194.
 
-The downstream benchmark must pass #192 before public wording can say that
-CodeLeWM improves candidate patch ranking.
+The #192 downstream gate is complete and remains claim-blocked on the fixture:
+public wording still cannot say that CodeLeWM improves candidate patch ranking.
+A future positive claim requires a new issue with a scaled labeled benchmark
+that passes the same gate.
