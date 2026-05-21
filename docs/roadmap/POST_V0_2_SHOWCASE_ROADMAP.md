@@ -196,8 +196,10 @@ The harness and downstream benchmark stream is complete through #206. The
 public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
 model slugs such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit:
 only `codelewm openrouter byok-register` or
-`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read the raw provider key, and no
-reports may serialize it.
+`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read the raw provider key. BYOK
+registration requires an OpenRouter management key such as
+`OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use `OPENROUTER_API_KEY`.
+No reports may serialize raw keys.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
 fixture report are public negative/diagnostic evidence. The harness demo can

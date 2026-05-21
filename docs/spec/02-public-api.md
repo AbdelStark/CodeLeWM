@@ -24,7 +24,7 @@ codelewm eval scorer-quality --config config/first_results/scorer_quality.json -
 codelewm score --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidate config/first_results/scorer_quality_candidates/true_after.py --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
 codelewm rerank --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidates config/first_results/scorer_quality_candidates --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
 codelewm llm-demo --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/llm-demo --allow-unsafe-checkpoint --json
-codelewm openrouter byok-register --provider anthropic --key-env ANTHROPIC_API_KEY --allowed-model anthropic/claude-4.5-sonnet --dry-run --json
+codelewm openrouter byok-register --provider anthropic --key-env ANTHROPIC_API_KEY --management-key-env OPENROUTER_MANAGEMENT_KEY --allowed-model anthropic/claude-4.5-sonnet --dry-run --json
 codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
 codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json
 ```
@@ -362,15 +362,18 @@ provider credential from local environment secrets:
 codelewm openrouter byok-register \
   --provider anthropic \
   --key-env ANTHROPIC_API_KEY \
+  --management-key-env OPENROUTER_MANAGEMENT_KEY \
   --allowed-model anthropic/claude-4.5-sonnet \
   --dry-run \
   --json
 ```
 
 The command emits `codelewm.openrouter_byok_register.v1`. Non-dry-run mode
-requires `OPENROUTER_API_KEY` plus the raw provider key named by `--key-env`.
-The raw provider key is sent only to OpenRouter's BYOK API and is never printed
-or serialized in the returned JSON. When `CODELEWM_OPENROUTER_BYOK=1`, request
+requires the OpenRouter management key named by `--management-key-env` plus the
+raw provider key named by `--key-env`. The raw provider key is sent only to
+OpenRouter's BYOK API and is never printed or serialized in the returned JSON.
+Normal chat requests still use `OPENROUTER_API_KEY`; management keys are only
+for administrative registration. When `CODELEWM_OPENROUTER_BYOK=1`, request
 metadata records redacted BYOK routing state and, with
 `CODELEWM_OPENROUTER_BYOK_REQUIRE=1`, restricts OpenRouter provider routing to
 the configured provider.

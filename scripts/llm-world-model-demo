@@ -5,10 +5,54 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 if [[ -f .env ]]; then
+  __codelewm_env_keys=(
+    CODELEWM_LLM_PROVIDER
+    CODELEWM_LLM_MODEL
+    CODELEWM_LLM_MAX_CANDIDATES
+    CODELEWM_LLM_TIMEOUT_SECONDS
+    CODELEWM_LLM_TEMPERATURE
+    CODELEWM_LLM_DRY_RUN
+    CODELEWM_LLM_RETRY_LIMIT
+    CODELEWM_LLM_PROVIDER_OPTIONS_JSON
+    CODELEWM_OPENROUTER_BYOK
+    CODELEWM_OPENROUTER_BYOK_PROVIDER
+    CODELEWM_OPENROUTER_BYOK_KEY_ENV
+    CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV
+    CODELEWM_OPENROUTER_BYOK_REQUIRE
+    CODELEWM_OPENROUTER_BYOK_REGISTER
+    CODELEWM_OPENROUTER_BYOK_DRY_RUN
+    CODELEWM_OPENROUTER_BYOK_NAME
+    CODELEWM_OPENROUTER_BYOK_ALLOWED_MODELS
+    CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID
+    CODELEWM_OPENROUTER_BYOK_IS_FALLBACK
+    CODELEWM_LLM_DEMO_ROOT
+    CODELEWM_LLM_DEMO_BEFORE
+    CODELEWM_LLM_DEMO_CHECKPOINT
+    CODELEWM_LLM_DEMO_TASK_ID
+    CODELEWM_LLM_DEMO_INSTRUCTION
+    CODELEWM_LLM_DEMO_OUT
+    OPENROUTER_API_KEY
+    OPENROUTER_MANAGEMENT_KEY
+    OPENROUTER_HTTP_REFERER
+    OPENROUTER_APP_TITLE
+    ANTHROPIC_API_KEY
+  )
+  __codelewm_restore_keys=()
+  __codelewm_restore_values=()
+  for key in "${__codelewm_env_keys[@]}"; do
+    if [[ ${!key+x} ]]; then
+      __codelewm_restore_keys+=("$key")
+      __codelewm_restore_values+=("${!key}")
+    fi
+  done
   set -a
   # shellcheck disable=SC1091
   . ./.env
   set +a
+  for i in "${!__codelewm_restore_keys[@]}"; do
+    export "${__codelewm_restore_keys[$i]}=${__codelewm_restore_values[$i]}"
+  done
+  unset __codelewm_env_keys __codelewm_restore_keys __codelewm_restore_values
 fi
 
 export CODELEWM_LLM_PROVIDER="${CODELEWM_LLM_PROVIDER:-openrouter}"

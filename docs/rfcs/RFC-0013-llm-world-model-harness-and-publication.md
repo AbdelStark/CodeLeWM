@@ -117,8 +117,9 @@ candidate-pack artifacts.
 Direct provider chat adapters remain out of scope. If local experiments use an
 Anthropic provider key, it must be configured through the explicit OpenRouter
 BYOK registration helper. Chat requests still authenticate to OpenRouter with
-`OPENROUTER_API_KEY`, and candidate-pack metadata must record only redacted BYOK
-state.
+`OPENROUTER_API_KEY`; BYOK registration uses an OpenRouter management key such
+as `OPENROUTER_MANAGEMENT_KEY`. Candidate-pack metadata must record only
+redacted BYOK state and env-var names, never raw keys.
 
 OpenRouter debug logging is out of scope for publishable runs. The adapter may
 support local debug mode later, but any enabled debug mode must be rejected by

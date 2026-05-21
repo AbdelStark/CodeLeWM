@@ -21,6 +21,7 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
 
         for marker in (
             "OPENROUTER_API_KEY",
+            "OPENROUTER_MANAGEMENT_KEY",
             "CODELEWM_LLM_MODEL",
             "openrouter==0.9.1",
             "codelewm.openrouter_candidate_request.v1",
@@ -34,6 +35,7 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "codelewm eval downstream-rerank",
             "codelewm.openrouter_byok_register.v1",
             "CODELEWM_OPENROUTER_BYOK_REGISTER",
+            "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV",
             "`ANTHROPIC_API_KEY` may be read only by the explicit BYOK registration helper",
             "OPENROUTER_DEBUG",
             "provider_routing",
@@ -149,6 +151,7 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
         for marker in (
             "CODELEWM_LLM_PROVIDER=openrouter",
             "OPENROUTER_API_KEY=openrouter_xxx",
+            "OPENROUTER_MANAGEMENT_KEY=openrouter_management_key_here",
             "CODELEWM_LLM_MODEL=anthropic/claude-4.5-sonnet",
             "CODELEWM_LLM_DRY_RUN=1",
             "CODELEWM_LLM_PROVIDER_OPTIONS_JSON=",
@@ -156,6 +159,7 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "OPENROUTER_APP_TITLE=CodeLeWM",
             "ANTHROPIC_API_KEY=anthropic_provider_key_here",
             "CODELEWM_OPENROUTER_BYOK=0",
+            "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV=OPENROUTER_MANAGEMENT_KEY",
             "CODELEWM_OPENROUTER_BYOK_REGISTER=0",
             "CODELEWM_OPENROUTER_BYOK_DRY_RUN=1",
             "CODELEWM_LLM_DEMO_ROOT=.artifacts/llm-world-model-demo",

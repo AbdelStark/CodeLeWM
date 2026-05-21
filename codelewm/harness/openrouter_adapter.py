@@ -33,6 +33,7 @@ OPENROUTER_BYOK_API_URL = "https://openrouter.ai/api/v1/byok"
 DEFAULT_OPENROUTER_MODEL = "anthropic/claude-4.5-sonnet"
 DEFAULT_OPENROUTER_BYOK_PROVIDER = "anthropic"
 DEFAULT_OPENROUTER_BYOK_KEY_ENV = "ANTHROPIC_API_KEY"
+DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV = "OPENROUTER_MANAGEMENT_KEY"
 DEFAULT_PROMPT_TEMPLATE_ID = "codelewm.openrouter.patch_candidates.v1"
 DEFAULT_OUTPUT_POLICY = "unified_diff"
 MAX_CAPTURE_PATCH_CHARS = 200_000
@@ -97,6 +98,7 @@ class OpenRouterBYOKRegisterResult:
     provider: str
     credential_name: str | None
     key_env: str
+    management_key_env: str
     allowed_models: tuple[str, ...]
     is_fallback: bool
     workspace_id_set: bool
@@ -111,6 +113,7 @@ class OpenRouterBYOKRegisterResult:
             "provider": self.provider,
             "credential_name": self.credential_name,
             "key_env": self.key_env,
+            "management_key_env": self.management_key_env,
             "allowed_models": list(self.allowed_models),
             "is_fallback": self.is_fallback,
             "workspace_id_set": self.workspace_id_set,
@@ -127,6 +130,7 @@ class OpenRouterBYOKConfig:
     enabled: bool = False
     provider: str = DEFAULT_OPENROUTER_BYOK_PROVIDER
     key_env: str = DEFAULT_OPENROUTER_BYOK_KEY_ENV
+    management_key_env: str = DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV
     require: bool = False
     register: bool = False
     registration_dry_run: bool = False
@@ -146,6 +150,11 @@ class OpenRouterBYOKConfig:
                 "CODELEWM_OPENROUTER_BYOK_KEY_ENV must not be empty",
                 error_type="config_error",
             )
+        if self.enabled and self.register and not self.management_key_env:
+            raise OpenRouterAdapterError(
+                "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV must not be empty",
+                error_type="config_error",
+            )
 
     @classmethod
     def from_env(
@@ -163,6 +172,10 @@ class OpenRouterBYOKConfig:
             "CODELEWM_OPENROUTER_BYOK_KEY_ENV",
             DEFAULT_OPENROUTER_BYOK_KEY_ENV,
         ).strip()
+        management_key_env = env.get(
+            "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV",
+            DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV,
+        ).strip()
         allowed_models = _parse_csv_env(env.get("CODELEWM_OPENROUTER_BYOK_ALLOWED_MODELS"))
         if enabled and not allowed_models:
             allowed_models = (model,)
@@ -170,6 +183,7 @@ class OpenRouterBYOKConfig:
             enabled=enabled,
             provider=provider,
             key_env=key_env,
+            management_key_env=management_key_env,
             require=_parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_REQUIRE", default=enabled),
             register=_parse_bool_env(env, "CODELEWM_OPENROUTER_BYOK_REGISTER", default=False),
             registration_dry_run=_parse_bool_env(
@@ -190,6 +204,7 @@ class OpenRouterBYOKConfig:
             "enabled": self.enabled,
             "provider": self.provider,
             "key_env": self.key_env,
+            "management_key_env": self.management_key_env,
             "require": self.require,
             "register": self.register,
             "registration_dry_run": self.registration_dry_run,
@@ -507,6 +522,7 @@ def generate_candidate_pack(
             env=env,
             provider=request.byok.provider,
             key_env=request.byok.key_env,
+            management_key_env=request.byok.management_key_env,
             name=request.byok.credential_name,
             allowed_models=request.byok.allowed_models,
             is_fallback=request.byok.is_fallback,
@@ -582,6 +598,7 @@ def register_openrouter_byok_credential(
     env: Mapping[str, str] | None = None,
     provider: str | None = None,
     key_env: str | None = None,
+    management_key_env: str | None = None,
     name: str | None = None,
     allowed_models: Sequence[str] | None = None,
     workspace_id: str | None = None,
@@ -597,6 +614,11 @@ def register_openrouter_byok_credential(
     ).strip()
     key_env = (
         key_env or env.get("CODELEWM_OPENROUTER_BYOK_KEY_ENV") or DEFAULT_OPENROUTER_BYOK_KEY_ENV
+    ).strip()
+    management_key_env = (
+        management_key_env
+        or env.get("CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV")
+        or DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV
     ).strip()
     name = _empty_to_none(name) or _empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_NAME"))
     workspace_id = _empty_to_none(workspace_id) or _empty_to_none(env.get("CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID"))
@@ -616,11 +638,17 @@ def register_openrouter_byok_credential(
         )
     if not key_env:
         raise OpenRouterAdapterError("BYOK key env name must not be empty", error_type="config_error")
+    if not management_key_env:
+        raise OpenRouterAdapterError(
+            "OpenRouter management key env name must not be empty",
+            error_type="config_error",
+        )
 
     result = OpenRouterBYOKRegisterResult(
         provider=provider,
         credential_name=name,
         key_env=key_env,
+        management_key_env=management_key_env,
         allowed_models=allowed_models_tuple,
         is_fallback=bool(is_fallback),
         workspace_id_set=workspace_id is not None,
@@ -630,13 +658,16 @@ def register_openrouter_byok_credential(
     if dry_run:
         return result
 
-    openrouter_key = env.get("OPENROUTER_API_KEY")
+    management_key = env.get(management_key_env)
     provider_key = env.get(key_env)
-    if not openrouter_key:
+    if not management_key:
         raise OpenRouterAdapterError(
-            "OPENROUTER_API_KEY is required to create an OpenRouter BYOK credential",
-            error_type="missing_openrouter_api_key",
-            remediation="set OPENROUTER_API_KEY or run with --dry-run",
+            f"{management_key_env} is required to create an OpenRouter BYOK credential",
+            error_type="missing_openrouter_management_key",
+            remediation=(
+                f"set {management_key_env}, or set CODELEWM_OPENROUTER_BYOK_REGISTER=0 "
+                "if the BYOK credential already exists"
+            ),
         )
     if not provider_key:
         raise OpenRouterAdapterError(
@@ -659,7 +690,7 @@ def register_openrouter_byok_credential(
         OPENROUTER_BYOK_API_URL,
         data=json.dumps(body, allow_nan=False).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {openrouter_key}",
+            "Authorization": f"Bearer {management_key}",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -692,6 +723,7 @@ def register_openrouter_byok_credential(
         provider=provider,
         credential_name=name or "CodeLeWM Anthropic BYOK",
         key_env=key_env,
+        management_key_env=management_key_env,
         allowed_models=allowed_models_tuple,
         is_fallback=bool(is_fallback),
         workspace_id_set=workspace_id is not None,

@@ -245,6 +245,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="environment variable containing the raw provider key; default: ANTHROPIC_API_KEY",
     )
+    byok_register.add_argument(
+        "--management-key-env",
+        default=None,
+        help=(
+            "environment variable containing the OpenRouter management key; "
+            "default: OPENROUTER_MANAGEMENT_KEY"
+        ),
+    )
     byok_register.add_argument("--name", default=None, help="OpenRouter BYOK key name")
     byok_register.add_argument(
         "--allowed-model",
@@ -789,6 +797,7 @@ def _openrouter_byok_register_command(args: argparse.Namespace) -> int:
         result = register_openrouter_byok_credential(
             provider=args.provider,
             key_env=args.key_env,
+            management_key_env=args.management_key_env,
             name=args.name,
             allowed_models=tuple(args.allowed_model or ()),
             workspace_id=args.workspace_id,
@@ -809,6 +818,7 @@ def _openrouter_byok_register_command(args: argparse.Namespace) -> int:
         print(f"status: {status}")
         print(f"provider: {result.provider}")
         print(f"key_env: {result.key_env}")
+        print(f"management_key_env: {result.management_key_env}")
         if result.credential_name:
             print(f"name: {result.credential_name}")
     return 0

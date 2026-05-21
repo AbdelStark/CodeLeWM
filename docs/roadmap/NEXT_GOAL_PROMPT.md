@@ -34,8 +34,10 @@ pack, and downstream rerank report are complete through #206. The public LLM
 adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and model slugs
 such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit: only
 `codelewm openrouter byok-register` or
-`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read `ANTHROPIC_API_KEY`, and no
-reports may serialize raw provider keys.
+`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read `ANTHROPIC_API_KEY`. BYOK
+registration requires an OpenRouter management key such as
+`OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use
+`OPENROUTER_API_KEY`. No reports may serialize raw provider keys.
 
 No active completion issue remains for the current public evidence boundary.
 The open streams are #207/#208, #209/#210/#211, and #212.
