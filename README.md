@@ -114,6 +114,11 @@ exists in the OpenRouter dashboard, set `CODELEWM_OPENROUTER_BYOK_REGISTER=0`
 and keep `CODELEWM_OPENROUTER_BYOK=1`. CodeLeWM records redacted BYOK routing
 metadata and never writes provider keys to reports.
 
+For Anthropic BYOK, start with
+`CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price"}'`. Add `zdr: true` only
+when OpenRouter shows a matching Zero Data Retention endpoint for the pinned
+provider route; otherwise OpenRouter rejects the request before generation.
+
 Dry-run the registration contract without sending secrets:
 
 ```bash

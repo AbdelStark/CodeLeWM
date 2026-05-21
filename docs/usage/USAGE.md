@@ -134,7 +134,7 @@ CODELEWM_LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=openrouter_xxx
 CODELEWM_LLM_MODEL=anthropic/claude-4.5-sonnet
 CODELEWM_LLM_DRY_RUN=1
-CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price","zdr":true}'
+CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price"}'
 ```
 
 The OpenRouter adapter uses `OPENROUTER_API_KEY`; it does not silently read a
@@ -169,6 +169,10 @@ Direct Anthropic API support still requires a separate adapter issue.
 OpenRouter is an optional dependency pinned to `openrouter==0.9.1`. Live runs
 record the SDK version in `codelewm.llm_candidate_pack.v1` artifacts. Dry-run
 mode remains the default and must not import the SDK or make network calls.
+OpenRouter's per-request `provider.zdr=true` option restricts routing to Zero
+Data Retention endpoints; if Anthropic BYOK is pinned with
+`CODELEWM_OPENROUTER_BYOK_REQUIRE=1`, remove `zdr` unless OpenRouter shows a
+matching ZDR endpoint for that route.
 
 Dry-run the BYOK registration contract without sending secrets:
 

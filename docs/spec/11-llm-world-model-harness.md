@@ -66,6 +66,12 @@ Optional environment variables:
 | `CODELEWM_LLM_PROVIDER_OPTIONS_JSON` | JSON object forwarded as OpenRouter provider routing options. |
 | `CODELEWM_LLM_RETRY_LIMIT` | Bounded retry count for retryable provider failures. |
 
+When `CODELEWM_LLM_PROVIDER_OPTIONS_JSON` includes `{"zdr": true}`, OpenRouter
+routes only to endpoints with a Zero Data Retention policy. BYOK provider-only
+routes can fail before generation when no matching ZDR endpoint exists; the
+adapter must surface the provider error and remediation instead of returning a
+generic provider failure.
+
 OpenRouter BYOK variables:
 
 | Variable | Purpose |

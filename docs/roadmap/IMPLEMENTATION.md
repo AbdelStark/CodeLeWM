@@ -152,6 +152,7 @@ the current negative/diagnostic public boundary.
 | #212 | [Tracking] v1.2 next positive-model research hypothesis | model/evaluation | p2 | l | follow-up | Open |
 | #214 | harness: render visual LLM world-model demo report | harness/docs | p1 | m | RFC-0013 | Closed |
 | #216 | harness: require OpenRouter management key for BYOK registration | harness | p1 | s | RFC-0013 | Closed |
+| #218 | harness: surface OpenRouter provider errors and accept fenced live diffs | harness | p1 | s | RFC-0013 | Closed |
 
 ## Tracking Issues
 
@@ -222,6 +223,8 @@ publication package.
 - #216 fixes the OpenRouter BYOK registration boundary so provider-key
   registration uses an OpenRouter management key while normal generation keeps
   using `OPENROUTER_API_KEY`.
+- #218 surfaces redacted OpenRouter provider-routing failures such as missing
+  ZDR endpoints and accepts markdown-fenced unified diffs from live LLM output.
 - #172 executed the v0.2 action-swap run
   `codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b` on HF Jobs job
   `6a0dea258229e585f969c808`; artifacts were downloaded with `hf download`,
