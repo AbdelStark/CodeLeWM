@@ -130,12 +130,18 @@ CODELEWM_LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=openrouter_xxx
 CODELEWM_LLM_MODEL=anthropic/claude-4.5-sonnet
 CODELEWM_LLM_DRY_RUN=1
+CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price","zdr":true}'
 ```
 
 The OpenRouter adapter uses `OPENROUTER_API_KEY`; it does not silently read a
 raw `ANTHROPIC_API_KEY`. To use Anthropic models, select an Anthropic model slug
 through OpenRouter or configure provider keys as OpenRouter BYOK outside the
 repo. Direct Anthropic API support requires a separate adapter issue.
+
+The first runtime issue must add OpenRouter as an optional dependency pinned to
+`openrouter==0.9.1`, then record the SDK version in
+`codelewm.llm_candidate_pack.v1` artifacts. Dry-run mode remains the default and
+must not import the SDK or make network calls.
 
 Tracked streams:
 

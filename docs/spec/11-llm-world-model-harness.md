@@ -29,6 +29,16 @@ reports.
 The public LLM integration path uses the OpenRouter Python SDK. The SDK is beta,
 so runtime work must pin the dependency version and keep the adapter thin.
 
+Dependency policy for #187:
+
+- add OpenRouter as an optional LLM/runtime dependency, not a base install
+  dependency;
+- pin the first supported SDK as `openrouter==0.9.1`, the latest release
+  observed when this contract was written on 2026-05-21;
+- record `openrouter` package version, Python version, and adapter version in
+  every live candidate pack;
+- require a small adapter-compatibility test before changing the pin.
+
 Required environment variables:
 
 | Variable | Purpose |
@@ -41,12 +51,60 @@ Required environment variables:
 | `CODELEWM_LLM_TEMPERATURE` | Generation temperature. |
 | `CODELEWM_LLM_DRY_RUN` | Fixture mode that never calls the network. |
 
+Optional environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `OPENROUTER_HTTP_REFERER` | Optional OpenRouter attribution header. |
+| `OPENROUTER_APP_TITLE` | Optional OpenRouter attribution title. |
+| `CODELEWM_LLM_PROVIDER_OPTIONS_JSON` | JSON object forwarded as OpenRouter provider routing options. |
+| `CODELEWM_LLM_RETRY_LIMIT` | Bounded retry count for retryable provider failures. |
+
 The OpenRouter adapter must not read a raw `ANTHROPIC_API_KEY`. To use
 Anthropic models through the public adapter, set `CODELEWM_LLM_MODEL` to an
 Anthropic OpenRouter slug and authenticate with `OPENROUTER_API_KEY`. If a raw
 Anthropic provider key is required, configure it as OpenRouter BYOK outside the
 repo or open a separate direct-Anthropic adapter issue. Do not silently mix the
 two auth modes.
+
+`OPENROUTER_DEBUG` must be treated as unsafe for publishable runs because SDK
+debug logging may include request or response content. Live publishable runs
+must either unset it or record that debug logging was disabled in the candidate
+pack metadata.
+
+## Request Contract
+
+Schema: `codelewm.openrouter_candidate_request.v1`.
+
+The adapter receives a request object rather than ad hoc CLI strings. Required
+fields:
+
+- `schema_version`;
+- `task_id`;
+- `instruction`;
+- `context_bundle`;
+- `prompt_template_id`;
+- `model`;
+- `max_candidates`;
+- `timeout_seconds`;
+- `temperature`;
+- `provider_options`;
+- `dry_run`;
+- `output_policy`.
+
+`context_bundle` must record included file paths, ignored paths, truncation
+policy, byte counts, content checksums, and secret-scan status before any live
+remote call. `.env`, token-bearing files, local checkpoint files, private HF
+download roots, and ignored artifact directories are excluded by default.
+
+`provider_options` is passed through to OpenRouter only after JSON validation.
+Allowed keys for v0.3 are `order`, `sort`, `allow_fallbacks`, `require_parameters`,
+and `zdr`. Unknown keys must fail validation instead of being silently forwarded.
+
+`output_policy` must request unified diffs unless the issue explicitly enables
+after-state files. The prompt must instruct the model to return exactly
+`max_candidates` candidates when possible, with a stable candidate identifier
+and no prose outside the candidate blocks.
 
 ## Candidate Pack
 
@@ -58,29 +116,70 @@ Required fields:
 
 - `schema_version`;
 - `task_id`;
-- `task_prompt_hash`;
+- `prompt`;
 - `context_hash`;
 - `generator.provider`;
 - `generator.model`;
 - `generator.sdk`;
 - `generator.sdk_version`;
+- `generator.adapter_version`;
+- `provider_routing`;
 - `generation_config`;
 - `candidates[]`;
+- `errors[]`;
 - `created_at`;
 - `artifact_manifest`.
+
+The `prompt` object records `template_id`, `rendered_sha256`,
+`redacted_prompt_path`, `prompt_preview`, and `secret_scan`. Raw prompt text may
+be stored only in a local artifact path that passes secret scanning. Published
+candidate packs may include the redacted prompt path or preview, not unscanned
+raw prompt content.
+
+The `provider_routing` object records requested model slug, requested provider
+ordering, fallback policy, zero-data-retention request flag when configured, and
+provider response metadata available from the SDK. If the SDK does not expose
+the final provider, the value must be `null` with a warning rather than inferred.
 
 Each candidate records:
 
 - stable `candidate_id`;
 - raw patch text or after-state path;
+- normalized patch checksum;
 - parser status;
+- dry-run patch-application status;
 - structured generation errors;
+- provider finish reason when available;
 - token/count metadata when available;
 - candidate content checksum;
 - redaction and secret-scan status.
 
 The candidate pack must never store API keys. Prompts, completions, patches, and
 reports must pass `codelewm secret-scan` before publication.
+
+## Dry-Run And Failure Behavior
+
+`CODELEWM_LLM_DRY_RUN=1` is the default until #187 lands live mode. Dry-run mode
+must not import the OpenRouter SDK, read `OPENROUTER_API_KEY`, or make network
+calls. It loads deterministic fixture responses and still writes the same
+request, candidate-pack, manifest, and secret-scan surfaces as live mode.
+
+Live mode failure behavior:
+
+- missing `OPENROUTER_API_KEY`: typed configuration error, no fallback to another
+  provider key;
+- invalid model slug: typed provider-request error recorded in the candidate
+  pack and command summary;
+- timeout: typed timeout error with elapsed time and retry count;
+- rate limit or transient provider failure: retry only up to
+  `CODELEWM_LLM_RETRY_LIMIT`;
+- malformed LLM output: candidate-level parse errors, not whole-run success;
+- fewer than requested candidates: report the count and block demo success;
+- zero valid candidates: demo report `success=false` and claim gate
+  `allowed=false`.
+
+No failure path may print token values, raw `.env` contents, full unredacted
+prompts, or full candidate content in logs.
 
 ## Demo Report
 
@@ -99,8 +198,21 @@ The demo report composes:
 - optional static/test check metadata;
 - claim gate.
 
+Demo success requires:
+
+- at least two generated candidates;
+- at least one valid parseable/applicable candidate;
+- successful CodeLeWM score/rerank execution;
+- manifest verification over the candidate pack and demo report;
+- secret scan with zero findings over publishable artifacts.
+
+Demo failure is not a model failure. The report must distinguish provider
+errors, malformed candidate outputs, invalid candidate patches, score/rerank
+errors, and claim-gate failures.
+
 The claim gate defaults to `allowed=false` unless a benchmark report, not a demo
-report, proves the configured downstream success criteria.
+report, proves the configured downstream success criteria. A demo may be
+published as workflow evidence only.
 
 ## Downstream Benchmark
 

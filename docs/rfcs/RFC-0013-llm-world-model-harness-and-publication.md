@@ -92,6 +92,11 @@ The default model slug should target an Anthropic model through OpenRouter, for
 example `anthropic/claude-4.5-sonnet` or a documented newer slug when the issue
 is implemented.
 
+The runtime issue must add OpenRouter as an optional dependency pinned to
+`openrouter==0.9.1`, the latest release observed when #186 locked this contract
+on 2026-05-21. Because the SDK is beta, changing that pin requires updating this
+RFC, the spec, and a fixture compatibility test in the same PR.
+
 The adapter must support:
 
 - dry-run fixture mode;
@@ -111,17 +116,34 @@ Direct provider secrets are out of scope for the OpenRouter adapter. If local
 experiments use an Anthropic provider key, it should be configured through
 OpenRouter BYOK or handled by a separate direct-Anthropic adapter issue.
 
+OpenRouter debug logging is out of scope for publishable runs. The adapter may
+support local debug mode later, but any enabled debug mode must be rejected by
+publication gates unless request and response content are separately redacted
+and secret-scanned.
+
 ## Artifact Schemas
 
 New schemas:
 
+- `codelewm.openrouter_candidate_request.v1`
 - `codelewm.llm_candidate_pack.v1`
 - `codelewm.harness.demo_report.v1`
 - `codelewm.downstream_rerank_benchmark.v1`
 - `codelewm.downstream_rerank_report.v1`
 
-All four must be JSON-native, schema-versioned, manifest-backed, checksum
+All five must be JSON-native, schema-versioned, manifest-backed, checksum
 verifiable, and secret-scanned before publication.
+
+The candidate pack must record prompt metadata, model slug, provider routing
+request and response metadata, patch text or after-state path, parser status,
+dry-run patch-application status, generation errors, token/count metadata when
+available, and redaction/secret-scan status. API keys and raw provider secrets
+must never appear in the pack.
+
+The demo report must define success and failure separately from scientific
+claims. Demo success proves only that candidate generation, capture, scoring,
+reranking, manifests, and scans completed. Coding-usefulness claims require the
+downstream benchmark gate.
 
 ## Milestones
 
@@ -176,4 +198,3 @@ Stream C, preliminary results publication:
 - `docs/rfcs/RFC-0008-agent-harness-scorer-reranker.md`
 - `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
-
