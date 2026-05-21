@@ -24,8 +24,9 @@ The public usability pass for BYOK and the local demo task is #206. The first
 live artifact direction (#207/#208) was superseded after the terminal demo
 proved the toy comment task was too weak for a public showcase. The current
 open follow-up streams are the meaningful harness demo (#224 through #231),
-scaled downstream benchmarking (#209/#210/#211), and the next positive-model
-research hypothesis (#212, with CWM comparison in #178).
+visual model observability and TUI harness (#235 through #245), scaled
+downstream benchmarking (#209/#210/#211), and the next positive-model research
+hypothesis (#212, with CWM comparison in #178).
 
 Each stream must land as one issue per branch and PR. The demo stream may run
 before the benchmark stream proves usefulness, but it must emit claim-safe
@@ -263,6 +264,13 @@ baseline orders, and the claim gate visible without reading JSON by hand.
 The local `scripts/llm-world-model-demo` entry point should default to a visual
 terminal walkthrough over the same JSON artifacts. Raw JSON command summaries
 remain available through explicit non-interactive mode.
+
+The #235 visual model observability and TUI follow-up extends the same report
+state with model/checkpoint inspection links, latent matrix diagnostics, run
+timeline artifacts, and optional Textual TUI rendering. That follow-up must use
+the same underlying JSON artifacts as terminal and HTML modes; interactive UI
+support must not replace non-interactive JSON output or require Textual for
+normal CLI execution.
 
 ## Meaningful Demo Scenarios
 

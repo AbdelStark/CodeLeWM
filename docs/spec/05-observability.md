@@ -146,6 +146,34 @@ store one JSONL metadata record per vector in `entries.jsonl`. The index artifac
 manifest records both the training-run artifact and packed-dataset artifact as
 parents.
 
+## Planned Visual Observability
+
+The #235 visual model observability and TUI stream extends this contract with
+diagnostic artifacts for model generation, checkpoint inspection, latent
+geometry, and run monitoring. These artifacts are planned surfaces until their
+implementation issues land; they must not replace the existing JSON reports,
+JSONL logs, or artifact manifests.
+
+Planned schemas:
+
+- `codelewm.training.tensorboard_export.v1`: TensorBoard-compatible event-log
+  metadata for training/checkpoint scalars and safe summaries.
+- `codelewm.model_checkpoint_inspection.v1`: model/layer/tensor structure,
+  parameter counts, finite-value checks, norms, and summary histograms.
+- `codelewm.eval.latent_matrix_report.v1`: latent dimension count,
+  per-dimension statistics, effective rank, covariance/correlation summaries,
+  probe associations, and semantic-axis claim gates.
+- `codelewm.run_timeline.v1`: ordered run steps, durations, command ids,
+  artifact ids, warnings, and typed failures.
+- `codelewm.harness.visual_view_model.v1`: normalized data consumed by JSON,
+  rich terminal, HTML, and Textual TUI views.
+
+TensorBoard-compatible output and Textual rendering remain optional runtime
+surfaces. Base package imports, fixture tests, JSON reports, and non-interactive
+CLI usage must work without either dependency group. Visual reports are
+diagnostic only and cannot support positive semantic-latent-axis or
+coding-usefulness claims without the relevant benchmark gates.
+
 ## Artifact Lineage
 
 Every dataset, checkpoint, index, and report includes:

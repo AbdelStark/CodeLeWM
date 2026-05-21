@@ -5,8 +5,9 @@ Last updated: 2026-05-21
 This roadmap turns the completed negative v0.2 result into the next public
 milestone: a claim-safe LLM + world-model harness, a real downstream reranking
 benchmark, and a preliminary publication package. As of the terminal-demo pass,
-it also defines the next open streams: a meaningful harness demo, scaled
-downstream benchmarking, and the next positive-model research hypothesis.
+it also defines the next open streams: a meaningful harness demo, visual model
+observability plus TUI tooling, scaled downstream benchmarking, and the next
+positive-model research hypothesis.
 
 The current evidence boundary is explicit:
 
@@ -17,7 +18,8 @@ The current evidence boundary is explicit:
 - unsupported: named semantic latent axes and scaled downstream
   coding-usefulness claims;
 - next: test whether CodeLeWM adds value when an LLM supplies candidate
-  patches.
+  patches, while improving diagnostics enough to understand why a scorer ranks
+  one candidate over another.
 
 ## Stream A: LLM + World-Model Harness Demo
 
@@ -149,6 +151,45 @@ Minimum scaled benchmark gate:
 - claim gate `allowed=false` unless CodeLeWM improves over no-action and
   LLM-order baselines on the agreed metrics.
 
+## Stream G: Visual Model Observability And TUI Harness
+
+Tracker: #235. Status: Open.
+Dedicated roadmap: `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`.
+
+Purpose: make model behavior, latent representations, candidate ranking, and
+run state inspectable enough to debug meaningful harness failures. The latest
+live `bugfix-edge-case` run worked end to end, but the learned scorer ranked an
+incomplete candidate over semantically better candidates. This stream adds the
+observability needed to inspect that failure mode.
+
+Issues:
+
+| Order | Issue | Title | Status |
+| --- | --- | --- | --- |
+| G0 | #236 | docs: lock visual model observability and TUI roadmap | Closed |
+| G1 | #237 | observability: add TensorBoard event export for training and checkpoints | Open |
+| G2 | #238 | model: add checkpoint tensor and layer inspection reports | Open |
+| G3 | #239 | eval: add latent representation matrix diagnostics | Open |
+| G4 | #240 | observability: add run timeline and monitoring reports | Open |
+| G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Open |
+| G6 | #241 | harness: build optional Textual TUI for demo inspection | Open |
+| G7 | #243 | harness: connect model and latent diagnostics to demo reports | Open |
+| G8 | #244 | research: define diagnostics-driven code model improvement experiment | Open |
+| G9 | #245 | run: publish visual observability harness artifact set | Open |
+
+Success for the stream:
+
+- training/checkpoint runs can emit optional TensorBoard-compatible traces;
+- checkpoint reports expose model/layer/tensor statistics with trust gates;
+- latent reports include a dimension matrix, effective-rank metrics, probe
+  associations, and semantic-axis claim gates;
+- run timelines expose ordered steps, durations, warnings, typed failures, and
+  artifact ids;
+- Textual TUI mode is optional and interactive;
+- JSON reports, rich terminal output, and HTML reports remain first-class
+  non-interactive surfaces;
+- every publishable artifact is manifest-backed and secret-scanned.
+
 ## Stream E: Next Positive-Model Research Hypothesis
 
 Tracker: #212. Status: Open.
@@ -225,14 +266,24 @@ Recommended order:
 17. #229
 18. #230
 19. #231
-20. #210
-21. #211
-22. #178 / #212
+20. #235 / #236
+21. #237
+22. #238
+23. #239
+24. #240
+25. #242
+26. #241
+27. #243
+28. #244
+29. #245
+30. #210
+31. #211
+32. #178 / #212
 
 Rationale: lock the contract first, publish the current result honestly, build
-the demo, make the public demo meaningful, prove one live workflow artifact,
-and only then spend effort on scaled downstream labels or a new model
-hypothesis.
+the demo, make the public demo meaningful, add enough visual observability to
+understand model and latent failure modes, and only then spend effort on scaled
+downstream labels or a new model hypothesis.
 
 ## `/goal` Prompt
 
@@ -242,14 +293,15 @@ The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. #220 and #222 proved learned scoring and terminal-first
 demo UX, but #207/#208 were superseded because the comment-style toy task is
 not the right public artifact. Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #210/#211 for scaled
-downstream reranking, or #178/#212 for the next positive-model research
-hypothesis.
+#227 through #231 for the meaningful harness demo, #237 through #245 for the
+visual model observability and TUI stream, #210/#211 for scaled downstream
+reranking, or #178/#212 for the next positive-model research hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
+docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
@@ -266,6 +318,14 @@ only `codelewm openrouter byok-register` or
 registration requires an OpenRouter management key such as
 `OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use `OPENROUTER_API_KEY`.
 No reports may serialize raw keys.
+
+The visual model observability and TUI tracker is #235: #237 adds optional
+TensorBoard-compatible export, #238 adds checkpoint tensor/layer inspection,
+#239 adds latent matrix diagnostics, #240 adds run timelines, #242 preserves
+non-interactive JSON/rich/HTML parity, #241 adds optional Textual TUI mode,
+#243 links model and latent diagnostics into demo reports, #244 defines the
+next diagnostics-driven model experiment, and #245 publishes a visual
+diagnostic artifact set.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
 fixture report are public negative/diagnostic evidence. The harness demo can

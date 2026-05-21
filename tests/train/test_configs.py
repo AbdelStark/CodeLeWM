@@ -388,6 +388,16 @@ class TrainConfigValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(TrainConfigError, "image-control"):
             validate_train_config(payload)
 
+    def test_validation_allows_forbidden_token_inside_unrelated_path_component(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["data"]["train"] = "/tmp/tmpdmcol33k/data/train.hdf5"
+        payload["data"]["val"] = "/tmp/tmpdmcol33k/data/val.hdf5"
+        payload["data"]["manifest"] = "/tmp/tmpdmcol33k/data/manifest.json"
+
+        config = validate_train_config(payload)
+
+        self.assertEqual(config.data.train, payload["data"]["train"])
+
     def test_validation_rejects_unknown_schema_keys(self) -> None:
         payload = copy.deepcopy(self.payload)
         payload["img_size"] = 224

@@ -380,6 +380,34 @@ Claim boundary: this can make the workflow tangible, but it still cannot prove
 CodeLeWM improves coding. That claim remains blocked until the scaled
 downstream benchmark gate passes.
 
+### Phase 13: Visual Model Observability And TUI Harness
+
+Status: planned under tracker #235.
+
+Goal: make model behavior, latent representations, candidate ranking, and run
+state inspectable enough to debug meaningful harness failures. The latest live
+`bugfix-edge-case` run worked end to end, but the learned scorer ranked an
+incomplete candidate above more semantically complete patches. This phase turns
+that failure into observable artifacts rather than another blind training run.
+
+Deliverables:
+
+- roadmap, backlog, and agent-context lock (#236)
+- TensorBoard-compatible training/checkpoint event export (#237)
+- checkpoint tensor and layer inspection reports (#238)
+- latent representation matrix diagnostics (#239)
+- run timeline and monitoring reports (#240)
+- shared non-interactive JSON/rich/HTML report view model (#242)
+- optional Textual TUI for interactive demo inspection (#241)
+- model/latent diagnostics linked from demo reports (#243)
+- diagnostics-driven model improvement experiment plan (#244)
+- published visual observability harness artifact set (#245)
+
+Claim boundary: visualizations and TUI surfaces are diagnostics. They can make
+the model easier to inspect, but they still cannot prove semantic latent axes or
+coding usefulness without the scaled representation and downstream benchmark
+gates.
+
 ## Ordered Backlog
 
 Keep this table in implementation order and update it when issue scope changes.
@@ -407,9 +435,20 @@ Keep this table in implementation order and update it when issue scope changes.
 | 19 | #229 | harness: show scorer traces and diff previews in the demo | Meaningful Harness Demo | #228 |
 | 20 | #230 | security: add opt-in sandbox checks for harness demos | Meaningful Harness Demo | #229 |
 | 21 | #231 | run: publish meaningful live harness demo artifacts | Meaningful Harness Demo | #230 |
-| 22 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
-| 23 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
-| 24 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
+| 22 | #235 | [Tracking] v1.4 visual model observability and TUI harness | Visual Observability/TUI | open |
+| 23 | #236 | docs: lock visual model observability and TUI roadmap | Visual Observability/TUI | complete |
+| 24 | #237 | observability: add TensorBoard event export for training and checkpoints | Visual Observability/TUI | #236 |
+| 25 | #238 | model: add checkpoint tensor and layer inspection reports | Visual Observability/TUI | #236 |
+| 26 | #239 | eval: add latent representation matrix diagnostics | Visual Observability/TUI | #236 |
+| 27 | #240 | observability: add run timeline and monitoring reports | Visual Observability/TUI | #236 |
+| 28 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Visual Observability/TUI | #240 |
+| 29 | #241 | harness: build optional Textual TUI for demo inspection | Visual Observability/TUI | #242 |
+| 30 | #243 | harness: connect model and latent diagnostics to demo reports | Visual Observability/TUI | #238/#239/#240/#242 |
+| 31 | #244 | research: define diagnostics-driven code model improvement experiment | Visual Observability/TUI | #239/#243 |
+| 32 | #245 | run: publish visual observability harness artifact set | Visual Observability/TUI | #237/#238/#239/#240/#241/#242/#243 |
+| 33 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
+| 34 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
+| 35 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
 
 Completed backlog base:
 
@@ -481,6 +520,8 @@ instead of creating duplicate trackers.
   live artifact issue #231.
 - #224 Meaningful LLM plus world-model harness demo: open; #226 is complete,
   and children #227 through #231 remain.
+- #235 Visual model observability and TUI harness: open; #236 is complete, and
+  children #237 through #245 remain.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178
@@ -499,6 +540,10 @@ that subsystem.
 - The no-action margin objective was proven insufficient by #154, the
   margin+retrieval remediation was proven insufficient by #159, and the
   action-swap/inverse-action intervention was proven insufficient by #172.
+- The latest meaningful live demo worked as a workflow but exposed a scorer
+  quality risk: the learned model can rank a semantically incomplete patch above
+  better candidates. #235 tracks the observability needed to inspect and plan a
+  falsifiable fix before another model run.
 - The v0.2 latent-probe gate does not support semantic latent-axis claims.
 - The v0.2 downstream scorer-quality path remains blocked as scaled evidence
   because it has one labeled example instead of the required 100.

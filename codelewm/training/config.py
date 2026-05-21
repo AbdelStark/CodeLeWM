@@ -840,9 +840,9 @@ def _optional_bool(payload: Mapping[str, Any], key: str, section: str, *, defaul
 
 
 def _reject_image_control_path(field_name: str, value: str) -> None:
-    normalized = value.lower()
+    normalized_tokens = {token for token in re.split(r"[^a-z0-9]+", value.lower()) if token}
     for token in sorted(_FORBIDDEN_DATASET_TOKENS):
-        if token in normalized:
+        if token in normalized_tokens:
             raise TrainConfigError(f"{field_name} must not reference image-control dataset token {token!r}")
 
 

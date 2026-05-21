@@ -4,6 +4,9 @@ Last updated: 2026-05-21
 
 Tracker: #224.
 
+Related follow-up tracker: #235 for visual model observability, latent matrix
+diagnostics, TensorBoard/checkpoint inspection, and optional Textual TUI work.
+
 This roadmap defines the v1.3 harness-demo upgrade. The current demo proves the
 system path: OpenRouter candidate generation, candidate-pack capture, learned
 CodeLeWM scoring, manifest verification, secret scanning, terminal output, and
@@ -122,3 +125,7 @@ and HTML reports let a reader answer:
 - Did static checks and optional sandbox checks pass?
 - Which artifacts and manifests prove the run?
 - Why does the claim gate remain closed?
+
+The broader visual observability work in #235 begins after this scenario-driven
+path and should reuse its candidate packs, static summaries, scorer traces, and
+claim gates rather than creating a second incompatible demo surface.

@@ -97,6 +97,13 @@ Current evidence:
   mode uses `OPENROUTER_API_KEY`; Anthropic BYOK is explicit through
   `codelewm openrouter byok-register` or
   `CODELEWM_OPENROUTER_BYOK_REGISTER=1`.
+- The meaningful default scenario is now `bugfix-edge-case`. A live
+  OpenRouter/BYOK run on 2026-05-21 completed end to end with 4/4 valid
+  candidates, learned torch scoring, manifest verification, and secret scans.
+  It also exposed the next model-observability gap: CodeLeWM ranked an
+  incomplete whitespace-handling patch above more semantically complete
+  candidates. Treat that as diagnostic workflow evidence, not a positive model
+  result.
 
 Current blocker:
 
@@ -132,8 +139,9 @@ Current blocker:
   output. Issues #207/#208 are closed as superseded because the comment-style
   toy task should not be the public live artifact target. The open next streams
   are the meaningful harness demo (#224 through #231), scaled downstream
-  benchmarking (#209/#210/#211), and a future positive-model research
-  hypothesis (#212, related to #178).
+  benchmarking (#209/#210/#211), the visual model observability and TUI stream
+  (#235 through #245), and a future positive-model research hypothesis (#212,
+  related to #178).
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -151,6 +159,7 @@ Before editing, read:
 - `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 - `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`
+- `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -205,8 +214,14 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #210 then #211 for the scaled downstream reranking benchmark gate.
-3. #178/#212 for CWM comparison and the next falsifiable positive-model
+2. #237 through #245 for visual model observability and the Textual TUI stream
+   under tracker #235: TensorBoard-compatible export (#237), checkpoint tensor
+   inspection (#238), latent matrix diagnostics (#239), run timelines (#240),
+   non-interactive report parity (#242), optional Textual TUI (#241), demo
+   diagnostic links (#243), diagnostics-driven model experiment planning
+   (#244), and final visual artifact publication (#245).
+3. #210 then #211 for the scaled downstream reranking benchmark gate.
+4. #178/#212 for CWM comparison and the next falsifiable positive-model
    research hypothesis.
 
 Issues #186, #187, #188, #189, #190, #191, #192, #193, and #194 are completed
@@ -224,6 +239,15 @@ The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
 `anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that
 adapter. Anthropic BYOK is allowed only through the explicit registration helper
 and redacted request metadata.
+
+Issue #235 is the open visual model observability and Textual TUI tracker.
+Issue #236 locked its roadmap and backlog. #235 does not supersede #224; it
+extends the project after the meaningful-demo scenario path by adding optional
+TensorBoard-compatible event exports, checkpoint tensor/layer inspection,
+latent representation matrix diagnostics, run timeline artifacts, shared report
+view models, an optional Textual TUI, and diagnostics-driven model-improvement
+planning. Visualization dependencies must remain optional and must not affect
+base imports, JSON reports, fixture tests, or non-interactive CLI usage.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training

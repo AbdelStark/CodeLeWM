@@ -11,6 +11,8 @@ release lifecycle.
 - Post-v0.2 spec: `docs/spec/11-llm-world-model-harness.md`
 - RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0013-*.md`
 - Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
+- Model observability/TUI roadmap:
+  `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - Next executable prompt: `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 
 ## How This Tracker Is Maintained
@@ -174,6 +176,29 @@ boundary.
 | #230 | security: add opt-in sandbox checks for harness demos | security/harness | p1 | l | RFC-0013 | Open |
 | #231 | run: publish meaningful live harness demo artifacts | results/harness | p1 | m | RFC-0013 | Open |
 
+## Milestone: v1.4
+
+Visual model observability and TUI harness: TensorBoard-compatible model
+generation traces, checkpoint tensor/layer inspection, latent representation
+matrix diagnostics, run timelines, shared report view models, optional Textual
+TUI, and diagnostics-driven model-improvement planning. This milestone improves
+debuggability and demo observability; it does not unlock positive model-quality
+claims by itself.
+
+| # | Title | Area | Priority | Effort | RFC | Status |
+|---|-------|------|----------|--------|-----|--------|
+| #235 | [Tracking] v1.4 visual model observability and TUI harness | observability/harness/model/evaluation | p1 | l | RFC-0009 | Open |
+| #236 | docs: lock visual model observability and TUI roadmap | docs/observability/harness | p1 | s | RFC-0009 | Closed |
+| #237 | observability: add TensorBoard event export for training and checkpoints | observability/model/runtime | p1 | m | RFC-0009 | Open |
+| #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Open |
+| #239 | eval: add latent representation matrix diagnostics | evaluation/model/observability | p1 | l | RFC-0007 | Open |
+| #240 | observability: add run timeline and monitoring reports | observability/runtime/results | p1 | m | RFC-0009 | Open |
+| #241 | harness: build optional Textual TUI for demo inspection | harness/runtime/observability | p1 | l | RFC-0013 | Open |
+| #242 | harness: keep rich terminal and JSON report parity with the TUI | harness/docs/observability | p1 | m | RFC-0013 | Open |
+| #243 | harness: connect model and latent diagnostics to demo reports | harness/model/evaluation/observability | p1 | m | RFC-0013 | Open |
+| #244 | research: define diagnostics-driven code model improvement experiment | model/evaluation/results | p1 | l | follow-up | Open |
+| #245 | run: publish visual observability harness artifact set | results/harness/observability | p1 | m | RFC-0013 | Open |
+
 ## Tracking Issues
 
 Tracking issues group child implementation issues by subsystem and remain open
@@ -199,7 +224,7 @@ intervention, closed with the negative/diagnostic #172 boundary; #183
 [Tracking] v0.3 LLM + world-model harness demo; #184 [Tracking] v0.3
 downstream candidate-reranking benchmark; #185 [Tracking] preliminary results
 publication package; #224 [Tracking] v1.3 meaningful LLM plus world-model
-harness demo.
+harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
 
 ## Cross-Cutting Dependencies
 
