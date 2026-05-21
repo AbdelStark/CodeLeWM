@@ -167,7 +167,7 @@ boundary.
 |---|-------|------|----------|--------|-----|--------|
 | #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | harness/evaluation/results | p1 | l | RFC-0013 | Open |
 | #225 | docs: lock meaningful harness demo roadmap and backlog | docs/harness | p1 | s | RFC-0013 | Closed |
-| #226 | harness: add meaningful demo scenarios and selector | harness | p1 | m | RFC-0013 | Open |
+| #226 | harness: add meaningful demo scenarios and selector | harness | p1 | m | RFC-0013 | Closed |
 | #227 | harness: upgrade demo prompt for task-solving patches | harness | p1 | m | RFC-0013 | Open |
 | #228 | harness: add static patch analysis to demo candidates | harness/security | p1 | l | RFC-0013 | Open |
 | #229 | harness: show scorer traces and diff previews in the demo | harness/docs | p1 | m | RFC-0013 | Open |

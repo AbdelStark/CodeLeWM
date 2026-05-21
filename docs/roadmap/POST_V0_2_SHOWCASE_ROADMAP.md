@@ -100,7 +100,7 @@ Issues:
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
 | F0 | #225 | docs: lock meaningful harness demo roadmap and backlog | Closed |
-| F1 | #226 | harness: add meaningful demo scenarios and selector | Open |
+| F1 | #226 | harness: add meaningful demo scenarios and selector | Closed |
 | F2 | #227 | harness: upgrade demo prompt for task-solving patches | Open |
 | F3 | #228 | harness: add static patch analysis to demo candidates | Open |
 | F4 | #229 | harness: show scorer traces and diff previews in the demo | Open |
@@ -242,7 +242,7 @@ The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. #220 and #222 proved learned scoring and terminal-first
 demo UX, but #207/#208 were superseded because the comment-style toy task is
 not the right public artifact. Select one open stream before making changes:
-#226 through #231 for the meaningful harness demo, #210/#211 for scaled
+#227 through #231 for the meaningful harness demo, #210/#211 for scaled
 downstream reranking, or #178/#212 for the next positive-model research
 hypothesis.
 
@@ -255,7 +255,7 @@ docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
 
 The harness and downstream benchmark stream is complete through #206. The
-meaningful harness demo tracker is #224: #226 adds scenario fixtures and
+meaningful harness demo tracker is #224: #226 added scenario fixtures and
 selection, #227 upgrades the prompt for task-solving patches, #228 adds static
 patch analysis, #229 adds scorer traces and compact diff previews, #230 adds
 opt-in sandbox checks, and #231 publishes the live diagnostic artifact. The

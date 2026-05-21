@@ -61,7 +61,7 @@ repository context.
 | Order | Issue | Slice | Acceptance summary |
 | --- | --- | --- | --- |
 | 0 | #225 | Roadmap and agent context | Specs, roadmap, tracker, prompt, and AGENTS.md point at this stream. |
-| 1 | #226 | Scenarios and selector | Demo supports scenario ids and defaults to a non-comment code task. |
+| 1 | #226 | Scenarios and selector | Closed: demo supports scenario ids and defaults to `bugfix-edge-case`. |
 | 2 | #227 | Task-solving prompts | Prompt template asks for diverse unified diffs that solve the scenario. |
 | 3 | #228 | Static patch analysis | Candidate packs and reports summarize changed files, hunks, symbols, parse/apply status, and risk flags. |
 | 4 | #229 | Scorer traces and previews | Terminal and HTML reports show scenario summary, compact diff previews, score/no-action deltas, and scorer metadata. |

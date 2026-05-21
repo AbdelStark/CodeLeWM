@@ -11,7 +11,7 @@ superseded by the meaningful harness demo stream.
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 Open or select a new issue from the updated backlog before making code changes:
-#226 through #231 for the meaningful LLM + world-model harness demo, #210/#211
+#227 through #231 for the meaningful LLM + world-model harness demo, #210/#211
 for the scaled downstream reranking benchmark, or #178/#212 for the next
 positive-model research hypothesis. Work one issue per branch and PR.
 
@@ -38,7 +38,7 @@ the local demo use a trusted learned torch checkpoint scorer instead of the
 deterministic hashing fixture scorer; #222 makes the local demo terminal-first
 by default while preserving explicit raw JSON mode. The comment-style live
 artifact path #207/#208 is closed as superseded. The next harness queue is
-#224: #226 scenario fixtures and selection, #227 task-solving prompts, #228
+#224: #226 scenario fixtures and selection is complete, #227 task-solving prompts, #228
 static patch analysis, #229 scorer traces and compact diff previews, #230
 opt-in sandbox checks, and #231 live meaningful diagnostic artifacts. The
 public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
@@ -51,7 +51,7 @@ registration requires an OpenRouter management key such as
 `OPENROUTER_API_KEY`. No reports may serialize raw provider keys.
 
 No active completion issue remains for the current public evidence boundary.
-The open streams are #224/#226-#231, #209/#210/#211, and #212.
+The open streams are #224/#227-#231, #209/#210/#211, and #212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
 not require network or paid LLM calls. Any live OpenRouter mode must redact

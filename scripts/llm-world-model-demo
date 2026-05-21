@@ -5,6 +5,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 uv_run=(uv run --group data --group train --group llm)
 cli_output_mode=""
+cli_scenario=""
+list_scenarios=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --json)
@@ -15,11 +17,25 @@ while [[ $# -gt 0 ]]; do
       cli_output_mode="visual"
       shift
       ;;
+    --scenario)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--scenario requires a scenario id' >&2
+        exit 2
+      fi
+      cli_scenario="$2"
+      shift 2
+      ;;
+    --list-scenarios)
+      list_scenarios=1
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/llm-world-model-demo [--visual|--json]
+Usage: scripts/llm-world-model-demo [--visual|--json] [--scenario ID]
 
 Runs the local LLM + CodeLeWM demo.
+
+Default scenario: bugfix-edge-case
 
 Default output is a visual terminal walkthrough. Use --json or set
 CODELEWM_LLM_DEMO_OUTPUT=json for raw machine-readable command output.
@@ -33,6 +49,12 @@ EOF
   esac
 done
 
+__codelewm_pre_demo_before="${CODELEWM_LLM_DEMO_BEFORE+x}"
+__codelewm_pre_demo_context_path="${CODELEWM_LLM_DEMO_CONTEXT_PATH+x}"
+__codelewm_pre_demo_task_id="${CODELEWM_LLM_DEMO_TASK_ID+x}"
+__codelewm_pre_demo_instruction="${CODELEWM_LLM_DEMO_INSTRUCTION+x}"
+__codelewm_pre_prompt_template="${CODELEWM_LLM_PROMPT_TEMPLATE_ID+x}"
+
 if [[ -f .env ]]; then
   __codelewm_env_keys=(
     CODELEWM_LLM_PROVIDER
@@ -42,6 +64,7 @@ if [[ -f .env ]]; then
     CODELEWM_LLM_TEMPERATURE
     CODELEWM_LLM_DRY_RUN
     CODELEWM_LLM_RETRY_LIMIT
+    CODELEWM_LLM_PROMPT_TEMPLATE_ID
     CODELEWM_LLM_PROVIDER_OPTIONS_JSON
     CODELEWM_OPENROUTER_BYOK
     CODELEWM_OPENROUTER_BYOK_PROVIDER
@@ -55,7 +78,9 @@ if [[ -f .env ]]; then
     CODELEWM_OPENROUTER_BYOK_WORKSPACE_ID
     CODELEWM_OPENROUTER_BYOK_IS_FALLBACK
     CODELEWM_LLM_DEMO_ROOT
+    CODELEWM_LLM_DEMO_SCENARIO
     CODELEWM_LLM_DEMO_BEFORE
+    CODELEWM_LLM_DEMO_CONTEXT_PATH
     CODELEWM_LLM_DEMO_CHECKPOINT
     CODELEWM_LLM_DEMO_TASK_ID
     CODELEWM_LLM_DEMO_INSTRUCTION
@@ -95,11 +120,15 @@ export CODELEWM_LLM_DRY_RUN="${CODELEWM_LLM_DRY_RUN:-1}"
 export CODELEWM_LLM_RETRY_LIMIT="${CODELEWM_LLM_RETRY_LIMIT:-2}"
 export OPENROUTER_APP_TITLE="${OPENROUTER_APP_TITLE:-CodeLeWM}"
 
+if [[ "$list_scenarios" == "1" ]]; then
+  "${uv_run[@]}" python -c 'from codelewm.harness.demo_scenarios import main; raise SystemExit(main())' \
+    --root .artifacts/llm-world-model-demo/input --list --json
+  exit 0
+fi
+
 demo_root="${CODELEWM_LLM_DEMO_ROOT:-.artifacts/llm-world-model-demo}"
-before_path="${CODELEWM_LLM_DEMO_BEFORE:-$demo_root/input/app.py}"
+scenario_id="${cli_scenario:-${CODELEWM_LLM_DEMO_SCENARIO:-bugfix-edge-case}}"
 checkpoint="${CODELEWM_LLM_DEMO_CHECKPOINT:-.artifacts/first-results/train/checkpoints/checkpoint.pt}"
-task_id="${CODELEWM_LLM_DEMO_TASK_ID:-codelewm-llm-world-model-demo}"
-instruction="${CODELEWM_LLM_DEMO_INSTRUCTION:-Add a deterministic comment candidate while preserving the value assignment.}"
 out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
 device="${CODELEWM_LLM_DEMO_DEVICE:-cpu}"
 output_mode="${cli_output_mode:-${CODELEWM_LLM_DEMO_OUTPUT:-visual}}"
@@ -115,6 +144,7 @@ demo_run_json="$tmp_dir/demo_run.json"
 manifest_verify_json="$tmp_dir/manifest_verify.json"
 secret_scan_json="$tmp_dir/secret_scan.json"
 html_secret_scan_json="$tmp_dir/html_secret_scan.json"
+scenario_env="$tmp_dir/scenario.env"
 
 run_json() {
   local label="$1"
@@ -138,11 +168,55 @@ run_json() {
 
 if [[ "$output_mode" == "visual" ]]; then
   printf 'CodeLeWM demo runner\n'
-  printf 'mode=%s model=%s device=%s out=%s\n\n' \
+fi
+
+"${uv_run[@]}" python -c 'from codelewm.harness.demo_scenarios import main; raise SystemExit(main())' \
+  --scenario "$scenario_id" \
+  --root "$demo_root/input" \
+  --shell-env-file "$scenario_env" >/dev/null
+# shellcheck disable=SC1090
+. "$scenario_env"
+
+if [[ -n "$__codelewm_pre_demo_before" ]]; then
+  before_path="$CODELEWM_LLM_DEMO_BEFORE"
+else
+  before_path="$CODELEWM_LLM_DEMO_SCENARIO_BEFORE"
+fi
+if [[ -n "$__codelewm_pre_demo_context_path" ]]; then
+  context_path="$CODELEWM_LLM_DEMO_CONTEXT_PATH"
+else
+  context_path="$CODELEWM_LLM_DEMO_SCENARIO_CONTEXT_PATH"
+fi
+if [[ -n "$__codelewm_pre_demo_task_id" ]]; then
+  task_id="$CODELEWM_LLM_DEMO_TASK_ID"
+else
+  task_id="$CODELEWM_LLM_DEMO_SCENARIO_TASK_ID"
+fi
+if [[ -n "$__codelewm_pre_demo_instruction" ]]; then
+  instruction="$CODELEWM_LLM_DEMO_INSTRUCTION"
+else
+  instruction="$CODELEWM_LLM_DEMO_SCENARIO_INSTRUCTION"
+fi
+if [[ -n "$__codelewm_pre_prompt_template" ]]; then
+  export CODELEWM_LLM_PROMPT_TEMPLATE_ID
+else
+  export CODELEWM_LLM_PROMPT_TEMPLATE_ID="$CODELEWM_LLM_DEMO_SCENARIO_PROMPT_TEMPLATE_ID"
+fi
+
+if [[ ! -f "$before_path" ]]; then
+  mkdir -p "$(dirname "$before_path")"
+  cp "$CODELEWM_LLM_DEMO_SCENARIO_BEFORE" "$before_path"
+fi
+
+if [[ "$output_mode" == "visual" ]]; then
+  printf 'mode=%s model=%s device=%s out=%s\n' \
     "$([[ "$CODELEWM_LLM_DRY_RUN" == "1" ]] && printf 'fixture' || printf 'live')" \
     "$CODELEWM_LLM_MODEL" \
     "$device" \
     "$out_dir"
+  printf 'scenario=%s title=%s\n\n' \
+    "$CODELEWM_LLM_DEMO_SCENARIO_ID" \
+    "$CODELEWM_LLM_DEMO_SCENARIO_TITLE"
 fi
 
 if [[ ! -f "$checkpoint" ]]; then
@@ -152,11 +226,6 @@ if [[ ! -f "$checkpoint" ]]; then
   "${uv_run[@]}" scripts/first-results --overwrite
 fi
 
-mkdir -p "$(dirname "$before_path")"
-cat > "$before_path" <<'PY'
-value = 1
-PY
-
 rm -rf "$out_dir"
 run_json "candidate generation + learned world-model scoring" "$demo_run_json" \
   "${uv_run[@]}" codelewm llm-demo \
@@ -165,7 +234,7 @@ run_json "candidate generation + learned world-model scoring" "$demo_run_json" \
   --checkpoint "$checkpoint" \
   --out "$out_dir" \
   --task-id "$task_id" \
-  --context-path app.py \
+  --context-path "$context_path" \
   --device "$device" \
   --require-learned-scorer \
   --overwrite \

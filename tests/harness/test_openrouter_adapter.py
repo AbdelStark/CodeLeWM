@@ -24,6 +24,7 @@ from codelewm.harness import (
     OpenRouterCandidateRequest,
     capture_candidate_pack,
     generate_candidate_pack,
+    get_demo_scenario,
     register_openrouter_byok_credential,
     render_candidate_prompt,
     write_candidate_pack_artifact,
@@ -58,6 +59,29 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertIn("CodeLeWM dry-run candidate", first["candidates"][0]["patch_text"])
         self.assertNotIn("anthropic-secret-value", json.dumps(first, sort_keys=True))
 
+    def test_dry_run_default_demo_scenario_generates_behavior_patch(self) -> None:
+        scenario = get_demo_scenario()
+        request = OpenRouterCandidateRequest(
+            task_id=scenario.task_id,
+            instruction=scenario.instruction,
+            context_bundle={scenario.primary_file.path: scenario.primary_file.content},
+            prompt_template_id=scenario.prompt_template_id,
+            max_candidates=2,
+            dry_run=True,
+        )
+
+        pack = generate_candidate_pack(request, env={})
+        captured = capture_candidate_pack(pack)
+        payload = captured.to_dict()
+
+        self.assertEqual(len(payload["candidates"]), 2)
+        self.assertEqual(payload["prompt"]["template_id"], scenario.prompt_template_id)
+        self.assertIn("untitled", payload["candidates"][0]["patch_text"])
+        self.assertIn("split", payload["candidates"][0]["patch_text"])
+        self.assertNotIn("CodeLeWM dry-run candidate", payload["candidates"][0]["patch_text"])
+        self.assertEqual(payload["candidates"][0]["parser_status"], "parseable_python_after_state")
+        self.assertEqual(payload["candidates"][0]["dry_run_patch_status"], "applied")
+
     def test_request_from_env_reads_only_documented_openrouter_settings(self) -> None:
         request = OpenRouterCandidateRequest.from_env(
             task_id="task-2",
@@ -73,6 +97,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
                 "CODELEWM_LLM_TEMPERATURE": "0.4",
                 "CODELEWM_LLM_DRY_RUN": "1",
                 "CODELEWM_LLM_RETRY_LIMIT": "1",
+                "CODELEWM_LLM_PROMPT_TEMPLATE_ID": "codelewm.test.template.v1",
                 "CODELEWM_LLM_PROVIDER_OPTIONS_JSON": '{"sort":"price","zdr":true}',
                 "OPENROUTER_HTTP_REFERER": "https://example.test",
                 "OPENROUTER_APP_TITLE": "CodeLeWM",
@@ -86,6 +111,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(request.timeout_seconds, 45)
         self.assertEqual(request.temperature, 0.4)
         self.assertEqual(request.retry_limit, 1)
+        self.assertEqual(request.prompt_template_id, "codelewm.test.template.v1")
         self.assertEqual(request.provider_options, {"sort": "price", "zdr": True})
         self.assertNotIn("ANTHROPIC_API_KEY", json.dumps(payload, sort_keys=True))
         self.assertNotIn("anthropic-secret-value", json.dumps(payload, sort_keys=True))
