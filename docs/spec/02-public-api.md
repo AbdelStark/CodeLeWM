@@ -146,6 +146,28 @@ reports. `--log-jsonl` appends
 `codelewm.log_event.v1` start, completion, and error events without replacing
 JSON stdout.
 
+`codelewm model inspect-checkpoint` is the public trusted-checkpoint to model
+inspection artifact path:
+
+```bash
+codelewm model inspect-checkpoint \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/tiny-checkpoint-inspection \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --json
+```
+
+It verifies the paired `codelewm.checkpoint.v1` manifest before deserializing
+the checkpoint unless `--allow-unsafe-checkpoint` is explicitly passed. It
+writes `reports/model_checkpoint_inspection.json` with
+`schema_version=codelewm.model_checkpoint_inspection.v1` and a
+`codelewm.artifact_manifest.v1` manifest over the report. The report contains
+module/layer names, parameter counts, tensor shapes, dtype/device metadata,
+finite-value checks, scalar statistics, norm summaries, selected bounded
+histograms, checkpoint-manifest provenance, compatibility metadata, and a
+diagnostic-only claim gate. It must not serialize raw tensor arrays, optimizer
+state, secrets, or unredacted private paths.
+
 `codelewm eval retrieval` is the public training-run plus packed-dataset to
 retrieval-report path:
 

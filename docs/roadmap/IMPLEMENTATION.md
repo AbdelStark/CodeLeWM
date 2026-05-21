@@ -190,7 +190,7 @@ claims by itself.
 | #235 | [Tracking] v1.4 visual model observability and TUI harness | observability/harness/model/evaluation | p1 | l | RFC-0009 | Open |
 | #236 | docs: lock visual model observability and TUI roadmap | docs/observability/harness | p1 | s | RFC-0009 | Closed |
 | #237 | observability: add TensorBoard event export for training and checkpoints | observability/model/runtime | p1 | m | RFC-0009 | Closed |
-| #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Open |
+| #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Closed |
 | #239 | eval: add latent representation matrix diagnostics | evaluation/model/observability | p1 | l | RFC-0007 | Open |
 | #240 | observability: add run timeline and monitoring reports | observability/runtime/results | p1 | m | RFC-0009 | Open |
 | #241 | harness: build optional Textual TUI for demo inspection | harness/runtime/observability | p1 | l | RFC-0013 | Open |

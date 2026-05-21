@@ -159,8 +159,10 @@ Planned schemas:
 - `codelewm.training.tensorboard_export.v1`: implemented
   TensorBoard-compatible event-log metadata for training/checkpoint scalars,
   bounded model-parameter histograms, and bounded latent summaries.
-- `codelewm.model_checkpoint_inspection.v1`: model/layer/tensor structure,
-  parameter counts, finite-value checks, norms, and summary histograms.
+- `codelewm.model_checkpoint_inspection.v1`: implemented model/layer/tensor
+  structure, parameter counts, tensor shapes, dtype/device metadata,
+  finite-value checks, norms, checkpoint-manifest provenance, compatibility
+  metadata, and bounded summary histograms.
 - `codelewm.eval.latent_matrix_report.v1`: latent dimension count,
   per-dimension statistics, effective rank, covariance/correlation summaries,
   probe associations, and semantic-axis claim gates.
@@ -175,9 +177,13 @@ CLI usage must work without either dependency group. TensorBoard export is
 enabled through `codelewm train --tensorboard`, requires the optional
 observability dependency group, writes event files plus
 `reports/tensorboard_export.json`, and includes both in the training artifact
-manifest with checksums. Visual reports are diagnostic only and cannot support
-positive semantic-latent-axis or coding-usefulness claims without the relevant
-benchmark gates.
+manifest with checksums. Checkpoint inspection is enabled through
+`codelewm model inspect-checkpoint`, verifies the checkpoint trust gate before
+loading unless an explicit unsafe local override is selected, writes
+`reports/model_checkpoint_inspection.json`, and includes the report in an
+artifact manifest with checksums. Visual reports are diagnostic only and cannot
+support positive semantic-latent-axis or coding-usefulness claims without the
+relevant benchmark gates.
 
 ## Artifact Lineage
 

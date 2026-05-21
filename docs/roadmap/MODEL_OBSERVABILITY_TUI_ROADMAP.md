@@ -89,7 +89,7 @@ automation surface and must keep:
 | --- | --- | --- | --- |
 | 0 | #236 | Roadmap and tracker lock | Docs, AGENTS.md, tracker, issue backlog, and next prompt point at #235. |
 | 1 | #237 | TensorBoard export | Closed: optional TensorBoard-compatible event logs for training/checkpoint scalars and bounded summaries. |
-| 2 | #238 | Checkpoint inspection | Schema-versioned model/layer/tensor report with trust gates and manifests. |
+| 2 | #238 | Checkpoint inspection | Closed: schema-versioned model/layer/tensor report with trust gates and manifests. |
 | 3 | #239 | Latent matrix diagnostics | Dimension matrix, finite stats, effective rank, probe associations, and semantic-axis claim gates. |
 | 4 | #240 | Run timeline and monitoring | Structured run timeline artifacts and richer redacted monitoring logs. |
 | 5 | #242 | Non-interactive report parity | Shared view model for JSON, rich terminal, and HTML outputs before TUI rendering. |
@@ -105,9 +105,9 @@ Planned artifact schemas:
 - `codelewm.training.tensorboard_export.v1`: event-log metadata, scalar tags,
   histogram tags, event-file paths, checksums, and parent training/checkpoint
   artifacts.
-- `codelewm.model_checkpoint_inspection.v1`: module tree, parameter counts,
-  tensor shapes, dtypes, finite-value checks, norms, summary histograms, config,
-  checkpoint manifest, and trust-gate status.
+- `codelewm.model_checkpoint_inspection.v1`: implemented module tree,
+  parameter counts, tensor shapes, dtypes, finite-value checks, norms, summary
+  histograms, config, checkpoint manifest, and trust-gate status.
 - `codelewm.eval.latent_matrix_report.v1`: latent matrix shape, dimension
   count, sample count, split/source coverage, per-dimension statistics,
   covariance/correlation summaries, effective rank, probe associations, and
@@ -234,10 +234,10 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then continue with #238,
-#239, #240, #242, #241, #243, #244, and #245 under #235. Issue #237 is closed
-and provides the optional TensorBoard-compatible training/checkpoint event
-export surface.
+(#227-#231) when the selected issue depends on them, then continue with #239,
+#240, #242, #241, #243, #244, and #245 under #235. Issues #237 and #238 are
+closed and provide the optional TensorBoard-compatible export plus trusted
+checkpoint tensor/layer inspection surfaces.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

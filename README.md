@@ -251,11 +251,12 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - meaningful scenario selection complete through #226.
 - visual model observability and TUI roadmap locked through #236.
 - optional TensorBoard-compatible training export complete through #237.
+- checkpoint tensor/layer inspection complete through #238.
 
 Open next streams:
 
 - meaningful harness demo: #224, with #227-#231 open;
-- visual model observability and Textual TUI harness: #235, with #238-#245
+- visual model observability and Textual TUI harness: #235, with #239-#245
   open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
