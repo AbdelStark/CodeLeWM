@@ -30,6 +30,18 @@ from .logging import (
     validate_log_event_payload,
     write_log_event_jsonl,
 )
+from .timeline import (
+    RUN_TIMELINE_SCHEMA_VERSION,
+    RunTimelineError,
+    RunTimelineRecorder,
+    RunTimelineReport,
+    RunTimelineStep,
+    read_run_timeline_report,
+    typed_failure_from_exception,
+    validate_run_timeline_report,
+    validate_run_timeline_report_payload,
+    write_run_timeline_report,
+)
 
 __all__ = [
     "ARTIFACT_KINDS",
@@ -41,6 +53,11 @@ __all__ = [
     "LogEvent",
     "LogEventError",
     "ManifestFile",
+    "RUN_TIMELINE_SCHEMA_VERSION",
+    "RunTimelineError",
+    "RunTimelineRecorder",
+    "RunTimelineReport",
+    "RunTimelineStep",
     "artifact_manifest_json_schema",
     "build_artifact_manifest",
     "build_manifest_file",
@@ -50,10 +67,15 @@ __all__ = [
     "redact_text",
     "redact_value",
     "read_artifact_manifest",
+    "read_run_timeline_report",
     "sha256_file",
     "validate_artifact_checksums",
     "validate_artifact_manifest_payload",
     "validate_log_event_payload",
+    "validate_run_timeline_report",
+    "validate_run_timeline_report_payload",
+    "typed_failure_from_exception",
     "write_artifact_manifest",
     "write_log_event_jsonl",
+    "write_run_timeline_report",
 ]

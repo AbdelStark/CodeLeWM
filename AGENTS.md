@@ -216,13 +216,14 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #240 through #245 for visual model observability and the Textual TUI stream
+2. #242, #241, and #243 through #245 for visual model observability and the Textual TUI stream
    under tracker #235. Issues #237 and #238 are complete and added optional
    TensorBoard-compatible training/checkpoint event export plus trusted
    checkpoint tensor inspection. Issue #239 adds manifest-backed latent matrix
    diagnostics with bounded heatmap-ready covariance/correlation previews and
-   closed semantic-axis claim gates. Continue with run timelines (#240),
-   non-interactive report parity (#242), optional Textual TUI (#241), demo
+   closed semantic-axis claim gates. Issue #240 adds manifest-backed
+   `codelewm.run_timeline.v1` reports to the LLM demo and latent-matrix eval
+   paths. Continue with non-interactive report parity (#242), optional Textual TUI (#241), demo
    diagnostic links (#243), diagnostics-driven model experiment planning
    (#244), and final visual artifact publication (#245).
 3. #210 then #211 for the scaled downstream reranking benchmark gate.
@@ -256,10 +257,13 @@ after checkpoint trust-gate verification. Issue #239 added
 `codelewm eval latent-matrix`, which writes manifest-backed
 `codelewm.eval.latent_matrix_report.v1` diagnostics for latent shapes,
 per-dimension statistics, effective rank, covariance/correlation summaries,
-probe associations, and semantic-axis claim gates. #235 does not supersede #224; it
+probe associations, and semantic-axis claim gates. Issue #240 added
+`codelewm.run_timeline.v1` reports for ordered steps, durations, warnings,
+typed failures, and artifact ids in the LLM demo and latent-matrix eval paths.
+#235 does not supersede #224; it
 extends the project after the meaningful-demo scenario path by adding optional
 TensorBoard-compatible event exports, checkpoint tensor/layer inspection,
-run timeline artifacts, shared report view models, an optional Textual TUI, and
+shared report view models, an optional Textual TUI, and
 diagnostics-driven model-improvement planning. Visualization dependencies must remain optional and must not affect
 base imports, JSON reports, fixture tests, or non-interactive CLI usage.
 

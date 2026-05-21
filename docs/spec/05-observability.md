@@ -177,8 +177,8 @@ Planned schemas:
 - `codelewm.eval.latent_matrix_report.v1`: implemented latent dimension count,
   per-dimension statistics, effective rank, covariance/correlation summaries,
   probe associations, and semantic-axis claim gates.
-- `codelewm.run_timeline.v1`: ordered run steps, durations, command ids,
-  artifact ids, warnings, and typed failures.
+- `codelewm.run_timeline.v1`: implemented ordered run steps, timestamps,
+  durations, command ids, artifact ids, warnings, and typed failures.
 - `codelewm.harness.visual_view_model.v1`: normalized data consumed by JSON,
   rich terminal, HTML, and Textual TUI views.
 
@@ -196,7 +196,11 @@ artifact manifest with checksums. Latent matrix diagnostics are enabled through
 `codelewm eval latent-matrix`, verify dataset, training-run, and checkpoint
 manifests before loading model weights, write
 `reports/latent_matrix_report.json`, and include the report in an artifact
-manifest with checksums. Visual reports are diagnostic only and cannot
+manifest with checksums. Run timeline reports are emitted today by
+`codelewm llm-demo` and `codelewm eval latent-matrix` as
+`reports/run_timeline.json`; they preserve append-only JSONL logging as the
+operational stream while adding a manifest-backed summary for visual reports
+and future TUI panels. Visual reports are diagnostic only and cannot
 support positive semantic-latent-axis or coding-usefulness claims without the
 relevant benchmark gates.
 

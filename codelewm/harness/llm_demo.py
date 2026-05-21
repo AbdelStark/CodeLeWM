@@ -13,9 +13,12 @@ from typing import Any
 
 from codelewm.observability import (
     ArtifactManifestError,
+    RUN_TIMELINE_SCHEMA_VERSION,
+    RunTimelineRecorder,
     build_artifact_manifest,
     read_artifact_manifest,
     validate_artifact_checksums,
+    write_run_timeline_report,
     write_artifact_manifest,
 )
 from codelewm.security.secret_scan import scan_text
@@ -90,109 +93,137 @@ def run_llm_world_model_demo(
     checkpoint_path = Path(checkpoint)
     output_dir = Path(out).resolve()
     report_path = output_dir / "reports" / "llm_world_model_demo_report.json"
+    timeline_path = output_dir / "reports" / "run_timeline.json"
     html_path = output_dir / "demo.html"
     manifest_path = output_dir / "manifest.json"
     candidate_pack_dir = output_dir / "candidate_pack"
     if not overwrite and (
-        report_path.exists() or html_path.exists() or manifest_path.exists() or candidate_pack_dir.exists()
+        report_path.exists()
+        or timeline_path.exists()
+        or html_path.exists()
+        or manifest_path.exists()
+        or candidate_pack_dir.exists()
     ):
         raise LLMWorldModelDemoError(
             f"output already exists; pass overwrite=True to replace: {output_dir}"
         )
 
-    try:
-        before_text = before_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise LLMWorldModelDemoError(f"before file could not be read: {exc}") from exc
-    context_key = context_path or before_path.name
-    try:
-        request = OpenRouterCandidateRequest.from_env(
-            task_id=task_id,
+    timeline = RunTimelineRecorder(run_id=task_id, command=command)
+    with timeline.step("read inputs", command_id="llm_demo.read_inputs"):
+        try:
+            before_text = before_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise LLMWorldModelDemoError(f"before file could not be read: {exc}") from exc
+        context_key = context_path or before_path.name
+    with timeline.step("candidate generation", command_id="llm_demo.candidate_generation"):
+        try:
+            request = OpenRouterCandidateRequest.from_env(
+                task_id=task_id,
+                instruction=instruction,
+                context_bundle={context_key: before_text},
+                env=env,
+            )
+            generated_pack = generate_candidate_pack(request, env=env)
+        except OpenRouterAdapterError as exc:
+            raise LLMWorldModelDemoError(f"candidate generation failed: {exc}") from exc
+    with timeline.step("parent manifest validation", command_id="llm_demo.parent_manifests"):
+        parent_artifact_ids = _read_parent_artifact_ids(parent_manifests)
+    with timeline.step("candidate pack capture", command_id="llm_demo.candidate_pack") as step:
+        try:
+            candidate_pack_result = write_candidate_pack_artifact(
+                generated_pack,
+                candidate_pack_dir,
+                parent_artifacts=parent_artifact_ids,
+                command=(*command, "candidate-pack"),
+                overwrite=overwrite,
+            )
+        except OpenRouterAdapterError as exc:
+            raise LLMWorldModelDemoError(f"candidate-pack capture failed: {exc}") from exc
+        step.add_artifact(candidate_pack_result.artifact_manifest_id)
+        candidate_pack_manifest_path = candidate_pack_dir / candidate_pack_result.artifact_manifest_path
+        candidate_pack_manifest = read_artifact_manifest(candidate_pack_manifest_path)
+        validate_artifact_checksums(candidate_pack_manifest, root=candidate_pack_dir)
+        candidate_pack_payload = json.loads(
+            (candidate_pack_dir / candidate_pack_result.candidate_pack_path).read_text(encoding="utf-8")
+        )
+
+    with timeline.step("world model scoring", command_id="llm_demo.world_model_scoring"):
+        scorer = load_scorer(
+            checkpoint_path,
+            device=device,
+            index=index,
+            retrieval_prior_weight=retrieval_prior_weight,
+            retrieval_prior_k=retrieval_prior_k,
+            allow_unsafe=allow_unsafe_checkpoint,
+            require_learned_backend=require_learned_scorer,
+        )
+        rerank = scorer.rerank_files(
+            before=before_path,
             instruction=instruction,
-            context_bundle={context_key: before_text},
-            env=env,
+            candidates=candidate_pack_dir / "candidates",
         )
-        generated_pack = generate_candidate_pack(request, env=env)
-    except OpenRouterAdapterError as exc:
-        raise LLMWorldModelDemoError(f"candidate generation failed: {exc}") from exc
-    parent_artifact_ids = _read_parent_artifact_ids(parent_manifests)
-    try:
-        candidate_pack_result = write_candidate_pack_artifact(
-            generated_pack,
-            candidate_pack_dir,
-            parent_artifacts=parent_artifact_ids,
-            command=(*command, "candidate-pack"),
-            overwrite=overwrite,
+        no_action = scorer.score_texts(
+            before=before_text,
+            instruction=instruction,
+            candidate=before_text,
+            candidate_name="no_action",
         )
-    except OpenRouterAdapterError as exc:
-        raise LLMWorldModelDemoError(f"candidate-pack capture failed: {exc}") from exc
-    candidate_pack_manifest_path = candidate_pack_dir / candidate_pack_result.artifact_manifest_path
-    candidate_pack_manifest = read_artifact_manifest(candidate_pack_manifest_path)
-    validate_artifact_checksums(candidate_pack_manifest, root=candidate_pack_dir)
-    candidate_pack_payload = json.loads(
-        (candidate_pack_dir / candidate_pack_result.candidate_pack_path).read_text(encoding="utf-8")
-    )
 
-    scorer = load_scorer(
-        checkpoint_path,
-        device=device,
-        index=index,
-        retrieval_prior_weight=retrieval_prior_weight,
-        retrieval_prior_k=retrieval_prior_k,
-        allow_unsafe=allow_unsafe_checkpoint,
-        require_learned_backend=require_learned_scorer,
-    )
-    rerank = scorer.rerank_files(
-        before=before_path,
-        instruction=instruction,
-        candidates=candidate_pack_dir / "candidates",
-    )
-    no_action = scorer.score_texts(
-        before=before_text,
-        instruction=instruction,
-        candidate=before_text,
-        candidate_name="no_action",
-    )
+    with timeline.step("report render", command_id="llm_demo.report_render"):
+        report = _build_demo_report(
+            task_id=task_id,
+            before_path=before_path,
+            before_text=before_text,
+            context_key=context_key,
+            instruction=instruction,
+            checkpoint_path=checkpoint_path,
+            checkpoint_sha256=scorer.checkpoint_sha256,
+            model_id=scorer.model_id,
+            candidate_pack_manifest_id=candidate_pack_manifest.artifact_id,
+            candidate_pack_manifest_path=f"candidate_pack/{candidate_pack_result.artifact_manifest_path}",
+            candidate_pack_payload=candidate_pack_payload,
+            rerank=rerank,
+            no_action=no_action,
+            index=index,
+            retrieval_prior_weight=retrieval_prior_weight,
+            retrieval_prior_k=retrieval_prior_k,
+            run_timeline_path="reports/run_timeline.json",
+        )
 
-    report = _build_demo_report(
-        task_id=task_id,
-        before_path=before_path,
-        before_text=before_text,
-        context_key=context_key,
-        instruction=instruction,
-        checkpoint_path=checkpoint_path,
-        checkpoint_sha256=scorer.checkpoint_sha256,
-        model_id=scorer.model_id,
-        candidate_pack_manifest_id=candidate_pack_manifest.artifact_id,
-        candidate_pack_manifest_path=f"candidate_pack/{candidate_pack_result.artifact_manifest_path}",
-        candidate_pack_payload=candidate_pack_payload,
-        rerank=rerank,
-        no_action=no_action,
-        index=index,
-        retrieval_prior_weight=retrieval_prior_weight,
-        retrieval_prior_k=retrieval_prior_k,
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        html_path.write_text(
+            render_llm_world_model_demo_html(report, candidate_pack_payload),
+            encoding="utf-8",
+        )
+    with timeline.step("artifact secret scan", command_id="llm_demo.secret_scan"):
+        report_scan = scan_text(report_path.read_text(encoding="utf-8"), path="llm_world_model_demo_report.json")
+        if report_scan:
+            raise LLMWorldModelDemoError("demo report contains secret-scan findings after redaction")
+        html_scan = scan_text(html_path.read_text(encoding="utf-8"), path="demo.html")
+        if html_scan:
+            raise LLMWorldModelDemoError("demo HTML contains secret-scan findings after redaction")
+    write_run_timeline_report(
+        timeline.to_report(
+            artifact_ids=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
+            metadata={
+                "report_path": "reports/llm_world_model_demo_report.json",
+                "html_path": "demo.html",
+            },
+        ),
+        timeline_path,
     )
-
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    html_path.write_text(
-        render_llm_world_model_demo_html(report, candidate_pack_payload),
-        encoding="utf-8",
-    )
-    report_scan = scan_text(report_path.read_text(encoding="utf-8"), path="llm_world_model_demo_report.json")
-    if report_scan:
-        raise LLMWorldModelDemoError("demo report contains secret-scan findings after redaction")
-    html_scan = scan_text(html_path.read_text(encoding="utf-8"), path="demo.html")
-    if html_scan:
-        raise LLMWorldModelDemoError("demo HTML contains secret-scan findings after redaction")
+    timeline_scan = scan_text(timeline_path.read_text(encoding="utf-8"), path="run_timeline.json")
+    if timeline_scan:
+        raise LLMWorldModelDemoError("demo timeline contains secret-scan findings after redaction")
 
     artifact_manifest = build_artifact_manifest(
         artifact_kind="demo_report",
         root=output_dir,
-        files=(report_path, html_path),
+        files=(report_path, html_path, timeline_path),
         command=command,
         config={
             "task_id": task_id,
@@ -209,6 +240,8 @@ def run_llm_world_model_demo(
         parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
         metadata={
             "schema_version": LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION,
+            "run_timeline_schema_version": RUN_TIMELINE_SCHEMA_VERSION,
+            "run_timeline_path": "reports/run_timeline.json",
             "success": report["success"],
             "candidate_count": report["candidate_summary"]["candidate_count"],
             "valid_candidate_count": report["candidate_summary"]["valid_candidate_count"],
@@ -396,6 +429,7 @@ def _build_demo_report(
     index: Path | str | None,
     retrieval_prior_weight: float,
     retrieval_prior_k: int,
+    run_timeline_path: str,
 ) -> dict[str, Any]:
     candidates = list(candidate_pack_payload.get("candidates", []))
     candidate_ids = [str(candidate.get("candidate_id")) for candidate in candidates]
@@ -456,6 +490,7 @@ def _build_demo_report(
             "candidate_pack_manifest_id": candidate_pack_manifest_id,
             "candidate_pack_manifest_path": candidate_pack_manifest_path,
             "demo_manifest_path": "manifest.json",
+            "run_timeline_path": run_timeline_path,
             "checkpoint_path": str(checkpoint_path),
             "checkpoint_sha256": checkpoint_sha256,
             "transition_index": None if index is None else str(index),
@@ -479,6 +514,7 @@ def _build_demo_report(
             "codelewm_rerank": result_payloads,
             "no_action": no_action.to_dict(),
             "model_id": model_id,
+            "score_direction": "lower_is_better",
             "retrieval_prior_weight": retrieval_prior_weight,
             "retrieval_prior_k": retrieval_prior_k,
         },

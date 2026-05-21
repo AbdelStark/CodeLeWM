@@ -91,6 +91,9 @@ class LatentProbeCliTest(unittest.TestCase):
             matrix_report = json.loads(
                 (matrix_out_dir / "reports" / "latent_matrix_report.json").read_text(encoding="utf-8")
             )
+            matrix_timeline = json.loads(
+                (matrix_out_dir / "reports" / "run_timeline.json").read_text(encoding="utf-8")
+            )
             artifact_manifest = read_artifact_manifest(out_dir / "manifest.json")
             matrix_artifact_manifest = read_artifact_manifest(matrix_out_dir / "manifest.json")
             checked_files = validate_artifact_checksums(artifact_manifest, root=out_dir)
@@ -142,10 +145,13 @@ class LatentProbeCliTest(unittest.TestCase):
         self.assertFalse(matrix_report["views"]["z_pred_after"]["matrix_policy"]["raw_latent_vectors_serialized"])
         self.assertTrue(matrix_report["probe_associations"]["latent_probe_report"]["available"])
         self.assertFalse(matrix_report["claim_boundary"]["semantic_axis_claim_allowed"])
+        self.assertEqual(matrix_timeline["schema_version"], "codelewm.run_timeline.v1")
+        self.assertEqual(matrix_timeline["status"], "completed")
+        self.assertIn("latent matrix report", [step["name"] for step in matrix_timeline["steps"]])
         self.assertEqual(matrix_artifact_manifest.artifact_kind, "eval_report")
         self.assertEqual(
             {path.name for path in matrix_checked_files},
-            {"config.json", "latent_matrix_report.json"},
+            {"config.json", "latent_matrix_report.json", "run_timeline.json"},
         )
         self.assertEqual(
             [event["event"] for event in matrix_log_events],

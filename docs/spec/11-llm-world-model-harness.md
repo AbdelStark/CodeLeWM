@@ -308,8 +308,11 @@ kept as structured errors and remain visible in the report.
 Terminal and HTML reports should expose enough of the meaningful task to be
 understandable without opening raw JSON: scenario title, task instruction
 summary, candidate summaries, compact diff previews or changed-symbol
-summaries, CodeLeWM score/rank, no-action delta, scorer backend/checkpoint
-metadata, optional check metadata, artifact gates, and claim gate.
+summaries, CodeLeWM score/rank, score direction, candidate-minus-no-action
+delta interpretation, scorer backend/checkpoint metadata, optional check
+metadata, artifact gates, and claim gate. Current CodeLeWM transition scores
+are lower-is-better energies, so a positive candidate-minus-no-action delta
+means the no-action baseline scored better.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank

@@ -234,7 +234,8 @@ codelewm eval latent-matrix \
 It verifies the same dataset, training-run, and checkpoint manifests as
 retrieval and latent-probe evaluation, then writes
 `reports/latent_matrix_report.json` with schema
-`codelewm.eval.latent_matrix_report.v1`. The report covers `z_before`,
+`codelewm.eval.latent_matrix_report.v1` and `reports/run_timeline.json` with
+schema `codelewm.run_timeline.v1`. The report covers `z_before`,
 `z_after`, and `z_pred_after` latent matrices, including row/dimension counts,
 split and source coverage, finite-value checks, per-dimension statistics,
 effective rank, norm summaries, mean pairwise cosine, bounded covariance and
@@ -401,9 +402,12 @@ codelewm llm-demo \
 It builds an OpenRouter request from environment variables, captures generated
 candidate patches as `codelewm.llm_candidate_pack.v1`, writes a manifest-backed
 candidate-pack artifact, scores/reranks candidates without executing them, and
-writes `codelewm.harness.demo_report.v1`. The command emits
+writes `codelewm.harness.demo_report.v1` plus `codelewm.run_timeline.v1` under
+`reports/run_timeline.json`. The command emits
 `codelewm.harness.demo_run.v1` on stdout and writes a self-contained
-`demo.html` visual report into the demo artifact. Fixture mode remains the default with
+`demo.html` visual report into the demo artifact. Demo score payloads include
+`score_direction=lower_is_better`; candidate-minus-no-action deltas are better
+when negative and worse when positive. Fixture mode remains the default with
 `CODELEWM_LLM_DRY_RUN=1`; live mode requires `OPENROUTER_API_KEY`. Use
 `uv run scripts/llm-world-model-demo` for the end-to-end local task that creates
 a tiny input file, ensures a first-results checkpoint exists, runs the demo,

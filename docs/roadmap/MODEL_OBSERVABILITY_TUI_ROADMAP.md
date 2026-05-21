@@ -91,7 +91,7 @@ automation surface and must keep:
 | 1 | #237 | TensorBoard export | Closed: optional TensorBoard-compatible event logs for training/checkpoint scalars and bounded summaries. |
 | 2 | #238 | Checkpoint inspection | Closed: schema-versioned model/layer/tensor report with trust gates and manifests. |
 | 3 | #239 | Latent matrix diagnostics | Closed: dimension matrix, finite stats, effective rank, probe associations, bounded heatmap previews, and semantic-axis claim gates. |
-| 4 | #240 | Run timeline and monitoring | Structured run timeline artifacts and richer redacted monitoring logs. |
+| 4 | #240 | Run timeline and monitoring | Closed: structured run timeline artifacts and richer redacted monitoring logs. |
 | 5 | #242 | Non-interactive report parity | Shared view model for JSON, rich terminal, and HTML outputs before TUI rendering. |
 | 6 | #241 | Textual TUI | Optional interactive TUI that loads fixture/live reports without affecting base CLI imports. |
 | 7 | #243 | Diagnostics in demo reports | Demo reports link checkpoint, latent, timeline, and tensor artifacts consistently. |
@@ -112,7 +112,7 @@ Planned artifact schemas:
   count, sample count, split/source coverage, per-dimension statistics,
   covariance/correlation summaries, effective rank, probe associations, and
   semantic-axis claim gates.
-- `codelewm.run_timeline.v1`: ordered steps, timestamps, durations, commands,
+- `codelewm.run_timeline.v1`: implemented ordered steps, timestamps, durations, commands,
   artifact ids, warnings, typed failures, and redaction status.
 - `codelewm.harness.visual_view_model.v1`: normalized view data consumed by
   JSON, rich terminal, HTML, and Textual surfaces.
@@ -235,10 +235,11 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then continue with #240,
-#242, #241, #243, #244, and #245 under #235. Issues #237, #238, and #239 are
+(#227-#231) when the selected issue depends on them, then continue with #242,
+#241, #243, #244, and #245 under #235. Issues #237, #238, #239, and #240 are
 closed and provide the optional TensorBoard-compatible export, trusted
-checkpoint tensor/layer inspection, and latent-matrix diagnostic surfaces.
+checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces, and
+run-timeline artifacts.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

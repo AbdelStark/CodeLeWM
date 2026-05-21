@@ -52,7 +52,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | ------- | ------ | ---------------------- |
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
-| `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.run_timeline.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm openrouter byok-register` | landed | `codelewm.openrouter_byok_register.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
@@ -62,7 +62,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm model inspect-checkpoint` | landed | `codelewm.model_checkpoint_inspection_run.v1`, `codelewm.model_checkpoint_inspection.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
-| `codelewm eval latent-matrix` | landed | `codelewm.eval.latent_matrix_run.v1`, `codelewm.eval.latent_matrix_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval latent-matrix` | landed | `codelewm.eval.latent_matrix_run.v1`, `codelewm.eval.latent_matrix_report.v1`, `codelewm.run_timeline.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval downstream-pack` | landed | `codelewm.downstream_benchmark_pack_run.v1`, `codelewm.downstream_rerank_benchmark.v1`, `codelewm.downstream_benchmark_readiness.v1`, `codelewm.artifact_manifest.v1`, `codelewm.secret_scan.v1`, `codelewm.error.v1` |
@@ -241,6 +241,7 @@ The command writes:
   manifest.json
   demo.html
   reports/llm_world_model_demo_report.json
+  reports/run_timeline.json
   candidate_pack/
     manifest.json
     candidate_pack.json
@@ -251,7 +252,9 @@ The command writes:
 The JSON report schema is `codelewm.harness.demo_report.v1`; the stdout summary
 schema is `codelewm.harness.demo_run.v1`. The report includes LLM order,
 CodeLeWM order, random/lexical/no-action baselines, candidate errors, optional
-check metadata, and a claim gate. The claim gate remains `allowed=false`
+check metadata, score direction, and a claim gate. CodeLeWM transition scores
+are lower-is-better energies; positive candidate-minus-no-action deltas mean
+the no-action baseline scored better. The claim gate remains `allowed=false`
 because the demo is workflow evidence, not downstream benchmark evidence.
 
 Tracked streams #183, #184, and #185 are complete as diagnostic evidence.
@@ -660,6 +663,7 @@ The command writes:
   config.json                                normalized latent-matrix config
   reports/
     latent_matrix_report.json                codelewm.eval.latent_matrix_report.v1
+    run_timeline.json                        codelewm.run_timeline.v1
 ```
 
 The report covers `z_before`, `z_after`, and `z_pred_after` latent matrices. It
@@ -671,7 +675,9 @@ inline dimension-label association summaries and can link an existing
 `codelewm.eval.latent_probe_report.v1` for probe metrics, controls, confidence
 intervals, and axis diagnostics. Raw latent vectors are not serialized by
 default. Semantic-axis, action-conditioned-quality, and downstream usefulness
-claim gates remain closed.
+claim gates remain closed. The same artifact includes `reports/run_timeline.json`
+with ordered validation, model-load, report-build, and artifact-write steps for
+future report and TUI viewers.
 
 ### `codelewm eval surprise`
 
@@ -1144,6 +1150,7 @@ field list.
 | Latent probe report | `codelewm.eval.latent_probe_report.v1` |
 | Latent matrix eval run | `codelewm.eval.latent_matrix_run.v1` |
 | Latent matrix report | `codelewm.eval.latent_matrix_report.v1` |
+| Run timeline report | `codelewm.run_timeline.v1` |
 | Action ablation run | `codelewm.eval.action_ablation_run.v1` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` |
 | Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |
