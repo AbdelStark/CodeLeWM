@@ -172,15 +172,13 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #186 spec: lock OpenRouter LLM candidate harness contract.
-2. #193 docs: publish preliminary negative-results report.
-3. #194 docs: prepare public artifact index and announcement package.
-4. #187 harness: add OpenRouter candidate generation adapter.
-5. #188 harness: add candidate pack schema and safe patch capture.
-6. #189 harness: build end-to-end LLM plus CodeLeWM demo report.
-7. #190 benchmark: define downstream task schema and claim gates.
-8. #191 benchmark: build public-safe labeled candidate reranking set.
-9. #192 eval: run downstream reranking comparison and claim gate.
+1. #189 harness: build end-to-end LLM plus CodeLeWM demo report.
+2. #190 benchmark: define downstream task schema and claim gates.
+3. #191 benchmark: build public-safe labeled candidate reranking set.
+4. #192 eval: run downstream reranking comparison and claim gate.
+
+Issues #186, #187, #188, #193, and #194 are completed preconditions for the
+demo stream and publication package.
 
 The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
 `anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that

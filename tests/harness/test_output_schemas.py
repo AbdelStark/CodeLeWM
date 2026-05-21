@@ -9,10 +9,12 @@ from pathlib import Path
 
 from codelewm.harness import (
     ERROR_REPORT_SCHEMA_VERSION,
+    LLM_CANDIDATE_PACK_SCHEMA_VERSION,
     RERANK_RESULT_SCHEMA_VERSION,
     SCORE_RESULT_SCHEMA_VERSION,
     ErrorReport,
     error_report_json_schema,
+    llm_candidate_pack_json_schema,
     rerank_result_json_schema,
     score_result_json_schema,
     validate_error_report_payload,
@@ -27,6 +29,7 @@ class HarnessOutputSchemaTest(unittest.TestCase):
         score_schema = score_result_json_schema()
         error_schema = error_report_json_schema()
         rerank_schema = rerank_result_json_schema()
+        candidate_pack_schema = llm_candidate_pack_json_schema()
 
         self.assertEqual(score_schema["properties"]["schema_version"]["const"], SCORE_RESULT_SCHEMA_VERSION)
         self.assertIn("checkpoint_sha256", score_schema["required"])
@@ -34,6 +37,15 @@ class HarnessOutputSchemaTest(unittest.TestCase):
         self.assertIn("invalid_syntax", error_schema["properties"]["error_type"]["enum"])
         self.assertEqual(rerank_schema["properties"]["schema_version"]["const"], RERANK_RESULT_SCHEMA_VERSION)
         self.assertIn("results", rerank_schema["required"])
+        self.assertEqual(
+            candidate_pack_schema["properties"]["schema_version"]["const"],
+            LLM_CANDIDATE_PACK_SCHEMA_VERSION,
+        )
+        self.assertIn("candidates", candidate_pack_schema["required"])
+        self.assertIn(
+            "patch_path",
+            candidate_pack_schema["properties"]["candidates"]["items"]["required"],
+        )
 
     def test_error_report_round_trips_json_native_payload(self) -> None:
         report = ErrorReport(
