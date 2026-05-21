@@ -13,6 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback
     import tomli as tomllib
 
 from codelewm.harness import (
+    DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV,
     DEFAULT_OPENROUTER_MODEL,
     LLM_CANDIDATE_PACK_SCHEMA_VERSION,
     OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION,
@@ -99,6 +100,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
                 "CODELEWM_OPENROUTER_BYOK": "1",
                 "CODELEWM_OPENROUTER_BYOK_PROVIDER": "anthropic",
                 "CODELEWM_OPENROUTER_BYOK_KEY_ENV": "ANTHROPIC_API_KEY",
+                "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV": "OPENROUTER_MANAGEMENT_KEY",
                 "CODELEWM_OPENROUTER_BYOK_REQUIRE": "1",
                 "CODELEWM_OPENROUTER_BYOK_REGISTER": "1",
                 "CODELEWM_OPENROUTER_BYOK_DRY_RUN": "1",
@@ -113,6 +115,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertTrue(payload["byok"]["enabled"])
         self.assertTrue(payload["byok"]["register"])
         self.assertTrue(payload["byok"]["registration_dry_run"])
+        self.assertEqual(payload["byok"]["management_key_env"], "OPENROUTER_MANAGEMENT_KEY")
         self.assertEqual(payload["byok"]["allowed_models"], ["anthropic/claude-4.5-sonnet"])
         self.assertNotIn("anthropic-secret-value", json.dumps(payload, sort_keys=True))
 
@@ -121,6 +124,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
             env={},
             provider="anthropic",
             key_env="ANTHROPIC_API_KEY",
+            management_key_env=DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV,
             name="CodeLeWM Anthropic BYOK",
             allowed_models=("anthropic/claude-4.5-sonnet",),
             dry_run=True,
@@ -129,6 +133,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(result["schema_version"], OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION)
         self.assertEqual(result["provider"], "anthropic")
         self.assertEqual(result["key_env"], "ANTHROPIC_API_KEY")
+        self.assertEqual(result["management_key_env"], DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV)
         self.assertEqual(result["allowed_models"], ["anthropic/claude-4.5-sonnet"])
         self.assertTrue(result["dry_run"])
         self.assertFalse(result["registered"])
@@ -164,10 +169,12 @@ class OpenRouterAdapterTest(unittest.TestCase):
             result = register_openrouter_byok_credential(
                 env={
                     "OPENROUTER_API_KEY": "openrouter_live_secret_value",
+                    "OPENROUTER_MANAGEMENT_KEY": "openrouter_management_secret_value",
                     "ANTHROPIC_API_KEY": "anthropic-secret-value",
                 },
                 provider="anthropic",
                 key_env="ANTHROPIC_API_KEY",
+                management_key_env="OPENROUTER_MANAGEMENT_KEY",
                 name="CodeLeWM Anthropic BYOK",
                 allowed_models=("anthropic/claude-4.5-sonnet",),
             ).to_dict()
@@ -180,7 +187,28 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(body["provider"], "anthropic")
         self.assertEqual(body["key"], "anthropic-secret-value")
         self.assertEqual(body["allowed_models"], ["anthropic/claude-4.5-sonnet"])
+        self.assertEqual(request.headers["Authorization"], "Bearer openrouter_management_secret_value")
         serialized = json.dumps(result, sort_keys=True)
+        self.assertNotIn("openrouter_live_secret_value", serialized)
+        self.assertNotIn("openrouter_management_secret_value", serialized)
+        self.assertNotIn("anthropic-secret-value", serialized)
+
+    def test_byok_registration_requires_management_key_not_chat_key(self) -> None:
+        with self.assertRaises(OpenRouterAdapterError) as raised:
+            register_openrouter_byok_credential(
+                env={
+                    "OPENROUTER_API_KEY": "openrouter_live_secret_value",
+                    "ANTHROPIC_API_KEY": "anthropic-secret-value",
+                },
+                provider="anthropic",
+                key_env="ANTHROPIC_API_KEY",
+                dry_run=False,
+            )
+
+        report = raised.exception.to_error_report()
+        self.assertEqual(report["error_type"], "missing_openrouter_management_key")
+        self.assertIn("CODELEWM_OPENROUTER_BYOK_REGISTER=0", report["remediation"])
+        serialized = json.dumps(report, sort_keys=True)
         self.assertNotIn("openrouter_live_secret_value", serialized)
         self.assertNotIn("anthropic-secret-value", serialized)
 

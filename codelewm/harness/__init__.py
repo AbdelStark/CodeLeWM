@@ -33,6 +33,7 @@ from .quality import (
     run_scorer_quality_evaluation,
 )
 from .openrouter_adapter import (
+    DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV,
     DEFAULT_OPENROUTER_MODEL,
     LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION,
     LLM_CANDIDATE_PACK_SCHEMA_VERSION,
@@ -117,6 +118,7 @@ __all__ = [
     "TRANSITION_INDEX_SCHEMA_VERSION",
     "CodeLeWMScorer",
     "CandidatePackArtifactResult",
+    "DEFAULT_OPENROUTER_MANAGEMENT_KEY_ENV",
     "DEFAULT_OPENROUTER_MODEL",
     "ErrorReport",
     "HashingTransitionScoringBackend",

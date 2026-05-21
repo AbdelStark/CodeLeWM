@@ -44,8 +44,10 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "CODELEWM_HF_SOURCE_DATASET_PATH=data/python/data.jsonl",
             "CODELEWM_HF_SOURCE_LOCAL_DIR=.artifacts/hf-sources/commitpackft",
             "OPENROUTER_API_KEY=openrouter_xxx",
+            "OPENROUTER_MANAGEMENT_KEY=openrouter_management_key_here",
             "ANTHROPIC_API_KEY=anthropic_provider_key_here",
             "CODELEWM_OPENROUTER_BYOK=0",
+            "CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV=OPENROUTER_MANAGEMENT_KEY",
             "CODELEWM_LLM_DEMO_ROOT=.artifacts/llm-world-model-demo",
         ):
             with self.subTest(marker=marker):

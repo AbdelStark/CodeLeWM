@@ -92,11 +92,13 @@ to a direct Anthropic client.
 ```bash
 # .env, kept local
 OPENROUTER_API_KEY=<openrouter-api-key>
+OPENROUTER_MANAGEMENT_KEY=<openrouter-management-key>
 ANTHROPIC_API_KEY=<anthropic-provider-key>
 CODELEWM_LLM_DRY_RUN=0
 CODELEWM_OPENROUTER_BYOK=1
 CODELEWM_OPENROUTER_BYOK_PROVIDER=anthropic
 CODELEWM_OPENROUTER_BYOK_KEY_ENV=ANTHROPIC_API_KEY
+CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV=OPENROUTER_MANAGEMENT_KEY
 CODELEWM_OPENROUTER_BYOK_REQUIRE=1
 CODELEWM_OPENROUTER_BYOK_REGISTER=1
 CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
@@ -105,9 +107,12 @@ CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
 `CODELEWM_OPENROUTER_BYOK_REGISTER=1` intentionally creates an encrypted
 Anthropic BYOK credential in the OpenRouter workspace via OpenRouter's BYOK API.
 Keep `CODELEWM_OPENROUTER_BYOK_DRY_RUN=1` to validate the registration contract
-without sending the provider key. Chat requests still authenticate with
-`OPENROUTER_API_KEY`; CodeLeWM records redacted BYOK routing metadata and never
-writes provider keys to reports.
+without sending the provider key. Registration uses the OpenRouter management
+key named by `CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV`; normal chat requests
+still authenticate with `OPENROUTER_API_KEY`. If the BYOK credential already
+exists in the OpenRouter dashboard, set `CODELEWM_OPENROUTER_BYOK_REGISTER=0`
+and keep `CODELEWM_OPENROUTER_BYOK=1`. CodeLeWM records redacted BYOK routing
+metadata and never writes provider keys to reports.
 
 Dry-run the registration contract without sending secrets:
 
@@ -115,6 +120,7 @@ Dry-run the registration contract without sending secrets:
 uv run codelewm openrouter byok-register \
   --provider anthropic \
   --key-env ANTHROPIC_API_KEY \
+  --management-key-env OPENROUTER_MANAGEMENT_KEY \
   --name "CodeLeWM Anthropic BYOK" \
   --allowed-model anthropic/claude-4.5-sonnet \
   --dry-run \

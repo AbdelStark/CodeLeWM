@@ -144,10 +144,12 @@ key through OpenRouter BYOK, make the BYOK mode explicit:
 
 ```bash
 OPENROUTER_API_KEY=<openrouter-api-key>
+OPENROUTER_MANAGEMENT_KEY=<openrouter-management-key>
 ANTHROPIC_API_KEY=<anthropic-provider-key>
 CODELEWM_OPENROUTER_BYOK=1
 CODELEWM_OPENROUTER_BYOK_PROVIDER=anthropic
 CODELEWM_OPENROUTER_BYOK_KEY_ENV=ANTHROPIC_API_KEY
+CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV=OPENROUTER_MANAGEMENT_KEY
 CODELEWM_OPENROUTER_BYOK_REQUIRE=1
 CODELEWM_OPENROUTER_BYOK_REGISTER=1
 CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
@@ -156,10 +158,13 @@ CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
 `CODELEWM_OPENROUTER_BYOK_REGISTER=1` creates an encrypted Anthropic BYOK
 credential in the OpenRouter workspace through OpenRouter's BYOK API before a
 live run. Keep `CODELEWM_OPENROUTER_BYOK_DRY_RUN=1` to validate the registration
-contract without sending the provider key. Chat requests still authenticate to OpenRouter with
-`OPENROUTER_API_KEY`; reports record redacted BYOK metadata and never write the
-raw provider key. Direct Anthropic API support still requires a separate
-adapter issue.
+contract without sending the provider key. Registration uses the OpenRouter
+management key named by `CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV`; chat
+requests still authenticate to OpenRouter with `OPENROUTER_API_KEY`. If the BYOK
+credential already exists in the OpenRouter dashboard, set
+`CODELEWM_OPENROUTER_BYOK_REGISTER=0` and keep `CODELEWM_OPENROUTER_BYOK=1`.
+Reports record redacted BYOK metadata and never write the raw provider key.
+Direct Anthropic API support still requires a separate adapter issue.
 
 OpenRouter is an optional dependency pinned to `openrouter==0.9.1`. Live runs
 record the SDK version in `codelewm.llm_candidate_pack.v1` artifacts. Dry-run
@@ -171,6 +176,7 @@ Dry-run the BYOK registration contract without sending secrets:
 uv run codelewm openrouter byok-register \
   --provider anthropic \
   --key-env ANTHROPIC_API_KEY \
+  --management-key-env OPENROUTER_MANAGEMENT_KEY \
   --name "CodeLeWM Anthropic BYOK" \
   --allowed-model anthropic/claude-4.5-sonnet \
   --dry-run \

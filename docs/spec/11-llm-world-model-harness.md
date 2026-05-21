@@ -50,6 +50,7 @@ Required environment variables:
 | --- | --- |
 | `CODELEWM_LLM_PROVIDER` | Must be `openrouter` for the first public adapter. |
 | `OPENROUTER_API_KEY` | OpenRouter API key. Never print, commit, or summarize. |
+| `OPENROUTER_MANAGEMENT_KEY` | OpenRouter management key for administrative BYOK registration only. Never print, commit, or summarize. |
 | `CODELEWM_LLM_MODEL` | Model slug, defaulting to an Anthropic model through OpenRouter. |
 | `CODELEWM_LLM_MAX_CANDIDATES` | Number of candidates requested from the LLM. |
 | `CODELEWM_LLM_TIMEOUT_SECONDS` | Per-request timeout. |
@@ -73,6 +74,7 @@ OpenRouter BYOK variables:
 | `CODELEWM_OPENROUTER_BYOK` | Enables redacted Anthropic BYOK routing metadata for OpenRouter requests. |
 | `CODELEWM_OPENROUTER_BYOK_PROVIDER` | Provider slug for the first BYOK path; currently `anthropic`. |
 | `CODELEWM_OPENROUTER_BYOK_KEY_ENV` | Environment variable name that holds the raw provider key. |
+| `CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV` | Environment variable name that holds the OpenRouter management key for registration. |
 | `CODELEWM_OPENROUTER_BYOK_REQUIRE` | Routes requests to the BYOK provider only and disables fallback when true. |
 | `CODELEWM_OPENROUTER_BYOK_REGISTER` | Runs the BYOK registration helper before a live demo run when true. |
 | `CODELEWM_OPENROUTER_BYOK_DRY_RUN` | Validates BYOK registration without sending provider secrets; set to `0` only for real registration. |
@@ -86,11 +88,14 @@ The public chat path still authenticates with `OPENROUTER_API_KEY`. A raw
 or when `CODELEWM_OPENROUTER_BYOK_REGISTER=1`; it must never be serialized into
 candidate packs, logs, reports, manifests, or docs. Request metadata records
 only redacted BYOK state such as `enabled`, provider slug, key env name,
-allowlist, and whether a workspace id was set.
+management-key env name, allowlist, and whether a workspace id was set.
 
 BYOK registration emits `codelewm.openrouter_byok_register.v1`. Non-dry-run
-registration sends the raw provider key only to OpenRouter's BYOK API and
-returns a redacted summary.
+registration uses the OpenRouter management key named by
+`CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV`, sends the raw provider key only
+to OpenRouter's BYOK API, and returns a redacted summary. If the credential
+already exists in OpenRouter, set `CODELEWM_OPENROUTER_BYOK_REGISTER=0` and
+keep `CODELEWM_OPENROUTER_BYOK=1`.
 
 `OPENROUTER_DEBUG` must be treated as unsafe for publishable runs because SDK
 debug logging may include request or response content. Live publishable runs

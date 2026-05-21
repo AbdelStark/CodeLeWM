@@ -364,10 +364,9 @@ def render_llm_world_model_demo_html(
       <p class="s-deck">Set the dry-run flags to zero when you want provider output instead of fixture candidates.</p>
       <pre class="code">CODELEWM_LLM_DRY_RUN=0
 CODELEWM_OPENROUTER_BYOK=1
-CODELEWM_OPENROUTER_BYOK_REGISTER=1
-CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
+CODELEWM_OPENROUTER_BYOK_REGISTER=0
 uv run scripts/llm-world-model-demo</pre>
-      <p class="footnote">Keep token values only in .env. This page records redacted routing metadata, not API keys.</p>
+      <p class="footnote">Keep token values only in .env. Set OPENROUTER_MANAGEMENT_KEY and CODELEWM_OPENROUTER_BYOK_REGISTER=1 only when CodeLeWM should create the BYOK credential.</p>
     </div>
   </section>
 </main>
