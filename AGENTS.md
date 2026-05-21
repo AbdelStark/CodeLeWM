@@ -127,8 +127,11 @@ Current blocker:
   `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
 - Stream trackers #183, #184, and #185 are complete. The current public
   boundary remains negative/diagnostic.
-- Issue #206 completed the public BYOK/local-demo/readme usability pass. The
-  open next streams are live harness evidence (#207/#208), scaled downstream
+- Issue #206 completed the public BYOK/local-demo/readme usability pass. Issues
+  #220 and #222 completed learned world-model scoring and terminal-first demo
+  output. Issues #207/#208 are closed as superseded because the comment-style
+  toy task should not be the public live artifact target. The open next streams
+  are the meaningful harness demo (#224 through #231), scaled downstream
   benchmarking (#209/#210/#211), and a future positive-model research
   hypothesis (#212, related to #178).
 
@@ -147,6 +150,7 @@ Before editing, read:
 - `docs/roadmap/IMPLEMENTATION.md`
 - `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
+- `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -165,6 +169,7 @@ or preliminary publication wording are touched, also read:
 
 - `docs/spec/11-llm-world-model-harness.md`
 - `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`
+- `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`
 - `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
 
 ## Work Rules
@@ -195,7 +200,12 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #208 for one live OpenRouter BYOK harness artifact.
+1. #226 through #231 for the meaningful LLM + world-model harness demo. The
+   branch for #225 has already locked the roadmap and backlog. Implement in
+   order: scenario fixtures and selector (#226), task-solving prompt path
+   (#227), static patch analysis (#228), scorer traces and compact diff
+   previews (#229), opt-in sandbox checks (#230), then the live public
+   diagnostic artifact run (#231).
 2. #210 then #211 for the scaled downstream reranking benchmark gate.
 3. #178/#212 for CWM comparison and the next falsifiable positive-model
    research hypothesis.
@@ -203,6 +213,14 @@ Current completion order:
 Issues #186, #187, #188, #189, #190, #191, #192, #193, and #194 are completed
 preconditions for the downstream benchmark stream and publication package.
 Issue #206 is the completed BYOK/local-demo/readme usability pass.
+Issue #224 is the open meaningful harness demo tracker. It supersedes #207/#208
+for the next public live artifact because a comment/no-op task is not a useful
+showcase. The default demo scenario should become a public-safe bug fix,
+edge-case handling task, API behavior change, or behavior-preserving refactor.
+Candidate code remains untrusted. Do not execute candidate code by default;
+only #230 may add opt-in sandbox checks, and those checks must use scenario
+allowlists, disposable checkouts, scrubbed environments, timeouts, manifests,
+and secret scans.
 
 The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
 `anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that

@@ -14,6 +14,8 @@ The next research-planning `/goal` prompt lives in
 completed #172 run. The v0.2 research intervention spec lives in
 `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`. The post-v0.2 harness and
 publication roadmap lives in `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
+The meaningful harness demo roadmap lives in
+`docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`.
 
 ## Project Status
 
@@ -90,9 +92,10 @@ Current blocker:
   complete as a claim-safe diagnostic workflow: #183, #184, and #185 tracked
   the streams, with child issues #186 through #194. Issue #206 adds the
   public BYOK/local-demo usability pass.
-- The next open streams are live harness evidence (#207/#208), scaled
-  downstream benchmark evidence (#209/#210/#211), and a future positive-model
-  research hypothesis (#212, related to #178).
+- The next open streams are the meaningful harness demo (#224 through #231),
+  scaled downstream benchmark evidence (#209/#210/#211), and a future
+  positive-model research hypothesis (#212, related to #178). The earlier
+  comment-style live artifact direction (#207/#208) is closed as superseded.
 
 Current landed CLI commands:
 
@@ -353,6 +356,30 @@ Publication artifacts:
 - `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md`
 - `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`
 
+### Phase 12: Meaningful Harness Demo
+
+Status: planned under tracker #224.
+
+Goal: make the public harness demo useful to inspect as a code task. The current
+demo proves the workflow, but the default instruction is too close to a
+comment/no-op patch. The v1.3 stream replaces that public target with
+scenario-driven code-edit tasks, richer candidate analysis, scorer traces,
+optional sandbox checks, and one live diagnostic artifact set.
+
+Deliverables:
+
+- roadmap, backlog, and agent-context lock (#225)
+- meaningful scenario fixtures and selector (#226)
+- task-solving prompt path for unified-diff candidates (#227)
+- static patch analysis in candidate packs and demo reports (#228)
+- terminal/HTML scorer traces and compact diff previews (#229)
+- opt-in sandbox checks behind the security boundary (#230)
+- published meaningful live OpenRouter/BYOK demo artifacts (#231)
+
+Claim boundary: this can make the workflow tangible, but it still cannot prove
+CodeLeWM improves coding. That claim remains blocked until the scaled
+downstream benchmark gate passes.
+
 ## Ordered Backlog
 
 Keep this table in implementation order and update it when issue scope changes.
@@ -371,10 +398,18 @@ Keep this table in implementation order and update it when issue scope changes.
 | 10 | #206 | harness: add OpenRouter BYOK demo task and public README polish | Harness Demo | complete |
 | 11 | #220 | harness: use learned world-model inference in LLM demo | Live Harness Evidence | complete |
 | 12 | #222 | harness: make LLM demo terminal output visual by default | Live Harness Evidence | complete |
-| 13 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Live Harness Evidence | #222 |
-| 14 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
-| 15 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
-| 16 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
+| 13 | #207/#208 | live comment-style harness artifact path | Live Harness Evidence | superseded by #224/#231 |
+| 14 | #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | Meaningful Harness Demo | open |
+| 15 | #225 | docs: lock meaningful harness demo roadmap and backlog | Meaningful Harness Demo | complete |
+| 16 | #226 | harness: add meaningful demo scenarios and selector | Meaningful Harness Demo | #225 |
+| 17 | #227 | harness: upgrade demo prompt for task-solving patches | Meaningful Harness Demo | #226 |
+| 18 | #228 | harness: add static patch analysis to demo candidates | Meaningful Harness Demo | #227 |
+| 19 | #229 | harness: show scorer traces and diff previews in the demo | Meaningful Harness Demo | #228 |
+| 20 | #230 | security: add opt-in sandbox checks for harness demos | Meaningful Harness Demo | #229 |
+| 21 | #231 | run: publish meaningful live harness demo artifacts | Meaningful Harness Demo | #230 |
+| 22 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
+| 23 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
+| 24 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
 
 Completed backlog base:
 
@@ -441,8 +476,11 @@ instead of creating duplicate trackers.
   through #192 are closed.
 - #185 Preliminary results publication package: complete; children #193 and
   #194 are closed.
-- #207 Live LLM plus world-model harness evidence: open; #220 and #222 are
-  completed demo-quality preconditions for #208.
+- #207 Live LLM plus world-model harness evidence: closed as superseded; #208
+  is also closed as superseded by the meaningful harness demo tracker #224 and
+  live artifact issue #231.
+- #224 Meaningful LLM plus world-model harness demo: open; children #226
+  through #231 remain after the #225 roadmap lock.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178

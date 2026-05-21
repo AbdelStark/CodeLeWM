@@ -4,10 +4,9 @@ Last updated: 2026-05-21
 
 This roadmap turns the completed negative v0.2 result into the next public
 milestone: a claim-safe LLM + world-model harness, a real downstream reranking
-benchmark, and a preliminary publication package. As of the BYOK/demo polish
-pass, it also defines the next three open streams: live harness evidence,
-scaled downstream benchmarking, and the next positive-model research
-hypothesis.
+benchmark, and a preliminary publication package. As of the terminal-demo pass,
+it also defines the next open streams: a meaningful harness demo, scaled
+downstream benchmarking, and the next positive-model research hypothesis.
 
 The current evidence boundary is explicit:
 
@@ -54,16 +53,21 @@ Success for the stream:
 
 ## Stream D: Live Harness Evidence
 
-Tracker: #207. Status: Open.
+Tracker: #207. Status: Closed as superseded by #224.
 
 Purpose: turn the fixture-proven harness into one live, publishable diagnostic
 artifact set without changing the claim boundary.
+
+This stream is intentionally superseded. After #220 and #222, the local demo
+proved learned scoring and terminal UX, but the toy comment-preserving task is
+not the right public artifact to publish. The live artifact target moves to
+Stream F.
 
 Issues:
 
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
-| D1 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Open |
+| D1 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Closed, superseded |
 | D2 | #220 | harness: use learned world-model inference in LLM demo | Closed |
 | D3 | #222 | harness: make LLM demo terminal output visual by default | Closed |
 
@@ -79,6 +83,45 @@ Success for the stream:
   `codelewm secret-scan`;
 - public docs record the live run as a workflow artifact, not evidence that
   CodeLeWM improves generated code.
+
+## Stream F: Meaningful Harness Demo
+
+Tracker: #224. Status: Open.
+Dedicated roadmap: `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`.
+
+Purpose: make the public harness demo meaningful to inspect as code. The
+workflow should use scenario-driven tasks, task-solving LLM patches, static
+candidate analysis, world-model scorer traces, optional sandbox checks, and one
+live diagnostic artifact set. This improves the demo, not the scientific claim
+boundary.
+
+Issues:
+
+| Order | Issue | Title | Status |
+| --- | --- | --- | --- |
+| F0 | #225 | docs: lock meaningful harness demo roadmap and backlog | Closed |
+| F1 | #226 | harness: add meaningful demo scenarios and selector | Open |
+| F2 | #227 | harness: upgrade demo prompt for task-solving patches | Open |
+| F3 | #228 | harness: add static patch analysis to demo candidates | Open |
+| F4 | #229 | harness: show scorer traces and diff previews in the demo | Open |
+| F5 | #230 | security: add opt-in sandbox checks for harness demos | Open |
+| F6 | #231 | run: publish meaningful live harness demo artifacts | Open |
+
+Success for the stream:
+
+- the default demo scenario is a public-safe bug-fix, edge-case, API behavior,
+  or refactor task rather than a comment/no-op task;
+- fixture mode remains deterministic and network-free;
+- live mode records OpenRouter SDK/model/provider metadata and redacted BYOK
+  state without serializing raw keys;
+- candidate packs include static patch analysis and structured candidate-level
+  errors;
+- terminal and HTML reports show scenario summary, compact diff previews or
+  changed-symbol summaries, CodeLeWM score/rank, no-action delta, scorer
+  backend/checkpoint metadata, artifact gates, and claim gate;
+- sandbox checks are disabled by default and available only through #230's
+  explicit allowlist/timeout/disposable-checkout contract;
+- #231 publishes one live artifact set as diagnostic workflow evidence only.
 
 ## Stream B: Downstream Candidate-Reranking Benchmark
 
@@ -175,33 +218,47 @@ Recommended order:
 10. #206
 11. #220
 12. #222
-13. #208
-14. #210
-15. #211
-16. #178 / #212
+13. #224 / #225
+14. #226
+15. #227
+16. #228
+17. #229
+18. #230
+19. #231
+20. #210
+21. #211
+22. #178 / #212
 
 Rationale: lock the contract first, publish the current result honestly, build
-the demo, prove one live workflow artifact, and only then spend effort on
-scaled downstream labels or a new model hypothesis.
+the demo, make the public demo meaningful, prove one live workflow artifact,
+and only then spend effort on scaled downstream labels or a new model
+hypothesis.
 
 ## `/goal` Prompt
 
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 The #186 through #194 stream is complete, and #206 added the public BYOK/local
-demo/readme polish. Select one open stream before making changes:
-#220/#208 for live OpenRouter BYOK harness evidence, #210/#211 for scaled
+demo/readme polish. #220 and #222 proved learned scoring and terminal-first
+demo UX, but #207/#208 were superseded because the comment-style toy task is
+not the right public artifact. Select one open stream before making changes:
+#226 through #231 for the meaningful harness demo, #210/#211 for scaled
 downstream reranking, or #178/#212 for the next positive-model research
 hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
+docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
 
 The harness and downstream benchmark stream is complete through #206. The
+meaningful harness demo tracker is #224: #226 adds scenario fixtures and
+selection, #227 upgrades the prompt for task-solving patches, #228 adds static
+patch analysis, #229 adds scorer traces and compact diff previews, #230 adds
+opt-in sandbox checks, and #231 publishes the live diagnostic artifact. The
 public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
 model slugs such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit:
 only `codelewm openrouter byok-register` or
