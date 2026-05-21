@@ -203,7 +203,7 @@ Stream A3, visual model observability and TUI harness:
 - #241 added optional Textual TUI mode for interactive demo inspection.
 - #243 connected model and latent diagnostics to demo reports.
 - #244 defines a diagnostics-driven model improvement experiment.
-- #245 publishes one visual observability harness artifact set as diagnostic
+- #245 published one visual observability harness artifact set as diagnostic
   evidence.
 
 Stream B, downstream candidate-reranking benchmark:

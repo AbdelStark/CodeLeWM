@@ -175,7 +175,7 @@ Issues:
 | G6 | #241 | harness: build optional Textual TUI for demo inspection | Closed |
 | G7 | #243 | harness: connect model and latent diagnostics to demo reports | Closed |
 | G8 | #244 | research: define diagnostics-driven code model improvement experiment | Closed |
-| G9 | #245 | run: publish visual observability harness artifact set | Open |
+| G9 | #245 | run: publish visual observability harness artifact set | Closed |
 
 Success for the stream:
 
@@ -295,9 +295,10 @@ not the right public artifact. #239 closed the latent-matrix diagnostic surface,
 #240 closed run-timeline reports, #242 closed the shared visual view-model
 surface for JSON/rich/HTML parity, and #241 closed optional Textual TUI mode.
 Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #245 for the
-visual model observability stream, #210/#211 for scaled downstream
-reranking, or #178/#212 for the next positive-model research hypothesis.
+#227 through #231 for the meaningful harness demo, #210/#211 for scaled
+downstream reranking, or #178/#212 for the next positive-model research
+hypothesis. The #235 visual model observability stream is complete through
+#245.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
@@ -327,8 +328,9 @@ TensorBoard-compatible export, #238 closed checkpoint tensor/layer inspection,
 non-interactive JSON/rich/HTML parity, #241 closed optional Textual TUI mode,
 #243 closed model and latent diagnostic links in demo reports, #244 defined the
 candidate-contrast action training experiment in
-`docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`, and #245 publishes a
-visual diagnostic artifact set.
+`docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`, and #245 published the
+visual diagnostic artifact set documented in
+`docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
 fixture report are public negative/diagnostic evidence. The harness demo can

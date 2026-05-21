@@ -139,11 +139,11 @@ Current blocker:
 - Issue #206 completed the public BYOK/local-demo/readme usability pass. Issues
   #220 and #222 completed learned world-model scoring and terminal-first demo
   output. Issues #207/#208 are closed as superseded because the comment-style
-  toy task should not be the public live artifact target. The open next streams
-  are the meaningful harness demo (#224 through #231), scaled downstream
-  benchmarking (#209/#210/#211), the visual model observability and TUI stream
-  (#235 through #245), and a future positive-model research hypothesis (#212,
-  related to #178).
+  toy task should not be the public live artifact target. The visual model
+  observability and TUI stream (#235 through #245) is complete. The open next
+  streams are the meaningful harness demo (#224 through #231), scaled
+  downstream benchmarking (#209/#210/#211), and a future positive-model
+  research hypothesis (#212, related to #178).
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -163,6 +163,7 @@ Before editing, read:
 - `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`
 - `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`
+- `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -217,8 +218,8 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #245 for visual model observability and the Textual TUI stream
-   under tracker #235. Issues #237 and #238 are complete and added optional
+2. Visual model observability and the Textual TUI stream under tracker #235 is
+   complete through #245. Issues #237 and #238 added optional
    TensorBoard-compatible training/checkpoint event export plus trusted
    checkpoint tensor inspection. Issue #239 adds manifest-backed latent matrix
    diagnostics with bounded heatmap-ready covariance/correlation previews and
@@ -230,8 +231,9 @@ Current completion order:
    #243 connects checkpoint-inspection, latent-matrix, TensorBoard, and timeline
    diagnostics into demo reports and view models. Issue #244 defines the
    candidate-contrast action training experiment in
-   `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`. Continue with final
-   visual artifact publication (#245).
+   `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`. Issue #245 published
+   the public visual observability artifact set documented in
+   `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`.
 3. #210 then #211 for the scaled downstream reranking benchmark gate.
 4. #178/#212 for CWM comparison and the next falsifiable positive-model
    research hypothesis.
