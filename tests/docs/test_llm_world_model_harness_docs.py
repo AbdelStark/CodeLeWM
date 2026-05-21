@@ -19,10 +19,15 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
         for marker in (
             "OPENROUTER_API_KEY",
             "CODELEWM_LLM_MODEL",
+            "openrouter==0.9.1",
+            "codelewm.openrouter_candidate_request.v1",
             "codelewm.llm_candidate_pack.v1",
             "codelewm.harness.demo_report.v1",
             "codelewm.downstream_rerank_report.v1",
             "must not read a raw `ANTHROPIC_API_KEY`",
+            "OPENROUTER_DEBUG",
+            "provider_routing",
+            "Demo success requires",
             "allowed=false",
         ):
             with self.subTest(marker=marker):
@@ -38,6 +43,9 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "#186 locks the OpenRouter harness contract",
             "#192 runs the downstream comparison",
             "OpenRouter SDK is beta",
+            "openrouter==0.9.1",
+            "codelewm.openrouter_candidate_request.v1",
+            "Demo success proves only",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -82,6 +90,9 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "OPENROUTER_API_KEY=openrouter_xxx",
             "CODELEWM_LLM_MODEL=anthropic/claude-4.5-sonnet",
             "CODELEWM_LLM_DRY_RUN=1",
+            "CODELEWM_LLM_PROVIDER_OPTIONS_JSON=",
+            "CODELEWM_LLM_RETRY_LIMIT=2",
+            "OPENROUTER_APP_TITLE=CodeLeWM",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

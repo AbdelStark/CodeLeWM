@@ -39,6 +39,8 @@ Success for the stream:
 
 - deterministic fixture demo runs without network access;
 - live demo can use `OPENROUTER_API_KEY` and an Anthropic OpenRouter model slug;
+- the runtime adapter pins `openrouter==0.9.1` until a compatibility PR updates
+  the contract;
 - candidate packs and demo reports are manifest-backed and secret-scanned;
 - public docs clearly state that the demo is not a model-quality proof.
 
@@ -131,4 +133,3 @@ Run the strongest local validation for each issue, commit, push, open a PR,
 wait for checks, merge when clean, return to main, pull latest main, and
 continue through #193, #194, #187, #188, #189, #190, #191, and #192.
 ```
-
