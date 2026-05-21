@@ -168,6 +168,8 @@ Stream A, LLM + world-model harness demo:
 - #189 builds the end-to-end demo report.
 - #206 adds explicit OpenRouter BYOK registration, the local
   `uv run scripts/llm-world-model-demo` task, and public README polish.
+- #220 requires learned torch checkpoint inference for the local demo scorer
+  path instead of the deterministic hashing fixture scorer.
 - #207/#208 track one live, claim-safe OpenRouter BYOK harness artifact.
 
 Stream B, downstream candidate-reranking benchmark:

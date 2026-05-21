@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+uv_run=(uv run --group data --group train --group llm)
 
 if [[ -f .env ]]; then
   __codelewm_env_keys=(
@@ -70,9 +71,10 @@ checkpoint="${CODELEWM_LLM_DEMO_CHECKPOINT:-.artifacts/first-results/train/check
 task_id="${CODELEWM_LLM_DEMO_TASK_ID:-codelewm-llm-world-model-demo}"
 instruction="${CODELEWM_LLM_DEMO_INSTRUCTION:-Add a deterministic comment candidate while preserving the value assignment.}"
 out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
+device="${CODELEWM_LLM_DEMO_DEVICE:-cpu}"
 
 if [[ ! -f "$checkpoint" ]]; then
-  uv run scripts/first-results --overwrite
+  "${uv_run[@]}" scripts/first-results --overwrite
 fi
 
 mkdir -p "$(dirname "$before_path")"
@@ -81,23 +83,24 @@ value = 1
 PY
 
 rm -rf "$out_dir"
-uv run codelewm llm-demo \
+"${uv_run[@]}" codelewm llm-demo \
   --before "$before_path" \
   --instruction "$instruction" \
   --checkpoint "$checkpoint" \
   --out "$out_dir" \
   --task-id "$task_id" \
   --context-path app.py \
-  --allow-unsafe-checkpoint \
+  --device "$device" \
+  --require-learned-scorer \
   --overwrite \
   --json
 
-uv run codelewm manifest verify \
+"${uv_run[@]}" codelewm manifest verify \
   --manifest "$out_dir/manifest.json" \
   --parent-manifest "$out_dir/candidate_pack/manifest.json" \
   --json
 
-uv run codelewm secret-scan "$out_dir" --json
-uv run codelewm secret-scan "$out_dir/demo.html" --include-suffix .html --json
+"${uv_run[@]}" codelewm secret-scan "$out_dir" --json
+"${uv_run[@]}" codelewm secret-scan "$out_dir/demo.html" --include-suffix .html --json
 
 printf 'visual_report: %s\n' "$out_dir/demo.html"

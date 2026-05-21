@@ -54,15 +54,17 @@ fixtures. It does not prove model quality.
 Run the deterministic fixture demo:
 
 ```bash
-uv sync --group dev --group llm
+uv sync --group dev --group data --group train --group llm
 uv run scripts/llm-world-model-demo
 ```
 
 The task loads `.env` if present, stays in `CODELEWM_LLM_DRY_RUN=1` by default,
 generates candidate diffs through the OpenRouter adapter fixture path, writes
-`codelewm.llm_candidate_pack.v1`, runs `codelewm llm-demo`, verifies manifests,
-secret-scans publishable outputs, and writes a visual report at
-`.artifacts/llm-world-model-demo/run/demo.html`.
+`codelewm.llm_candidate_pack.v1`, runs `codelewm llm-demo` with a trusted
+package-native torch checkpoint and `--require-learned-scorer`, verifies
+manifests, secret-scans publishable outputs, and writes a visual report at
+`.artifacts/llm-world-model-demo/run/demo.html`. If the local first-results
+checkpoint is missing, the script regenerates it before scoring.
 
 Expected success signal:
 

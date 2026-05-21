@@ -80,6 +80,7 @@ def run_llm_world_model_demo(
     retrieval_prior_k: int = 10,
     parent_manifests: Sequence[Path | str] = (),
     allow_unsafe_checkpoint: bool = False,
+    require_learned_scorer: bool = False,
     overwrite: bool = False,
     command: Sequence[str] = ("codelewm", "llm-demo"),
 ) -> LLMWorldModelDemoRunResult:
@@ -139,6 +140,7 @@ def run_llm_world_model_demo(
         retrieval_prior_weight=retrieval_prior_weight,
         retrieval_prior_k=retrieval_prior_k,
         allow_unsafe=allow_unsafe_checkpoint,
+        require_learned_backend=require_learned_scorer,
     )
     rerank = scorer.rerank_files(
         before=before_path,
@@ -202,6 +204,7 @@ def run_llm_world_model_demo(
             "retrieval_prior_weight": retrieval_prior_weight,
             "retrieval_prior_k": retrieval_prior_k,
             "allow_unsafe_checkpoint": allow_unsafe_checkpoint,
+            "require_learned_scorer": require_learned_scorer,
         },
         parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
         metadata={
