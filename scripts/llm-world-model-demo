@@ -4,6 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 uv_run=(uv run --group data --group train --group llm)
+uv_light_run=(uv run)
 cli_output_mode=""
 cli_scenario=""
 list_scenarios=0
@@ -121,7 +122,7 @@ export CODELEWM_LLM_RETRY_LIMIT="${CODELEWM_LLM_RETRY_LIMIT:-2}"
 export OPENROUTER_APP_TITLE="${OPENROUTER_APP_TITLE:-CodeLeWM}"
 
 if [[ "$list_scenarios" == "1" ]]; then
-  "${uv_run[@]}" python -c 'from codelewm.harness.demo_scenarios import main; raise SystemExit(main())' \
+  "${uv_light_run[@]}" python -c 'from codelewm.harness.demo_scenarios import main; raise SystemExit(main())' \
     --root .artifacts/llm-world-model-demo/input --list --json
   exit 0
 fi
