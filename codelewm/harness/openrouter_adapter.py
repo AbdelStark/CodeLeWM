@@ -6,23 +6,31 @@ import hashlib
 import importlib.metadata
 import json
 import os
-from collections.abc import Mapping
-from dataclasses import dataclass, field
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
 from typing import Any
 
+from codelewm.observability import build_artifact_manifest, write_artifact_manifest
 from codelewm.observability.logging import redact_text, redact_value
 from codelewm.security.secret_scan import scan_text
+from codelewm.security import parse_python_source_text
+
+from .scorer import ScoreError, _apply_unified_diff
 
 
 OPENROUTER_CANDIDATE_REQUEST_SCHEMA_VERSION = "codelewm.openrouter_candidate_request.v1"
 LLM_CANDIDATE_PACK_SCHEMA_VERSION = "codelewm.llm_candidate_pack.v1"
+LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION = "codelewm.llm_candidate_pack_artifact.v1"
 OPENROUTER_ADAPTER_VERSION = "codelewm.openrouter_adapter.v0.1"
 OPENROUTER_SDK_PACKAGE = "openrouter"
 OPENROUTER_SDK_VERSION_PIN = "0.9.1"
 DEFAULT_OPENROUTER_MODEL = "anthropic/claude-4.5-sonnet"
 DEFAULT_PROMPT_TEMPLATE_ID = "codelewm.openrouter.patch_candidates.v1"
 DEFAULT_OUTPUT_POLICY = "unified_diff"
+MAX_CAPTURE_PATCH_CHARS = 200_000
+MAX_SERIALIZED_TEXT_CHARS = 50_000
 ALLOWED_PROVIDER_OPTION_KEYS = frozenset(
     {"order", "sort", "allow_fallbacks", "require_parameters", "zdr"}
 )
@@ -51,6 +59,28 @@ class OpenRouterAdapterError(ValueError):
             "record_id": None,
             "artifact": None,
             "caused_by": None,
+        }
+
+
+@dataclass(frozen=True)
+class CandidatePackArtifactResult:
+    """Summary returned after writing a manifest-backed candidate-pack artifact."""
+
+    artifact_manifest_id: str
+    artifact_manifest_path: str
+    candidate_pack_path: str
+    prompt_path: str
+    parent_artifacts: tuple[str, ...] = ()
+    schema_version: str = LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "artifact_manifest_id": self.artifact_manifest_id,
+            "artifact_manifest_path": self.artifact_manifest_path,
+            "candidate_pack_path": self.candidate_pack_path,
+            "prompt_path": self.prompt_path,
+            "parent_artifacts": list(self.parent_artifacts),
         }
 
 
@@ -170,12 +200,19 @@ class LLMCandidate:
     generation_error: str | None = None
     provider_finish_reason: str | None = None
     token_count: int | None = None
+    patch_path: str | None = None
+    applied_before_path: str | None = None
+    after_state_sha256: str | None = None
+    patch_bytes: int | None = None
+    errors: tuple[Mapping[str, Any], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         scan = scan_text(self.patch_text, path=f"{self.candidate_id}.patch")
+        has_errors = bool(self.errors) or self.generation_error is not None
         return {
             "candidate_id": self.candidate_id,
-            "patch_text": redact_text(self.patch_text),
+            "patch_text": _redacted_text_preview(self.patch_text),
+            "patch_path": self.patch_path,
             "normalized_patch_sha256": _sha256_text(_normalize_patch(self.patch_text)),
             "parser_status": self.parser_status,
             "dry_run_patch_status": self.dry_run_patch_status,
@@ -184,11 +221,21 @@ class LLMCandidate:
             else redact_text(self.generation_error),
             "provider_finish_reason": self.provider_finish_reason,
             "token_count": self.token_count,
+            "applied_before_path": self.applied_before_path,
+            "after_state_sha256": self.after_state_sha256,
+            "patch_bytes": self.patch_bytes
+            if self.patch_bytes is not None
+            else len(self.patch_text.encode("utf-8")),
             "content_sha256": _sha256_text(self.patch_text),
             "redaction": {
                 "secret_scan_ok": not scan,
                 "secret_findings_count": len(scan),
             },
+            "rankability": {
+                "rankable": True,
+                "fallback_order": "after_valid_candidates" if has_errors else "normal",
+            },
+            "errors": [redact_value(dict(error)) for error in self.errors],
         }
 
 
@@ -249,6 +296,60 @@ class LLMCandidatePack:
             "created_at": self.created_at,
             "artifact_manifest": self.artifact_manifest,
         }
+
+
+def llm_candidate_pack_json_schema() -> dict[str, Any]:
+    """Return the JSON Schema for LLM candidate-pack artifacts."""
+
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": LLM_CANDIDATE_PACK_SCHEMA_VERSION,
+        "type": "object",
+        "additionalProperties": True,
+        "required": [
+            "schema_version",
+            "task_id",
+            "prompt",
+            "context_hash",
+            "generator",
+            "provider_routing",
+            "generation_config",
+            "candidates",
+            "errors",
+            "created_at",
+            "artifact_manifest",
+        ],
+        "properties": {
+            "schema_version": {"const": LLM_CANDIDATE_PACK_SCHEMA_VERSION},
+            "task_id": {"type": "string", "minLength": 1},
+            "prompt": {"type": "object"},
+            "context_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "generator": {
+                "type": "object",
+                "required": ["provider", "model", "sdk", "sdk_version", "adapter_version"],
+            },
+            "provider_routing": {"type": "object"},
+            "generation_config": {"type": "object"},
+            "candidates": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "candidate_id",
+                        "patch_text",
+                        "patch_path",
+                        "normalized_patch_sha256",
+                        "parser_status",
+                        "dry_run_patch_status",
+                        "errors",
+                    ],
+                },
+            },
+            "errors": {"type": "array"},
+            "created_at": {"type": "string"},
+            "artifact_manifest": {"type": ["string", "null"]},
+        },
+    }
 
 
 def generate_candidate_pack(
@@ -336,6 +437,128 @@ def generate_candidate_pack(
     )
 
 
+def capture_candidate_pack(
+    pack: LLMCandidatePack,
+    *,
+    max_patch_chars: int = MAX_CAPTURE_PATCH_CHARS,
+) -> LLMCandidatePack:
+    """Parse and dry-run candidate patches as text without executing candidate code."""
+
+    if max_patch_chars < 1:
+        raise OpenRouterAdapterError("max_patch_chars must be >= 1", error_type="schema_error")
+    captured = tuple(
+        _capture_candidate(candidate, pack.request.context_bundle, max_patch_chars=max_patch_chars)
+        for candidate in pack.candidates
+    )
+    return replace(pack, candidates=captured)
+
+
+def write_candidate_pack_artifact(
+    pack: LLMCandidatePack,
+    out: Path | str,
+    *,
+    parent_artifacts: Sequence[str] = (),
+    command: Sequence[str] = ("codelewm", "harness", "candidate-pack"),
+    overwrite: bool = False,
+    allow_secret_findings: bool = False,
+    max_patch_chars: int = MAX_CAPTURE_PATCH_CHARS,
+) -> CandidatePackArtifactResult:
+    """Write a manifest-backed candidate-pack artifact after secret and patch checks."""
+
+    secret_findings = _raw_candidate_pack_secret_findings(pack)
+    if secret_findings and not allow_secret_findings:
+        raise OpenRouterAdapterError(
+            "candidate pack contains secret-scan findings; refusing to write publishable artifact",
+            error_type="secret_scan_failed",
+            remediation="remove secrets from prompt/context/candidate output before publication",
+        )
+
+    output_dir = Path(out).resolve()
+    candidate_pack_path = output_dir / "candidate_pack.json"
+    prompt_path = output_dir / "prompt" / "redacted_prompt.txt"
+    candidates_dir = output_dir / "candidates"
+    manifest_path = output_dir / "manifest.json"
+    if not overwrite and any(path.exists() for path in (candidate_pack_path, prompt_path, manifest_path, candidates_dir)):
+        raise OpenRouterAdapterError(
+            f"output already exists; pass overwrite=True to replace: {output_dir}",
+            error_type="config_error",
+            remediation="choose a clean output directory or enable overwrite",
+        )
+
+    captured = capture_candidate_pack(pack, max_patch_chars=max_patch_chars)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    candidates_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text(_redacted_text_preview(captured.prompt_text) + "\n", encoding="utf-8")
+
+    candidates_with_paths: list[LLMCandidate] = []
+    candidate_files: list[Path] = []
+    for candidate in captured.candidates:
+        patch_path = candidates_dir / f"{candidate.candidate_id}.patch"
+        patch_text = candidate.patch_text
+        if len(patch_text) > max_patch_chars or scan_text(patch_text, path=str(patch_path)):
+            patch_path = candidates_dir / f"{candidate.candidate_id}.patch.redacted.txt"
+            patch_text = _redacted_text_preview(patch_text)
+        patch_path.write_text(patch_text.rstrip("\n") + "\n", encoding="utf-8")
+        candidate_files.append(patch_path)
+        candidates_with_paths.append(
+            replace(candidate, patch_path=_relative_to_root(patch_path, output_dir))
+        )
+
+    materialized = replace(
+        captured,
+        candidates=tuple(candidates_with_paths),
+        artifact_manifest="manifest.json",
+    )
+    candidate_pack_path.write_text(
+        json.dumps(materialized.to_dict(), indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+    report_scan = scan_text(candidate_pack_path.read_text(encoding="utf-8"), path="candidate_pack.json")
+    if report_scan and not allow_secret_findings:
+        raise OpenRouterAdapterError(
+            "candidate pack report contains secret-scan findings after redaction",
+            error_type="secret_scan_failed",
+            remediation="inspect redaction patterns before publication",
+        )
+
+    artifact_manifest = build_artifact_manifest(
+        artifact_kind="candidate_pack",
+        root=output_dir,
+        files=(candidate_pack_path, prompt_path, *candidate_files),
+        command=command,
+        config={
+            "task_id": materialized.request.task_id,
+            "model": materialized.request.model,
+            "dry_run": materialized.request.dry_run,
+            "max_candidates": materialized.request.max_candidates,
+            "max_patch_chars": max_patch_chars,
+            "allow_secret_findings": allow_secret_findings,
+        },
+        parent_artifacts=tuple(parent_artifacts),
+        metadata={
+            "schema_version": LLM_CANDIDATE_PACK_SCHEMA_VERSION,
+            "candidate_count": len(materialized.candidates),
+            "valid_candidate_count": sum(
+                1 for candidate in materialized.candidates if not candidate.errors
+            ),
+            "error_candidate_count": sum(
+                1 for candidate in materialized.candidates if candidate.errors
+            ),
+            "secret_findings_count": len(secret_findings),
+        },
+    )
+    write_artifact_manifest(artifact_manifest, manifest_path)
+    return CandidatePackArtifactResult(
+        artifact_manifest_id=artifact_manifest.artifact_id,
+        artifact_manifest_path="manifest.json",
+        candidate_pack_path="candidate_pack.json",
+        prompt_path=_relative_to_root(prompt_path, output_dir),
+        parent_artifacts=tuple(parent_artifacts),
+    )
+
+
 def render_candidate_prompt(request: OpenRouterCandidateRequest) -> str:
     """Render the deterministic prompt sent to OpenRouter."""
 
@@ -385,9 +608,191 @@ def _dry_run_patch(request: OpenRouterCandidateRequest, *, index: int) -> str:
         f"### Candidate candidate_{index:03d}\n"
         f"--- a/{first_path}\n"
         f"+++ b/{first_path}\n"
-        "@@\n"
+        "@@ -1,0 +1,1 @@\n"
         f"+# CodeLeWM dry-run candidate {index}: {marker}\n"
     )
+
+
+def _capture_candidate(
+    candidate: LLMCandidate,
+    context_bundle: Mapping[str, str],
+    *,
+    max_patch_chars: int,
+) -> LLMCandidate:
+    errors: list[Mapping[str, Any]] = list(candidate.errors)
+    patch_bytes = len(candidate.patch_text.encode("utf-8"))
+    secret_findings = scan_text(candidate.patch_text, path=f"{candidate.candidate_id}.patch")
+    if secret_findings:
+        errors.append(
+            _candidate_error(
+                candidate.candidate_id,
+                "secret_scan_failed",
+                "candidate patch contains secret-scan findings",
+                "remove secrets from the candidate patch before publication",
+            )
+        )
+
+    if len(candidate.patch_text) > max_patch_chars:
+        errors.append(
+            _candidate_error(
+                candidate.candidate_id,
+                "patch_too_large",
+                "candidate patch exceeds the configured capture limit",
+                "reduce candidate output size or raise max_patch_chars for local diagnostics",
+            )
+        )
+        return replace(
+            candidate,
+            parser_status="not_parsed",
+            dry_run_patch_status="blocked_patch_too_large",
+            patch_bytes=patch_bytes,
+            errors=tuple(errors),
+        )
+
+    before_path: str | None = None
+    after_state_sha256: str | None = None
+    parser_status = "not_parsed"
+    dry_run_patch_status = "not_applied"
+    try:
+        before_path = _patch_context_path(candidate.patch_text, context_bundle)
+        after_text = _apply_unified_diff(
+            context_bundle[before_path],
+            candidate.patch_text,
+            artifact=candidate.candidate_id,
+        )
+        dry_run_patch_status = "applied"
+        after_state_sha256 = _sha256_text(after_text)
+        try:
+            parse_python_source_text(after_text, filename=before_path)
+            parser_status = "parseable_python_after_state"
+        except SyntaxError as exc:
+            parser_status = "invalid_syntax"
+            errors.append(
+                _candidate_error(
+                    candidate.candidate_id,
+                    "invalid_syntax",
+                    "candidate patch applies but produces invalid Python syntax",
+                    "generate a syntactically valid Python after-state",
+                    artifact=before_path,
+                    caused_by=f"{exc.__class__.__name__}: {exc.msg}",
+                )
+            )
+    except ScoreError as exc:
+        dry_run_patch_status = exc.error_type
+        errors.append(
+            _candidate_error(
+                candidate.candidate_id,
+                exc.error_type,
+                str(exc),
+                exc.remediation,
+                artifact=exc.artifact,
+                caused_by=exc.caused_by,
+            )
+        )
+    except OpenRouterAdapterError as exc:
+        dry_run_patch_status = exc.error_type
+        errors.append(
+            _candidate_error(
+                candidate.candidate_id,
+                exc.error_type,
+                str(exc),
+                exc.remediation,
+            )
+        )
+
+    return replace(
+        candidate,
+        parser_status=parser_status,
+        dry_run_patch_status=dry_run_patch_status,
+        applied_before_path=before_path,
+        after_state_sha256=after_state_sha256,
+        patch_bytes=patch_bytes,
+        errors=tuple(errors),
+    )
+
+
+def _patch_context_path(patch_text: str, context_bundle: Mapping[str, str]) -> str:
+    source_path, target_path = _patch_header_paths(patch_text)
+    for candidate_path in (target_path, source_path):
+        if candidate_path in context_bundle:
+            return candidate_path
+    available = ", ".join(sorted(context_bundle)) or "<empty>"
+    raise OpenRouterAdapterError(
+        "candidate patch does not target a file in the supplied context bundle",
+        error_type="source_unavailable",
+        remediation=f"target one of the context bundle paths: {available}",
+    )
+
+
+def _patch_header_paths(patch_text: str) -> tuple[str, str]:
+    old_paths: list[str] = []
+    new_paths: list[str] = []
+    for line in patch_text.splitlines():
+        if line.startswith("--- "):
+            old_paths.append(_normalize_patch_header_path(line[4:].strip()))
+        elif line.startswith("+++ "):
+            new_paths.append(_normalize_patch_header_path(line[4:].strip()))
+
+    if not old_paths or not new_paths:
+        raise OpenRouterAdapterError(
+            "candidate patch must include unified-diff source and target headers",
+            error_type="patch_parse_failed",
+            remediation="generate a unified diff with --- and +++ headers",
+        )
+    if len(old_paths) != 1 or len(new_paths) != 1:
+        raise OpenRouterAdapterError(
+            "candidate pack capture supports exactly one changed file per candidate",
+            error_type="multi_file_patch_unsupported",
+            remediation="split multi-file changes into one candidate per file for the v0 harness",
+        )
+    return old_paths[0], new_paths[0]
+
+
+def _normalize_patch_header_path(raw: str) -> str:
+    token = raw.split("\t", 1)[0].split(" ", 1)[0].strip()
+    if token == "/dev/null":
+        raise OpenRouterAdapterError(
+            "candidate patch creates or deletes files, which v0 capture does not support",
+            error_type="patch_parse_failed",
+            remediation="generate a patch against an existing context file",
+        )
+    if token.startswith("a/") or token.startswith("b/"):
+        token = token[2:]
+    path = PurePosixPath(token)
+    lowered = token.lower()
+    if path.is_absolute() or ".." in path.parts or not token:
+        raise OpenRouterAdapterError(
+            "candidate patch path must be a safe relative repository path",
+            error_type="security_error",
+            remediation="remove absolute paths and path traversal from the patch",
+        )
+    if ".env" in lowered or "token" in lowered:
+        raise OpenRouterAdapterError(
+            "candidate patch path must not target token-bearing or .env files",
+            error_type="security_error",
+            remediation="remove secret-bearing files from candidate generation",
+        )
+    return path.as_posix()
+
+
+def _candidate_error(
+    candidate_id: str,
+    error_type: str,
+    message: str,
+    remediation: str,
+    *,
+    artifact: str | None = None,
+    caused_by: str | None = None,
+) -> Mapping[str, Any]:
+    return {
+        "schema_version": "codelewm.error.v1",
+        "candidate_id": candidate_id,
+        "error_type": error_type,
+        "message": redact_text(message),
+        "remediation": remediation,
+        "artifact": artifact,
+        "caused_by": caused_by,
+    }
 
 
 def _candidates_from_response_text(text: str, max_candidates: int) -> list[LLMCandidate]:
@@ -571,6 +976,25 @@ def _openrouter_sdk_version() -> str:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _raw_candidate_pack_secret_findings(pack: LLMCandidatePack) -> tuple[Any, ...]:
+    findings = list(scan_text(pack.prompt_text, path="prompt.txt"))
+    for candidate in pack.candidates:
+        findings.extend(scan_text(candidate.patch_text, path=f"{candidate.candidate_id}.patch"))
+    return tuple(findings)
+
+
+def _redacted_text_preview(text: str, *, limit: int = MAX_SERIALIZED_TEXT_CHARS) -> str:
+    redacted = redact_text(text)
+    if len(redacted) <= limit:
+        return redacted
+    digest = _sha256_text(redacted)
+    return redacted[:limit] + f"\n...[truncated sha256={digest} chars={len(redacted)}]"
+
+
+def _relative_to_root(path: Path, root: Path) -> str:
+    return path.resolve().relative_to(root.resolve()).as_posix()
 
 
 def _normalize_patch(text: str) -> str:

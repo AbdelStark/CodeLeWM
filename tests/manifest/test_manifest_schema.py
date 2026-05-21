@@ -115,6 +115,7 @@ class ArtifactManifestSchemaTest(unittest.TestCase):
         schema = artifact_manifest_json_schema()
 
         self.assertEqual(schema["$id"], ARTIFACT_MANIFEST_SCHEMA_VERSION)
+        self.assertIn("candidate_pack", schema["properties"]["artifact_kind"]["enum"])
         self.assertIn("training_run", schema["properties"]["artifact_kind"]["enum"])
         for field in (
             "artifact_id",

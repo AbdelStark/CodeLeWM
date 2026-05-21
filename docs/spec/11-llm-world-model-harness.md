@@ -157,12 +157,18 @@ Each candidate records:
 The candidate pack must never store API keys. Prompts, completions, patches, and
 reports must pass `codelewm secret-scan` before publication.
 
+Materialized candidate-pack artifacts use artifact kind `candidate_pack`. They
+write `candidate_pack.json`, a redacted prompt file, candidate patch files, and
+`manifest.json`. Invalid or oversized candidates are kept as structured
+candidate errors and remain rankable after valid candidates; they must not abort
+the whole pack.
+
 ## Dry-Run And Failure Behavior
 
-`CODELEWM_LLM_DRY_RUN=1` is the default until #187 lands live mode. Dry-run mode
-must not import the OpenRouter SDK, read `OPENROUTER_API_KEY`, or make network
-calls. It loads deterministic fixture responses and still writes the same
-request, candidate-pack, manifest, and secret-scan surfaces as live mode.
+`CODELEWM_LLM_DRY_RUN=1` remains the default fixture path. Dry-run mode must not
+import the OpenRouter SDK, read `OPENROUTER_API_KEY`, or make network calls. It
+loads deterministic fixture responses and still writes the same request,
+candidate-pack, manifest, and secret-scan surfaces as live mode.
 
 Live mode failure behavior:
 

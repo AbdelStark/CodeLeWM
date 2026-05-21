@@ -30,9 +30,9 @@ Issues:
 
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
-| A1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Open |
-| A2 | #187 | harness: add OpenRouter candidate generation adapter | Open |
-| A3 | #188 | harness: add candidate pack schema and safe patch capture | Open |
+| A1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Closed |
+| A2 | #187 | harness: add OpenRouter candidate generation adapter | Closed |
+| A3 | #188 | harness: add candidate pack schema and safe patch capture | Closed |
 | A4 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Open |
 
 Success for the stream:

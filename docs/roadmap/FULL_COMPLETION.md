@@ -287,7 +287,7 @@ Deliverables:
 
 ### Phase 9: LLM + World-Model Harness Demo
 
-Status: complete as a claim-safe preliminary publication package.
+Status: open; #186 through #188 are complete and #189 is the next demo issue.
 
 Goal: showcase the intended use case without claiming model improvement. An LLM
 generates candidate patches through the OpenRouter Python SDK, CodeLeWM
@@ -343,11 +343,11 @@ Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Harness Demo | #187, #188, #189 |
+| 1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Harness Demo | complete |
 | 2 | #193 | docs: publish preliminary negative-results report | Publication | complete |
 | 3 | #194 | docs: prepare public artifact index and announcement package | Publication | complete |
-| 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | #189 |
-| 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | #189 |
+| 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | complete |
+| 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | complete |
 | 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | #192 |
 | 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | #191, #192 |
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | #192 |

@@ -15,6 +15,7 @@ from typing import Any, Literal
 
 ARTIFACT_MANIFEST_SCHEMA_VERSION = "codelewm.artifact_manifest.v1"
 ArtifactKind = Literal[
+    "candidate_pack",
     "dataset",
     "checkpoint",
     "training_run",
@@ -23,6 +24,7 @@ ArtifactKind = Literal[
     "score_report",
 ]
 ARTIFACT_KINDS: tuple[str, ...] = (
+    "candidate_pack",
     "dataset",
     "checkpoint",
     "training_run",
