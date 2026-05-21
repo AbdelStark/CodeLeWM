@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CodeLeWM — Codebase Crash Course</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #12161b;
+    --panel-2: #161b22;
+    --ink: #e6edf3;
+    --muted: #9aa6b2;
+    --accent: #7ee787;
+    --accent-2: #79c0ff;
+    --warn: #ffa657;
+    --danger: #ff7b72;
+    --rule: #21262d;
+    --code-bg: #0d1117;
+    --kbd: #2a313a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre, .mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  :not(pre) > code {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    color: #d2dae3;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 56px 28px 96px;
+  }
+  header.title {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  header.title .eyebrow {
+    color: var(--accent);
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  header.title h1 {
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  header.title .sub {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 720px;
+  }
+  nav.toc {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 48px;
+  }
+  nav.toc h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  nav.toc ol {
+    margin: 0;
+    padding-left: 20px;
+    columns: 2;
+    column-gap: 28px;
+  }
+  nav.toc li { margin: 4px 0; break-inside: avoid; }
+
+  h2.section {
+    font-size: 26px;
+    margin: 64px 0 8px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    letter-spacing: -0.01em;
+  }
+  h2.section .num {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent);
+    margin-right: 12px;
+    font-size: 18px;
+    vertical-align: middle;
+  }
+  h3 {
+    font-size: 19px;
+    margin: 28px 0 8px;
+    color: var(--ink);
+  }
+  h4 {
+    font-size: 15px;
+    margin: 22px 0 6px;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  p { margin: 10px 0; }
+
+  blockquote {
+    margin: 16px 0;
+    padding: 12px 18px;
+    border-left: 3px solid var(--accent);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout {
+    margin: 22px 0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--rule);
+    background: var(--panel);
+  }
+  .callout.intuition { border-left: 3px solid var(--accent-2); }
+  .callout.warn { border-left: 3px solid var(--warn); }
+  .callout.danger { border-left: 3px solid var(--danger); }
+  .callout .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .callout.intuition .label { color: var(--accent-2); }
+  .callout.warn .label { color: var(--warn); }
+  .callout.danger .label { color: var(--danger); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 14.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    background: var(--panel-2);
+  }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.014); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 18px 0;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card h4 { margin-top: 4px; }
+
+  .filepath {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent);
+    font-size: 0.92em;
+  }
+  .kbd {
+    font-family: "JetBrains Mono", monospace;
+    background: var(--kbd);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.85em;
+    color: #d2dae3;
+  }
+  .pill {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(126,231,135,0.10);
+    color: var(--accent);
+    border: 1px solid rgba(126,231,135,0.25);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .ascii {
+    white-space: pre;
+    font-family: "JetBrains Mono", monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    color: #c9d1d9;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Math-ish formula block */
+  .formula {
+    background: var(--panel-2);
+    border: 1px dashed var(--rule);
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin: 14px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    overflow-x: auto;
+  }
+
+  hr.soft {
+    border: 0;
+    border-top: 1px dashed var(--rule);
+    margin: 28px 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="title">
+  <div class="eyebrow">codelewm · crash course</div>
+  <h1>CodeLeWM — Codebase Crash Course</h1>
+  <p class="sub">
+    A pedagogic walkthrough of the training pipeline, the transition objective, and the
+    anti-collapse machinery that holds a JEPA-style latent world model together. Read it top
+    to bottom; each section assumes the previous one.
+  </p>
+</header>
+
+<nav class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#part-1">Part 1 — The Big Picture</a></li>
+    <li><a href="#part-2">Part 2 — Pipeline Map</a></li>
+    <li><a href="#part-3">Part 3 — The Training Executor</a></li>
+    <li><a href="#part-4">Part 4 — The Transition Objective</a></li>
+    <li><a href="#part-5">Part 5 — SIGReg, In Depth</a></li>
+    <li><a href="#part-6">Part 6 — The Action-Use Probes</a></li>
+    <li><a href="#part-7">Part 7 — Anti-Collapse Toolkit</a></li>
+    <li><a href="#part-8">Part 8 — Reproducibility Contract</a></li>
+    <li><a href="#part-9">Part 9 — Glossary &amp; Cheatsheet</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-1"><span class="num">01</span> The Big Picture</h2>
+
+<p>
+CodeLeWM is a <strong>latent world model for code</strong>. Given a piece of code
+(<code>state_before</code>) and an edit (<code>action</code>), the model predicts the
+<em>latent representation</em> of the resulting code (<code>z_pred_after</code>) and is trained
+to make that match the latent of the actual post-edit code (<code>z_after</code>). This is a
+<strong>JEPA-style objective</strong> — we never reconstruct pixels or tokens, only embeddings.
+</p>
+
+<div class="callout danger">
+  <div class="label">The defining risk</div>
+  Latent predictors are prone to <strong>representation collapse</strong> — the model trivially
+  wins by outputting a constant vector for everything, so <code>z_pred_after == z_after</code>
+  always. Almost every &ldquo;weird&rdquo; piece of this codebase
+  (SIGReg, action-swap diagnostics, the collapse smoke test, the validation distance gap)
+  is a defense against collapse or a probe to detect it.
+</div>
+
+<h3>What the model actually computes</h3>
+
+<p>Hold these symbols in your head; they appear in every subsequent section:</p>
+
+<table>
+  <thead>
+    <tr><th>Symbol</th><th>Definition</th><th>Where it comes from</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>z_before</code></td>
+      <td>Encoder applied to pre-edit code</td>
+      <td><code>E(state_before)</code></td>
+    </tr>
+    <tr>
+      <td><code>z_after</code></td>
+      <td>Encoder applied to post-edit code</td>
+      <td><code>E(state_after)</code></td>
+    </tr>
+    <tr>
+      <td><code>action_emb</code></td>
+      <td>Encoder applied to the edit</td>
+      <td><code>A(action)</code></td>
+    </tr>
+    <tr>
+      <td><code>z_pred_after</code></td>
+      <td>Transition head's prediction</td>
+      <td><code>T(z_before, action_emb)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The training goal in one line:</p>
+
+<div class="formula">
+    Learn E, A, T such that &nbsp; T(E(s), A(a)) ≈ E(s')&nbsp; for every transition (s, a, s') in the data.
+</div>
+
+<p>
+The naive thing — minimize <code>‖z_pred_after − z_after‖²</code> — has a degenerate global optimum:
+make <code>E</code> constant. Everything else in this crash course exists to make collapse a
+<em>worse</em> minimizer than the actual task.
+</p>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-2"><span class="num">02</span> Pipeline Map</h2>
+
+<p>Before reading any code, picture the data flowing through these stages:</p>
+
+<div class="ascii">raw repo edits  ─→  packed HDF5 splits (state_before, action, state_after)
+        ─→  PackedTransitionHdf5Dataset  ─→  DataLoader
+        ─→  TorchCodeTransitionModel forward
+                ↓
+          { z_before, z_after, z_pred_after, action_emb, action_reconstruction? }
+        ─→  compute_transition_objective
+                ↓
+          MSE  +  SIGReg  ( +  retrieval | margin | swap | inverse  )
+        ─→  backward, clip_grad_norm, optimizer.step
+        ─→  end-of-run: validation pass + collapse report + checkpoint + JSON report</div>
+
+<p>Where to find each stage in the repo:</p>
+
+<table>
+  <thead><tr><th>Stage</th><th>File</th><th>Key symbol</th></tr></thead>
+  <tbody>
+    <tr><td>Packed dataset</td><td class="filepath">codelewm/training/torch_executor.py</td><td><code>PackedTransitionHdf5Dataset</code></td></tr>
+    <tr><td>Training loop</td><td class="filepath">codelewm/training/torch_executor.py</td><td><code>torch_training_executor</code></td></tr>
+    <tr><td>Outer runner</td><td class="filepath">codelewm/training/runner.py</td><td><code>train(...)</code></td></tr>
+    <tr><td>Model architecture</td><td class="filepath">codelewm/model/transition.py</td><td><code>TorchCodeTransitionModel</code></td></tr>
+    <tr><td>Objective</td><td class="filepath">codelewm/model/objective.py</td><td><code>compute_transition_objective</code></td></tr>
+    <tr><td>Anti-collapse audit</td><td class="filepath">codelewm/eval/</td><td><code>compute_collapse_report</code></td></tr>
+  </tbody>
+</table>
+
+<div class="callout intuition">
+  <div class="label">Mental model</div>
+  <code>torch_training_executor</code> is the <em>inner loop</em> in the pipeline. Everything
+  above it (data packing) and below it (eval suite, probes) is someone else's code, gated by
+  schema versions and a manifest contract.
+</div>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-3"><span class="num">03</span> The Training Executor</h2>
+
+<p>
+File: <span class="filepath">codelewm/training/torch_executor.py:89</span>.
+The function is large but follows a strict shape. Read it as <strong>five phases</strong>.
+</p>
+
+<h3>3.1 &nbsp;Setup phase</h3>
+
+<pre>runtime = _require_torch_runtime()
+_seed_everything(context.config.seed, runtime)
+selected_device = _resolve_device(device or context.config.trainer.accelerator, runtime)
+precision = _precision_dtype(context.config.trainer.precision, selected_device, runtime)</pre>
+
+<ul>
+  <li><strong>Torch is optional.</strong> The package imports with no torch installed; the
+      guard fails loud if you try to train without the <code>train</code> dependency group.</li>
+  <li><strong>Seed everything.</strong> Python <code>random</code>, NumPy, torch (CPU + CUDA).
+      Same config + same seed ⇒ same trajectory.</li>
+  <li><strong>Device resolution.</strong> <code>auto</code> prefers CUDA, then MPS, then CPU.
+      Explicit <code>cuda</code> raises if unavailable — fail loud, not silent.</li>
+  <li><strong>Precision dtype.</strong> <code>bf16-mixed</code> is the modern default on
+      Ampere+. fp16 is forced to fp32 on CPU because fp16 on CPU is meaningless.</li>
+</ul>
+
+<h3>3.2 &nbsp;Data &amp; model construction</h3>
+
+<pre>train_dataset = PackedTransitionHdf5Dataset(train_path, action_view=..., vocab_size=...)
+val_dataset   = PackedTransitionHdf5Dataset(val_path,   ..., allow_empty=True)
+
+model = build_torch_transition_model(_model_config(context.config))
+model.to(selected_device)
+optimizer = runtime.optim.AdamW(model.parameters(), lr=..., weight_decay=...)</pre>
+
+<div class="grid">
+  <div class="card">
+    <h4>HDF5 packed format</h4>
+    <p>Each split is one <code>.h5</code> file containing three groups —
+    <code>state_before</code>, <code>state_after</code>, and either
+    <code>action_text</code> or <code>action_abs</code>. Fixed-width int matrices.
+    Packing is offline so training does zero tokenization on the hot path.</p>
+  </div>
+  <div class="card">
+    <h4>action_view switch</h4>
+    <p><code>text</code> = raw diff/patch text. <code>abstract</code> = structured action.
+    <code>patch</code> is <em>diagnostic only</em> and explicitly raises in the dataset
+    constructor — a hard contract.</p>
+  </div>
+  <div class="card">
+    <h4>vocab modulation</h4>
+    <p>Tokens are clamped into <code>DEFAULT_TRAINING_VOCAB_SIZE = 32768</code> via
+    <code>_read_token_matrix</code> — a deliberate cap so the model can grow vocab
+    independently of the packed data.</p>
+  </div>
+  <div class="card">
+    <h4>AdamW + clip</h4>
+    <p>AdamW separates weight decay (regularizer on weights) from gradient clipping
+    (post-hoc clamp on the gradient norm). Both are stability seatbelts and serve
+    different purposes.</p>
+  </div>
+</div>
+
+<h3>3.3 &nbsp;Optional resume</h3>
+
+<pre>start_step = 0
+if context.resume is not None:
+    start_step = _load_resume_checkpoint(...)</pre>
+
+<p>The resume path is paranoid, on purpose:</p>
+<ol>
+  <li><strong>Trust check</strong> via <code>require_trusted_checkpoint</code> — the
+      manifest is the signed metadata. Checkpoint loading is treated as a security boundary.</li>
+  <li><strong><code>weights_only=True</code></strong> on <code>torch.load</code> — limits
+      the unpickler to safe tensor types.</li>
+  <li><strong>Schema-version check</strong> on the checkpoint payload.</li>
+  <li><strong>State-dict compatibility check</strong> on model and optimizer.</li>
+</ol>
+
+<h3>3.4 &nbsp;The training loop</h3>
+
+<pre>model.train()
+while step &lt; target_step:
+    for raw_batch in train_loader:
+        if step &gt;= target_step: break
+        batch = _to_transition_batch(raw_batch, device=..., action_view=...)
+
+        optimizer.zero_grad(set_to_none=True)
+        with _autocast_context(precision, device, runtime):
+            outputs = model(batch)
+            z_pred_after_swapped = _swapped_action_prediction(model, outputs)
+            terms = compute_transition_objective(
+                outputs["z_before"], outputs["z_after"], outputs["z_pred_after"],
+                config=objective_config,
+                z_pred_after_swapped=z_pred_after_swapped,
+                action_emb=outputs["action_emb"],
+                action_reconstruction=outputs.get("action_reconstruction"),
+            )
+        terms.total.backward()
+        grad_norm = runtime.nn.utils.clip_grad_norm_(model.parameters(), max_norm=...)
+        optimizer.step()
+        step += 1
+        ...</pre>
+
+<div class="callout intuition">
+  <div class="label">Why <em>while + for</em>?</div>
+  The pattern is the standard &ldquo;I want N steps, not N epochs.&rdquo;
+  When the loader exhausts, the <code>while</code> re-enters and starts a new epoch.
+  The inner <code>break</code> ensures we stop <em>mid-epoch</em> if we hit
+  <code>target_step</code>. <code>max_steps</code> is <em>additional</em> steps, not absolute —
+  important for resume semantics.
+</div>
+
+<h4>The action-swap probe</h4>
+
+<pre>def _swapped_action_prediction(model, outputs):
+    swapped_action = outputs["action_emb"].roll(shifts=1, dims=0)
+    return model.predict_after(outputs["z_before"], swapped_action)</pre>
+
+<p>
+We shift the actions by one position in the batch, then re-predict. If the model is actually
+using the action, the swapped prediction should be <em>worse</em>. If they're equally good,
+the model is ignoring the action — which usually means it's collapsing onto a
+<code>z_pred_after = z_before</code> shortcut. This shows up downstream as
+<code>action_diagnostics/swap_distance_gap</code> in the metrics, and (optionally) as a
+contrastive loss term.
+</p>
+
+<h3>3.5 &nbsp;Post-loop: validation, collapse audit, artifacts</h3>
+
+<pre>final_metrics = dict(last_terms)
+final_metrics["train/examples_per_second"] = examples / elapsed
+if len(val_dataset) &gt; 0:
+    final_metrics.update(_evaluate_validation(...))
+
+collapse_report = compute_collapse_report(last_embeddings)
+final_metrics.update(_collapse_metrics(collapse_report))
+_validate_no_collapse_smoke(final_metrics)
+
+_write_torch_checkpoint(...)
+write_checkpoint_manifest(...)
+_write_json(report_payload, report_path)</pre>
+
+<div class="callout warn">
+  <div class="label">Hard gate</div>
+  <code>_validate_no_collapse_smoke</code> raises <code>TrainingRunError</code> if
+  <code>per_dim_variance_max ≤ 0</code> or <code>embedding_norm_mean ≤ 0</code>. The
+  executor refuses to produce an artifact for a catastrophically-collapsed run. Stricter
+  thresholds live in the eval suite, not here — the executor only catches the smoke.
+</div>
+
+<p>Two artifacts are always paired:</p>
+
+<ul>
+  <li><strong><code>checkpoint.pt</code></strong> — model + optimizer state, plus the
+      compatibility config hash. Opaque pickle.</li>
+  <li><strong><code>checkpoint.pt.manifest.json</code></strong> — the trust artifact. Plain
+      JSON; inspectable with no torch installed. The resume path refuses to load a
+      checkpoint without a valid manifest.</li>
+</ul>
+
+<p>The training report (<code>reports/torch_training_report.json</code>) is the
+<strong>publication artifact</strong>: schema version, run id, full final metrics, collapse
+report, objective payload, runtime fingerprint. <code>allow_nan=False</code>,
+<code>sort_keys=True</code>, <code>indent=2</code> — deterministic JSON, no
+<code>NaN</code>/<code>Infinity</code>.</p>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-4"><span class="num">04</span> The Transition Objective</h2>
+
+<p>
+File: <span class="filepath">codelewm/model/objective.py:154</span>. This is where the science
+lives. The skeleton:
+</p>
+
+<pre>prediction_mse = compute_prediction_mse(z_pred_after, z_after)             # ALWAYS
+sigreg         = compute_sigreg_loss(stack(z_before, z_after, z_pred_after))  # ALWAYS
+total = prediction_mse + sigreg * config.sigreg_weight
+
+if config.enable_retrieval_loss:                total += retrieval_weight * retrieval_loss
+if config.enable_action_use_margin:             total += margin_weight    * margin_loss
+if config.enable_action_swap_contrastive:       total += swap_weight      * swap_loss
+if config.enable_inverse_action_reconstruction: total += inv_weight       * inv_loss
+
+_check_finite(total)
+return ObjectiveTerms(...)</pre>
+
+<p>Two invariants that shape everything:</p>
+
+<ul>
+  <li><strong>Two terms are always on</strong>: prediction MSE and SIGReg.</li>
+  <li><strong>Optional terms are <code>(flag, weight)</code> pairs.</strong>
+      <code>ObjectiveConfig.__post_init__</code> enforces &ldquo;enabled ⇒ weight &gt; 0&rdquo; and
+      &ldquo;disabled ⇒ weight = 0&rdquo;. You cannot have an enabled-but-zero term or a
+      disabled-but-nonzero term silently. Discipline against silent misconfiguration.</li>
+</ul>
+
+<p>All optional weights are capped at 1.0. MSE is meant to remain dominant; auxiliary losses
+<em>modulate</em>, not <em>replace</em>.</p>
+
+<h3>4.1 &nbsp;The prediction MSE</h3>
+
+<pre>def compute_prediction_mse(z_pred_after, z_after):
+    return (z_pred_after - z_after).pow(2).mean()</pre>
+
+<div class="callout intuition">
+  <div class="label">Why MSE, not cosine?</div>
+  Cosine ignores magnitude. If the model is allowed to choose embedding norms freely, magnitude
+  carries information — predicting both <em>direction</em> and <em>scale</em> of
+  <code>z_after</code> is a stronger constraint. The retrieval loss is the cosine variant; MSE
+  complements it.
+</div>
+
+<p>
+This term alone is the JEPA objective in its purest — and most collapsible — form. Everything
+else exists to make collapse worse than learning the actual task.
+</p>
+
+<h3>4.2 &nbsp;Returned <code>ObjectiveTerms</code></h3>
+
+<p>Every term is logged in <strong>two flavors</strong>:</p>
+
+<table>
+  <thead><tr><th>Flavor</th><th>What it tells you</th><th>Use case</th></tr></thead>
+  <tbody>
+    <tr><td>Unweighted (e.g. <code>loss/sigreg</code>)</td><td>Physical signal in natural units</td><td>&ldquo;Is the model getting more Gaussian over time?&rdquo;</td></tr>
+    <tr><td>Weighted (e.g. <code>loss/sigreg_weighted</code>)</td><td>Contribution to the actual gradient</td><td>&ldquo;Is this term currently driving the optimization?&rdquo;</td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 &nbsp;Finite checks (last line of defense)</h3>
+
+<pre>_check_finite(total, "loss/total")
+_check_finite(prediction_mse, "loss/prediction_mse")
+_check_finite(sigreg, "loss/sigreg")
+if retrieval is not None: _check_finite(retrieval, "loss/retrieval")
+...</pre>
+
+<p>
+After all terms are summed, <strong>every term is asserted finite</strong>. NaN/inf in a single
+optional term must not silently propagate to <code>total</code>. Paired with
+<code>_finite_float</code> guards in the executor — defense in depth.
+</p>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-5"><span class="num">05</span> SIGReg, In Depth</h2>
+
+<p>
+File: <span class="filepath">codelewm/model/objective.py:416</span>. This is the most
+conceptually subtle piece in the whole repo. Worth understanding deeply.
+</p>
+
+<h3>5.1 &nbsp;The problem SIGReg solves</h3>
+
+<p>The classic anti-collapse toolkit:</p>
+
+<table>
+  <thead><tr><th>Method</th><th>What it constrains</th><th>Limitation</th></tr></thead>
+  <tbody>
+    <tr><td>VICReg</td><td>Per-dim variance + off-diagonal covariance</td><td>Only second-order moments</td></tr>
+    <tr><td>Barlow Twins</td><td>Cross-correlation matrix → identity</td><td>Only second-order moments</td></tr>
+    <tr><td>BYOL / SimSiam</td><td>Architectural asymmetry (stop-gradient, EMA target)</td><td>Implicit, hard to reason about</td></tr>
+    <tr><td><strong>SIGReg</strong></td><td>Full distribution matching to isotropic Gaussian</td><td>More expensive, but stronger</td></tr>
+  </tbody>
+</table>
+
+<p>
+VICReg-style methods can be satisfied by a distribution with the right covariance but a
+pathological shape — e.g., concentrated on a few delta peaks or a thin manifold. SIGReg tries
+to make the embedding distribution actually <em>look like</em> an isotropic Gaussian, not just
+have its first two moments.
+</p>
+
+<h3>5.2 &nbsp;The mathematical idea: characteristic functions</h3>
+
+<p>
+For a random vector <code>X ∈ ℝᵈ</code> and a fixed unit direction <code>u ∈ ℝᵈ</code>, the
+scalar projection <code>Y = ⟨u, X⟩</code> has characteristic function:
+</p>
+
+<div class="formula">φ_Y(t) = E[exp(i·t·Y)] = E[cos(t·Y)] + i·E[sin(t·Y)]</div>
+
+<p>For a standard normal scalar:</p>
+
+<div class="formula">φ_{N(0,1)}(t) = exp(−t²/2)  +  0·i</div>
+
+<div class="callout intuition">
+  <div class="label">The trick</div>
+  If <code>Y</code> is truly standard normal, then
+  <code>E[cos(t·Y)] = exp(−t²/2)</code> and <code>E[sin(t·Y)] = 0</code> for every <code>t</code>.
+  The characteristic function gives us a per-<code>t</code> certificate of normality. Sample
+  many random unit directions and check this for each → a test of <strong>isotropic
+  Gaussianity</strong>, because every 1-D projection of an isotropic Gaussian is itself a
+  standard Gaussian.
+</div>
+
+<h3>5.3 &nbsp;Reading the code</h3>
+
+<pre>projections = torch.randn(d, num_proj, ...) / norm   # num_proj random unit directions in ℝᵈ
+t = torch.linspace(0.0, 3.0, knots, ...)              # evaluation points for t
+dt = 3.0 / (knots - 1)
+weights = full(knots, 2*dt); weights[0] = weights[-1] = dt   # trapezoidal rule
+phi = exp(-t² / 2)                                    # target characteristic function
+weights = weights * phi                               # weight by Gaussian envelope
+
+x_t = (embeddings @ projections).unsqueeze(-1) * t    # t · ⟨u, X⟩
+err = (cos(x_t).mean(dim=1) - phi)² + sin(x_t).mean(dim=1)²
+statistic = (err @ weights) * batch_size
+return statistic.mean()</pre>
+
+<p>What that computes, in math:</p>
+
+<div class="formula">SIGReg ≈ (1/num_proj) Σ_u ∫₀³ [(Ê[cos(t·⟨u,X⟩)] − e^{−t²/2})² + Ê[sin(t·⟨u,X⟩)]²] · e^{−t²/2} dt · N</div>
+
+<p>where <code>Ê</code> is the empirical mean over the batch and <code>N</code> is batch size.</p>
+
+<h4>Three deliberate choices</h4>
+
+<ul>
+  <li><strong><code>t ∈ [0, 3]</code></strong>: at <code>t = 3</code>,
+      <code>exp(−t²/2) ≈ 0.011</code>, so the Gaussian-weighted integrand is already tiny —
+      extending past 3 buys very little.</li>
+  <li><strong>Trapezoidal weights</strong>: classic numerical quadrature over <code>[0, 3]</code>.</li>
+  <li><strong>Multiply by <code>N</code> (batch size)</strong>: this isn't aesthetic; it's
+      <em>statistical</em>. Under the null (truly isotropic Gaussian), an
+      <code>N · MSE</code>-type statistic has a well-defined limit distribution. So as you
+      increase batch size, the magnitude of SIGReg under perfect Gaussianity stays roughly
+      constant — you don't need to retune <code>sigreg_weight</code> when you change batch
+      size. Many anti-collapse losses get this wrong.</li>
+</ul>
+
+<h3>5.4 &nbsp;Applied to all three latent flavors</h3>
+
+<pre>sigreg_input = stack_objective_embeddings(z_before, z_after, z_pred_after)
+# shape: [time=3, batch, latent_dim]</pre>
+
+<p>
+We stack <em>three</em> latents along a new &ldquo;time&rdquo; axis and force each slice to be
+isotropic-Gaussian across the batch. Why all three?
+</p>
+
+<table>
+  <thead><tr><th>Collapse mode</th><th>Caught by</th></tr></thead>
+  <tbody>
+    <tr><td><code>z_before</code> collapsed</td><td>Encoder is a constant function</td></tr>
+    <tr><td><code>z_after</code> collapsed</td><td>Encoder is a constant function (post-edit side)</td></tr>
+    <tr><td><code>z_pred_after</code> collapsed (others healthy)</td><td>Transition head is constant — &ldquo;ignore the action and output the centroid&rdquo;</td></tr>
+  </tbody>
+</table>
+
+<h3>5.5 &nbsp;What SIGReg does to optimization</h3>
+
+<div class="callout intuition">
+  <div class="label">Three forces the SIGReg gradient applies</div>
+  <ol>
+    <li><strong>Spread the batch.</strong> Clustered points → <code>cos(t·Y)</code> empirical
+        mean too close to 1 (all <code>Y</code> values agree) → penalty pushes points apart.</li>
+    <li><strong>Center the batch.</strong> Non-zero batch mean → non-zero
+        <code>sin(t·Y)</code> empirical average (target is 0) → penalty drives the mean to zero.</li>
+    <li><strong>Match Gaussian tails.</strong> Heavy- or light-tailed distributions distort
+        <code>cos/sin</code> averages away from the target curve.</li>
+  </ol>
+</div>
+
+<p>The cumulative effect: push the latent distribution toward a high-entropy, isotropic
+shape — exactly the opposite of collapse.</p>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-6"><span class="num">06</span> The Action-Use Probes</h2>
+
+<p>
+SIGReg guards the encoder. The <em>action</em> side needs its own guards: the transition head
+could still be lazy, copying <code>z_before</code> or ignoring the action's specific content.
+Three optional losses target three named failure modes.
+</p>
+
+<h3>6.1 &nbsp;Action-use margin — &ldquo;beat the identity baseline&rdquo;</h3>
+
+<pre>def compute_action_use_margin_loss(z_before, z_after, z_pred_after, *, margin):
+    target = z_after.detach()
+    no_action_delta = z_before.detach() - target          # identity baseline
+    pred_delta      = z_pred_after - target
+    return torch.relu(pred_dist - no_action_dist + margin).mean()</pre>
+
+<div class="callout intuition">
+  <div class="label">Intuition</div>
+  For many edits, the code barely changes, so the trivial &ldquo;do nothing&rdquo; baseline
+  (<code>z_pred_after = z_before</code>) already gets a decent MSE. This hinge loss says:
+  <em>the model's prediction must beat the identity baseline by at least <code>margin</code>.</em>
+  Zero only when <code>pred_dist + margin ≤ no_action_dist</code>.
+</div>
+
+<p>Note the <code>detach()</code> calls. Gradients flow only through <code>z_pred_after</code>.
+We don't want this loss to teach the encoder to make <code>z_before</code> bad; we want it to
+teach the predictor to be better than the encoder's no-op fallback.</p>
+
+<h3>6.2 &nbsp;Action-swap contrastive — &ldquo;use the <em>right</em> action&rdquo;</h3>
+
+<pre>def compute_action_swap_contrastive_loss(z_after, z_pred_after, z_pred_after_swapped, *, margin):
+    positive_dist = (z_pred_after        - z_after.detach()).pow(2).mean(dim=...)
+    swapped_dist  = (z_pred_after_swapped - z_after.detach()).pow(2).mean(dim=...)
+    return torch.relu(positive_dist - swapped_dist + margin).mean()</pre>
+
+<p>The training-time twin of the swap diagnostic. The diagnostic <em>measures</em> the swap
+gap; this loss <em>trains</em> the gap to be large.</p>
+
+<h3>6.3 &nbsp;Margin vs swap — why both?</h3>
+
+<table>
+  <thead><tr><th>Loss</th><th>Baseline</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td>Action-use margin</td><td>Identity (no action info)</td><td>Predictor ignores action entirely</td></tr>
+    <tr><td>Action-swap contrastive</td><td>Wrong action (some action info)</td><td>Predictor uses generic action features (length, type), not the right one</td></tr>
+  </tbody>
+</table>
+
+<p>A model can pass the margin loss by using <em>some</em> function of the action
+(e.g., only its length). Swap would still fire because the wrong action has the same length
+distribution. Together they pin down: &ldquo;the model is using the <em>specific</em> action
+semantics, not just any feature of it.&rdquo;</p>
+
+<h3>6.4 &nbsp;Inverse-action reconstruction — dual constraint</h3>
+
+<pre>def compute_inverse_action_reconstruction_loss(action_reconstruction, action_emb):
+    return (action_reconstruction - action_emb.detach()).pow(2).mean()</pre>
+
+<p>If the model exposes an <em>inverse head</em>
+<code>I(z_before, z_after) → action_reconstruction</code>, this loss enforces:</p>
+
+<blockquote>
+  From the two latents alone, you should be able to recover the action that connected them.
+</blockquote>
+
+<p>It's the <strong>dual</strong> of the main objective:</p>
+
+<table>
+  <tbody>
+    <tr><td>Forward</td><td><code>(z_before, action)  →  z_after</code> — the transition head</td></tr>
+    <tr><td>Inverse</td><td><code>(z_before, z_after) →  action</code> — the inverse head</td></tr>
+  </tbody>
+</table>
+
+<p>If both directions are learnable, the latents are forced to carry enough information about
+the dynamics to be invertible. Same idea as inverse-dynamics models and Dreamer-family world
+models.</p>
+
+<h3>6.5 &nbsp;Retrieval (InfoNCE) — &ldquo;beat <em>every</em> wrong target&rdquo;</h3>
+
+<pre>def compute_in_batch_retrieval_loss(z_pred_after, z_after, *, temperature):
+    scores  = compute_retrieval_score_matrix(z_pred_after, z_after, temperature=temperature)
+    targets = torch.arange(scores.size(0), device=scores.device)
+    return torch.nn.functional.cross_entropy(scores, targets)</pre>
+
+<p>The SimCLR / CLIP-style contrastive loss. L2-normalize, build a <code>(B × B)</code> cosine
+similarity matrix scaled by <code>1/τ</code>, treat row <code>i</code> as a classification
+problem with correct answer <code>j = i</code>, apply softmax + cross-entropy.</p>
+
+<p>What it enforces:</p>
+
+<blockquote>
+  For each example <code>i</code>, the predicted latent <code>z_pred_after[i]</code> should be
+  closer to its own <code>z_after[i]</code> than to <em>any other</em> example's
+  <code>z_after[j]</code>.
+</blockquote>
+
+<p>That's much stronger than MSE alone — MSE cares about <em>absolute</em> distance, retrieval
+cares about <em>relative ordering</em> within the batch. Collapse catastrophically fails
+retrieval: identical embeddings give a uniform softmax and loss of <code>log(B)</code>.</p>
+
+<div class="callout warn">
+  <div class="label">Why capped at 0.1?</div>
+  <code>retrieval_weight_cap = 0.10</code>. Retrieval has a known failure mode: it can be
+  satisfied by direction alone, ignoring magnitude. And it's <code>O(B²)</code> memory. So
+  it's a <em>probe</em>, not a <em>driver</em>.
+</div>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-7"><span class="num">07</span> Anti-Collapse Toolkit</h2>
+
+<p>Time to put it all together. Read this table backwards from the &ldquo;what collapse mode
+it kills&rdquo; column — every optional term targets a <em>specific named failure mode</em>.
+That maps directly to ablation studies.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Always on?</th>
+      <th>What collapse mode it kills</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>prediction_mse</code></td>
+      <td><span class="pill">YES</span></td>
+      <td>None — it's the <em>signal</em>, not a guard.</td>
+    </tr>
+    <tr>
+      <td><code>sigreg</code></td>
+      <td><span class="pill">YES</span></td>
+      <td>Encoder/predictor outputs collapsed to a point or low-dim manifold.</td>
+    </tr>
+    <tr>
+      <td><code>retrieval</code></td>
+      <td>optional</td>
+      <td>Different examples' predictions all live in the same spot.</td>
+    </tr>
+    <tr>
+      <td><code>action_use_margin</code></td>
+      <td>optional</td>
+      <td>Predictor is identity (ignores action entirely).</td>
+    </tr>
+    <tr>
+      <td><code>action_swap_contrastive</code></td>
+      <td>optional</td>
+      <td>Predictor uses <em>some</em> action feature but not the <em>right</em> one.</td>
+    </tr>
+    <tr>
+      <td><code>inverse_action_reconstruction</code></td>
+      <td>optional</td>
+      <td>Latents don't preserve enough info about the dynamics.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>7.1 &nbsp;Measurement is separate from training</h3>
+
+<p>
+The training executor only catches the smoke (<code>per_dim_variance_max ≤ 0</code>,
+<code>embedding_norm_mean ≤ 0</code>). The full audit lives in
+<code>compute_collapse_report</code>:
+</p>
+
+<table>
+  <thead><tr><th>Metric</th><th>What it tells you</th></tr></thead>
+  <tbody>
+    <tr><td><code>effective_rank</code></td><td>Entropy of the singular value spectrum. Collapsed models have effective rank ≪ latent_dim.</td></tr>
+    <tr><td><code>effective_rank_ratio</code></td><td>Same, normalized by latent dim.</td></tr>
+    <tr><td><code>per_dim_variance_{min,median,max}</code></td><td>Dead dims have variance ≈ 0.</td></tr>
+    <tr><td><code>pairwise_cosine_mean</code></td><td>All embeddings pointing the same way ≈ 1.</td></tr>
+    <tr><td><code>embedding_norm_mean</code></td><td>Should be stable.</td></tr>
+    <tr><td><code>nearest_neighbor_entropy</code></td><td>How spread out the neighborhood structure is.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout intuition">
+  <div class="label">The whole anti-collapse posture, in one sentence</div>
+  Variance and norm being non-zero is <em>necessary</em> but not <em>sufficient</em> for a
+  healthy model. The training executor's job is to <strong>produce</strong> the metrics, not
+  to <strong>adjudicate</strong> them. Adjudication lives in the eval suite — where stricter
+  thresholds, downstream probes, and ablation studies live.
+</div>
+
+<h3>7.2 &nbsp;CodeLeWM's bet vs the alternatives</h3>
+
+<p>Compare to standard JEPA recipes:</p>
+
+<ul>
+  <li><strong>I-JEPA / V-JEPA:</strong> invariance + EMA target encoder, no explicit
+      anti-collapse term. Rely on architectural asymmetry.</li>
+  <li><strong>VICReg:</strong> variance + covariance only. Works but misses higher-order
+      structure.</li>
+  <li><strong>CodeLeWM:</strong> MSE + <em>distribution matching</em> (SIGReg) +
+      <em>action-aware probes</em> (margin, swap, inverse).</li>
+</ul>
+
+<p>The author bet that (1) distribution matching is a stronger anti-collapse signal than
+moment matching, and (2) action-aware losses are essential when transitions are dictated by a
+controllable input. Both bets are <em>testable</em> hypotheses, which is exactly what the
+ablation-friendly config supports.</p>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-8"><span class="num">08</span> Reproducibility Contract</h2>
+
+<p>Most of the &ldquo;extra&rdquo; code in this repo isn't anti-collapse — it's the
+<strong>reproducibility contract</strong>. Worth naming the moving parts.</p>
+
+<h3>8.1 &nbsp;Schema versions everywhere</h3>
+
+<table>
+  <thead><tr><th>Constant</th><th>Guards</th></tr></thead>
+  <tbody>
+    <tr><td><code>DATASET_SCHEMA_VERSION</code></td><td>The packed HDF5 file format</td></tr>
+    <tr><td><code>CHECKPOINT_SCHEMA_VERSION</code></td><td>The model state-dict layout</td></tr>
+    <tr><td><code>TORCH_CHECKPOINT_SCHEMA_VERSION</code></td><td>The executor's <code>.pt</code> payload shape</td></tr>
+    <tr><td><code>TORCH_TRAINING_REPORT_SCHEMA_VERSION</code></td><td>The JSON report consumed by downstream tooling</td></tr>
+  </tbody>
+</table>
+
+<p>Every read site checks the version and raises on mismatch. Every write site stamps the
+version. This is what lets the eval suite, the paper figures, and the leaderboard tooling
+evolve safely.</p>
+
+<h3>8.2 &nbsp;Determinism levers</h3>
+
+<ul>
+  <li><strong><code>_seed_everything(seed)</code></strong> — Python, NumPy, torch CPU, torch CUDA.</li>
+  <li><strong>DataLoader generator</strong> — <code>runtime.Generator().manual_seed(seed)</code>
+      makes shuffling order deterministic.</li>
+  <li><strong>SIGReg seed</strong> — <code>sigreg_seed</code> in <code>ObjectiveConfig</code>;
+      the random projections are reproducible.</li>
+  <li><strong>Deterministic JSON</strong> — <code>allow_nan=False</code>, <code>sort_keys=True</code>.</li>
+</ul>
+
+<h3>8.3 &nbsp;Trust boundary on checkpoints</h3>
+
+<ul>
+  <li><strong>Signed manifest</strong> via <code>require_trusted_checkpoint</code>.</li>
+  <li><strong><code>weights_only=True</code></strong> on <code>torch.load</code>.</li>
+  <li><strong>State-dict compatibility check</strong> raises
+      <code>CheckpointCompatibilityError</code> on mismatch.</li>
+  <li><strong>Optimizer state migrated to device</strong> via <code>_move_optimizer_state</code>.</li>
+</ul>
+
+<h3>8.4 &nbsp;The fail-loud philosophy</h3>
+
+<div class="callout danger">
+  <div class="label">Pattern to recognize</div>
+  Every guard in this codebase prefers <strong>raise</strong> to <strong>warn-and-continue</strong>.
+  <code>_finite_float</code> turns NaN/inf into a hard error. <code>_check_finite</code>
+  refuses to backprop NaN. The dataset checks row counts, widths, schema versions. The
+  collapse smoke check refuses to emit an artifact for a broken run. <em>Silent corruption is
+  the worst outcome for a research harness</em>; loud failure is always better than a
+  misleading number on a leaderboard.
+</div>
+
+<!-- ============================================================ -->
+<h2 class="section" id="part-9"><span class="num">09</span> Glossary &amp; Cheatsheet</h2>
+
+<h3>Concepts</h3>
+<table>
+  <tbody>
+    <tr><td><strong>JEPA</strong></td><td>Joint Embedding Predictive Architecture. Predict embeddings, not pixels/tokens.</td></tr>
+    <tr><td><strong>Representation collapse</strong></td><td>Encoder maps everything to (nearly) the same point. Trivial winner of pure MSE.</td></tr>
+    <tr><td><strong>Latent world model</strong></td><td>Predict the next latent state given current state + action.</td></tr>
+    <tr><td><strong>Characteristic function</strong></td><td><code>φ_X(t) = E[exp(i·t·X)]</code>. Fully describes a distribution.</td></tr>
+    <tr><td><strong>Effective rank</strong></td><td>Entropy of normalized singular value spectrum. Collapse ⇒ low effective rank.</td></tr>
+    <tr><td><strong>Action-swap gap</strong></td><td>How much worse the model is with a wrong action vs the right one.</td></tr>
+  </tbody>
+</table>
+
+<h3>Files to know</h3>
+<table>
+  <thead><tr><th>File</th><th>What lives there</th></tr></thead>
+  <tbody>
+    <tr><td class="filepath">codelewm/training/torch_executor.py</td><td>Training loop, packed dataset, checkpoint I/O</td></tr>
+    <tr><td class="filepath">codelewm/training/runner.py</td><td>Outer harness, context, executor-agnostic plumbing</td></tr>
+    <tr><td class="filepath">codelewm/training/config.py</td><td><code>TrainConfig</code> and friends</td></tr>
+    <tr><td class="filepath">codelewm/model/objective.py</td><td><code>compute_transition_objective</code>, SIGReg, all loss terms</td></tr>
+    <tr><td class="filepath">codelewm/model/transition.py</td><td>Encoder, action encoder, transition head, inverse head</td></tr>
+    <tr><td class="filepath">codelewm/eval/</td><td><code>compute_collapse_report</code>, downstream probes</td></tr>
+    <tr><td class="filepath">codelewm/security/</td><td>Checkpoint trust, manifest validation</td></tr>
+    <tr><td class="filepath">codelewm/data/</td><td>Packed HDF5 schema, dataset versioning</td></tr>
+  </tbody>
+</table>
+
+<h3>Numbers worth memorizing</h3>
+<table>
+  <tbody>
+    <tr><td><code>DEFAULT_TRAINING_VOCAB_SIZE = 32768</code></td><td>Cap on vocab; raw tokens are modulated into this range.</td></tr>
+    <tr><td><code>sigreg_weight ≈ 0.09</code></td><td>Default; SIGReg is meant to be a steady regularizer, not the main signal.</td></tr>
+    <tr><td><code>retrieval_weight_cap = 0.10</code></td><td>Hard cap. Retrieval is a probe, not a driver.</td></tr>
+    <tr><td><code>sigreg_knots = 17</code>, <code>sigreg_num_proj = 1024</code></td><td>Defaults for quadrature + projection sketch.</td></tr>
+    <tr><td><code>t ∈ [0, 3]</code></td><td>SIGReg integration range; past 3 the Gaussian envelope is negligible.</td></tr>
+  </tbody>
+</table>
+
+<h3>If you only remember three things</h3>
+
+<div class="grid">
+  <div class="card">
+    <h4>1. The risk is collapse</h4>
+    <p>Pure MSE on latents has a trivial &ldquo;constant encoder&rdquo; minimizer. Every other
+    term in this codebase is a guard or a probe against that.</p>
+  </div>
+  <div class="card">
+    <h4>2. SIGReg is distribution matching</h4>
+    <p>Random projections + characteristic-function matching against
+    <code>N(0,1)</code>. Stronger than VICReg-style variance/covariance constraints.</p>
+  </div>
+  <div class="card">
+    <h4>3. Action probes guard the transition head</h4>
+    <p>Margin (beat identity), swap (beat wrong action), inverse (recover action from
+    latents). Each kills a specific named failure mode.</p>
+  </div>
+</div>
+
+<footer>
+  CodeLeWM Crash Course · single-file HTML, no external assets · built from a reading of
+  <code>torch_executor.py</code> and <code>objective.py</code>.
+</footer>
+
+</div>
+</body>
+</html>
