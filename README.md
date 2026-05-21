@@ -61,7 +61,8 @@ uv run scripts/llm-world-model-demo
 The task loads `.env` if present, stays in `CODELEWM_LLM_DRY_RUN=1` by default,
 generates candidate diffs through the OpenRouter adapter fixture path, writes
 `codelewm.llm_candidate_pack.v1`, runs `codelewm llm-demo`, verifies manifests,
-and secret-scans publishable outputs.
+secret-scans publishable outputs, and writes a visual report at
+`.artifacts/llm-world-model-demo/run/demo.html`.
 
 Expected success signal:
 
@@ -72,6 +73,7 @@ Expected success signal:
 "ok": true
 "schema_version": "codelewm.secret_scan.v1"
 "ok": true
+visual_report: .artifacts/llm-world-model-demo/run/demo.html
 ```
 
 Live OpenRouter mode is explicit:

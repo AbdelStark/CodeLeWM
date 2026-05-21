@@ -42,6 +42,7 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("OpenRouterBYOKConfig", codelewm.harness.__all__)
         self.assertIn("register_openrouter_byok_credential", codelewm.harness.__all__)
         self.assertIn("run_llm_world_model_demo", codelewm.harness.__all__)
+        self.assertIn("render_llm_world_model_demo_html", codelewm.harness.__all__)
         self.assertIn("read_llm_world_model_demo_report", codelewm.harness.__all__)
         self.assertIn("write_candidate_pack_artifact", codelewm.harness.__all__)
         self.assertIn("score_result_json_schema", codelewm.harness.__all__)

@@ -42,6 +42,9 @@ earliest one minor release after the deprecation notice.
   `codelewm openrouter byok-register`, redacted BYOK request metadata, and the
   local `uv run scripts/llm-world-model-demo` task for the LLM + world-model
   fixture demo.
+- Visual `demo.html` output for LLM + world-model demo artifacts, including
+  generation mode, candidate patches, ranking bars, baseline orders, and the
+  claim gate.
 
 ### Changed
 

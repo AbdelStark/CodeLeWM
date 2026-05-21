@@ -61,6 +61,7 @@ from .llm_demo import (
     LLMWorldModelDemoError,
     LLMWorldModelDemoRunResult,
     read_llm_world_model_demo_report,
+    render_llm_world_model_demo_html,
     run_llm_world_model_demo,
 )
 from .scorer import (
@@ -157,6 +158,7 @@ __all__ = [
     "rerank_result_json_schema",
     "rerank_result_to_json",
     "render_candidate_prompt",
+    "render_llm_world_model_demo_html",
     "score_input_digest",
     "score_result_json_schema",
     "score_result_to_json",

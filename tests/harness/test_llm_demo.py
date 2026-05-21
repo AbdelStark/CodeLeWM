@@ -51,6 +51,7 @@ class LLMWorldModelDemoTest(unittest.TestCase):
             )
             validate_artifact_checksums(candidate_manifest, root=root / "demo" / "candidate_pack")
             report = read_llm_world_model_demo_report(root / "demo" / result.report_path)
+            html = (root / "demo" / result.html_path).read_text(encoding="utf-8")
 
         self.assertEqual(result.schema_version, LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION)
         self.assertTrue(result.success)
@@ -58,7 +59,12 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertEqual(demo_manifest.artifact_kind, "demo_report")
         self.assertEqual(candidate_manifest.artifact_kind, "candidate_pack")
         self.assertEqual(demo_manifest.parent_artifacts, (candidate_manifest.artifact_id,))
-        self.assertEqual({path.name for path in checked}, {"llm_world_model_demo_report.json"})
+        self.assertEqual({path.name for path in checked}, {"llm_world_model_demo_report.json", "demo.html"})
+        self.assertEqual(result.html_path, "demo.html")
+        self.assertIn("Visual demo report", html)
+        self.assertIn("fixture dry-run", html)
+        self.assertIn("candidate_001", html)
+        self.assertNotIn("—", html)
         self.assertEqual(report["candidate_summary"]["candidate_count"], 2)
         self.assertEqual(report["candidate_summary"]["valid_candidate_count"], 2)
         self.assertEqual(report["orders"]["llm"], ["candidate_001", "candidate_002"])
@@ -117,11 +123,14 @@ class LLMWorldModelDemoTest(unittest.TestCase):
 
             payload = json.loads(completed.stdout)
             report = read_llm_world_model_demo_report(out / payload["report_path"])
+            html = (out / payload["html_path"]).read_text(encoding="utf-8")
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertEqual(completed.stderr, "")
         self.assertTrue(payload["success"])
         self.assertEqual(payload["schema_version"], LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION)
+        self.assertEqual(payload["html_path"], "demo.html")
+        self.assertIn("Visual demo report", html)
         self.assertEqual(report["candidate_summary"]["candidate_count"], 2)
         self.assertFalse(report["claim_gate"]["allowed"])
 

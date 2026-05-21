@@ -93,8 +93,8 @@ Current evidence:
   `codelewm.downstream_rerank_claim_gate.v1`. On the checked-in fixture, the
   claim gate remains closed because `example_count=1`.
 - `uv run scripts/llm-world-model-demo` runs the local LLM + world-model fixture
-  path, verifies manifests, and secret-scans outputs. Live mode uses
-  `OPENROUTER_API_KEY`; Anthropic BYOK is explicit through
+  path, writes `demo.html`, verifies manifests, and secret-scans outputs. Live
+  mode uses `OPENROUTER_API_KEY`; Anthropic BYOK is explicit through
   `codelewm openrouter byok-register` or
   `CODELEWM_OPENROUTER_BYOK_REGISTER=1`.
 

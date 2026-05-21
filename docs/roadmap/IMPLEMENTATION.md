@@ -150,6 +150,7 @@ the current negative/diagnostic public boundary.
 | #210 | data: build public-safe 100-example downstream reranking set | data/evaluation | p1 | l | RFC-0013 | Open |
 | #211 | eval: run scaled downstream reranking comparison and claim gate | evaluation/harness | p1 | m | RFC-0013 | Open |
 | #212 | [Tracking] v1.2 next positive-model research hypothesis | model/evaluation | p2 | l | follow-up | Open |
+| #214 | harness: render visual LLM world-model demo report | harness/docs | p1 | m | RFC-0013 | Closed |
 
 ## Tracking Issues
 
