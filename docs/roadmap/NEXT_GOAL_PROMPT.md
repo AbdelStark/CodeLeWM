@@ -7,7 +7,7 @@ candidate-reranking benchmark.
 
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
-Start with issue #190 and work one issue per branch and PR.
+Start with issue #191 and work one issue per branch and PR.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
@@ -16,7 +16,7 @@ docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md,
 docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md, CONTRIBUTING.md,
-and issue #190.
+and issue #191.
 
 Do not relaunch #159 or #172. The current public artifact set is valid
 negative/diagnostic evidence: v0.2 text-action reached Recall@1 0.263 and MRR
@@ -24,7 +24,8 @@ negative/diagnostic evidence: v0.2 text-action reached Recall@1 0.263 and MRR
 probes and downstream gates also failed.
 
 The OpenRouter LLM candidate harness contract, adapter, candidate-pack capture,
-and fixture demo are complete through #189. The public LLM adapter uses the
+fixture demo, and downstream schema/claim-gate contract are complete through
+#190. The public LLM adapter uses the
 OpenRouter Python SDK with OPENROUTER_API_KEY and model slugs such as
 anthropic/claude-4.5-sonnet. Do not silently read raw provider keys in the
 OpenRouter adapter. If direct Anthropic API key support is required, open a
@@ -33,9 +34,8 @@ repo.
 
 Work in this order unless a blocker appears:
 
-1. #190 benchmark: define downstream task schema and claim gates.
-2. #191 benchmark: build public-safe labeled candidate reranking set.
-3. #192 eval: run downstream reranking comparison and claim gate.
+1. #191 benchmark: build public-safe labeled candidate reranking set.
+2. #192 eval: run downstream reranking comparison and claim gate.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
 not require network or paid LLM calls. Any live OpenRouter mode must redact

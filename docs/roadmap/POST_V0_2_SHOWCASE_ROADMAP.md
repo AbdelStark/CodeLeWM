@@ -56,7 +56,7 @@ Issues:
 
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
-| B1 | #190 | benchmark: define downstream task schema and claim gates | Open |
+| B1 | #190 | benchmark: define downstream task schema and claim gates | Closed |
 | B2 | #191 | benchmark: build public-safe labeled candidate reranking set | Open |
 | B3 | #192 | eval: run downstream reranking comparison and claim gate | Open |
 

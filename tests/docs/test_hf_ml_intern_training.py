@@ -119,9 +119,9 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         self.assertIn("docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md", text)
         self.assertIn("docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md", text)
         self.assertIn("docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md", text)
-        self.assertIn("Start with issue #190", text)
+        self.assertIn("Start with issue #191", text)
         self.assertIn("OpenRouter Python SDK", text)
-        self.assertIn("complete through #189", text)
+        self.assertIn("downstream schema/claim-gate contract", text)
         self.assertIn("benchmark gate in #192", text)
 
     def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:

@@ -927,6 +927,9 @@ field list.
 | LLM candidate pack | `codelewm.llm_candidate_pack.v1` |
 | LLM demo run | `codelewm.harness.demo_run.v1` |
 | LLM demo report | `codelewm.harness.demo_report.v1` |
+| Downstream rerank benchmark | `codelewm.downstream_rerank_benchmark.v1` |
+| Downstream rerank report | `codelewm.downstream_rerank_report.v1` |
+| Downstream rerank claim gate | `codelewm.downstream_rerank_claim_gate.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Candidate pool | `codelewm.eval.candidate_pool.v1` |
