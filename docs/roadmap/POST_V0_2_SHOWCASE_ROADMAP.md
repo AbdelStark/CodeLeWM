@@ -57,7 +57,7 @@ Issues:
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
 | B1 | #190 | benchmark: define downstream task schema and claim gates | Closed |
-| B2 | #191 | benchmark: build public-safe labeled candidate reranking set | Open |
+| B2 | #191 | benchmark: build public-safe labeled candidate reranking set | Closed |
 | B3 | #192 | eval: run downstream reranking comparison and claim gate | Open |
 
 Minimum scaled benchmark gate:
@@ -118,19 +118,19 @@ build the demo and only then spend effort on scaled downstream labels.
 
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
-Start with issue #186 and work one issue per branch and PR.
+Start with issue #192 and work one issue per branch and PR.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
-docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, and issue #186.
+docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
+docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, and issue #192.
 
-Implement the OpenRouter LLM candidate harness contract first. The public LLM
-adapter must use the OpenRouter Python SDK with OPENROUTER_API_KEY and model
-slugs such as anthropic/claude-4.5-sonnet. Do not silently read raw provider
-keys in the OpenRouter adapter. If direct Anthropic API key support is required,
-open a separate adapter issue.
+The harness and downstream benchmark inputs are complete through #191. The
+public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
+model slugs such as anthropic/claude-4.5-sonnet. Do not silently read raw
+provider keys in the OpenRouter adapter.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint is public
 negative/diagnostic evidence. The harness demo can show workflow value, but it
@@ -139,5 +139,5 @@ must not claim CodeLeWM improves coding until the downstream benchmark gate in
 
 Run the strongest local validation for each issue, commit, push, open a PR,
 wait for checks, merge when clean, return to main, pull latest main, and
-continue through #193, #194, #187, #188, #189, #190, #191, and #192.
+finish #192.
 ```

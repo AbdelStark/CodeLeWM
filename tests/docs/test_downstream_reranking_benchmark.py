@@ -14,9 +14,13 @@ class DownstreamRerankingBenchmarkDocsTest(unittest.TestCase):
         text = BENCHMARK.read_text(encoding="utf-8")
 
         for marker in (
-            "#190",
+            "#191",
             "#184",
+            "codelewm eval downstream-pack",
             "codelewm.downstream_rerank_benchmark.v1",
+            "codelewm.downstream_benchmark_readiness.v1",
+            "codelewm.downstream_source_license_policy.v1",
+            "codelewm.downstream_split_leakage_report.v1",
             "codelewm.downstream_rerank_report.v1",
             "codelewm.downstream_rerank_claim_gate.v1",
             "codelewm.harness.scorer_quality_report.v1",

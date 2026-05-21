@@ -1,0 +1,120 @@
+{
+  "benchmark_id": "codelewm-downstream-rerank-fixture-v0",
+  "evaluation_only": true,
+  "min_labeled_examples": 100,
+  "provenance": {
+    "issue": "#191",
+    "purpose": "public-safe fixture benchmark pack for downstream reranking plumbing"
+  },
+  "required_baselines": [
+    "llm_order",
+    "random",
+    "lexical",
+    "no_action",
+    "codelewm",
+    "retrieval_prior",
+    "score_ensemble"
+  ],
+  "required_metrics": [
+    "pass_at_1",
+    "pass_at_k",
+    "mrr",
+    "valid_patch_rate",
+    "check_pass_rate"
+  ],
+  "schema_version": "codelewm.downstream_rerank_benchmark_config.v1",
+  "source_license_policy": {
+    "allowed_use": [
+      "public fixture benchmark artifact",
+      "local and CI validation",
+      "claim-blocked downstream evaluation smoke tests"
+    ],
+    "license": "repository license",
+    "notes": [
+      "Rows are project-owned synthetic fixtures already committed to this repository.",
+      "This fixture has one labeled task and cannot support a scaled downstream usefulness claim."
+    ],
+    "publication_allowed": true,
+    "schema_version": "codelewm.downstream_source_license_policy.v1",
+    "source_kind": "project_fixture"
+  },
+  "tasks": [
+    {
+      "before_path": "../../tests/fixtures/codestate/class_method_before.py",
+      "candidates": [
+        {
+          "after_state_path": "../first_results/scorer_quality_candidates/true_after.py",
+          "candidate_id": "candidate_001_true_after",
+          "label": "pass",
+          "llm_rank": 1,
+          "provenance": {
+            "fixture": "config/first_results/scorer_quality_candidates/true_after.py"
+          },
+          "source": {
+            "candidate_kind": "true_after",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "not_run"
+        },
+        {
+          "after_state_path": "../first_results/scorer_quality_candidates/hard_negative.py",
+          "candidate_id": "candidate_002_hard_negative",
+          "label": "fail",
+          "llm_rank": 2,
+          "provenance": {
+            "fixture": "config/first_results/scorer_quality_candidates/hard_negative.py"
+          },
+          "source": {
+            "candidate_kind": "hard_negative",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        },
+        {
+          "after_state_path": "../first_results/scorer_quality_candidates/syntax_failure.py",
+          "candidate_id": "candidate_003_syntax_failure",
+          "label": "fail",
+          "llm_rank": 3,
+          "provenance": {
+            "fixture": "config/first_results/scorer_quality_candidates/syntax_failure.py"
+          },
+          "source": {
+            "candidate_kind": "syntax_failure",
+            "generator": "fixture"
+          },
+          "static_check": "fail",
+          "test_check": "not_applicable"
+        },
+        {
+          "candidate_id": "candidate_004_patch_failure",
+          "label": "fail",
+          "llm_rank": 4,
+          "patch_path": "../first_results/scorer_quality_candidates/patch_failure.patch",
+          "provenance": {
+            "fixture": "config/first_results/scorer_quality_candidates/patch_failure.patch"
+          },
+          "source": {
+            "candidate_kind": "patch_failure",
+            "generator": "fixture"
+          },
+          "static_check": "fail",
+          "test_check": "not_applicable"
+        }
+      ],
+      "prompt": "rewrite the accumulator update explicitly",
+      "provenance": {
+        "source_config": "config/first_results/scorer_quality.json"
+      },
+      "repo_id": "codelewm-fixtures",
+      "source": {
+        "license_policy_id": "project_fixture",
+        "source_family": "synthetic_fixture"
+      },
+      "split": "test",
+      "task_id": "class-method-fixture",
+      "task_type": "refactor"
+    }
+  ]
+}

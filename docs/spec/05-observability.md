@@ -178,6 +178,7 @@ class ArtifactManifest:
         "candidate_pack",
         "dataset",
         "demo_report",
+        "downstream_benchmark",
         "checkpoint",
         "training_run",
         "index",
