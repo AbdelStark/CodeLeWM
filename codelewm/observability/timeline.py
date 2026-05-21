@@ -248,9 +248,9 @@ class _RunTimelineStepContext(AbstractContextManager["_RunTimelineStepContext"])
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,
+        _exc_type: type[BaseException] | None,
         exc: BaseException | None,
-        traceback: TracebackType | None,
+        _traceback: TracebackType | None,
     ) -> bool | None:
         status = "failed" if exc is not None else "completed"
         failure = None if exc is None else typed_failure_from_exception(exc)

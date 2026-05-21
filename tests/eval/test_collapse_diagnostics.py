@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -37,10 +38,13 @@ class CollapseDiagnosticsTest(unittest.TestCase):
 
     def test_noncollapsed_embeddings_pass_default_gate(self) -> None:
         rng = np.random.default_rng(7)
-        report = compute_collapse_report(rng.normal(size=(32, 8)))
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            report = compute_collapse_report(rng.normal(size=(32, 8)))
 
         failures = evaluate_collapse_gates(report)
 
+        self.assertEqual(caught, [])
         self.assertEqual(failures, ())
 
     def test_forced_collapse_writes_kill_report_and_raises(self) -> None:

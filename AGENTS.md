@@ -149,6 +149,12 @@ Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
 truth for CodeLeWM's code-edit training path.
 
+The production cleanup tracker is #256. Issue #257 is the first bounded
+audit-backed slice: fix concrete static dead-code findings, warning-prone
+numeric diagnostics, and stale architecture/roadmap context while preserving
+the legacy compatibility boundary unless a future deprecation/removal issue
+explicitly changes it.
+
 ## Required Reading
 
 Before editing, read:

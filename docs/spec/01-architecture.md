@@ -17,9 +17,10 @@ The LeWM-derived implementation seed now lives under package boundaries:
 - `codelewm.training.utils` contains current training helpers.
 
 Root `jepa.py`, `module.py`, and `utils.py` remain compatibility wrappers for
-existing Hydra configs and scripts. Root `train.py` and `eval.py` remain
-LeWM-derived entry points until the CodeLeWM training and evaluation runners are
-implemented.
+existing Hydra configs and scripts. Root `train.py`, root `eval.py`, and the
+inherited Hydra configs remain legacy LeWorldModel entry points only. The
+package-native `codelewm train`, `codelewm eval ...`, `scripts/first-results`,
+and `scripts/hf-*` paths are the CodeLeWM source of truth.
 
 ## Data Flow
 
@@ -176,8 +177,9 @@ for v0.1; it accepts candidates from callers.
 
 ## Existing Repository Maturity
 
-The current checkout is a minimal LeWM codebase: root model/training scripts,
-Hydra configs for image-control environments, and no packaging metadata. The
-project-specific CodeLeWM package, data pipeline, evaluation pipeline, CLI, tests,
-CI, and docs are not implemented yet. This spec therefore defines a bootstrap
-path rather than documenting an already complete system.
+The current checkout has a package-native CodeLeWM runtime with data,
+model, training, evaluation, harness, observability, security, release, docs,
+tests, and CI surfaces. The remaining root LeWorldModel scripts and Hydra
+configs are compatibility artifacts. They are not expanded by default and are
+not the public evidence path for code-edit training, evaluation, scoring, or
+publication.
