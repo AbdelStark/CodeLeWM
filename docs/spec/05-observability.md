@@ -156,8 +156,9 @@ JSONL logs, or artifact manifests.
 
 Planned schemas:
 
-- `codelewm.training.tensorboard_export.v1`: TensorBoard-compatible event-log
-  metadata for training/checkpoint scalars and safe summaries.
+- `codelewm.training.tensorboard_export.v1`: implemented
+  TensorBoard-compatible event-log metadata for training/checkpoint scalars,
+  bounded model-parameter histograms, and bounded latent summaries.
 - `codelewm.model_checkpoint_inspection.v1`: model/layer/tensor structure,
   parameter counts, finite-value checks, norms, and summary histograms.
 - `codelewm.eval.latent_matrix_report.v1`: latent dimension count,
@@ -170,9 +171,13 @@ Planned schemas:
 
 TensorBoard-compatible output and Textual rendering remain optional runtime
 surfaces. Base package imports, fixture tests, JSON reports, and non-interactive
-CLI usage must work without either dependency group. Visual reports are
-diagnostic only and cannot support positive semantic-latent-axis or
-coding-usefulness claims without the relevant benchmark gates.
+CLI usage must work without either dependency group. TensorBoard export is
+enabled through `codelewm train --tensorboard`, requires the optional
+observability dependency group, writes event files plus
+`reports/tensorboard_export.json`, and includes both in the training artifact
+manifest with checksums. Visual reports are diagnostic only and cannot support
+positive semantic-latent-axis or coding-usefulness claims without the relevant
+benchmark gates.
 
 ## Artifact Lineage
 

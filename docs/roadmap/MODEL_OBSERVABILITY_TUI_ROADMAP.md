@@ -88,7 +88,7 @@ automation surface and must keep:
 | Order | Issue | Slice | Acceptance summary |
 | --- | --- | --- | --- |
 | 0 | #236 | Roadmap and tracker lock | Docs, AGENTS.md, tracker, issue backlog, and next prompt point at #235. |
-| 1 | #237 | TensorBoard export | Optional TensorBoard-compatible event logs for training/checkpoint scalars and safe summaries. |
+| 1 | #237 | TensorBoard export | Closed: optional TensorBoard-compatible event logs for training/checkpoint scalars and bounded summaries. |
 | 2 | #238 | Checkpoint inspection | Schema-versioned model/layer/tensor report with trust gates and manifests. |
 | 3 | #239 | Latent matrix diagnostics | Dimension matrix, finite stats, effective rank, probe associations, and semantic-axis claim gates. |
 | 4 | #240 | Run timeline and monitoring | Structured run timeline artifacts and richer redacted monitoring logs. |
@@ -124,8 +124,8 @@ manifest-backed, checksum-verifiable, and secret-scanned before publication.
 
 Visualization dependencies are optional:
 
-- TensorBoard or a TensorBoard-compatible writer belongs behind a future
-  observability dependency group.
+- TensorBoard-compatible training export is behind the optional observability
+  dependency group.
 - Textual belongs behind a future TUI/runtime dependency group.
 - Base install, fixture tests, JSON reports, and normal CLI imports must work
   without either dependency.
@@ -137,9 +137,8 @@ uv sync --group dev --group observability
 uv sync --group dev --group tui
 ```
 
-The exact group names are part of the implementation issue that introduces the
-dependency. Until then, docs must call them planned groups rather than present
-install commands.
+The observability group is now landed for TensorBoard-compatible export. The
+TUI group remains planned until the Textual implementation issue lands.
 
 ## TUI Contract
 
@@ -235,8 +234,10 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then implement #237,
-#238, #239, #240, #242, #241, #243, #244, and #245 under #235.
+(#227-#231) when the selected issue depends on them, then continue with #238,
+#239, #240, #242, #241, #243, #244, and #245 under #235. Issue #237 is closed
+and provides the optional TensorBoard-compatible training/checkpoint event
+export surface.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

@@ -6,6 +6,7 @@ import math
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from codelewm.data import build_dataset_from_config_path, pack_dataset_from_manifest
 from codelewm.model import (
@@ -19,9 +20,11 @@ from codelewm.model import (
 from codelewm.observability import read_artifact_manifest, validate_artifact_checksums
 from codelewm.training import (
     DEFAULT_TRAINING_VOCAB_SIZE,
+    TENSORBOARD_EXPORT_SCHEMA_VERSION,
     TORCH_CHECKPOINT_SCHEMA_VERSION,
     TORCH_TRAINING_REPORT_SCHEMA_VERSION,
     PackedTransitionHdf5Dataset,
+    TensorBoardExportResult,
     TrainingRunError,
     compatibility_config_payload,
     load_train_config,
@@ -162,6 +165,36 @@ class TorchTrainingExecutorTest(unittest.TestCase):
         self.assertGreater(manifest.final_metrics["collapse/per_dim_variance_max"], 0.0)
         self.assertIn("checkpoints/checkpoint.pt", {item.path for item in manifest.checkpoint_files})
 
+    def test_tiny_packed_fixture_can_manifest_tensorboard_export_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pack_dir = _build_and_pack_fixture(root)
+            payload = _train_config_payload(root, pack_dir, name="torch_tensorboard_fixture")
+            config = validate_train_config(payload)
+
+            with mock.patch(
+                "codelewm.training.torch_executor.export_tensorboard_training_run",
+                side_effect=_fake_tensorboard_export,
+            ):
+                manifest = train_torch(
+                    config,
+                    root=root,
+                    source_git_sha=SOURCE_SHA,
+                    created_at=CREATED_AT,
+                    tensorboard=True,
+                    tensorboard_dir="tb",
+                )
+
+            run_dir = root / "runs" / "torch_tensorboard_fixture"
+            artifact_manifest = read_artifact_manifest(run_dir / "manifest.json")
+            report = json.loads((run_dir / "reports" / "torch_training_report.json").read_text(encoding="utf-8"))
+            artifact_paths = {item.path for item in artifact_manifest.files}
+
+        self.assertEqual(manifest.metadata["executor"]["tensorboard_export"]["schema_version"], TENSORBOARD_EXPORT_SCHEMA_VERSION)
+        self.assertEqual(report["tensorboard_export"]["schema_version"], TENSORBOARD_EXPORT_SCHEMA_VERSION)
+        self.assertIn("reports/tensorboard_export.json", artifact_paths)
+        self.assertIn("tb/events.out.tfevents.fixture", artifact_paths)
+
     def test_action_use_margin_objective_runs_one_torch_step_and_records_manifest_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -239,6 +272,37 @@ def _build_and_pack_fixture(root: Path) -> Path:
         command=("codelewm", "dataset", "pack"),
     )
     return pack_dir
+
+
+def _fake_tensorboard_export(**kwargs) -> TensorBoardExportResult:
+    run_dir = Path(kwargs["run_dir"])
+    log_dir = run_dir / Path(kwargs["log_dir"] or "tensorboard")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    event_path = log_dir / "events.out.tfevents.fixture"
+    event_path.write_bytes(b"fixture tensorboard event\n")
+    report_path = run_dir / "reports" / "tensorboard_export.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": TENSORBOARD_EXPORT_SCHEMA_VERSION,
+                "run_id": kwargs["run_id"],
+                "step_count": kwargs["step_count"],
+                "event_files": [{"path": "tb/events.out.tfevents.fixture"}],
+                "scalar_tags": ["loss/total"],
+                "histogram_tags": ["parameters/encoder.weight"],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return TensorBoardExportResult(
+        report_path=report_path,
+        event_files=(event_path,),
+        scalar_tags=("loss/total",),
+        histogram_tags=("parameters/encoder.weight",),
+    )
 
 
 def _train_config_payload(root: Path, pack_dir: Path, *, name: str = "torch_fixture") -> dict:

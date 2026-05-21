@@ -167,7 +167,7 @@ Issues:
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
 | G0 | #236 | docs: lock visual model observability and TUI roadmap | Closed |
-| G1 | #237 | observability: add TensorBoard event export for training and checkpoints | Open |
+| G1 | #237 | observability: add TensorBoard event export for training and checkpoints | Closed |
 | G2 | #238 | model: add checkpoint tensor and layer inspection reports | Open |
 | G3 | #239 | eval: add latent representation matrix diagnostics | Open |
 | G4 | #240 | observability: add run timeline and monitoring reports | Open |
@@ -267,18 +267,17 @@ Recommended order:
 18. #230
 19. #231
 20. #235 / #236
-21. #237
-22. #238
-23. #239
-24. #240
-25. #242
-26. #241
-27. #243
-28. #244
-29. #245
-30. #210
-31. #211
-32. #178 / #212
+21. #238
+22. #239
+23. #240
+24. #242
+25. #241
+26. #243
+27. #244
+28. #245
+29. #210
+30. #211
+31. #178 / #212
 
 Rationale: lock the contract first, publish the current result honestly, build
 the demo, make the public demo meaningful, add enough visual observability to
@@ -293,7 +292,7 @@ The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. #220 and #222 proved learned scoring and terminal-first
 demo UX, but #207/#208 were superseded because the comment-style toy task is
 not the right public artifact. Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #237 through #245 for the
+#227 through #231 for the meaningful harness demo, #238 through #245 for the
 visual model observability and TUI stream, #210/#211 for scaled downstream
 reranking, or #178/#212 for the next positive-model research hypothesis.
 
@@ -319,7 +318,7 @@ registration requires an OpenRouter management key such as
 `OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use `OPENROUTER_API_KEY`.
 No reports may serialize raw keys.
 
-The visual model observability and TUI tracker is #235: #237 adds optional
+The visual model observability and TUI tracker is #235: #237 closed optional
 TensorBoard-compatible export, #238 adds checkpoint tensor/layer inspection,
 #239 adds latent matrix diagnostics, #240 adds run timelines, #242 preserves
 non-interactive JSON/rich/HTML parity, #241 adds optional Textual TUI mode,

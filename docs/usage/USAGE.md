@@ -23,6 +23,7 @@ Optional groups:
 uv sync --group dev --group data      # h5py + pyarrow for dataset packing
 uv sync --group dev --group train     # torch and training runtime adapters
 uv sync --group dev --group eval      # optional evaluation helpers
+uv sync --group dev --group observability  # TensorBoard-compatible event export
 uv sync --group dev --group llm       # OpenRouter SDK for live LLM candidate generation
 uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
@@ -57,7 +58,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
-| `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
+| `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.training.tensorboard_export.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
@@ -454,6 +455,7 @@ codelewm train \
   --out .artifacts/tiny-train \
   --executor torch \
   --device cpu \
+  --tensorboard \
   --json
 ```
 
@@ -472,6 +474,9 @@ state/action/predictor stack and writes:
   reports/
     metrics_report.json
     torch_training_report.json          codelewm.torch_training_report.v1
+    tensorboard_export.json             codelewm.training.tensorboard_export.v1
+  tensorboard/
+    events.out.tfevents.*               TensorBoard-compatible event log
 ```
 
 The command verifies `data.manifest`, records the packed dataset artifact as the
@@ -490,6 +495,27 @@ keeps validating runner contracts but is not a model-quality claim and does not
 replace the torch executor for first-results training. Missing train/data
 runtime packages return `error_type=optional_dependency_missing`; incompatible
 resume checkpoints return `error_type=checkpoint_error`.
+
+TensorBoard export is optional and requires the observability dependency group:
+
+```bash
+uv sync --group dev --group train --group data --group observability
+codelewm train \
+  --config tests/fixtures/tiny_train.json \
+  --out .artifacts/tiny-train \
+  --executor torch \
+  --device cpu \
+  --tensorboard \
+  --tensorboard-dir tensorboard \
+  --json
+tensorboard --logdir .artifacts/tiny-train/tensorboard
+```
+
+The export writes scalar tags for finite training metrics and bounded histogram
+summaries for selected model parameters and latent values. The event files and
+`reports/tensorboard_export.json` are included in the training artifact manifest
+with checksums. They are diagnostics only; JSONL metrics, JSON reports,
+checkpoint manifests, and artifact manifests remain the release-facing contract.
 
 Scaled training profiles live under `config/train/scaled/`. Validate them before
 launching a long run:
@@ -1048,6 +1074,7 @@ field list.
 | Checkpoint manifest | `codelewm.checkpoint.v1` |
 | Training run manifest | `codelewm.training_run.v1` |
 | Training metrics | `codelewm.training_metrics.v1` |
+| TensorBoard export metadata | `codelewm.training.tensorboard_export.v1` |
 | Index build report | `codelewm.index_build.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |

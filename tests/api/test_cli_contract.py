@@ -93,6 +93,8 @@ class PublicCliContractTest(unittest.TestCase):
             "--device",
             "--executor",
             "--resume-from",
+            "--tensorboard",
+            "--tensorboard-dir",
             "--overwrite",
             "--json",
             "--log-jsonl",

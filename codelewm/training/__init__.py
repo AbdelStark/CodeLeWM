@@ -45,6 +45,12 @@ from .runner import (
     read_training_run_manifest,
     train,
 )
+from .tensorboard_export import (
+    TENSORBOARD_EXPORT_SCHEMA_VERSION,
+    TensorBoardExportError,
+    TensorBoardExportResult,
+    export_tensorboard_training_run,
+)
 from .torch_executor import (
     DEFAULT_TRAINING_VOCAB_SIZE,
     TORCH_CHECKPOINT_SCHEMA_VERSION,
@@ -68,6 +74,7 @@ __all__ = [
     "TRAINING_METRICS_SCHEMA_VERSION",
     "TRAINING_RUN_MANIFEST_SCHEMA_VERSION",
     "TRAIN_CONFIG_SCHEMA_VERSION",
+    "TENSORBOARD_EXPORT_SCHEMA_VERSION",
     "TORCH_CHECKPOINT_SCHEMA_VERSION",
     "TORCH_TRAINING_REPORT_SCHEMA_VERSION",
     "PackedTransitionHdf5Dataset",
@@ -82,10 +89,13 @@ __all__ = [
     "TrainingRunContext",
     "TrainingRunError",
     "TrainingRunManifest",
+    "TensorBoardExportError",
+    "TensorBoardExportResult",
     "WorldModelTrainConfig",
     "compatibility_config_payload",
     "cpu_smoke_training_executor",
     "default_train_config_paths",
+    "export_tensorboard_training_run",
     "load_default_train_configs",
     "load_scaled_train_configs",
     "load_train_config",

@@ -119,6 +119,22 @@ class TrainCliArgumentTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 2, completed.stderr)
         self.assertEqual(payload["error_type"], "config_error")
 
+    def test_cpu_smoke_rejects_tensorboard_export_before_runtime(self) -> None:
+        completed = _run_cli(
+            "train",
+            "--config",
+            str(ROOT / "config" / "train" / "codelewm_tiny.yaml"),
+            "--executor",
+            "cpu-smoke",
+            "--tensorboard",
+            "--json",
+        )
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(payload["error_type"], "config_error")
+        self.assertIn("TensorBoard", payload["message"])
+
 
 def _build_and_pack_fixture(root: Path) -> Path:
     build_dir = root / "build"

@@ -37,6 +37,10 @@ from codelewm.security import CheckpointTrustError, require_trusted_checkpoint
 from .config import TrainConfig
 from .resume import compatibility_config_payload
 from .runner import TrainingExecutorResult, TrainingRunContext, TrainingRunError, train
+from .tensorboard_export import (
+    TensorBoardExportError,
+    export_tensorboard_training_run,
+)
 
 try:  # pragma: no cover - exercised when torch is installed.
     import torch
@@ -61,10 +65,16 @@ def train_torch(
     overwrite: bool = False,
     resume_from: Path | str | None = None,
     device: str | None = None,
+    tensorboard: bool = False,
+    tensorboard_dir: Path | str | None = None,
 ):
     """Run the manifest-backed runner with the package-native torch executor."""
 
-    executor = make_torch_training_executor(device=device)
+    executor = make_torch_training_executor(
+        device=device,
+        tensorboard=tensorboard,
+        tensorboard_dir=tensorboard_dir,
+    )
     return train(
         config,
         executor=executor,
@@ -77,11 +87,21 @@ def train_torch(
     )
 
 
-def make_torch_training_executor(*, device: str | None = None):
+def make_torch_training_executor(
+    *,
+    device: str | None = None,
+    tensorboard: bool = False,
+    tensorboard_dir: Path | str | None = None,
+):
     """Return a torch executor with an optional explicit device override."""
 
     def _executor(context: TrainingRunContext) -> TrainingExecutorResult:
-        return torch_training_executor(context, device=device)
+        return torch_training_executor(
+            context,
+            device=device,
+            tensorboard=tensorboard,
+            tensorboard_dir=tensorboard_dir,
+        )
 
     return _executor
 
@@ -90,6 +110,8 @@ def torch_training_executor(
     context: TrainingRunContext,
     *,
     device: str | None = None,
+    tensorboard: bool = False,
+    tensorboard_dir: Path | str | None = None,
 ) -> TrainingExecutorResult:
     """Train the package-native transition model over packed HDF5 batches."""
 
@@ -230,6 +252,29 @@ def torch_training_executor(
         manifest_path=checkpoint_manifest_path,
     )
 
+    tensorboard_paths: tuple[Path, ...] = ()
+    tensorboard_metadata: dict[str, Any] = {"enabled": False}
+    if tensorboard:
+        try:
+            tensorboard_export = export_tensorboard_training_run(
+                run_id=context.config.name,
+                run_dir=context.run_dir,
+                step_count=step,
+                metrics=final_metrics,
+                model=model,
+                embeddings=last_embeddings,
+                checkpoint_path=checkpoint_path,
+                checkpoint_manifest_path=checkpoint_manifest_path,
+                log_dir=tensorboard_dir,
+            )
+        except TensorBoardExportError as exc:
+            raise TrainingRunError(f"TensorBoard export failed: {exc}") from exc
+        tensorboard_paths = (
+            tensorboard_export.report_path,
+            *tensorboard_export.event_files,
+        )
+        tensorboard_metadata = tensorboard_export.to_metadata(root=context.run_dir)
+
     report_path = context.run_dir / "reports" / "torch_training_report.json"
     report_payload = {
         "schema_version": TORCH_TRAINING_REPORT_SCHEMA_VERSION,
@@ -249,6 +294,7 @@ def torch_training_executor(
             "dtype": str(precision),
             "torch": str(runtime.__version__),
         },
+        "tensorboard_export": tensorboard_metadata,
     }
     _write_json(report_payload, report_path)
 
@@ -256,7 +302,7 @@ def torch_training_executor(
         step_count=step,
         metrics=final_metrics,
         checkpoint_paths=(checkpoint_path, checkpoint_manifest_path),
-        report_paths=(report_path,),
+        report_paths=(report_path, *tensorboard_paths),
         metadata={
             "executor": "torch",
             "device": str(selected_device),
@@ -266,6 +312,7 @@ def torch_training_executor(
             "val_rows": len(val_dataset),
             "objective": objective_payload,
             "checkpoint_schema_version": CHECKPOINT_SCHEMA_VERSION,
+            "tensorboard_export": tensorboard_metadata,
         },
     )
 

@@ -54,6 +54,9 @@ train = [
 eval = [
   "scikit-learn>=1.3"
 ]
+observability = [
+  "tensorboard>=2.16"
+]
 llm = [
   "openrouter==0.9.1"
 ]
@@ -87,6 +90,9 @@ train = [
 ]
 eval = [
   "scikit-learn>=1.3"
+]
+observability = [
+  "tensorboard>=2.16"
 ]
 llm = [
   "openrouter==0.9.1"

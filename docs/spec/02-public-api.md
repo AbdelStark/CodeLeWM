@@ -116,6 +116,7 @@ codelewm train \
   --out .artifacts/tiny-train \
   --executor torch \
   --device cpu \
+  --tensorboard \
   --json
 ```
 
@@ -128,6 +129,9 @@ It loads `codelewm.train_config.v1`, optionally overrides `output.run_dir` with
 - `metrics.jsonl`: `codelewm.training_metrics.v1`;
 - `reports/metrics_report.json`;
 - `reports/torch_training_report.json` when `--executor torch` is used;
+- `reports/tensorboard_export.json`:
+  `codelewm.training.tensorboard_export.v1` when `--tensorboard` is enabled;
+- `tensorboard/events.out.tfevents.*` when `--tensorboard` is enabled;
 - `checkpoints/checkpoint.pt` and
   `checkpoints/checkpoint.pt.manifest.json` for torch runs.
 
@@ -135,7 +139,10 @@ It loads `codelewm.train_config.v1`, optionally overrides `output.run_dir` with
 artifact manifest, and paired checkpoint manifest before loading the checkpoint.
 Resume incompatibility exits 5 with `error_type=checkpoint_error`. Missing
 train/data runtime dependencies exit 2 with
-`error_type=optional_dependency_missing`. `--log-jsonl` appends
+`error_type=optional_dependency_missing`. `--tensorboard` requires the optional
+observability dependency group, records bounded scalar and histogram diagnostics
+in the training artifact manifest, and does not replace JSONL metrics or JSON
+reports. `--log-jsonl` appends
 `codelewm.log_event.v1` start, completion, and error events without replacing
 JSON stdout.
 

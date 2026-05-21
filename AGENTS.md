@@ -214,9 +214,10 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #237 through #245 for visual model observability and the Textual TUI stream
-   under tracker #235: TensorBoard-compatible export (#237), checkpoint tensor
-   inspection (#238), latent matrix diagnostics (#239), run timelines (#240),
+2. #238 through #245 for visual model observability and the Textual TUI stream
+   under tracker #235. Issue #237 is complete and added optional
+   TensorBoard-compatible training/checkpoint event export. Continue with
+   checkpoint tensor inspection (#238), latent matrix diagnostics (#239), run timelines (#240),
    non-interactive report parity (#242), optional Textual TUI (#241), demo
    diagnostic links (#243), diagnostics-driven model experiment planning
    (#244), and final visual artifact publication (#245).
@@ -241,7 +242,11 @@ adapter. Anthropic BYOK is allowed only through the explicit registration helper
 and redacted request metadata.
 
 Issue #235 is the open visual model observability and Textual TUI tracker.
-Issue #236 locked its roadmap and backlog. #235 does not supersede #224; it
+Issue #236 locked its roadmap and backlog. Issue #237 added the optional
+observability dependency group and `codelewm train --tensorboard`, which writes
+manifest-backed `codelewm.training.tensorboard_export.v1` metadata plus
+TensorBoard-compatible event files for finite metrics and bounded model/latent
+histograms. #235 does not supersede #224; it
 extends the project after the meaningful-demo scenario path by adding optional
 TensorBoard-compatible event exports, checkpoint tensor/layer inspection,
 latent representation matrix diagnostics, run timeline artifacts, shared report

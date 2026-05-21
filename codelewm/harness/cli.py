@@ -307,6 +307,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="parent training_manifest.json to resume from after compatibility checks",
     )
     train_parser.add_argument(
+        "--tensorboard",
+        action="store_true",
+        help="emit optional TensorBoard-compatible training/checkpoint event logs",
+    )
+    train_parser.add_argument(
+        "--tensorboard-dir",
+        type=Path,
+        help="event-log directory relative to output.run_dir; implies --tensorboard",
+    )
+    train_parser.add_argument(
         "--overwrite",
         action="store_true",
         help="overwrite an existing CodeLeWM run output",
@@ -1072,6 +1082,7 @@ def _dataset_build_command(args: argparse.Namespace) -> int:
 def _train_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _train_command_tuple(args)
+    tensorboard_enabled = bool(args.tensorboard or args.tensorboard_dir is not None)
     try:
         config = _load_cli_train_config(args)
         _validate_train_cli_executor(args)
@@ -1091,12 +1102,20 @@ def _train_command(args: argparse.Namespace) -> int:
                     "resume_from": None
                     if args.resume_from is None
                     else str(args.resume_from),
+                    "tensorboard": tensorboard_enabled,
+                    "tensorboard_dir": None
+                    if args.tensorboard_dir is None
+                    else str(args.tensorboard_dir),
                     "overwrite": bool(args.overwrite),
                 },
             ),
         )
         executor = (
-            make_torch_training_executor(device=args.device)
+            make_torch_training_executor(
+                device=args.device,
+                tensorboard=tensorboard_enabled,
+                tensorboard_dir=args.tensorboard_dir,
+            )
             if args.executor == "torch"
             else cpu_smoke_training_executor
         )
@@ -1139,10 +1158,15 @@ def _train_command(args: argparse.Namespace) -> int:
         _emit_error(args, error, json_output=args.json)
         return 2
     except OptionalDependencyError as exc:
+        remediation = (
+            "install the required groups with `uv sync --group train --group data --group dev --group observability`"
+            if tensorboard_enabled
+            else "install the required groups with `uv sync --group train --group data --group dev`"
+        )
         error = ScoreError(
             f"training optional dependency is missing: {exc}",
             error_type="optional_dependency_missing",
-            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            remediation=remediation,
             artifact=str(args.config),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         )
@@ -2329,6 +2353,8 @@ def _validate_train_cli_executor(args: argparse.Namespace) -> None:
         raise TrainConfigError(
             "cpu-smoke executor only supports --device cpu or --device auto"
         )
+    if args.executor == "cpu-smoke" and (args.tensorboard or args.tensorboard_dir is not None):
+        raise TrainConfigError("TensorBoard export currently requires --executor torch")
 
 
 def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
@@ -2346,6 +2372,10 @@ def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         command.extend(("--out", str(args.out)))
     if args.resume_from is not None:
         command.extend(("--resume-from", str(args.resume_from)))
+    if args.tensorboard:
+        command.append("--tensorboard")
+    if args.tensorboard_dir is not None:
+        command.extend(("--tensorboard-dir", str(args.tensorboard_dir)))
     if args.overwrite:
         command.append("--overwrite")
     if args.json:
