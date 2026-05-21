@@ -287,7 +287,8 @@ Deliverables:
 
 ### Phase 9: LLM + World-Model Harness Demo
 
-Status: open; #186 through #188 are complete and #189 is the next demo issue.
+Status: complete as a claim-safe demo workflow. This still does not support a
+coding-usefulness claim.
 
 Goal: showcase the intended use case without claiming model improvement. An LLM
 generates candidate patches through the OpenRouter Python SDK, CodeLeWM
@@ -348,7 +349,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 3 | #194 | docs: prepare public artifact index and announcement package | Publication | complete |
 | 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | complete |
 | 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | complete |
-| 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | #192 |
+| 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | complete |
 | 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | #191, #192 |
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | #192 |
 | 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | public coding-usefulness claim path |
@@ -413,7 +414,7 @@ instead of creating duplicate trackers.
   closed with the negative/diagnostic boundary.
 - #167 v0.2 action-use and representation research intervention: complete as
   negative/diagnostic evidence through #168 through #172.
-- #183 LLM + world-model harness demo: active; children #186 through #189.
+- #183 LLM + world-model harness demo: complete; children #186 through #189.
 - #184 Downstream candidate-reranking benchmark: active; children #190 through
   #192.
 - #185 Preliminary results publication package: active; children #193 and #194.

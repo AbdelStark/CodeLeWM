@@ -23,6 +23,7 @@ Optional groups:
 uv sync --group dev --group data      # h5py + pyarrow for dataset packing
 uv sync --group dev --group train     # torch and training runtime adapters
 uv sync --group dev --group eval      # optional evaluation helpers
+uv sync --group dev --group llm       # OpenRouter SDK for live LLM candidate generation
 uv sync --group dev --group docs      # documentation checks
 uv sync --group dev --group release   # package build and release gates
 ```
@@ -50,6 +51,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | ------- | ------ | ---------------------- |
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
+| `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
@@ -116,12 +118,11 @@ the completed v0.2 action-swap/inverse-action run.
 Public claim wording must keep that boundary until a later artifact passes the
 action-use claim gate.
 
-## Planned LLM + World-Model Harness
+## LLM + World-Model Harness Demo
 
-The next public harness stream is specified, not yet implemented. It will let an
-LLM generate candidate patches, store them as untrusted candidate packs, and
-then call `codelewm score` / `codelewm rerank` to rank those candidates with the
-world model.
+The public harness stream now has a fixture-first demo command. It lets an LLM
+generate candidate patches, stores them as untrusted candidate packs, and then
+calls the CodeLeWM reranker to rank those candidates with the world model.
 
 The public adapter contract uses the OpenRouter Python SDK:
 
@@ -138,10 +139,43 @@ raw `ANTHROPIC_API_KEY`. To use Anthropic models, select an Anthropic model slug
 through OpenRouter or configure provider keys as OpenRouter BYOK outside the
 repo. Direct Anthropic API support requires a separate adapter issue.
 
-The first runtime issue must add OpenRouter as an optional dependency pinned to
-`openrouter==0.9.1`, then record the SDK version in
-`codelewm.llm_candidate_pack.v1` artifacts. Dry-run mode remains the default and
-must not import the SDK or make network calls.
+OpenRouter is an optional dependency pinned to `openrouter==0.9.1`. Live runs
+record the SDK version in `codelewm.llm_candidate_pack.v1` artifacts. Dry-run
+mode remains the default and must not import the SDK or make network calls.
+
+Run a deterministic fixture demo:
+
+```bash
+CODELEWM_LLM_PROVIDER=openrouter \
+CODELEWM_LLM_DRY_RUN=1 \
+CODELEWM_LLM_MAX_CANDIDATES=2 \
+uv run codelewm llm-demo \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
+  --out .artifacts/llm-demo \
+  --context-path src/example.py \
+  --json
+```
+
+The command writes:
+
+```text
+.artifacts/llm-demo/
+  manifest.json
+  reports/llm_world_model_demo_report.json
+  candidate_pack/
+    manifest.json
+    candidate_pack.json
+    candidates/*.patch
+    prompt/redacted_prompt.txt
+```
+
+The JSON report schema is `codelewm.harness.demo_report.v1`; the stdout summary
+schema is `codelewm.harness.demo_run.v1`. The report includes LLM order,
+CodeLeWM order, random/lexical/no-action baselines, candidate errors, optional
+check metadata, and a claim gate. The claim gate remains `allowed=false`
+because the demo is workflow evidence, not downstream benchmark evidence.
 
 Tracked streams:
 
@@ -890,6 +924,9 @@ field list.
 | Scorer quality config | `codelewm.harness.scorer_quality_config.v1` |
 | Scorer quality run | `codelewm.harness.scorer_quality_run.v1` |
 | Scorer quality report | `codelewm.harness.scorer_quality_report.v1` |
+| LLM candidate pack | `codelewm.llm_candidate_pack.v1` |
+| LLM demo run | `codelewm.harness.demo_run.v1` |
+| LLM demo report | `codelewm.harness.demo_report.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |
 | Surprise report | `codelewm.eval.surprise_report.v1` |
 | Candidate pool | `codelewm.eval.candidate_pool.v1` |

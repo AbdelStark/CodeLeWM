@@ -99,6 +99,9 @@ their workflow depends on.
 | Scorer quality config         | `codelewm.harness.scorer_quality_config.v1`     |
 | Scorer quality report         | `codelewm.harness.scorer_quality_report.v1`     |
 | Scorer quality run            | `codelewm.harness.scorer_quality_run.v1`        |
+| LLM candidate pack            | `codelewm.llm_candidate_pack.v1`                |
+| LLM demo report               | `codelewm.harness.demo_report.v1`               |
+| LLM demo run                  | `codelewm.harness.demo_run.v1`                  |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |
 | Kill-switch report            | `codelewm.eval.kill_report.v1`                  |
 | Public license gate           | `codelewm.public_license_gate.v1`               |

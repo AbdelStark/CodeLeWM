@@ -33,6 +33,10 @@ from codelewm.eval import (
     run_surprise_evaluation,
 )
 from codelewm.harness.index_runner import build_transition_index_artifact
+from codelewm.harness.llm_demo import (
+    LLMWorldModelDemoError,
+    run_llm_world_model_demo,
+)
 from codelewm.harness.quality import (
     ScorerQualityError,
     run_scorer_quality_evaluation,
@@ -167,6 +171,60 @@ def build_parser() -> argparse.ArgumentParser:
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
     rerank.set_defaults(func=_rerank_command)
+    llm_demo = subparsers.add_parser(
+        "llm-demo", help="run LLM candidate generation plus CodeLeWM reranking demo"
+    )
+    llm_demo.add_argument(
+        "--before", type=Path, required=True, help="before-state Python file"
+    )
+    llm_demo.add_argument(
+        "--instruction", required=True, help="instruction text or path to a text file"
+    )
+    llm_demo.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
+    llm_demo.add_argument("--out", type=Path, required=True, help="demo artifact directory")
+    llm_demo.add_argument("--task-id", default="codelewm-demo", help="stable demo task id")
+    llm_demo.add_argument(
+        "--context-path",
+        help="repository-relative path label for the before file sent to the LLM",
+    )
+    llm_demo.add_argument(
+        "--device", default="auto", choices=("cpu", "cuda", "mps", "auto")
+    )
+    llm_demo.add_argument(
+        "--index",
+        type=Path,
+        help="transition index directory for retrieval-prior scoring",
+    )
+    llm_demo.add_argument(
+        "--retrieval-prior-weight",
+        type=float,
+        default=0.0,
+        help="non-negative weight applied to the retrieval prior",
+    )
+    llm_demo.add_argument(
+        "--retrieval-prior-k",
+        type=int,
+        default=10,
+        help="nearest index hits used for the prior",
+    )
+    llm_demo.add_argument(
+        "--parent-manifest",
+        action="append",
+        type=Path,
+        default=[],
+        help="parent artifact manifest to verify and record; may be repeated",
+    )
+    llm_demo.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
+    llm_demo.add_argument("--overwrite", action="store_true", help="replace existing output")
+    llm_demo.add_argument("--json", action="store_true", help="emit JSON output")
+    llm_demo.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    llm_demo.set_defaults(func=_llm_demo_command)
     train_parser = subparsers.add_parser(
         "train", help="run manifest-backed CodeLeWM training"
     )
@@ -658,6 +716,95 @@ def _score_command(args: argparse.Namespace) -> int:
         print(f"candidate: {result.candidate}")
         print(f"transition_energy: {result.transition_energy:.6g}")
         print(f"final_score: {result.final_score:.6g}")
+    return 0
+
+
+def _llm_demo_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    try:
+        instruction = _instruction_arg_to_text(args.instruction)
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.llm_demo.start",
+                level="info",
+                run_id=run_id,
+                step="llm_demo",
+                message="LLM demo command started",
+                fields={
+                    "before": str(args.before),
+                    "checkpoint": str(args.checkpoint),
+                    "out": str(args.out),
+                    "task_id": args.task_id,
+                    "context_path": args.context_path,
+                    "device": args.device,
+                    "index": None if args.index is None else str(args.index),
+                    "retrieval_prior_weight": args.retrieval_prior_weight,
+                    "retrieval_prior_k": args.retrieval_prior_k,
+                    "instruction_sha256": _sha256_text(instruction),
+                },
+            ),
+        )
+        result = run_llm_world_model_demo(
+            before=args.before,
+            instruction=instruction,
+            checkpoint=args.checkpoint,
+            out=args.out,
+            task_id=args.task_id,
+            context_path=args.context_path,
+            device=args.device,
+            index=args.index,
+            retrieval_prior_weight=args.retrieval_prior_weight,
+            retrieval_prior_k=args.retrieval_prior_k,
+            parent_manifests=tuple(args.parent_manifest or ()),
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            overwrite=args.overwrite,
+            command=(
+                "codelewm",
+                "llm-demo",
+                "--before",
+                str(args.before),
+                "--checkpoint",
+                str(args.checkpoint),
+                "--out",
+                str(args.out),
+            ),
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="harness.llm_demo.complete",
+                level="info",
+                run_id=run_id,
+                step="llm_demo",
+                message="LLM demo command completed",
+                fields=result.to_dict(),
+            ),
+        )
+    except (LLMWorldModelDemoError, ScoreError) as exc:
+        error = ScoreError(
+            f"LLM demo failed: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the demo inputs, candidate pack, checkpoint, and output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="llm_demo", event="harness.llm_demo.error", exc=error
+        )
+        if args.json:
+            print(json.dumps(error.to_error_report().to_dict(), indent=2, sort_keys=True))
+        else:
+            print(str(error), file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"demo_report: {args.out / result.report_path}")
+        print(f"candidate_pack_manifest: {args.out / result.candidate_pack_manifest_path}")
+        print(f"success: {result.success}")
     return 0
 
 

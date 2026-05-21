@@ -19,7 +19,7 @@ The current evidence boundary is explicit:
 
 ## Stream A: LLM + World-Model Harness Demo
 
-Tracker: #183.
+Tracker: #183. Status: complete after #189.
 
 Purpose: show the intended product use case without overstating the model. An
 LLM generates candidate patches through the OpenRouter Python SDK. CodeLeWM
@@ -33,7 +33,7 @@ Issues:
 | A1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Closed |
 | A2 | #187 | harness: add OpenRouter candidate generation adapter | Closed |
 | A3 | #188 | harness: add candidate pack schema and safe patch capture | Closed |
-| A4 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Open |
+| A4 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Closed |
 
 Success for the stream:
 

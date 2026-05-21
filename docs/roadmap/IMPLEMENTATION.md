@@ -123,13 +123,13 @@ negative-results publication.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
-| #183 | [Tracking] v0.3 LLM + world-model harness demo | harness | p1 | l | RFC-0013 | Open |
+| #183 | [Tracking] v0.3 LLM + world-model harness demo | harness | p1 | l | RFC-0013 | Closed |
 | #184 | [Tracking] v0.3 downstream candidate-reranking benchmark | evaluation | p1 | l | RFC-0013 | Open |
 | #185 | [Tracking] preliminary results publication package | docs | p1 | m | RFC-0013 | Closed |
 | #186 | spec: lock OpenRouter LLM candidate harness contract | harness | p1 | m | RFC-0013 | Closed |
 | #187 | harness: add OpenRouter candidate generation adapter | harness | p1 | m | RFC-0013 | Closed |
 | #188 | harness: add candidate pack schema and safe patch capture | harness | p1 | m | RFC-0013 | Closed |
-| #189 | harness: build end-to-end LLM plus CodeLeWM demo report | harness | p1 | l | RFC-0013 | Open |
+| #189 | harness: build end-to-end LLM plus CodeLeWM demo report | harness | p1 | l | RFC-0013 | Closed |
 | #190 | benchmark: define downstream task schema and claim gates | evaluation | p1 | m | RFC-0013 | Open |
 | #191 | benchmark: build public-safe labeled candidate reranking set | evaluation | p1 | l | RFC-0013 | Open |
 | #192 | eval: run downstream reranking comparison and claim gate | evaluation | p1 | l | RFC-0013 | Open |

@@ -33,6 +33,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("CandidatePackArtifactResult", codelewm.harness.__all__)
         self.assertIn("capture_candidate_pack", codelewm.harness.__all__)
         self.assertIn("llm_candidate_pack_json_schema", codelewm.harness.__all__)
+        self.assertIn("run_llm_world_model_demo", codelewm.harness.__all__)
+        self.assertIn("read_llm_world_model_demo_report", codelewm.harness.__all__)
         self.assertIn("write_candidate_pack_artifact", codelewm.harness.__all__)
         self.assertIn("score_result_json_schema", codelewm.harness.__all__)
         self.assertIn("validate_rerank_result_payload", codelewm.harness.__all__)

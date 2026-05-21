@@ -51,6 +51,14 @@ from .openrouter_adapter import (
     render_candidate_prompt,
     write_candidate_pack_artifact,
 )
+from .llm_demo import (
+    LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION,
+    LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION,
+    LLMWorldModelDemoError,
+    LLMWorldModelDemoRunResult,
+    read_llm_world_model_demo_report,
+    run_llm_world_model_demo,
+)
 from .scorer import (
     ERROR_REPORT_SCHEMA_VERSION,
     RERANK_RESULT_SCHEMA_VERSION,
@@ -89,6 +97,8 @@ __all__ = [
     "INDEX_BUILD_RESULT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_SCHEMA_VERSION",
+    "LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION",
+    "LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION",
     "MAX_CAPTURE_PATCH_CHARS",
     "OPENROUTER_ADAPTER_VERSION",
     "OPENROUTER_CANDIDATE_REQUEST_SCHEMA_VERSION",
@@ -107,6 +117,8 @@ __all__ = [
     "IndexBuildResult",
     "LLMCandidate",
     "LLMCandidatePack",
+    "LLMWorldModelDemoError",
+    "LLMWorldModelDemoRunResult",
     "OpenRouterAdapterError",
     "OpenRouterCandidateRequest",
     "RerankResult",
@@ -133,6 +145,7 @@ __all__ = [
     "read_transition_index",
     "read_scorer_quality_config",
     "read_scorer_quality_report",
+    "read_llm_world_model_demo_report",
     "rerank_result_json_schema",
     "rerank_result_to_json",
     "render_candidate_prompt",
@@ -140,6 +153,7 @@ __all__ = [
     "score_result_json_schema",
     "score_result_to_json",
     "run_scorer_quality_evaluation",
+    "run_llm_world_model_demo",
     "transition_index_header_json_schema",
     "validate_error_report_payload",
     "validate_rerank_result_payload",
