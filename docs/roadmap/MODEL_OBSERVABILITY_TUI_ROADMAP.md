@@ -95,7 +95,7 @@ automation surface and must keep:
 | 5 | #242 | Non-interactive report parity | Closed: shared visual view model for JSON, rich terminal, and HTML outputs before TUI rendering. |
 | 6 | #241 | Textual TUI | Closed: optional interactive TUI that loads fixture/live reports without affecting base CLI imports. |
 | 7 | #243 | Diagnostics in demo reports | Closed: demo reports link checkpoint, latent, timeline, and tensor artifacts consistently. |
-| 8 | #244 | Diagnostics-driven model experiment | Define the next falsifiable model improvement from observed ranking/latent failures. |
+| 8 | #244 | Diagnostics-driven model experiment | Closed: candidate-contrast action training plan with HF recipe, metrics, baselines, and claim gates. |
 | 9 | #245 | Visual artifact publication | Publish one manifest-backed visual observability artifact set as diagnostic evidence. |
 
 ## Artifact Contracts
@@ -165,8 +165,9 @@ It must not:
 
 ## Model Improvement Contract
 
-The model-improvement issue (#244) must start from diagnostics, not from a blind
-training run. It should use:
+The model-improvement issue (#244) is closed by
+`docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`. It starts from
+diagnostics, not from a blind training run, and uses:
 
 - candidate static analysis and semantic completeness failures;
 - scorer and no-action deltas;
@@ -174,7 +175,7 @@ training run. It should use:
 - latent matrix diagnostics and probe gates;
 - downstream reranking metrics and baselines.
 
-Before any new scaled run, it must define:
+Before any new scaled run, the plan defines:
 
 - falsifiable hypothesis;
 - data/config intervention;
@@ -183,6 +184,11 @@ Before any new scaled run, it must define:
 - HF Jobs recipe;
 - artifact download and verification gates;
 - public wording if the run fails.
+
+The selected intervention is candidate-contrast action training: build
+same-before, same-action positive/negative after-state contrasts and train a
+pairwise energy margin so complete task-solving candidates score below no-op,
+partial, wrong-symbol, over-broad, and shuffled-action negatives.
 
 ## Validation Gates
 
@@ -239,12 +245,13 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then continue with #244
-and #245 under #235. Issues #237, #238, #239, #240, #241, #242, and #243 are
+(#227-#231) when the selected issue depends on them, then continue with #245
+under #235. Issues #237, #238, #239, #240, #241, #242, #243, and #244 are
 closed and provide the optional TensorBoard-compatible export, trusted
 checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces,
-run-timeline artifacts, optional Textual TUI, and schema-versioned visual view
-model with manifest-backed diagnostic links.
+run-timeline artifacts, optional Textual TUI, schema-versioned visual view
+model with manifest-backed diagnostic links, and candidate-contrast experiment
+plan.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

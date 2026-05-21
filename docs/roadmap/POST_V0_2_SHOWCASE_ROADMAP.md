@@ -174,7 +174,7 @@ Issues:
 | G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Closed |
 | G6 | #241 | harness: build optional Textual TUI for demo inspection | Closed |
 | G7 | #243 | harness: connect model and latent diagnostics to demo reports | Closed |
-| G8 | #244 | research: define diagnostics-driven code model improvement experiment | Open |
+| G8 | #244 | research: define diagnostics-driven code model improvement experiment | Closed |
 | G9 | #245 | run: publish visual observability harness artifact set | Open |
 
 Success for the stream:
@@ -295,7 +295,7 @@ not the right public artifact. #239 closed the latent-matrix diagnostic surface,
 #240 closed run-timeline reports, #242 closed the shared visual view-model
 surface for JSON/rich/HTML parity, and #241 closed optional Textual TUI mode.
 Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #243 through #245 for the
+#227 through #231 for the meaningful harness demo, #245 for the
 visual model observability stream, #210/#211 for scaled downstream
 reranking, or #178/#212 for the next positive-model research hypothesis.
 
@@ -325,9 +325,10 @@ The visual model observability and TUI tracker is #235: #237 closed optional
 TensorBoard-compatible export, #238 closed checkpoint tensor/layer inspection,
 #239 closed latent matrix diagnostics, #240 closed run timelines, #242 closed
 non-interactive JSON/rich/HTML parity, #241 closed optional Textual TUI mode,
-#243 closed model and latent diagnostic links in demo reports, #244 defines the
-next diagnostics-driven model experiment, and #245 publishes a visual
-diagnostic artifact set.
+#243 closed model and latent diagnostic links in demo reports, #244 defined the
+candidate-contrast action training experiment in
+`docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`, and #245 publishes a
+visual diagnostic artifact set.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
 fixture report are public negative/diagnostic evidence. The harness demo can
