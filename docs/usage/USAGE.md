@@ -281,6 +281,22 @@ uv run codelewm llm-demo-tui \
   --snapshot-json
 ```
 
+Demo reports can link existing diagnostic artifacts without copying or executing
+them. Pass the diagnostic manifests, and the report records each diagnostic's
+status, path, schema, checksum, manifest path, and parent artifact id:
+
+```bash
+uv run codelewm llm-demo \
+  --before tests/fixtures/codestate/class_method_before.py \
+  --instruction "rewrite the accumulator update explicitly" \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
+  --out .artifacts/llm-demo \
+  --checkpoint-inspection-manifest .artifacts/model-inspect/manifest.json \
+  --latent-matrix-manifest .artifacts/latent-matrix/manifest.json \
+  --tensorboard-manifest .artifacts/first-results/train/manifest.json \
+  --json
+```
+
 Tracked streams #183, #184, and #185 are complete as diagnostic evidence.
 
 The demo can show the workflow, but only the downstream benchmark can support a
@@ -1185,6 +1201,7 @@ field list.
 | LLM demo run | `codelewm.harness.demo_run.v1` |
 | LLM demo report | `codelewm.harness.demo_report.v1` |
 | LLM demo visual view model | `codelewm.harness.visual_view_model.v1` |
+| LLM demo TUI snapshot | `codelewm.harness.demo_tui_snapshot.v1` |
 | Downstream rerank benchmark | `codelewm.downstream_rerank_benchmark.v1` |
 | Downstream rerank benchmark config | `codelewm.downstream_rerank_benchmark_config.v1` |
 | Downstream benchmark pack run | `codelewm.downstream_benchmark_pack_run.v1` |

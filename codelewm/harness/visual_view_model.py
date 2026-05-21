@@ -35,6 +35,7 @@ def build_demo_visual_view_model(
     """Normalize demo state for JSON, terminal, HTML, and future TUI renderers."""
 
     artifacts = _mapping(demo_report.get("artifacts"))
+    diagnostic_refs = _mapping(demo_report.get("diagnostics"))
     scores = _mapping(demo_report.get("scores"))
     claim_gate = _mapping(demo_report.get("claim_gate"))
     candidate_summary = _mapping(demo_report.get("candidate_summary"))
@@ -112,12 +113,22 @@ def build_demo_visual_view_model(
         "candidates": candidates,
         "diagnostics": {
             "checkpoint_inspection": _diagnostic_slot(
-                artifacts.get("checkpoint_inspection_path")
+                diagnostic_refs.get("checkpoint_inspection")
+                or artifacts.get("checkpoint_inspection_path")
                 or artifacts.get("model_checkpoint_inspection_path")
             ),
-            "latent_matrix": _diagnostic_slot(artifacts.get("latent_matrix_report_path")),
-            "run_timeline": _diagnostic_slot(artifacts.get("run_timeline_path")),
-            "tensorboard": _diagnostic_slot(artifacts.get("tensorboard_export_path")),
+            "latent_matrix": _diagnostic_slot(
+                diagnostic_refs.get("latent_matrix")
+                or artifacts.get("latent_matrix_report_path")
+            ),
+            "run_timeline": _diagnostic_slot(
+                diagnostic_refs.get("run_timeline")
+                or artifacts.get("run_timeline_path")
+            ),
+            "tensorboard": _diagnostic_slot(
+                diagnostic_refs.get("tensorboard")
+                or artifacts.get("tensorboard_export_path")
+            ),
         },
         "artifact_gates": {
             "manifest_verify": _gate_view(manifest_verify),
@@ -309,10 +320,32 @@ def _gate_view(payload: Mapping[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def _diagnostic_slot(path: Any) -> dict[str, Any]:
-    if path is None or str(path) == "":
+def _diagnostic_slot(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        status = _safe_string(value.get("status"))
+        path = value.get("path")
+        return {
+            "status": status if status != "n/a" else "not_configured",
+            "path": None if path in (None, "") else redact_text(str(path)),
+            "schema_version": _safe_string(value.get("schema_version")),
+            "artifact_id": None if value.get("artifact_id") in (None, "") else _safe_string(value.get("artifact_id")),
+            "artifact_kind": None if value.get("artifact_kind") in (None, "") else _safe_string(value.get("artifact_kind")),
+            "artifact_manifest_path": (
+                None
+                if value.get("artifact_manifest_path") in (None, "")
+                else redact_text(str(value.get("artifact_manifest_path")))
+            ),
+            "manifest_file_path": (
+                None
+                if value.get("manifest_file_path") in (None, "")
+                else redact_text(str(value.get("manifest_file_path")))
+            ),
+            "sha256": None if value.get("sha256") in (None, "") else _safe_string(value.get("sha256")),
+            "bytes": _optional_int(value.get("bytes")),
+        }
+    if value is None or str(value) == "":
         return {"status": "not_configured", "path": None}
-    return {"status": "available", "path": redact_text(str(path))}
+    return {"status": "available", "path": redact_text(str(value))}
 
 
 def _routing_summary(provider_options: Mapping[str, Any], byok: Mapping[str, Any]) -> str:

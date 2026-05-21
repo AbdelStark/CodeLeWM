@@ -311,9 +311,17 @@ def _diagnostics_table(diagnostics: Mapping[str, Any]) -> list[str]:
         ("tensorboard", "tensorboard"),
     ):
         slot = _mapping(diagnostics.get(key))
+        artifact = slot.get("artifact_id")
+        checksum = slot.get("sha256")
+        suffix = ""
+        if artifact:
+            suffix += f" artifact={_safe_text(artifact)}"
+        if checksum:
+            suffix += f" sha256={_safe_text(str(checksum)[:12])}"
         lines.append(
             f"{label}: {_safe_text(slot.get('status'))}"
             f"{' -> ' + _safe_text(slot.get('path')) if slot.get('path') else ''}"
+            f"{suffix}"
         )
     return lines
 

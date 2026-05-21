@@ -173,7 +173,7 @@ Issues:
 | G4 | #240 | observability: add run timeline and monitoring reports | Closed |
 | G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Closed |
 | G6 | #241 | harness: build optional Textual TUI for demo inspection | Closed |
-| G7 | #243 | harness: connect model and latent diagnostics to demo reports | Open |
+| G7 | #243 | harness: connect model and latent diagnostics to demo reports | Closed |
 | G8 | #244 | research: define diagnostics-driven code model improvement experiment | Open |
 | G9 | #245 | run: publish visual observability harness artifact set | Open |
 
@@ -325,7 +325,7 @@ The visual model observability and TUI tracker is #235: #237 closed optional
 TensorBoard-compatible export, #238 closed checkpoint tensor/layer inspection,
 #239 closed latent matrix diagnostics, #240 closed run timelines, #242 closed
 non-interactive JSON/rich/HTML parity, #241 closed optional Textual TUI mode,
-#243 links model and latent diagnostics into demo reports, #244 defines the
+#243 closed model and latent diagnostic links in demo reports, #244 defines the
 next diagnostics-driven model experiment, and #245 publishes a visual
 diagnostic artifact set.
 

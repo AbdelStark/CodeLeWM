@@ -211,6 +211,10 @@ when available, and no ANSI terminal layout data. Textual is implemented behind
 the optional `tui` dependency group through `codelewm llm-demo-tui` and
 `scripts/llm-world-model-demo --tui`; the view model remains the stable
 non-interactive contract consumed by JSON, rich terminal, HTML, and TUI views.
+The demo can link checkpoint-inspection, latent-matrix, TensorBoard export, and
+run-timeline diagnostics. Linked diagnostics include manifest-backed artifact
+ids and checksums when a manifest is provided; absent diagnostics are
+`not_configured`, not silently dropped.
 
 ## Artifact Lineage
 

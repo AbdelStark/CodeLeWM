@@ -226,6 +226,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="parent artifact manifest to verify and record; may be repeated",
     )
     llm_demo.add_argument(
+        "--checkpoint-inspection-manifest",
+        type=Path,
+        help="manifest for a model checkpoint inspection diagnostic artifact",
+    )
+    llm_demo.add_argument(
+        "--checkpoint-inspection-report",
+        type=Path,
+        help="model checkpoint inspection report; inferred from manifest metadata when omitted",
+    )
+    llm_demo.add_argument(
+        "--latent-matrix-manifest",
+        type=Path,
+        help="manifest for a latent matrix diagnostic artifact",
+    )
+    llm_demo.add_argument(
+        "--latent-matrix-report",
+        type=Path,
+        help="latent matrix diagnostic report; inferred from manifest metadata when omitted",
+    )
+    llm_demo.add_argument(
+        "--tensorboard-manifest",
+        type=Path,
+        help="manifest for a TensorBoard export diagnostic artifact",
+    )
+    llm_demo.add_argument(
+        "--tensorboard-export",
+        type=Path,
+        help="TensorBoard export metadata report; inferred from manifest metadata when omitted",
+    )
+    llm_demo.add_argument(
         "--allow-unsafe-checkpoint",
         action="store_true",
         help="load the checkpoint without verifying its manifest (trusted local use only)",
@@ -1086,6 +1116,15 @@ def _llm_demo_command(args: argparse.Namespace) -> int:
                     "index": None if args.index is None else str(args.index),
                     "retrieval_prior_weight": args.retrieval_prior_weight,
                     "retrieval_prior_k": args.retrieval_prior_k,
+                    "checkpoint_inspection_manifest": None
+                    if args.checkpoint_inspection_manifest is None
+                    else str(args.checkpoint_inspection_manifest),
+                    "latent_matrix_manifest": None
+                    if args.latent_matrix_manifest is None
+                    else str(args.latent_matrix_manifest),
+                    "tensorboard_manifest": None
+                    if args.tensorboard_manifest is None
+                    else str(args.tensorboard_manifest),
                     "require_learned_scorer": args.require_learned_scorer,
                     "instruction_sha256": _sha256_text(instruction),
                 },
@@ -1103,6 +1142,12 @@ def _llm_demo_command(args: argparse.Namespace) -> int:
             retrieval_prior_weight=args.retrieval_prior_weight,
             retrieval_prior_k=args.retrieval_prior_k,
             parent_manifests=tuple(args.parent_manifest or ()),
+            checkpoint_inspection_manifest=args.checkpoint_inspection_manifest,
+            checkpoint_inspection_report=args.checkpoint_inspection_report,
+            latent_matrix_manifest=args.latent_matrix_manifest,
+            latent_matrix_report=args.latent_matrix_report,
+            tensorboard_manifest=args.tensorboard_manifest,
+            tensorboard_export=args.tensorboard_export,
             allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
             require_learned_scorer=args.require_learned_scorer,
             overwrite=args.overwrite,

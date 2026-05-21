@@ -94,6 +94,21 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_llm_demo_help_snapshot_exposes_diagnostic_link_flags(self) -> None:
+        help_text = _run_help("llm-demo", "--help")
+
+        for flag in (
+            "--checkpoint-inspection-manifest",
+            "--checkpoint-inspection-report",
+            "--latent-matrix-manifest",
+            "--latent-matrix-report",
+            "--tensorboard-manifest",
+            "--tensorboard-export",
+            "--tui",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_train_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("train", "--help")
 

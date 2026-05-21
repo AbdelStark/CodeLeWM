@@ -299,7 +299,11 @@ def _details_text(snapshot: Mapping[str, Any]) -> str:
     lines.append("Diagnostics")
     for row in snapshot.get("diagnostics", ()):
         if isinstance(row, Mapping):
-            lines.append(f"- {_safe(row.get('name'))}: {_safe(row.get('status'))} {_safe(row.get('path'))}")
+            lines.append(
+                f"- {_safe(row.get('name'))}: {_safe(row.get('status'))} "
+                f"{_safe(row.get('path'))} artifact={_safe(row.get('artifact_id'))} "
+                f"sha256={_safe(row.get('sha256'))}"
+            )
     lines.append("")
     lines.append("Artifact gates")
     for row in snapshot.get("artifact_gates", ()):
@@ -369,6 +373,8 @@ def _slot_rows(slots: Mapping[str, Any]) -> list[dict[str, Any]]:
                 "name": name,
                 "status": _safe(slot.get("status")),
                 "path": _safe(slot.get("path")),
+                "artifact_id": _safe(slot.get("artifact_id")),
+                "sha256": _safe(slot.get("sha256")),
             }
         )
     return rows
