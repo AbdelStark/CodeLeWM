@@ -31,6 +31,11 @@ from .openrouter_adapter import (
     write_candidate_pack_artifact,
 )
 from .scorer import ErrorReport, RerankResult, ScoreError, ScoreResult, load_scorer
+from .visual_view_model import (
+    DEMO_VISUAL_VIEW_MODEL_SCHEMA_VERSION,
+    build_demo_visual_view_model,
+    write_demo_visual_view_model,
+)
 
 
 LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION = "codelewm.harness.demo_report.v1"
@@ -50,6 +55,7 @@ class LLMWorldModelDemoRunResult:
     artifact_manifest_path: str
     report_path: str
     html_path: str
+    visual_view_model_path: str
     candidate_pack_manifest_path: str
     parent_artifacts: tuple[str, ...]
     success: bool
@@ -62,6 +68,7 @@ class LLMWorldModelDemoRunResult:
             "artifact_manifest_path": self.artifact_manifest_path,
             "report_path": self.report_path,
             "html_path": self.html_path,
+            "visual_view_model_path": self.visual_view_model_path,
             "candidate_pack_manifest_path": self.candidate_pack_manifest_path,
             "parent_artifacts": list(self.parent_artifacts),
             "success": self.success,
@@ -93,12 +100,14 @@ def run_llm_world_model_demo(
     checkpoint_path = Path(checkpoint)
     output_dir = Path(out).resolve()
     report_path = output_dir / "reports" / "llm_world_model_demo_report.json"
+    visual_view_model_path = output_dir / "reports" / "visual_view_model.json"
     timeline_path = output_dir / "reports" / "run_timeline.json"
     html_path = output_dir / "demo.html"
     manifest_path = output_dir / "manifest.json"
     candidate_pack_dir = output_dir / "candidate_pack"
     if not overwrite and (
         report_path.exists()
+        or visual_view_model_path.exists()
         or timeline_path.exists()
         or html_path.exists()
         or manifest_path.exists()
@@ -188,6 +197,12 @@ def run_llm_world_model_demo(
             retrieval_prior_weight=retrieval_prior_weight,
             retrieval_prior_k=retrieval_prior_k,
             run_timeline_path="reports/run_timeline.json",
+            visual_view_model_path="reports/visual_view_model.json",
+        )
+        view_model = build_demo_visual_view_model(
+            demo_report=report,
+            candidate_pack=candidate_pack_payload,
+            out_dir=output_dir,
         )
 
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -195,8 +210,11 @@ def run_llm_world_model_demo(
             json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
             encoding="utf-8",
         )
+        write_demo_visual_view_model(view_model, visual_view_model_path)
         html_path.write_text(
-            render_llm_world_model_demo_html(report, candidate_pack_payload),
+            render_llm_world_model_demo_html(
+                report, candidate_pack_payload, visual_view_model=view_model
+            ),
             encoding="utf-8",
         )
     with timeline.step("artifact secret scan", command_id="llm_demo.secret_scan"):
@@ -206,11 +224,18 @@ def run_llm_world_model_demo(
         html_scan = scan_text(html_path.read_text(encoding="utf-8"), path="demo.html")
         if html_scan:
             raise LLMWorldModelDemoError("demo HTML contains secret-scan findings after redaction")
+        view_model_scan = scan_text(
+            visual_view_model_path.read_text(encoding="utf-8"),
+            path="visual_view_model.json",
+        )
+        if view_model_scan:
+            raise LLMWorldModelDemoError("demo visual view model contains secret-scan findings")
     write_run_timeline_report(
         timeline.to_report(
             artifact_ids=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
             metadata={
                 "report_path": "reports/llm_world_model_demo_report.json",
+                "visual_view_model_path": "reports/visual_view_model.json",
                 "html_path": "demo.html",
             },
         ),
@@ -223,7 +248,7 @@ def run_llm_world_model_demo(
     artifact_manifest = build_artifact_manifest(
         artifact_kind="demo_report",
         root=output_dir,
-        files=(report_path, html_path, timeline_path),
+        files=(report_path, html_path, visual_view_model_path, timeline_path),
         command=command,
         config={
             "task_id": task_id,
@@ -240,6 +265,8 @@ def run_llm_world_model_demo(
         parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
         metadata={
             "schema_version": LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION,
+            "visual_view_model_schema_version": DEMO_VISUAL_VIEW_MODEL_SCHEMA_VERSION,
+            "visual_view_model_path": "reports/visual_view_model.json",
             "run_timeline_schema_version": RUN_TIMELINE_SCHEMA_VERSION,
             "run_timeline_path": "reports/run_timeline.json",
             "success": report["success"],
@@ -254,6 +281,7 @@ def run_llm_world_model_demo(
         artifact_manifest_path="manifest.json",
         report_path=_relative_to_root(report_path, output_dir),
         html_path=_relative_to_root(html_path, output_dir),
+        visual_view_model_path=_relative_to_root(visual_view_model_path, output_dir),
         candidate_pack_manifest_path=f"candidate_pack/{candidate_pack_result.artifact_manifest_path}",
         parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
         success=bool(report["success"]),
@@ -272,38 +300,55 @@ def read_llm_world_model_demo_report(path: Path | str) -> Mapping[str, Any]:
 def render_llm_world_model_demo_html(
     report: Mapping[str, Any],
     candidate_pack_payload: Mapping[str, Any],
+    *,
+    visual_view_model: Mapping[str, Any] | None = None,
 ) -> str:
     """Render a self-contained visual report for the LLM plus world-model demo."""
 
+    view_model = (
+        visual_view_model
+        if visual_view_model is not None
+        else build_demo_visual_view_model(
+            demo_report=report,
+            candidate_pack=candidate_pack_payload,
+            out_dir=".",
+        )
+    )
+    summary = _mapping(view_model.get("summary"))
+    generator = _mapping(view_model.get("generator"))
+    orders_payload = _mapping(view_model.get("orders"))
+    diagnostics = _mapping(view_model.get("diagnostics"))
     candidates = [
-        candidate for candidate in candidate_pack_payload.get("candidates", []) if isinstance(candidate, Mapping)
+        candidate for candidate in view_model.get("candidates", []) if isinstance(candidate, Mapping)
     ]
-    score_by_id = _score_by_candidate_id(report)
-    codelewm_order = _string_list(report.get("orders", {}).get("codelewm", ()))
-    llm_order = _string_list(report.get("orders", {}).get("llm", ()))
-    lexical_order = _string_list(report.get("orders", {}).get("lexical", ()))
-    random_order = _string_list(report.get("orders", {}).get("random", ()))
-    generation_config = _mapping(candidate_pack_payload.get("generation_config"))
-    provider_routing = _mapping(candidate_pack_payload.get("provider_routing"))
-    generator = _mapping(candidate_pack_payload.get("generator"))
-    byok = _mapping(provider_routing.get("byok"))
-    metadata = _mapping(provider_routing.get("response_metadata"))
-    dry_run = bool(generation_config.get("dry_run"))
-    mode = "fixture dry-run" if dry_run else "live OpenRouter"
+    codelewm_order = _string_list(orders_payload.get("codelewm", ()))
+    llm_order = _string_list(orders_payload.get("llm", ()))
+    lexical_order = _string_list(orders_payload.get("lexical", ()))
+    random_order = _string_list(orders_payload.get("random", ()))
+    dry_run = bool(summary.get("dry_run"))
+    mode = str(summary.get("mode", "fixture dry-run" if dry_run else "live OpenRouter"))
     status_sentence = (
         "In this run the LLM side used deterministic fixture candidates because dry-run mode was enabled."
         if dry_run
         else "In this run the LLM side called OpenRouter and captured provider output as untrusted patches."
     )
     status_class = "warn" if dry_run else "ok"
-    claim_gate = _mapping(report.get("claim_gate"))
-    max_score = max((score for score in score_by_id.values() if score is not None), default=1.0)
+    claim_gate = _mapping(view_model.get("claim_gate"))
+    max_score = max(
+        (
+            float(candidate["score"])
+            for candidate in candidates
+            if isinstance(candidate.get("score"), (int, float))
+        ),
+        default=1.0,
+    )
 
     rows = "\n".join(
-        _candidate_row(candidate, score_by_id=score_by_id, max_score=max_score, codelewm_order=codelewm_order)
+        _candidate_row(candidate, max_score=max_score)
         for candidate in candidates
     )
     patch_cards = "\n".join(_patch_card(candidate) for candidate in candidates)
+    diagnostic_cards = _diagnostics_markup(diagnostics)
     orders = _orders_markup(
         (
             ("LLM order", llm_order),
@@ -332,7 +377,7 @@ def render_llm_world_model_demo_html(
       <p class="deck">This page shows what the demo actually did: how candidates were produced, how CodeLeWM ranked them, and why the claim gate stays closed.</p>
       <div class="pill-row">
         <span class="pill {status_class}">{_h(mode)}</span>
-        <span class="pill">success: {_h(str(report.get("success", False)).lower())}</span>
+        <span class="pill">success: {_h(str(summary.get("success", False)).lower())}</span>
         <span class="pill">claim: {_h(str(claim_gate.get("allowed", False)).lower())}</span>
       </div>
     </div>
@@ -340,11 +385,12 @@ def render_llm_world_model_demo_html(
       {_stat("model", generator.get("model"))}
       {_stat("provider", generator.get("provider"))}
       {_stat("sdk version", generator.get("sdk_version") or "not loaded")}
-      {_stat("provider mode", metadata.get("mode") or ("live" if not dry_run else "fixture"))}
-      {_stat("BYOK", "enabled" if byok.get("enabled") else "disabled")}
-      {_stat("candidates", _mapping(report.get("candidate_summary")).get("candidate_count"))}
-      {_stat("valid", _mapping(report.get("candidate_summary")).get("valid_candidate_count"))}
-      {_stat("scorer", _mapping(report.get("scores")).get("model_id"))}
+      {_stat("provider mode", "fixture" if dry_run else "live")}
+      {_stat("BYOK", "enabled" if generator.get("byok_enabled") else "disabled")}
+      {_stat("candidates", summary.get("candidate_count"))}
+      {_stat("valid", summary.get("valid_candidate_count"))}
+      {_stat("scorer", summary.get("scorer"))}
+      {_stat("score direction", summary.get("score_direction"))}
     </aside>
   </div>
 </header>
@@ -367,9 +413,9 @@ def render_llm_world_model_demo_html(
     <div class="wrap">
       <div class="section-head"><span class="section-num">02</span><span class="section-kind">ranking</span></div>
       <h2>Candidate scores, <em>lower</em> is better.</h2>
-      <p class="s-deck">The bars show transition energy from the current scorer backend. The rank number is CodeLeWM's order.</p>
+      <p class="s-deck">The bars show transition energy from the current scorer backend. Candidate-minus-no-action deltas are better when negative and worse when positive.</p>
       <table class="rank-table">
-        <thead><tr><th>rank</th><th>candidate</th><th>score</th><th>status</th><th>bar</th></tr></thead>
+        <thead><tr><th>rank</th><th>candidate</th><th>score</th><th>vs no-op</th><th>status</th><th>bar</th></tr></thead>
         <tbody>{rows}</tbody>
       </table>
     </div>
@@ -387,15 +433,24 @@ def render_llm_world_model_demo_html(
   <section class="s" id="patches" data-num="04">
     <div class="wrap">
       <div class="section-head"><span class="section-num">04</span><span class="section-kind">patches</span></div>
-      <h2>The actual candidate <em>patches</em>.</h2>
-      <p class="s-deck">Candidate code is treated as untrusted text. The demo parses and dry-run-applies patches; it does not execute them.</p>
+      <h2>Compact candidate <em>diffs</em>.</h2>
+      <p class="s-deck">Candidate code is treated as untrusted text. The shared view model shows bounded diff summaries; full patches stay in local artifacts and are not executed.</p>
       <div class="patch-grid">{patch_cards}</div>
     </div>
   </section>
 
-  <section class="s" id="next" data-num="05">
+  <section class="s" id="diagnostics" data-num="05">
     <div class="wrap">
-      <div class="section-head"><span class="section-num">05</span><span class="section-kind">next run</span></div>
+      <div class="section-head"><span class="section-num">05</span><span class="section-kind">diagnostics</span></div>
+      <h2>Model and latent <em>links</em>.</h2>
+      <p class="s-deck">The same normalized view model feeds JSON, terminal, HTML, and the future Textual TUI. Missing diagnostics stay explicit.</p>
+      <div class="grid-3">{diagnostic_cards}</div>
+    </div>
+  </section>
+
+  <section class="s" id="next" data-num="06">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">06</span><span class="section-kind">next run</span></div>
       <h2>Make the next run <em>live</em>.</h2>
       <p class="s-deck">Set the dry-run flags to zero when you want provider output instead of fixture candidates.</p>
       <pre class="code">CODELEWM_LLM_DRY_RUN=0
@@ -430,6 +485,7 @@ def _build_demo_report(
     retrieval_prior_weight: float,
     retrieval_prior_k: int,
     run_timeline_path: str,
+    visual_view_model_path: str,
 ) -> dict[str, Any]:
     candidates = list(candidate_pack_payload.get("candidates", []))
     candidate_ids = [str(candidate.get("candidate_id")) for candidate in candidates]
@@ -490,6 +546,7 @@ def _build_demo_report(
             "candidate_pack_manifest_id": candidate_pack_manifest_id,
             "candidate_pack_manifest_path": candidate_pack_manifest_path,
             "demo_manifest_path": "manifest.json",
+            "visual_view_model_path": visual_view_model_path,
             "run_timeline_path": run_timeline_path,
             "checkpoint_path": str(checkpoint_path),
             "checkpoint_sha256": checkpoint_sha256,
@@ -574,20 +631,24 @@ def _score_by_candidate_id(report: Mapping[str, Any]) -> dict[str, float | None]
 def _candidate_row(
     candidate: Mapping[str, Any],
     *,
-    score_by_id: Mapping[str, float | None],
     max_score: float,
-    codelewm_order: Sequence[str],
 ) -> str:
     candidate_id = str(candidate.get("candidate_id", "unknown"))
-    score = score_by_id.get(candidate_id)
-    rank = codelewm_order.index(candidate_id) + 1 if candidate_id in codelewm_order else "n/a"
-    width = 0 if score is None or max_score <= 0 else max(4, min(100, int((score / max_score) * 100)))
-    status = f"{candidate.get('parser_status', 'unknown')} / {candidate.get('dry_run_patch_status', 'unknown')}"
+    score = candidate.get("score")
+    score_value = float(score) if isinstance(score, (int, float)) else None
+    rank = candidate.get("rank") or "n/a"
+    width = (
+        0
+        if score_value is None or max_score <= 0
+        else max(4, min(100, int((score_value / max_score) * 100)))
+    )
+    status = str(candidate.get("status", "unknown"))
     return (
         "<tr>"
         f"<td class=\"rank\">{_h(rank)}</td>"
         f"<td><code>{_h(candidate_id)}</code></td>"
-        f"<td>{_h(_format_score(score))}</td>"
+        f"<td>{_h(_format_score(score_value))}</td>"
+        f"<td>{_h(candidate.get('no_action_delta_display', 'n/a'))}</td>"
         f"<td>{_h(status)}</td>"
         f"<td><div class=\"bar\"><span style=\"width:{width}%\"></span></div></td>"
         "</tr>"
@@ -596,14 +657,34 @@ def _candidate_row(
 
 def _patch_card(candidate: Mapping[str, Any]) -> str:
     candidate_id = str(candidate.get("candidate_id", "unknown"))
-    patch_text = str(candidate.get("patch_text", ""))
-    status = f"{candidate.get('parser_status', 'unknown')} / {candidate.get('dry_run_patch_status', 'unknown')}"
+    patch_summary = _mapping(candidate.get("patch_summary"))
+    preview_lines = _string_list(patch_summary.get("preview_lines", ()))
+    patch_text = "\n".join(preview_lines) if preview_lines else "no diff preview available"
+    status = str(candidate.get("status", "unknown"))
+    meta = (
+        f"{patch_summary.get('changed_file_count', 0)} files, "
+        f"{patch_summary.get('hunk_count', 0)} hunks, "
+        f"+{patch_summary.get('additions', 0)}/-{patch_summary.get('deletions', 0)}"
+    )
     return (
         "<article class=\"patch-card\">"
         f"<div class=\"patch-head\"><code>{_h(candidate_id)}</code><span>{_h(status)}</span></div>"
+        f"<div class=\"patch-meta\">{_h(meta)}</div>"
         f"<pre>{_h(patch_text)}</pre>"
         "</article>"
     )
+
+
+def _diagnostics_markup(diagnostics: Mapping[str, Any]) -> str:
+    cards = []
+    for label, key in (
+        ("Checkpoint inspection", "checkpoint_inspection"),
+        ("Latent matrix", "latent_matrix"),
+        ("Run timeline", "run_timeline"),
+    ):
+        slot = _mapping(diagnostics.get(key))
+        cards.append(_mini(label, slot.get("status", "not_configured"), str(slot.get("path") or "not configured")))
+    return "\n".join(cards)
 
 
 def _orders_markup(orders: Sequence[tuple[str, Sequence[str]]]) -> str:
@@ -713,6 +794,7 @@ code{color:var(--paper)}
 .patch-grid{display:grid;gap:14px}
 .patch-head{display:flex;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .patch-head span{color:var(--ink-dim);font-size:11px}
+.patch-meta{padding:9px 14px;border-bottom:1px solid var(--line);color:var(--ink-dim);font-size:11px}
 pre{margin:0;white-space:pre-wrap;overflow:auto;color:var(--ink);background:#070907}
 .patch-card pre{padding:14px;max-height:260px}
 .code{padding:16px;border:1px solid var(--line-2);background:#070907;color:var(--paper)}

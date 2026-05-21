@@ -198,7 +198,8 @@ Stream A3, visual model observability and TUI harness:
 - #238 added checkpoint tensor and layer inspection reports.
 - #239 adds latent representation matrix diagnostics.
 - #240 adds run timeline and monitoring reports.
-- #242 preserves non-interactive rich terminal, HTML, and JSON report parity.
+- #242 adds the shared visual view model that preserves non-interactive rich
+  terminal, HTML, and JSON report parity.
 - #241 adds optional Textual TUI mode for interactive demo inspection.
 - #243 connects model and latent diagnostics to demo reports.
 - #244 defines a diagnostics-driven model improvement experiment.

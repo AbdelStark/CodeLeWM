@@ -10,6 +10,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from .visual_view_model import build_demo_visual_view_model
+
 
 _RESET = "\033[0m"
 _COLORS = {
@@ -38,6 +40,20 @@ def render_demo_terminal_report(
 
     painter = _Painter(enabled=color)
     lines: list[str] = []
+    view_model = build_demo_visual_view_model(
+        demo_run=demo_run,
+        manifest_verify=manifest_verify,
+        secret_scan=secret_scan,
+        html_secret_scan=html_secret_scan,
+        demo_report=demo_report,
+        candidate_pack=candidate_pack,
+        out_dir=out_dir,
+    )
+    summary = _mapping(view_model.get("summary"))
+    diagnostics = _mapping(view_model.get("diagnostics"))
+    view_candidates = [
+        candidate for candidate in view_model.get("candidates", ()) if isinstance(candidate, Mapping)
+    ]
     generation_config = _mapping(candidate_pack.get("generation_config"))
     generator = _mapping(candidate_pack.get("generator"))
     provider_routing = _mapping(candidate_pack.get("provider_routing"))
@@ -78,8 +94,10 @@ def render_demo_terminal_report(
             "Runtime and inputs",
             ok=True,
             details=(
-                f"before: {_safe_text(_mapping(demo_report.get('task')).get('before_path'))}",
-                f"checkpoint: {_short_sha(_mapping(demo_report.get('artifacts')).get('checkpoint_sha256'))}",
+                f"task: {_safe_text(summary.get('task_id'))}",
+                f"context: {_safe_text(summary.get('context_path'))}",
+                f"before: {_safe_text(summary.get('before_path'))}",
+                f"checkpoint: {_safe_text(summary.get('checkpoint_short_sha'))}",
                 f"output: {Path(out_dir).as_posix()}",
             ),
         )
@@ -125,7 +143,7 @@ def render_demo_terminal_report(
             details=(
                 f"backend: {_safe_text(scores.get('model_id'))}",
                 f"warnings: {_compact_warnings(demo_report.get('warnings', ()))}",
-                "score direction: lower transition energy is better",
+                f"score direction: {_score_direction_text(summary.get('score_direction'))}",
                 f"best candidate: {best_candidate} ({_format_score(best_score)})",
                 f"no-action: {_format_score(no_action_score)}  candidate - no-action: {_format_noop_delta(delta)}",
                 f"score range: {score_range}",
@@ -162,13 +180,22 @@ def render_demo_terminal_report(
     lines.append("")
     lines.append(painter.paint("Candidate ranking", "bold"))
     lines.append("-" * 42)
-    lines.extend(_candidate_table(candidates, codelewm_order, score_by_id, no_action_score, painter))
+    lines.extend(_candidate_table(view_candidates, painter))
+
+    lines.append("")
+    lines.append(painter.paint("Diagnostics", "bold"))
+    lines.append("-" * 42)
+    lines.extend(_diagnostics_table(diagnostics))
 
     lines.append("")
     lines.append(painter.paint("Artifacts", "bold"))
     lines.append("-" * 42)
     lines.append(f"html report: {Path(out_dir, str(demo_run.get('html_path', 'demo.html'))).as_posix()}")
     lines.append(f"json report: {Path(out_dir, str(demo_run.get('report_path', 'reports/llm_world_model_demo_report.json'))).as_posix()}")
+    lines.append(
+        "view model: "
+        f"{Path(out_dir, str(demo_run.get('visual_view_model_path', 'reports/visual_view_model.json'))).as_posix()}"
+    )
     lines.append(f"manifest: {Path(out_dir, str(demo_run.get('artifact_manifest_path', 'manifest.json'))).as_posix()}")
     lines.append("")
     lines.append(
@@ -242,28 +269,51 @@ def _stage(
 
 def _candidate_table(
     candidates: Sequence[Mapping[str, Any]],
-    order: Sequence[str],
-    score_by_id: Mapping[str, float],
-    no_action_score: float | None,
     painter: _Painter,
 ) -> list[str]:
     if not candidates:
         return ["no candidates captured"]
-    lines = [f"{'rank':<4} {'candidate':<14} {'score':>12} {'vs no-op':>10} {'status':<34} patch"]
-    by_id = {str(candidate.get("candidate_id")): candidate for candidate in candidates}
-    ordered_ids = list(order) + [cid for cid in by_id if cid not in order]
-    for index, candidate_id in enumerate(ordered_ids, start=1):
-        candidate = by_id.get(candidate_id)
-        if candidate is None:
-            continue
-        score = score_by_id.get(candidate_id)
-        delta = None if score is None or no_action_score is None else score - no_action_score
-        status = f"{candidate.get('parser_status', 'unknown')}/{candidate.get('dry_run_patch_status', 'unknown')}"
-        patch = _short_sha(candidate.get("normalized_patch_sha256") or candidate.get("content_sha256"))
-        rank = painter.paint(index, "green" if index == 1 else "dim")
+    lines = [
+        f"{'rank':<4} {'candidate':<14} {'score':>12} {'vs no-op':>12} "
+        f"{'status':<28} {'diff':<17} patch"
+    ]
+    ordered = sorted(
+        candidates,
+        key=lambda item: item.get("rank") if isinstance(item.get("rank"), int) else 9999,
+    )
+    for candidate in ordered:
+        rank_value = candidate.get("rank")
+        rank = painter.paint(rank_value or "n/a", "green" if rank_value == 1 else "dim")
+        candidate_id = str(candidate.get("candidate_id", "unknown"))
+        patch_summary = _mapping(candidate.get("patch_summary"))
+        diff_summary = (
+            f"{patch_summary.get('changed_file_count', 0)}f/"
+            f"{patch_summary.get('hunk_count', 0)}h "
+            f"+{patch_summary.get('additions', 0)}"
+            f"-{patch_summary.get('deletions', 0)}"
+        )
+        patch = _short_sha(candidate.get("patch_sha256"))
         lines.append(
-            f"{str(rank):<4} {candidate_id:<14} {_format_score(score):>12} "
-            f"{_format_delta(delta):>10} {_truncate(status, 34):<34} {patch}"
+            f"{str(rank):<4} {candidate_id:<14} {_safe_text(candidate.get('score_display')):>12} "
+            f"{_safe_text(candidate.get('no_action_delta_display')):>12} "
+            f"{_truncate(str(candidate.get('status', 'unknown')), 28):<28} "
+            f"{diff_summary:<17} {patch}"
+        )
+    return lines
+
+
+def _diagnostics_table(diagnostics: Mapping[str, Any]) -> list[str]:
+    lines: list[str] = []
+    for label, key in (
+        ("checkpoint inspection", "checkpoint_inspection"),
+        ("latent matrix", "latent_matrix"),
+        ("run timeline", "run_timeline"),
+        ("tensorboard", "tensorboard"),
+    ):
+        slot = _mapping(diagnostics.get(key))
+        lines.append(
+            f"{label}: {_safe_text(slot.get('status'))}"
+            f"{' -> ' + _safe_text(slot.get('path')) if slot.get('path') else ''}"
         )
     return lines
 
@@ -333,6 +383,12 @@ def _format_noop_delta(value: float | None) -> str:
     if value > 0:
         return f"{_format_delta(value)} (worse than no-op)"
     return f"{_format_delta(value)} (tied with no-op)"
+
+
+def _score_direction_text(value: object) -> str:
+    if value == "lower_is_better":
+        return "lower transition energy is better"
+    return _safe_text(value)
 
 
 def _optional_float(value: Any) -> float | None:

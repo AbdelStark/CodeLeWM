@@ -179,8 +179,8 @@ Planned schemas:
   probe associations, and semantic-axis claim gates.
 - `codelewm.run_timeline.v1`: implemented ordered run steps, timestamps,
   durations, command ids, artifact ids, warnings, and typed failures.
-- `codelewm.harness.visual_view_model.v1`: normalized data consumed by JSON,
-  rich terminal, HTML, and Textual TUI views.
+- `codelewm.harness.visual_view_model.v1`: implemented normalized data consumed
+  by JSON, rich terminal, HTML, and future Textual TUI views.
 
 TensorBoard-compatible output and Textual rendering remain optional runtime
 surfaces. Base package imports, fixture tests, JSON reports, and non-interactive
@@ -203,6 +203,11 @@ operational stream while adding a manifest-backed summary for visual reports
 and future TUI panels. Visual reports are diagnostic only and cannot
 support positive semantic-latent-axis or coding-usefulness claims without the
 relevant benchmark gates.
+The LLM demo writes `reports/visual_view_model.json` with compact candidate
+diff summaries, score/no-action deltas, diagnostic slots, artifact gate status
+when available, and no ANSI terminal layout data. Textual remains unimplemented
+and optional; the view model is the stable non-interactive contract it will
+consume.
 
 ## Artifact Lineage
 

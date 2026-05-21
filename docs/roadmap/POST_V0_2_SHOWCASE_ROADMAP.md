@@ -171,7 +171,7 @@ Issues:
 | G2 | #238 | model: add checkpoint tensor and layer inspection reports | Closed |
 | G3 | #239 | eval: add latent representation matrix diagnostics | Closed |
 | G4 | #240 | observability: add run timeline and monitoring reports | Closed |
-| G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Open |
+| G5 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Closed |
 | G6 | #241 | harness: build optional Textual TUI for demo inspection | Open |
 | G7 | #243 | harness: connect model and latent diagnostics to demo reports | Open |
 | G8 | #244 | research: define diagnostics-driven code model improvement experiment | Open |
@@ -292,9 +292,10 @@ The #186 through #194 stream is complete, and #206 added the public BYOK/local
 demo/readme polish. #220 and #222 proved learned scoring and terminal-first
 demo UX, but #207/#208 were superseded because the comment-style toy task is
 not the right public artifact. #239 closed the latent-matrix diagnostic surface,
-and #240 closed run-timeline reports.
+#240 closed run-timeline reports, and #242 closed the shared visual view-model
+surface for JSON/rich/HTML parity.
 Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #241 through #245 for the
+#227 through #231 for the meaningful harness demo, #241 and #243 through #245 for the
 visual model observability and TUI stream, #210/#211 for scaled downstream
 reranking, or #178/#212 for the next positive-model research hypothesis.
 
@@ -322,7 +323,7 @@ No reports may serialize raw keys.
 
 The visual model observability and TUI tracker is #235: #237 closed optional
 TensorBoard-compatible export, #238 closed checkpoint tensor/layer inspection,
-#239 closed latent matrix diagnostics, #240 closed run timelines, #242 preserves
+#239 closed latent matrix diagnostics, #240 closed run timelines, #242 closed
 non-interactive JSON/rich/HTML parity, #241 adds optional Textual TUI mode,
 #243 links model and latent diagnostics into demo reports, #244 defines the
 next diagnostics-driven model experiment, and #245 publishes a visual
