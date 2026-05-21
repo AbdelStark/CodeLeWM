@@ -18,6 +18,7 @@ from codelewm.harness import (
     rerank_result_json_schema,
     score_result_json_schema,
 )
+from codelewm.model.inspection import MODEL_CHECKPOINT_INSPECTION_SCHEMA_VERSION
 from codelewm.observability import ManifestFile
 from codelewm.training import TRAINING_RUN_MANIFEST_SCHEMA_VERSION, TrainingRunManifest
 
@@ -34,6 +35,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("score", help_text)
         self.assertIn("rerank", help_text)
         self.assertIn("train", help_text)
+        self.assertIn("model", help_text)
         self.assertIn("eval", help_text)
         self.assertIn("index", help_text)
         self.assertIn("dataset", help_text)
@@ -95,6 +97,25 @@ class PublicCliContractTest(unittest.TestCase):
             "--resume-from",
             "--tensorboard",
             "--tensorboard-dir",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_model_inspect_checkpoint_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("model", "inspect-checkpoint", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--checkpoint-manifest",
+            "--out",
+            "--parent-manifest",
+            "--histogram-bins",
+            "--max-histogram-tensors",
+            "--max-histogram-values",
+            "--allow-unsafe-checkpoint",
             "--overwrite",
             "--json",
             "--log-jsonl",
@@ -303,6 +324,7 @@ class PublicCliContractTest(unittest.TestCase):
                 "--device",
                 "tpu",
             ),
+            ("model", "inspect-checkpoint", "--checkpoint", "ckpt"),
         )
 
         for argv in cases:
@@ -316,6 +338,7 @@ class PublicCliContractTest(unittest.TestCase):
             "dataset": _dataset_manifest_payload(),
             "train": _training_manifest_payload(),
             "eval": build_retrieval_report((1,), candidate_counts=(1,)).to_dict(),
+            "model": {"schema_version": MODEL_CHECKPOINT_INSPECTION_SCHEMA_VERSION},
             "score": _score_result_payload(),
             "rerank": _rerank_result_payload(),
         }

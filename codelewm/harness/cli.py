@@ -51,6 +51,7 @@ from codelewm.harness.quality import (
 )
 from codelewm.harness.scorer import ScoreError, load_scorer
 from codelewm.harness.transition_index import TransitionIndexError
+from codelewm.model.inspection import CheckpointInspectionError, inspect_checkpoint
 from codelewm.observability import (
     ArtifactManifestError,
     LogEvent,
@@ -326,6 +327,62 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     train_parser.set_defaults(func=_train_command)
+    model = subparsers.add_parser("model", help="model inspection utilities")
+    model_subcommands = model.add_subparsers(dest="model_command")
+    inspect_ckpt = model_subcommands.add_parser(
+        "inspect-checkpoint",
+        help="write a manifest-backed checkpoint tensor/layer inspection report",
+    )
+    inspect_ckpt.add_argument(
+        "--checkpoint", type=Path, required=True, help="trusted training checkpoint path"
+    )
+    inspect_ckpt.add_argument(
+        "--checkpoint-manifest",
+        type=Path,
+        help="checkpoint manifest path; defaults to <checkpoint>.manifest.json",
+    )
+    inspect_ckpt.add_argument(
+        "--out", type=Path, required=True, help="checkpoint inspection artifact directory"
+    )
+    inspect_ckpt.add_argument(
+        "--parent-manifest",
+        type=Path,
+        action="append",
+        default=[],
+        help="parent artifact manifest to verify and record; may be repeated",
+    )
+    inspect_ckpt.add_argument(
+        "--histogram-bins",
+        type=int,
+        default=16,
+        help="number of bins for selected tensor histograms",
+    )
+    inspect_ckpt.add_argument(
+        "--max-histogram-tensors",
+        type=int,
+        default=24,
+        help="maximum tensors that receive histogram summaries",
+    )
+    inspect_ckpt.add_argument(
+        "--max-histogram-values",
+        type=int,
+        default=8192,
+        help="maximum finite tensor values sampled per histogram",
+    )
+    inspect_ckpt.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
+    inspect_ckpt.add_argument(
+        "--overwrite", action="store_true", help="overwrite existing inspection output files"
+    )
+    inspect_ckpt.add_argument("--json", action="store_true", help="emit JSON output")
+    inspect_ckpt.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    inspect_ckpt.set_defaults(func=_model_inspect_checkpoint_command)
+    model.set_defaults(func=_model_help_command, model_parser=model)
     eval_parser = subparsers.add_parser("eval", help="evaluation report utilities")
     eval_subcommands = eval_parser.add_subparsers(dest="eval_command")
     retrieval = eval_subcommands.add_parser(
@@ -802,6 +859,11 @@ def _eval_help_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _model_help_command(args: argparse.Namespace) -> int:
+    args.model_parser.print_help()
+    return 0
+
+
 def _openrouter_help_command(args: argparse.Namespace) -> int:
     args.openrouter_parser.print_help()
     return 0
@@ -1231,6 +1293,156 @@ def _train_command(args: argparse.Namespace) -> int:
         print(f"training_manifest: {config.output.manifest_path}")
         print(f"metrics: {config.output.metrics_path}")
         print(f"step_count: {manifest.step_count}")
+    return 0
+
+
+def _model_inspect_checkpoint_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _model_inspect_checkpoint_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="model.checkpoint_inspection.start",
+                level="info",
+                run_id=run_id,
+                step="model.inspect_checkpoint",
+                message="checkpoint inspection started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "checkpoint_manifest": None
+                    if args.checkpoint_manifest is None
+                    else str(args.checkpoint_manifest),
+                    "out": str(args.out),
+                    "parent_manifest_count": len(args.parent_manifest),
+                    "allow_unsafe_checkpoint": bool(args.allow_unsafe_checkpoint),
+                    "histogram_bins": args.histogram_bins,
+                    "max_histogram_tensors": args.max_histogram_tensors,
+                    "max_histogram_values": args.max_histogram_values,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = inspect_checkpoint(
+            checkpoint=args.checkpoint,
+            checkpoint_manifest=args.checkpoint_manifest,
+            out=args.out,
+            parent_manifests=tuple(args.parent_manifest),
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            overwrite=args.overwrite,
+            histogram_bins=args.histogram_bins,
+            max_histogram_tensors=args.max_histogram_tensors,
+            max_histogram_values=args.max_histogram_values,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="model.checkpoint_inspection.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="model.inspect_checkpoint",
+                message="checkpoint inspection completed",
+                fields=result.to_dict(),
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"checkpoint inspection optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group dev`",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="model.inspect_checkpoint",
+            event="model.checkpoint_inspection.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"checkpoint inspection rejected checkpoint: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest or explicitly pass --allow-unsafe-checkpoint for trusted local inspection",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="model.inspect_checkpoint",
+            event="model.checkpoint_inspection.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"checkpoint inspection artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, parent artifact manifests, and output directory, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="model.inspect_checkpoint",
+            event="model.checkpoint_inspection.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointInspectionError as exc:
+        error = ScoreError(
+            f"checkpoint inspection failed: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the checkpoint payload, manifest, and output directory",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="model.inspect_checkpoint",
+            event="model.checkpoint_inspection.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"checkpoint inspection failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the checkpoint inputs and retry with a corrected request",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="model.inspect_checkpoint",
+            event="model.checkpoint_inspection.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print("CodeLeWM checkpoint inspection")
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"report: {args.out / result.report_path.relative_to(result.output_dir)}")
+        print(f"tensors: {result.tensor_count}")
+        print(f"modules: {result.module_count}")
+        print(f"parameters: {result.parameter_count}")
+        print("claim_gate: diagnostic_only")
     return 0
 
 
@@ -2376,6 +2588,34 @@ def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         command.append("--tensorboard")
     if args.tensorboard_dir is not None:
         command.extend(("--tensorboard-dir", str(args.tensorboard_dir)))
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _model_inspect_checkpoint_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "model",
+        "inspect-checkpoint",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--out",
+        str(args.out),
+    ]
+    if args.checkpoint_manifest is not None:
+        command.extend(("--checkpoint-manifest", str(args.checkpoint_manifest)))
+    for parent_manifest in args.parent_manifest:
+        command.extend(("--parent-manifest", str(parent_manifest)))
+    command.extend(("--histogram-bins", str(args.histogram_bins)))
+    command.extend(("--max-histogram-tensors", str(args.max_histogram_tensors)))
+    command.extend(("--max-histogram-values", str(args.max_histogram_values)))
+    if args.allow_unsafe_checkpoint:
+        command.append("--allow-unsafe-checkpoint")
     if args.overwrite:
         command.append("--overwrite")
     if args.json:

@@ -11,7 +11,7 @@ superseded by the meaningful harness demo stream.
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 Open or select a new issue from the updated backlog before making code changes:
-#227 through #231 for the meaningful LLM + world-model harness demo, #238
+#227 through #231 for the meaningful LLM + world-model harness demo, #239
 through #245 for visual model observability and the Textual TUI stream,
 #210/#211 for the scaled downstream reranking benchmark, or #178/#212 for the
 next positive-model research hypothesis. Work one issue per branch and PR.
@@ -54,8 +54,8 @@ registration requires an OpenRouter management key such as
 
 The #235 visual model observability and TUI tracker is now the single stream.
 #237 closed optional TensorBoard-compatible model-generation traces for
-training/checkpoint runs; the remaining queue is checkpoint tensor/layer
-inspection, latent representation matrix diagnostics, run timelines, shared
+training/checkpoint runs; #238 closed trusted checkpoint tensor/layer
+inspection; the remaining queue is latent representation matrix diagnostics, run timelines, shared
 JSON/rich/HTML report view models, optional Textual TUI mode, demo diagnostic
 links, diagnostics-driven model experiment planning, and final visual artifact
 publication. The latest live meaningful demo worked end to end, but it also
@@ -64,7 +64,7 @@ stronger candidates; treat that as a diagnostic failure mode to inspect, not as
 a positive model result.
 
 No active completion issue remains for the current public evidence boundary.
-The open streams are #224/#227-#231, #235/#238-#245, #209/#210/#211, and
+The open streams are #224/#227-#231, #235/#239-#245, #209/#210/#211, and
 #212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does
@@ -84,8 +84,9 @@ is implemented and selected.
 
 For visual observability/TUI work, keep TensorBoard-compatible export and
 Textual dependencies optional. #237 implemented the observability group and
-`codelewm train --tensorboard`; base imports, fixture tests, JSON reports, and
-non-interactive rich terminal output must keep working without optional groups.
+`codelewm train --tensorboard`; #238 implemented
+`codelewm model inspect-checkpoint`; base imports, fixture tests, JSON reports,
+and non-interactive rich terminal output must keep working without optional groups.
 Model, tensor, latent, and TUI artifacts remain diagnostic until scaled
 representation and downstream benchmark gates pass.
 

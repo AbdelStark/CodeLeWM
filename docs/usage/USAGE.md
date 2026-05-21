@@ -59,6 +59,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm dataset pack` | landed | `codelewm.dataset_pack_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
 | `codelewm train` | landed | `codelewm.training_run.v1`, `codelewm.training.tensorboard_export.v1`, `codelewm.torch_training_report.v1`, `codelewm.checkpoint.v1`, `codelewm.error.v1` |
+| `codelewm model inspect-checkpoint` | landed | `codelewm.model_checkpoint_inspection_run.v1`, `codelewm.model_checkpoint_inspection.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval retrieval` | landed | `codelewm.eval.retrieval_run.v1`, `codelewm.eval.retrieval_report.v1`, `codelewm.eval.action_contrast_pool_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
@@ -516,6 +517,29 @@ summaries for selected model parameters and latent values. The event files and
 `reports/tensorboard_export.json` are included in the training artifact manifest
 with checksums. They are diagnostics only; JSONL metrics, JSON reports,
 checkpoint manifests, and artifact manifests remain the release-facing contract.
+
+Checkpoint inspection turns a trusted checkpoint into a manifest-backed tensor
+and layer report:
+
+```bash
+codelewm model inspect-checkpoint \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/tiny-checkpoint-inspection \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --json
+codelewm manifest verify \
+  --manifest .artifacts/tiny-checkpoint-inspection/manifest.json \
+  --parent-manifest .artifacts/tiny-train/manifest.json \
+  --json
+```
+
+The command verifies `<checkpoint>.manifest.json` before loading the checkpoint
+unless `--allow-unsafe-checkpoint` is explicitly selected for trusted local
+inspection. It writes `reports/model_checkpoint_inspection.json` with module
+names, parameter counts, tensor shapes, dtype/device metadata, finite-value
+status, min/mean/std/max, norm summaries, selected histograms, compatibility
+metadata, and a diagnostic-only claim gate. It never serializes raw tensor
+arrays or optimizer state into the JSON report.
 
 Scaled training profiles live under `config/train/scaled/`. Validate them before
 launching a long run:
@@ -1075,6 +1099,8 @@ field list.
 | Training run manifest | `codelewm.training_run.v1` |
 | Training metrics | `codelewm.training_metrics.v1` |
 | TensorBoard export metadata | `codelewm.training.tensorboard_export.v1` |
+| Model checkpoint inspection run | `codelewm.model_checkpoint_inspection_run.v1` |
+| Model checkpoint inspection report | `codelewm.model_checkpoint_inspection.v1` |
 | Index build report | `codelewm.index_build.v1` |
 | Retrieval eval run | `codelewm.eval.retrieval_run.v1` |
 | Retrieval report | `codelewm.eval.retrieval_report.v1` |
