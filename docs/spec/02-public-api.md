@@ -429,6 +429,21 @@ The interactive TUI requires the optional `tui` dependency group. Snapshot JSON
 uses `codelewm.harness.demo_tui_snapshot.v1` and is deterministic for fixture
 tests.
 
+`codelewm llm-demo` can also reference diagnostic artifacts from other commands:
+
+```bash
+codelewm llm-demo ... \
+  --checkpoint-inspection-manifest .artifacts/model-inspect/manifest.json \
+  --latent-matrix-manifest .artifacts/latent-matrix/manifest.json \
+  --tensorboard-manifest .artifacts/train/manifest.json
+```
+
+For each configured diagnostic, the demo report records `status`, `path`,
+`schema_version`, `artifact_id`, `artifact_manifest_path`, `manifest_file_path`,
+`sha256`, and `bytes`. Missing diagnostics are explicit `not_configured` slots.
+The demo artifact manifest records referenced diagnostic artifact ids as parent
+artifacts.
+
 `codelewm openrouter byok-register` creates or dry-runs an OpenRouter BYOK
 provider credential from local environment secrets:
 

@@ -37,6 +37,7 @@ class DemoTuiTest(unittest.TestCase):
         self.assertEqual(snapshot["candidates"][0]["candidate_id"], "candidate_001")
         self.assertEqual(snapshot["candidates"][0]["diff_summary"], "+2/-1 hunks=1")
         self.assertEqual(snapshot["diagnostics"][2]["name"], "run_timeline")
+        self.assertEqual(snapshot["diagnostics"][2]["sha256"], "n/a")
         self.assertEqual(snapshot["artifact_gates"][0]["name"], "manifest_verify")
         self.assertFalse(snapshot["claim_gate"]["allowed"])
         self.assertNotIn("do not print this whole raw patch", json.dumps(snapshot))

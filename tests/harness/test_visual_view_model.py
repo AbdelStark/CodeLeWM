@@ -35,8 +35,9 @@ class DemoVisualViewModelTest(unittest.TestCase):
             "better_than_no_action",
         )
         self.assertEqual(payload["artifact_gates"]["manifest_verify"]["files_checked"], 4)
+        self.assertEqual(payload["diagnostics"]["checkpoint_inspection"]["artifact_id"], "diag-model")
         self.assertEqual(payload["diagnostics"]["run_timeline"]["status"], "available")
-        self.assertEqual(payload["diagnostics"]["latent_matrix"]["status"], "not_configured")
+        self.assertEqual(payload["diagnostics"]["latent_matrix"]["status"], "available")
         first = payload["candidates"][0]
         self.assertEqual(first["patch_summary"]["changed_files"], ["app.py"])
         self.assertEqual(first["patch_summary"]["hunk_count"], 1)
@@ -89,6 +90,30 @@ def _demo_report() -> dict[str, object]:
             "checkpoint_sha256": "a" * 64,
             "candidate_pack_manifest_path": "candidate_pack/manifest.json",
             "run_timeline_path": "reports/run_timeline.json",
+        },
+        "diagnostics": {
+            "checkpoint_inspection": {
+                "status": "available",
+                "path": "diagnostics/model/reports/model_checkpoint_inspection.json",
+                "schema_version": "codelewm.model_checkpoint_inspection.v1",
+                "artifact_id": "diag-model",
+                "artifact_kind": "eval_report",
+                "artifact_manifest_path": "diagnostics/model/manifest.json",
+                "manifest_file_path": "reports/model_checkpoint_inspection.json",
+                "sha256": "a" * 64,
+                "bytes": 12,
+            },
+            "latent_matrix": {
+                "status": "available",
+                "path": "diagnostics/latent/reports/latent_matrix_report.json",
+                "schema_version": "codelewm.eval.latent_matrix_report.v1",
+                "artifact_id": "diag-latent",
+                "artifact_kind": "eval_report",
+                "artifact_manifest_path": "diagnostics/latent/manifest.json",
+                "manifest_file_path": "reports/latent_matrix_report.json",
+                "sha256": "b" * 64,
+                "bytes": 13,
+            },
         },
         "candidate_summary": {"candidate_count": 2, "valid_candidate_count": 2},
         "orders": {

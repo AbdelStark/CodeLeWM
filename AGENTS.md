@@ -216,7 +216,7 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #243 through #245 for visual model observability and the Textual TUI stream
+2. #244 through #245 for visual model observability and the Textual TUI stream
    under tracker #235. Issues #237 and #238 are complete and added optional
    TensorBoard-compatible training/checkpoint event export plus trusted
    checkpoint tensor inspection. Issue #239 adds manifest-backed latent matrix
@@ -225,9 +225,11 @@ Current completion order:
    `codelewm.run_timeline.v1` reports to the LLM demo and latent-matrix eval
    paths. Issue #242 adds `codelewm.harness.visual_view_model.v1` for
    non-interactive JSON, rich terminal, and HTML parity. Issue #241 adds the
-   optional Textual TUI and `codelewm.harness.demo_tui_snapshot.v1`. Continue
-   with demo diagnostic links (#243), diagnostics-driven model experiment
-   planning (#244), and final visual artifact publication (#245).
+   optional Textual TUI and `codelewm.harness.demo_tui_snapshot.v1`. Issue
+   #243 connects checkpoint-inspection, latent-matrix, TensorBoard, and timeline
+   diagnostics into demo reports and view models. Continue with
+   diagnostics-driven model experiment planning (#244) and final visual artifact
+   publication (#245).
 3. #210 then #211 for the scaled downstream reranking benchmark gate.
 4. #178/#212 for CWM comparison and the next falsifiable positive-model
    research hypothesis.

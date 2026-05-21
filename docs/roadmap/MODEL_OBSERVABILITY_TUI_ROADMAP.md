@@ -94,7 +94,7 @@ automation surface and must keep:
 | 4 | #240 | Run timeline and monitoring | Closed: structured run timeline artifacts and richer redacted monitoring logs. |
 | 5 | #242 | Non-interactive report parity | Closed: shared visual view model for JSON, rich terminal, and HTML outputs before TUI rendering. |
 | 6 | #241 | Textual TUI | Closed: optional interactive TUI that loads fixture/live reports without affecting base CLI imports. |
-| 7 | #243 | Diagnostics in demo reports | Demo reports link checkpoint, latent, timeline, and tensor artifacts consistently. |
+| 7 | #243 | Diagnostics in demo reports | Closed: demo reports link checkpoint, latent, timeline, and tensor artifacts consistently. |
 | 8 | #244 | Diagnostics-driven model experiment | Define the next falsifiable model improvement from observed ranking/latent failures. |
 | 9 | #245 | Visual artifact publication | Publish one manifest-backed visual observability artifact set as diagnostic evidence. |
 
@@ -239,12 +239,12 @@ semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
 Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them, then continue with #243,
-#244, and #245 under #235. Issues #237, #238, #239, #240, #241, and #242 are
+(#227-#231) when the selected issue depends on them, then continue with #244
+and #245 under #235. Issues #237, #238, #239, #240, #241, #242, and #243 are
 closed and provide the optional TensorBoard-compatible export, trusted
 checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces,
 run-timeline artifacts, optional Textual TUI, and schema-versioned visual view
-model.
+model with manifest-backed diagnostic links.
 
 Keep visualization dependencies optional. TensorBoard-compatible exports and
 Textual TUI support must not affect base imports, normal JSON output, fixture

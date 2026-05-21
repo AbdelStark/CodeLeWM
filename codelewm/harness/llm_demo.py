@@ -17,6 +17,7 @@ from codelewm.observability import (
     RunTimelineRecorder,
     build_artifact_manifest,
     read_artifact_manifest,
+    sha256_file,
     validate_artifact_checksums,
     write_run_timeline_report,
     write_artifact_manifest,
@@ -41,6 +42,9 @@ from .visual_view_model import (
 LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION = "codelewm.harness.demo_report.v1"
 LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION = "codelewm.harness.demo_run.v1"
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
+_MODEL_CHECKPOINT_INSPECTION_SCHEMA_VERSION = "codelewm.model_checkpoint_inspection.v1"
+_LATENT_MATRIX_REPORT_SCHEMA_VERSION = "codelewm.eval.latent_matrix_report.v1"
+_TENSORBOARD_EXPORT_SCHEMA_VERSION = "codelewm.training.tensorboard_export.v1"
 
 
 class LLMWorldModelDemoError(ValueError):
@@ -89,6 +93,12 @@ def run_llm_world_model_demo(
     retrieval_prior_weight: float = 0.0,
     retrieval_prior_k: int = 10,
     parent_manifests: Sequence[Path | str] = (),
+    checkpoint_inspection_manifest: Path | str | None = None,
+    checkpoint_inspection_report: Path | str | None = None,
+    latent_matrix_manifest: Path | str | None = None,
+    latent_matrix_report: Path | str | None = None,
+    tensorboard_manifest: Path | str | None = None,
+    tensorboard_export: Path | str | None = None,
     allow_unsafe_checkpoint: bool = False,
     require_learned_scorer: bool = False,
     overwrite: bool = False,
@@ -137,6 +147,17 @@ def run_llm_world_model_demo(
             raise LLMWorldModelDemoError(f"candidate generation failed: {exc}") from exc
     with timeline.step("parent manifest validation", command_id="llm_demo.parent_manifests"):
         parent_artifact_ids = _read_parent_artifact_ids(parent_manifests)
+    with timeline.step("diagnostic artifact validation", command_id="llm_demo.diagnostics"):
+        diagnostics = _build_demo_diagnostics(
+            checkpoint_inspection_manifest=checkpoint_inspection_manifest,
+            checkpoint_inspection_report=checkpoint_inspection_report,
+            latent_matrix_manifest=latent_matrix_manifest,
+            latent_matrix_report=latent_matrix_report,
+            tensorboard_manifest=tensorboard_manifest,
+            tensorboard_export=tensorboard_export,
+            run_timeline_path="reports/run_timeline.json",
+        )
+        diagnostic_parent_artifact_ids = _diagnostic_parent_artifact_ids(diagnostics)
     with timeline.step("candidate pack capture", command_id="llm_demo.candidate_pack") as step:
         try:
             candidate_pack_result = write_candidate_pack_artifact(
@@ -198,6 +219,7 @@ def run_llm_world_model_demo(
             retrieval_prior_k=retrieval_prior_k,
             run_timeline_path="reports/run_timeline.json",
             visual_view_model_path="reports/visual_view_model.json",
+            diagnostics=diagnostics,
         )
         view_model = build_demo_visual_view_model(
             demo_report=report,
@@ -232,7 +254,11 @@ def run_llm_world_model_demo(
             raise LLMWorldModelDemoError("demo visual view model contains secret-scan findings")
     write_run_timeline_report(
         timeline.to_report(
-            artifact_ids=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
+            artifact_ids=(
+                candidate_pack_manifest.artifact_id,
+                *parent_artifact_ids,
+                *diagnostic_parent_artifact_ids,
+            ),
             metadata={
                 "report_path": "reports/llm_world_model_demo_report.json",
                 "visual_view_model_path": "reports/visual_view_model.json",
@@ -261,14 +287,20 @@ def run_llm_world_model_demo(
             "retrieval_prior_k": retrieval_prior_k,
             "allow_unsafe_checkpoint": allow_unsafe_checkpoint,
             "require_learned_scorer": require_learned_scorer,
+            "diagnostics": _diagnostic_config(diagnostics),
         },
-        parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
+        parent_artifacts=(
+            candidate_pack_manifest.artifact_id,
+            *parent_artifact_ids,
+            *diagnostic_parent_artifact_ids,
+        ),
         metadata={
             "schema_version": LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION,
             "visual_view_model_schema_version": DEMO_VISUAL_VIEW_MODEL_SCHEMA_VERSION,
             "visual_view_model_path": "reports/visual_view_model.json",
             "run_timeline_schema_version": RUN_TIMELINE_SCHEMA_VERSION,
             "run_timeline_path": "reports/run_timeline.json",
+            "diagnostics": diagnostics,
             "success": report["success"],
             "candidate_count": report["candidate_summary"]["candidate_count"],
             "valid_candidate_count": report["candidate_summary"]["valid_candidate_count"],
@@ -283,7 +315,11 @@ def run_llm_world_model_demo(
         html_path=_relative_to_root(html_path, output_dir),
         visual_view_model_path=_relative_to_root(visual_view_model_path, output_dir),
         candidate_pack_manifest_path=f"candidate_pack/{candidate_pack_result.artifact_manifest_path}",
-        parent_artifacts=(candidate_pack_manifest.artifact_id, *parent_artifact_ids),
+        parent_artifacts=(
+            candidate_pack_manifest.artifact_id,
+            *parent_artifact_ids,
+            *diagnostic_parent_artifact_ids,
+        ),
         success=bool(report["success"]),
     )
 
@@ -486,6 +522,7 @@ def _build_demo_report(
     retrieval_prior_k: int,
     run_timeline_path: str,
     visual_view_model_path: str,
+    diagnostics: Mapping[str, Any],
 ) -> dict[str, Any]:
     candidates = list(candidate_pack_payload.get("candidates", []))
     candidate_ids = [str(candidate.get("candidate_id")) for candidate in candidates]
@@ -552,6 +589,7 @@ def _build_demo_report(
             "checkpoint_sha256": checkpoint_sha256,
             "transition_index": None if index is None else str(index),
         },
+        "diagnostics": dict(diagnostics),
         "generator": dict(candidate_pack_payload.get("generator", {})),
         "candidate_summary": {
             "candidate_count": len(candidate_ids),
@@ -611,6 +649,182 @@ def _read_parent_artifact_ids(parent_manifests: Sequence[Path | str]) -> tuple[s
             raise LLMWorldModelDemoError(f"parent manifest validation failed: {exc}") from exc
         parent_artifacts.append(manifest.artifact_id)
     return tuple(parent_artifacts)
+
+
+def _build_demo_diagnostics(
+    *,
+    checkpoint_inspection_manifest: Path | str | None,
+    checkpoint_inspection_report: Path | str | None,
+    latent_matrix_manifest: Path | str | None,
+    latent_matrix_report: Path | str | None,
+    tensorboard_manifest: Path | str | None,
+    tensorboard_export: Path | str | None,
+    run_timeline_path: str,
+) -> dict[str, dict[str, Any]]:
+    return {
+        "checkpoint_inspection": _diagnostic_reference(
+            name="checkpoint_inspection",
+            report_path=checkpoint_inspection_report,
+            manifest_path=checkpoint_inspection_manifest,
+            expected_schema_version=_MODEL_CHECKPOINT_INSPECTION_SCHEMA_VERSION,
+            default_manifest_report_path="reports/model_checkpoint_inspection.json",
+        ),
+        "latent_matrix": _diagnostic_reference(
+            name="latent_matrix",
+            report_path=latent_matrix_report,
+            manifest_path=latent_matrix_manifest,
+            expected_schema_version=_LATENT_MATRIX_REPORT_SCHEMA_VERSION,
+            default_manifest_report_path="reports/latent_matrix_report.json",
+        ),
+        "tensorboard": _diagnostic_reference(
+            name="tensorboard",
+            report_path=tensorboard_export,
+            manifest_path=tensorboard_manifest,
+            expected_schema_version=_TENSORBOARD_EXPORT_SCHEMA_VERSION,
+            default_manifest_report_path="reports/tensorboard_export.json",
+        ),
+        "run_timeline": {
+            "status": "available",
+            "path": run_timeline_path,
+            "schema_version": RUN_TIMELINE_SCHEMA_VERSION,
+            "artifact_id": None,
+            "artifact_manifest_path": None,
+            "sha256": None,
+            "bytes": None,
+            "source": "current_demo_run",
+        },
+    }
+
+
+def _diagnostic_reference(
+    *,
+    name: str,
+    report_path: Path | str | None,
+    manifest_path: Path | str | None,
+    expected_schema_version: str,
+    default_manifest_report_path: str,
+) -> dict[str, Any]:
+    if report_path is None and manifest_path is None:
+        return {
+            "status": "not_configured",
+            "path": None,
+            "schema_version": expected_schema_version,
+            "artifact_id": None,
+            "artifact_manifest_path": None,
+            "sha256": None,
+            "bytes": None,
+        }
+
+    manifest = None
+    manifest_file = None
+    resolved_manifest_path: Path | None = None
+    if manifest_path is not None:
+        resolved_manifest_path = Path(manifest_path)
+        try:
+            manifest = read_artifact_manifest(resolved_manifest_path)
+            validate_artifact_checksums(manifest, root=resolved_manifest_path.parent)
+        except (ArtifactManifestError, OSError, json.JSONDecodeError) as exc:
+            raise LLMWorldModelDemoError(
+                f"{name} diagnostic manifest validation failed: {exc}"
+            ) from exc
+
+    if report_path is None:
+        if manifest is None or resolved_manifest_path is None:
+            raise LLMWorldModelDemoError(f"{name} diagnostic report requires a manifest")
+        metadata_path = manifest.metadata.get("report_path") if isinstance(manifest.metadata, Mapping) else None
+        report_path = str(metadata_path or default_manifest_report_path)
+
+    resolved_report_path = _resolve_diagnostic_report_path(
+        report_path,
+        manifest_path=resolved_manifest_path,
+    )
+    if not resolved_report_path.is_file():
+        raise LLMWorldModelDemoError(f"{name} diagnostic report does not exist: {resolved_report_path}")
+
+    try:
+        report_text = resolved_report_path.read_text(encoding="utf-8")
+        payload = json.loads(report_text)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise LLMWorldModelDemoError(f"{name} diagnostic report is not valid JSON") from exc
+    if not isinstance(payload, Mapping):
+        raise LLMWorldModelDemoError(f"{name} diagnostic report must be a JSON object")
+    schema_version = payload.get("schema_version")
+    if schema_version != expected_schema_version:
+        raise LLMWorldModelDemoError(
+            f"{name} diagnostic report schema_version must be {expected_schema_version!r}; "
+            f"got {schema_version!r}"
+        )
+    findings = scan_text(report_text, path=resolved_report_path.name)
+    if findings:
+        raise LLMWorldModelDemoError(f"{name} diagnostic report contains secret-scan findings")
+
+    if manifest is not None and resolved_manifest_path is not None:
+        manifest_file = _find_manifest_file_for_path(
+            manifest,
+            resolved_report_path,
+            root=resolved_manifest_path.parent,
+        )
+        if manifest_file is None:
+            raise LLMWorldModelDemoError(
+                f"{name} diagnostic report is not listed in manifest: {resolved_report_path}"
+            )
+
+    return {
+        "status": "available",
+        "path": str(resolved_report_path),
+        "schema_version": str(schema_version),
+        "artifact_id": None if manifest is None else manifest.artifact_id,
+        "artifact_kind": None if manifest is None else manifest.artifact_kind,
+        "artifact_manifest_path": None if resolved_manifest_path is None else str(resolved_manifest_path),
+        "manifest_file_path": None if manifest_file is None else manifest_file.path,
+        "sha256": manifest_file.sha256 if manifest_file is not None else sha256_file(resolved_report_path),
+        "bytes": manifest_file.bytes if manifest_file is not None else resolved_report_path.stat().st_size,
+    }
+
+
+def _resolve_diagnostic_report_path(
+    path: Path | str,
+    *,
+    manifest_path: Path | None,
+) -> Path:
+    report_path = Path(path)
+    if report_path.is_absolute() or manifest_path is None:
+        return report_path
+    manifest_relative = manifest_path.parent / report_path
+    if manifest_relative.exists():
+        return manifest_relative
+    return report_path
+
+
+def _find_manifest_file_for_path(manifest: Any, path: Path, *, root: Path) -> Any:
+    resolved = path.resolve()
+    for file in manifest.files:
+        candidate = (root / file.path).resolve()
+        if candidate == resolved:
+            return file
+    return None
+
+
+def _diagnostic_parent_artifact_ids(diagnostics: Mapping[str, Any]) -> tuple[str, ...]:
+    parent_ids: list[str] = []
+    for diagnostic in diagnostics.values():
+        if not isinstance(diagnostic, Mapping):
+            continue
+        artifact_id = diagnostic.get("artifact_id")
+        if isinstance(artifact_id, str) and artifact_id and artifact_id not in parent_ids:
+            parent_ids.append(artifact_id)
+    return tuple(parent_ids)
+
+
+def _diagnostic_config(diagnostics: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        name: {
+            "status": _mapping(value).get("status"),
+            "path": _mapping(value).get("path"),
+            "artifact_manifest_path": _mapping(value).get("artifact_manifest_path"),
+        }
+        for name, value in diagnostics.items()
+    }
 
 
 def _score_by_candidate_id(report: Mapping[str, Any]) -> dict[str, float | None]:

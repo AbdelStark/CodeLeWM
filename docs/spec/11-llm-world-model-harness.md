@@ -320,6 +320,11 @@ statistics, diagnostic slots, artifact gates, warnings, and the claim gate for
 terminal, HTML, raw JSON, and optional Textual TUI rendering. The optional TUI
 also exposes a deterministic `codelewm.harness.demo_tui_snapshot.v1` snapshot
 for headless tests.
+Diagnostic slots can reference checkpoint-inspection, latent-matrix,
+TensorBoard export, and run-timeline artifacts. Available external diagnostics
+carry the source manifest path, parent artifact id, manifest file path, schema,
+checksum, and byte size; missing diagnostics remain structured
+`not_configured` entries.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank

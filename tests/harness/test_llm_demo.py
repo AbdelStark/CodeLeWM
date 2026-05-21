@@ -15,7 +15,12 @@ from codelewm.harness import (
     read_llm_world_model_demo_report,
     run_llm_world_model_demo,
 )
-from codelewm.observability import read_artifact_manifest, validate_artifact_checksums
+from codelewm.observability import (
+    build_artifact_manifest,
+    read_artifact_manifest,
+    validate_artifact_checksums,
+    write_artifact_manifest,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,6 +34,24 @@ class LLMWorldModelDemoTest(unittest.TestCase):
             checkpoint = root / "checkpoint.bin"
             before.write_text("value = 1\n", encoding="utf-8")
             checkpoint.write_bytes(b"fixture checkpoint")
+            checkpoint_diag = _write_diagnostic_artifact(
+                root / "checkpoint-diag",
+                report_relative_path="reports/model_checkpoint_inspection.json",
+                schema_version="codelewm.model_checkpoint_inspection.v1",
+                artifact_id="checkpoint-diag-fixture",
+            )
+            latent_diag = _write_diagnostic_artifact(
+                root / "latent-diag",
+                report_relative_path="reports/latent_matrix_report.json",
+                schema_version="codelewm.eval.latent_matrix_report.v1",
+                artifact_id="latent-diag-fixture",
+            )
+            tensorboard_diag = _write_diagnostic_artifact(
+                root / "tensorboard-diag",
+                report_relative_path="reports/tensorboard_export.json",
+                schema_version="codelewm.training.tensorboard_export.v1",
+                artifact_id="tensorboard-diag-fixture",
+            )
 
             result = run_llm_world_model_demo(
                 before=before,
@@ -43,6 +66,9 @@ class LLMWorldModelDemoTest(unittest.TestCase):
                     "CODELEWM_LLM_MAX_CANDIDATES": "2",
                 },
                 allow_unsafe_checkpoint=True,
+                checkpoint_inspection_manifest=checkpoint_diag,
+                latent_matrix_manifest=latent_diag,
+                tensorboard_manifest=tensorboard_diag,
                 command=("codelewm", "llm-demo"),
             )
             demo_manifest = read_artifact_manifest(root / "demo" / "manifest.json")
@@ -61,7 +87,16 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertEqual(report["schema_version"], LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION)
         self.assertEqual(demo_manifest.artifact_kind, "demo_report")
         self.assertEqual(candidate_manifest.artifact_kind, "candidate_pack")
-        self.assertEqual(demo_manifest.parent_artifacts, (candidate_manifest.artifact_id,))
+        self.assertEqual(
+            demo_manifest.parent_artifacts,
+            (
+                candidate_manifest.artifact_id,
+                "checkpoint-diag-fixture",
+                "latent-diag-fixture",
+                "tensorboard-diag-fixture",
+            ),
+        )
+        self.assertEqual(result.parent_artifacts, demo_manifest.parent_artifacts)
         self.assertEqual(
             {path.name for path in checked},
             {
@@ -75,8 +110,17 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertEqual(result.visual_view_model_path, "reports/visual_view_model.json")
         self.assertEqual(report["artifacts"]["visual_view_model_path"], "reports/visual_view_model.json")
         self.assertEqual(report["artifacts"]["run_timeline_path"], "reports/run_timeline.json")
+        self.assertEqual(report["diagnostics"]["checkpoint_inspection"]["status"], "available")
+        self.assertEqual(report["diagnostics"]["checkpoint_inspection"]["artifact_id"], "checkpoint-diag-fixture")
+        self.assertEqual(report["diagnostics"]["checkpoint_inspection"]["manifest_file_path"], "reports/model_checkpoint_inspection.json")
+        self.assertEqual(report["diagnostics"]["latent_matrix"]["status"], "available")
+        self.assertEqual(report["diagnostics"]["tensorboard"]["status"], "available")
+        self.assertRegex(report["diagnostics"]["tensorboard"]["sha256"], r"^[0-9a-f]{64}$")
         self.assertEqual(view_model["schema_version"], "codelewm.harness.visual_view_model.v1")
         self.assertEqual(view_model["summary"]["score_direction"], "lower_is_better")
+        self.assertEqual(view_model["diagnostics"]["checkpoint_inspection"]["artifact_id"], "checkpoint-diag-fixture")
+        self.assertEqual(view_model["diagnostics"]["latent_matrix"]["status"], "available")
+        self.assertEqual(view_model["diagnostics"]["tensorboard"]["status"], "available")
         self.assertEqual(view_model["diagnostics"]["run_timeline"]["status"], "available")
         self.assertEqual(timeline["schema_version"], "codelewm.run_timeline.v1")
         self.assertEqual(timeline["status"], "completed")
@@ -157,6 +201,43 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertIn("Model and latent", html)
         self.assertEqual(report["candidate_summary"]["candidate_count"], 2)
         self.assertFalse(report["claim_gate"]["allowed"])
+        self.assertEqual(report["diagnostics"]["checkpoint_inspection"]["status"], "not_configured")
+        self.assertEqual(report["diagnostics"]["latent_matrix"]["status"], "not_configured")
+        self.assertEqual(report["diagnostics"]["tensorboard"]["status"], "not_configured")
+
+
+def _write_diagnostic_artifact(
+    root: Path,
+    *,
+    report_relative_path: str,
+    schema_version: str,
+    artifact_id: str,
+) -> Path:
+    report_path = root / report_relative_path
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": schema_version,
+                "summary": {"fixture": True},
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest = build_artifact_manifest(
+        artifact_kind="eval_report",
+        root=root,
+        files=(report_path,),
+        command=("codelewm", "diagnostic-fixture"),
+        config={"schema_version": schema_version},
+        artifact_id=artifact_id,
+        metadata={"report_path": report_relative_path},
+    )
+    manifest_path = root / "manifest.json"
+    write_artifact_manifest(manifest, manifest_path)
+    return manifest_path
 
 
 if __name__ == "__main__":
