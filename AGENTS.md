@@ -162,6 +162,7 @@ Before editing, read:
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 - `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`
 - `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
+- `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -216,7 +217,7 @@ Current completion order:
    (#227), static patch analysis (#228), scorer traces and compact diff
    previews (#229), opt-in sandbox checks (#230), then the live public
    diagnostic artifact run (#231).
-2. #244 through #245 for visual model observability and the Textual TUI stream
+2. #245 for visual model observability and the Textual TUI stream
    under tracker #235. Issues #237 and #238 are complete and added optional
    TensorBoard-compatible training/checkpoint event export plus trusted
    checkpoint tensor inspection. Issue #239 adds manifest-backed latent matrix
@@ -227,9 +228,10 @@ Current completion order:
    non-interactive JSON, rich terminal, and HTML parity. Issue #241 adds the
    optional Textual TUI and `codelewm.harness.demo_tui_snapshot.v1`. Issue
    #243 connects checkpoint-inspection, latent-matrix, TensorBoard, and timeline
-   diagnostics into demo reports and view models. Continue with
-   diagnostics-driven model experiment planning (#244) and final visual artifact
-   publication (#245).
+   diagnostics into demo reports and view models. Issue #244 defines the
+   candidate-contrast action training experiment in
+   `docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md`. Continue with final
+   visual artifact publication (#245).
 3. #210 then #211 for the scaled downstream reranking benchmark gate.
 4. #178/#212 for CWM comparison and the next falsifiable positive-model
    research hypothesis.
