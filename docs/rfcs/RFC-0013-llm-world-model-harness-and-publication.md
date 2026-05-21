@@ -200,7 +200,7 @@ Stream A3, visual model observability and TUI harness:
 - #240 adds run timeline and monitoring reports.
 - #242 adds the shared visual view model that preserves non-interactive rich
   terminal, HTML, and JSON report parity.
-- #241 adds optional Textual TUI mode for interactive demo inspection.
+- #241 added optional Textual TUI mode for interactive demo inspection.
 - #243 connects model and latent diagnostics to demo reports.
 - #244 defines a diagnostics-driven model improvement experiment.
 - #245 publishes one visual observability harness artifact set as diagnostic

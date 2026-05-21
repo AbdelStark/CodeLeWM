@@ -256,13 +256,13 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - checkpoint tensor/layer inspection complete through #238.
 - latent representation matrix diagnostics complete through #239.
 - run timeline and monitoring reports complete through #240.
+- optional Textual TUI for demo inspection complete through #241.
 - shared visual view model for JSON/rich/HTML demo parity complete through #242.
 
 Open next streams:
 
 - meaningful harness demo: #224, with #227-#231 open;
-- visual model observability and Textual TUI harness: #235, with #241 and
-  #243-#245 open;
+- visual model observability and Textual TUI harness: #235, with #243-#245 open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
 

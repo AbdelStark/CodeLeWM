@@ -405,7 +405,7 @@ candidate-pack artifact, scores/reranks candidates without executing them, and
 writes `codelewm.harness.demo_report.v1`,
 `codelewm.harness.visual_view_model.v1`, and `codelewm.run_timeline.v1` under
 `reports/`. The visual view model is the normalized, ANSI-free adapter consumed
-by JSON, rich terminal, HTML, and the future Textual TUI surface. The command emits
+by JSON, rich terminal, HTML, and the optional Textual TUI surface. The command emits
 `codelewm.harness.demo_run.v1` on stdout and writes a self-contained
 `demo.html` visual report into the demo artifact. Demo score payloads include
 `score_direction=lower_is_better`; candidate-minus-no-action deltas are better
@@ -414,6 +414,20 @@ when negative and worse when positive. Fixture mode remains the default with
 `uv run scripts/llm-world-model-demo` for the end-to-end local task that creates
 a tiny input file, ensures a first-results checkpoint exists, runs the demo,
 verifies manifests, secret-scans the output, and prints the visual report path.
+Use `scripts/llm-world-model-demo --tui` to open the optional TUI after the
+same artifact gates pass.
+
+`codelewm llm-demo-tui` opens a Textual viewer over an existing
+`reports/visual_view_model.json`:
+
+```bash
+codelewm llm-demo-tui --demo-dir .artifacts/llm-world-model-demo/run
+codelewm llm-demo-tui --view-model .artifacts/llm-world-model-demo/run/reports/visual_view_model.json --snapshot-json
+```
+
+The interactive TUI requires the optional `tui` dependency group. Snapshot JSON
+uses `codelewm.harness.demo_tui_snapshot.v1` and is deterministic for fixture
+tests.
 
 `codelewm openrouter byok-register` creates or dry-runs an OpenRouter BYOK
 provider credential from local environment secrets:

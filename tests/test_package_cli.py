@@ -49,6 +49,7 @@ class PackageMetadataTest(unittest.TestCase):
             "h5py",
             "pyarrow",
             "scikit-learn",
+            "textual",
         ):
             with self.subTest(dependency=heavy_dependency):
                 self.assertNotIn(heavy_dependency, base_dependencies)
@@ -58,7 +59,7 @@ class PackageMetadataTest(unittest.TestCase):
         groups = metadata["dependency-groups"]
         extras = metadata["project"]["optional-dependencies"]
 
-        for group_name in ("dev", "data", "train", "eval", "docs", "release"):
+        for group_name in ("dev", "data", "train", "eval", "tui", "docs", "release"):
             with self.subTest(group=group_name):
                 self.assertIn(group_name, groups)
 
@@ -67,11 +68,12 @@ class PackageMetadataTest(unittest.TestCase):
         self.assertIn("torch", _dependency_names(groups["train"]))
         self.assertIn("stable-worldmodel", _dependency_names(groups["train"]))
         self.assertIn("scikit-learn", _dependency_names(groups["eval"]))
+        self.assertIn("textual", _dependency_names(groups["tui"]))
         self.assertIn("build", _dependency_names(groups["release"]))
         self.assertIn("pip-audit", _dependency_names(groups["release"]))
         self.assertIn("twine", _dependency_names(groups["release"]))
 
-        for extra_name in ("data", "train", "eval", "docs", "release"):
+        for extra_name in ("data", "train", "eval", "tui", "docs", "release"):
             with self.subTest(extra=extra_name):
                 self.assertEqual(extras[extra_name], groups[extra_name])
 

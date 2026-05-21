@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 uv_run=(uv run --group data --group train --group llm)
 uv_light_run=(uv run)
+uv_tui_run=(uv run --group data --group train --group llm --group tui)
 cli_output_mode=""
 cli_scenario=""
 list_scenarios=0
@@ -16,6 +17,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --visual)
       cli_output_mode="visual"
+      shift
+      ;;
+    --tui)
+      cli_output_mode="tui"
       shift
       ;;
     --scenario)
@@ -32,7 +37,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/llm-world-model-demo [--visual|--json] [--scenario ID]
+Usage: scripts/llm-world-model-demo [--visual|--json|--tui] [--scenario ID]
 
 Runs the local LLM + CodeLeWM demo.
 
@@ -40,6 +45,7 @@ Default scenario: bugfix-edge-case
 
 Default output is a visual terminal walkthrough. Use --json or set
 CODELEWM_LLM_DEMO_OUTPUT=json for raw machine-readable command output.
+Use --tui or CODELEWM_LLM_DEMO_OUTPUT=tui to open the optional Textual viewer.
 EOF
       exit 0
       ;;
@@ -134,8 +140,8 @@ out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
 device="${CODELEWM_LLM_DEMO_DEVICE:-cpu}"
 output_mode="${cli_output_mode:-${CODELEWM_LLM_DEMO_OUTPUT:-visual}}"
 
-if [[ "$output_mode" != "visual" && "$output_mode" != "json" ]]; then
-  printf 'CODELEWM_LLM_DEMO_OUTPUT must be visual or json; got %s\n' "$output_mode" >&2
+if [[ "$output_mode" != "visual" && "$output_mode" != "json" && "$output_mode" != "tui" ]]; then
+  printf 'CODELEWM_LLM_DEMO_OUTPUT must be visual, json, or tui; got %s\n' "$output_mode" >&2
   exit 2
 fi
 
@@ -152,7 +158,7 @@ run_json() {
   local output="$2"
   shift 2
   local stderr_file="$tmp_dir/${label//[^A-Za-z0-9_]/_}.stderr"
-  if [[ "$output_mode" == "visual" ]]; then
+  if [[ "$output_mode" == "visual" || "$output_mode" == "tui" ]]; then
     printf '[run] %s\n' "$label"
   fi
   if ! "$@" >"$output" 2>"$stderr_file"; then
@@ -167,7 +173,7 @@ run_json() {
   fi
 }
 
-if [[ "$output_mode" == "visual" ]]; then
+if [[ "$output_mode" == "visual" || "$output_mode" == "tui" ]]; then
   printf 'CodeLeWM demo runner\n'
 fi
 
@@ -209,7 +215,7 @@ if [[ ! -f "$before_path" ]]; then
   cp "$CODELEWM_LLM_DEMO_SCENARIO_BEFORE" "$before_path"
 fi
 
-if [[ "$output_mode" == "visual" ]]; then
+if [[ "$output_mode" == "visual" || "$output_mode" == "tui" ]]; then
   printf 'mode=%s model=%s device=%s out=%s\n' \
     "$([[ "$CODELEWM_LLM_DRY_RUN" == "1" ]] && printf 'fixture' || printf 'live')" \
     "$CODELEWM_LLM_MODEL" \
@@ -221,7 +227,7 @@ if [[ "$output_mode" == "visual" ]]; then
 fi
 
 if [[ ! -f "$checkpoint" ]]; then
-  if [[ "$output_mode" == "visual" ]]; then
+  if [[ "$output_mode" == "visual" || "$output_mode" == "tui" ]]; then
     printf '[run] first-results checkpoint missing, regenerating local smoke artifacts\n'
   fi
   "${uv_run[@]}" scripts/first-results --overwrite
@@ -258,7 +264,7 @@ if [[ "$output_mode" == "json" ]]; then
   cat "$secret_scan_json"
   cat "$html_secret_scan_json"
   printf 'visual_report: %s\n' "$out_dir/demo.html"
-else
+elif [[ "$output_mode" == "visual" ]]; then
   "${uv_run[@]}" python -m codelewm.harness.demo_terminal \
     --demo-run "$demo_run_json" \
     --manifest-verify "$manifest_verify_json" \
@@ -267,4 +273,7 @@ else
     --report "$out_dir/reports/llm_world_model_demo_report.json" \
     --candidate-pack "$out_dir/candidate_pack/candidate_pack.json" \
     --out-dir "$out_dir"
+else
+  "${uv_tui_run[@]}" python -m codelewm.harness.demo_tui \
+    --view-model "$out_dir/reports/visual_view_model.json"
 fi

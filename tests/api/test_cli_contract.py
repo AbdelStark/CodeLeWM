@@ -40,6 +40,7 @@ class PublicCliContractTest(unittest.TestCase):
         self.assertIn("index", help_text)
         self.assertIn("dataset", help_text)
         self.assertIn("secret-scan", help_text)
+        self.assertIn("llm-demo-tui", help_text)
 
     def test_score_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("score", "--help")
@@ -83,6 +84,13 @@ class PublicCliContractTest(unittest.TestCase):
         help_text = _run_help("dataset", "build", "--help")
 
         for flag in ("--config", "--out", "--json"):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_llm_demo_tui_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("llm-demo-tui", "--help")
+
+        for flag in ("--view-model", "--demo-dir", "--snapshot-json", "--json"):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 

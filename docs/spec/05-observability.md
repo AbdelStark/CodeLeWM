@@ -180,7 +180,9 @@ Planned schemas:
 - `codelewm.run_timeline.v1`: implemented ordered run steps, timestamps,
   durations, command ids, artifact ids, warnings, and typed failures.
 - `codelewm.harness.visual_view_model.v1`: implemented normalized data consumed
-  by JSON, rich terminal, HTML, and future Textual TUI views.
+  by JSON, rich terminal, HTML, and optional Textual TUI views.
+- `codelewm.harness.demo_tui_snapshot.v1`: implemented deterministic snapshot
+  consumed by the optional Textual TUI and headless TUI fixture tests.
 
 TensorBoard-compatible output and Textual rendering remain optional runtime
 surfaces. Base package imports, fixture tests, JSON reports, and non-interactive
@@ -200,14 +202,15 @@ manifest with checksums. Run timeline reports are emitted today by
 `codelewm llm-demo` and `codelewm eval latent-matrix` as
 `reports/run_timeline.json`; they preserve append-only JSONL logging as the
 operational stream while adding a manifest-backed summary for visual reports
-and future TUI panels. Visual reports are diagnostic only and cannot
+and TUI panels. Visual reports are diagnostic only and cannot
 support positive semantic-latent-axis or coding-usefulness claims without the
 relevant benchmark gates.
 The LLM demo writes `reports/visual_view_model.json` with compact candidate
 diff summaries, score/no-action deltas, diagnostic slots, artifact gate status
-when available, and no ANSI terminal layout data. Textual remains unimplemented
-and optional; the view model is the stable non-interactive contract it will
-consume.
+when available, and no ANSI terminal layout data. Textual is implemented behind
+the optional `tui` dependency group through `codelewm llm-demo-tui` and
+`scripts/llm-world-model-demo --tui`; the view model remains the stable
+non-interactive contract consumed by JSON, rich terminal, HTML, and TUI views.
 
 ## Artifact Lineage
 
