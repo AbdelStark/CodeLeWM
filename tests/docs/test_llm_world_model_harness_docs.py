@@ -71,13 +71,22 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
         text = RESULTS.read_text(encoding="utf-8")
 
         for marker in (
-            "The first action-conditioned hypotheses failed",
+            "The first scaled action-conditioned hypotheses failed",
+            "Run Ledger",
+            "codelewm-v0-2-action-swap-rerun-20260520-7c7cb0b",
+            "6a0dea258229e585f969c808",
+            "docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md",
+            "| #159 margin+retrieval | 0.597 | 0.650 | -0.053",
+            "semantic_structure_status=unsupported",
+            "scaled downstream benchmark requires at least 100 labeled examples; got 1",
             "Validated",
             "Invalidated Or Unsupported",
             "Public Artifacts",
             "What We Can Publish Now",
+            "Blog / README Summary",
             "We cannot publish it as",
             "LLM + world-model harness",
+            "The downstream benchmark must pass #192",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
