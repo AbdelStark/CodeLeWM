@@ -258,6 +258,9 @@ Demo success requires:
 The demo artifact must also include `demo.html`, a self-contained visual report
 that makes dry-run versus live mode, candidate patches, CodeLeWM ranking,
 baseline orders, and the claim gate visible without reading JSON by hand.
+The local `scripts/llm-world-model-demo` entry point should default to a visual
+terminal walkthrough over the same JSON artifacts. Raw JSON command summaries
+remain available through explicit non-interactive mode.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank

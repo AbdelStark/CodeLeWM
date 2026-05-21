@@ -64,7 +64,8 @@ Issues:
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
 | D1 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Open |
-| D2 | #220 | harness: use learned world-model inference in LLM demo | Open |
+| D2 | #220 | harness: use learned world-model inference in LLM demo | Closed |
+| D3 | #222 | harness: make LLM demo terminal output visual by default | Closed |
 
 Success for the stream:
 
@@ -72,6 +73,8 @@ Success for the stream:
   `OPENROUTER_API_KEY` and explicit BYOK settings where desired;
 - demo reports show `codelewm.torch_transition_scorer.v1` from a trusted
   package-native checkpoint, not the deterministic hashing fixture scorer;
+- the default local script output is a visual terminal walkthrough, with raw
+  JSON reserved for explicit non-interactive mode;
 - candidate-pack and demo-report artifacts pass manifest verification and
   `codelewm secret-scan`;
 - public docs record the live run as a workflow artifact, not evidence that
@@ -171,10 +174,11 @@ Recommended order:
 9. #192
 10. #206
 11. #220
-12. #208
-13. #210
-14. #211
-15. #178 / #212
+12. #222
+13. #208
+14. #210
+15. #211
+16. #178 / #212
 
 Rationale: lock the contract first, publish the current result honestly, build
 the demo, prove one live workflow artifact, and only then spend effort on

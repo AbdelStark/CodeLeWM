@@ -9,7 +9,7 @@ the BYOK/local-demo/readme usability pass.
 ```text
 /goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
 Open or select a new issue from the updated backlog before making code changes:
-#220/#208 for live OpenRouter BYOK harness evidence, #210/#211 for the scaled
+#208 for live OpenRouter BYOK harness evidence, #210/#211 for the scaled
 downstream reranking benchmark, or #178/#212 for the next positive-model
 research hypothesis. Work one issue per branch and PR.
 
@@ -30,11 +30,11 @@ probes and downstream gates also failed.
 The OpenRouter LLM candidate harness contract, adapter, candidate-pack capture,
 fixture demo, BYOK registration helper, local `uv run scripts/llm-world-model-demo`
 task, downstream schema/claim-gate contract, public-safe downstream benchmark
-pack, and downstream rerank report are complete through #206. Issue #220 is the
-open precondition that makes the local demo use a trusted learned torch
-checkpoint scorer instead of the deterministic hashing fixture scorer. The
-public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
-model slugs
+pack, and downstream rerank report are complete through #206. Issue #220 makes
+the local demo use a trusted learned torch checkpoint scorer instead of the
+deterministic hashing fixture scorer; #222 makes the local demo terminal-first
+by default while preserving explicit raw JSON mode. The public LLM adapter uses
+the OpenRouter Python SDK with OPENROUTER_API_KEY and model slugs
 such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit: only
 `codelewm openrouter byok-register` or
 `CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read `ANTHROPIC_API_KEY`. BYOK

@@ -201,6 +201,9 @@ and writes a self-contained visual report at
 `.artifacts/llm-world-model-demo/run/demo.html`. The script passes
 `--require-learned-scorer`, so it fails instead of silently using the fixture
 hashing scorer when the checkpoint is not a learned torch transition model.
+Default output is a visual terminal walkthrough. Use
+`uv run scripts/llm-world-model-demo --json` or
+`CODELEWM_LLM_DEMO_OUTPUT=json` for the raw JSON command summaries.
 
 Run the underlying deterministic fixture command directly:
 

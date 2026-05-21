@@ -64,19 +64,22 @@ generates candidate diffs through the OpenRouter adapter fixture path, writes
 package-native torch checkpoint and `--require-learned-scorer`, verifies
 manifests, secret-scans publishable outputs, and writes a visual report at
 `.artifacts/llm-world-model-demo/run/demo.html`. If the local first-results
-checkpoint is missing, the script regenerates it before scoring.
+checkpoint is missing, the script regenerates it before scoring. The default
+output is a terminal walkthrough of candidate generation, learned world-model
+inference, artifact gates, and claim status.
 
 Expected success signal:
 
 ```text
-"schema_version": "codelewm.harness.demo_run.v1"
-"success": true
-"schema_version": "codelewm.manifest_verify.v1"
-"ok": true
-"schema_version": "codelewm.secret_scan.v1"
-"ok": true
-visual_report: .artifacts/llm-world-model-demo/run/demo.html
+CodeLeWM LLM + World-Model Demo
+mode: fixture dry-run | scorer: codelewm.torch_transition_scorer.v1 | success: true
+[ok] 4/6 World-model inference
+[ok] 5/6 Artifact gates
+html report: .artifacts/llm-world-model-demo/run/demo.html
 ```
+
+For non-interactive JSON output, use `uv run scripts/llm-world-model-demo --json`
+or `CODELEWM_LLM_DEMO_OUTPUT=json`.
 
 Live OpenRouter mode is explicit:
 

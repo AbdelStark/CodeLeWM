@@ -4,6 +4,34 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 uv_run=(uv run --group data --group train --group llm)
+cli_output_mode=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --json)
+      cli_output_mode="json"
+      shift
+      ;;
+    --visual)
+      cli_output_mode="visual"
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: scripts/llm-world-model-demo [--visual|--json]
+
+Runs the local LLM + CodeLeWM demo.
+
+Default output is a visual terminal walkthrough. Use --json or set
+CODELEWM_LLM_DEMO_OUTPUT=json for raw machine-readable command output.
+EOF
+      exit 0
+      ;;
+    *)
+      printf 'unknown option: %s\n' "$1" >&2
+      exit 2
+      ;;
+  esac
+done
 
 if [[ -f .env ]]; then
   __codelewm_env_keys=(
@@ -32,6 +60,8 @@ if [[ -f .env ]]; then
     CODELEWM_LLM_DEMO_TASK_ID
     CODELEWM_LLM_DEMO_INSTRUCTION
     CODELEWM_LLM_DEMO_OUT
+    CODELEWM_LLM_DEMO_DEVICE
+    CODELEWM_LLM_DEMO_OUTPUT
     OPENROUTER_API_KEY
     OPENROUTER_MANAGEMENT_KEY
     OPENROUTER_HTTP_REFERER
@@ -72,8 +102,53 @@ task_id="${CODELEWM_LLM_DEMO_TASK_ID:-codelewm-llm-world-model-demo}"
 instruction="${CODELEWM_LLM_DEMO_INSTRUCTION:-Add a deterministic comment candidate while preserving the value assignment.}"
 out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
 device="${CODELEWM_LLM_DEMO_DEVICE:-cpu}"
+output_mode="${cli_output_mode:-${CODELEWM_LLM_DEMO_OUTPUT:-visual}}"
+
+if [[ "$output_mode" != "visual" && "$output_mode" != "json" ]]; then
+  printf 'CODELEWM_LLM_DEMO_OUTPUT must be visual or json; got %s\n' "$output_mode" >&2
+  exit 2
+fi
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+demo_run_json="$tmp_dir/demo_run.json"
+manifest_verify_json="$tmp_dir/manifest_verify.json"
+secret_scan_json="$tmp_dir/secret_scan.json"
+html_secret_scan_json="$tmp_dir/html_secret_scan.json"
+
+run_json() {
+  local label="$1"
+  local output="$2"
+  shift 2
+  local stderr_file="$tmp_dir/${label//[^A-Za-z0-9_]/_}.stderr"
+  if [[ "$output_mode" == "visual" ]]; then
+    printf '[run] %s\n' "$label"
+  fi
+  if ! "$@" >"$output" 2>"$stderr_file"; then
+    printf '[fail] %s\n' "$label" >&2
+    if [[ -s "$output" ]]; then
+      cat "$output" >&2
+    fi
+    if [[ -s "$stderr_file" ]]; then
+      sed -n '1,80p' "$stderr_file" >&2
+    fi
+    exit 1
+  fi
+}
+
+if [[ "$output_mode" == "visual" ]]; then
+  printf 'CodeLeWM demo runner\n'
+  printf 'mode=%s model=%s device=%s out=%s\n\n' \
+    "$([[ "$CODELEWM_LLM_DRY_RUN" == "1" ]] && printf 'fixture' || printf 'live')" \
+    "$CODELEWM_LLM_MODEL" \
+    "$device" \
+    "$out_dir"
+fi
 
 if [[ ! -f "$checkpoint" ]]; then
+  if [[ "$output_mode" == "visual" ]]; then
+    printf '[run] first-results checkpoint missing, regenerating local smoke artifacts\n'
+  fi
   "${uv_run[@]}" scripts/first-results --overwrite
 fi
 
@@ -83,7 +158,8 @@ value = 1
 PY
 
 rm -rf "$out_dir"
-"${uv_run[@]}" codelewm llm-demo \
+run_json "candidate generation + learned world-model scoring" "$demo_run_json" \
+  "${uv_run[@]}" codelewm llm-demo \
   --before "$before_path" \
   --instruction "$instruction" \
   --checkpoint "$checkpoint" \
@@ -95,12 +171,30 @@ rm -rf "$out_dir"
   --overwrite \
   --json
 
-"${uv_run[@]}" codelewm manifest verify \
+run_json "manifest verification" "$manifest_verify_json" \
+  "${uv_run[@]}" codelewm manifest verify \
   --manifest "$out_dir/manifest.json" \
   --parent-manifest "$out_dir/candidate_pack/manifest.json" \
   --json
 
-"${uv_run[@]}" codelewm secret-scan "$out_dir" --json
-"${uv_run[@]}" codelewm secret-scan "$out_dir/demo.html" --include-suffix .html --json
+run_json "artifact secret scan" "$secret_scan_json" \
+  "${uv_run[@]}" codelewm secret-scan "$out_dir" --json
+run_json "HTML secret scan" "$html_secret_scan_json" \
+  "${uv_run[@]}" codelewm secret-scan "$out_dir/demo.html" --include-suffix .html --json
 
-printf 'visual_report: %s\n' "$out_dir/demo.html"
+if [[ "$output_mode" == "json" ]]; then
+  cat "$demo_run_json"
+  cat "$manifest_verify_json"
+  cat "$secret_scan_json"
+  cat "$html_secret_scan_json"
+  printf 'visual_report: %s\n' "$out_dir/demo.html"
+else
+  "${uv_run[@]}" python -m codelewm.harness.demo_terminal \
+    --demo-run "$demo_run_json" \
+    --manifest-verify "$manifest_verify_json" \
+    --secret-scan "$secret_scan_json" \
+    --html-secret-scan "$html_secret_scan_json" \
+    --report "$out_dir/reports/llm_world_model_demo_report.json" \
+    --candidate-pack "$out_dir/candidate_pack/candidate_pack.json" \
+    --out-dir "$out_dir"
+fi
