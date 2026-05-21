@@ -395,7 +395,7 @@ Deliverables:
 - roadmap, backlog, and agent-context lock (#236)
 - TensorBoard-compatible training/checkpoint event export (#237, complete)
 - checkpoint tensor and layer inspection reports (#238, complete)
-- latent representation matrix diagnostics (#239)
+- latent representation matrix diagnostics (#239, complete)
 - run timeline and monitoring reports (#240)
 - shared non-interactive JSON/rich/HTML report view model (#242)
 - optional Textual TUI for interactive demo inspection (#241)
@@ -439,8 +439,8 @@ Keep this table in implementation order and update it when issue scope changes.
 | 23 | #236 | docs: lock visual model observability and TUI roadmap | Visual Observability/TUI | complete |
 | 24 | #237 | observability: add TensorBoard event export for training and checkpoints | Visual Observability/TUI | complete |
 | 25 | #238 | model: add checkpoint tensor and layer inspection reports | Visual Observability/TUI | complete |
-| 26 | #239 | eval: add latent representation matrix diagnostics | Visual Observability/TUI | #236 |
-| 27 | #240 | observability: add run timeline and monitoring reports | Visual Observability/TUI | #236 |
+| 26 | #239 | eval: add latent representation matrix diagnostics | Visual Observability/TUI | complete |
+| 27 | #240 | observability: add run timeline and monitoring reports | Visual Observability/TUI | #236/#239 |
 | 28 | #242 | harness: keep rich terminal and JSON report parity with the TUI | Visual Observability/TUI | #240 |
 | 29 | #241 | harness: build optional Textual TUI for demo inspection | Visual Observability/TUI | #242 |
 | 30 | #243 | harness: connect model and latent diagnostics to demo reports | Visual Observability/TUI | #238/#239/#240/#242 |
@@ -520,8 +520,8 @@ instead of creating duplicate trackers.
   live artifact issue #231.
 - #224 Meaningful LLM plus world-model harness demo: open; #226 is complete,
   and children #227 through #231 remain.
-- #235 Visual model observability and TUI harness: open; #236 through #238 are
-  complete, and children #239 through #245 remain.
+- #235 Visual model observability and TUI harness: open; #236 through #239 are
+  complete, and children #240 through #245 remain.
 - #209 Scaled downstream reranking benchmark: open; children #210 and #211
   remain.
 - #212 Next positive-model research hypothesis: open; related issue #178

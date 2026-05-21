@@ -27,7 +27,8 @@ The systems path works end to end:
 - manifest-backed training on Hugging Face Jobs;
 - public dataset/model/run artifacts on Hugging Face;
 - downloaded-artifact verification with checksums and secret scans;
-- retrieval, action ablation, surprise, latent-probe, scorer-quality, score,
+- retrieval, action ablation, surprise, latent-probe, latent-matrix,
+  scorer-quality, score,
   rerank, downstream-pack, downstream-rerank, and LLM-demo reports.
 
 The first scientific result is negative. The tested action-conditioned variants
@@ -169,6 +170,7 @@ uv run codelewm dataset pack --help
 uv run codelewm train --help
 uv run codelewm eval retrieval --help
 uv run codelewm eval latent-probe --help
+uv run codelewm eval latent-matrix --help
 uv run codelewm eval surprise --help
 uv run codelewm eval scorer-quality --help
 uv run codelewm eval downstream-pack --help
@@ -252,11 +254,12 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - visual model observability and TUI roadmap locked through #236.
 - optional TensorBoard-compatible training export complete through #237.
 - checkpoint tensor/layer inspection complete through #238.
+- latent representation matrix diagnostics complete through #239.
 
 Open next streams:
 
 - meaningful harness demo: #224, with #227-#231 open;
-- visual model observability and Textual TUI harness: #235, with #239-#245
+- visual model observability and Textual TUI harness: #235, with #240-#245
   open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.

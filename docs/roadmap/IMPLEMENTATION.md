@@ -191,7 +191,7 @@ claims by itself.
 | #236 | docs: lock visual model observability and TUI roadmap | docs/observability/harness | p1 | s | RFC-0009 | Closed |
 | #237 | observability: add TensorBoard event export for training and checkpoints | observability/model/runtime | p1 | m | RFC-0009 | Closed |
 | #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Closed |
-| #239 | eval: add latent representation matrix diagnostics | evaluation/model/observability | p1 | l | RFC-0007 | Open |
+| #239 | eval: add latent representation matrix diagnostics | evaluation/model/observability | p1 | l | RFC-0007 | Closed |
 | #240 | observability: add run timeline and monitoring reports | observability/runtime/results | p1 | m | RFC-0009 | Open |
 | #241 | harness: build optional Textual TUI for demo inspection | harness/runtime/observability | p1 | l | RFC-0013 | Open |
 | #242 | harness: keep rich terminal and JSON report parity with the TUI | harness/docs/observability | p1 | m | RFC-0013 | Open |
@@ -306,6 +306,13 @@ harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
   fixtures and selector, task-solving prompts, static patch analysis, scorer
   traces and compact diff previews, opt-in sandbox checks, and one live
   diagnostic artifact publication.
+- #235 through #245 define the visual observability stream. #237 adds optional
+  TensorBoard-compatible training/checkpoint traces, #238 adds trusted
+  checkpoint tensor/layer inspection, and #239 adds manifest-backed latent
+  matrix diagnostics with bounded heatmap previews and closed semantic-axis
+  claim gates. The remaining queue is run timelines, report view-model parity,
+  optional Textual TUI mode, demo diagnostic links, diagnostics-driven model
+  experiment planning, and one visual artifact publication.
 - #209/#210/#211 track the scaled downstream gate; #212 tracks the next model
   hypothesis and should use #178 only if CWM comparison yields reusable
   baselines or criteria.

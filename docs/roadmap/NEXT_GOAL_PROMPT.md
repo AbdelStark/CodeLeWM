@@ -55,16 +55,17 @@ registration requires an OpenRouter management key such as
 The #235 visual model observability and TUI tracker is now the single stream.
 #237 closed optional TensorBoard-compatible model-generation traces for
 training/checkpoint runs; #238 closed trusted checkpoint tensor/layer
-inspection; the remaining queue is latent representation matrix diagnostics, run timelines, shared
-JSON/rich/HTML report view models, optional Textual TUI mode, demo diagnostic
-links, diagnostics-driven model experiment planning, and final visual artifact
+inspection; #239 closed manifest-backed latent representation matrix
+diagnostics. The remaining queue is run timelines, shared JSON/rich/HTML report
+view models, optional Textual TUI mode, demo diagnostic links,
+diagnostics-driven model experiment planning, and final visual artifact
 publication. The latest live meaningful demo worked end to end, but it also
 showed the current scorer can rank an incomplete patch above semantically
 stronger candidates; treat that as a diagnostic failure mode to inspect, not as
 a positive model result.
 
 No active completion issue remains for the current public evidence boundary.
-The open streams are #224/#227-#231, #235/#239-#245, #209/#210/#211, and
+The open streams are #224/#227-#231, #235/#240-#245, #209/#210/#211, and
 #212.
 
 For benchmark work, keep fixture/dry-run mode available so local validation does

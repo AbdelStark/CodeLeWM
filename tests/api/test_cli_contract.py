@@ -160,6 +160,27 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_latent_matrix_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "latent-matrix", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--data",
+            "--out",
+            "--device",
+            "--max-examples-per-split",
+            "--matrix-dimension-limit",
+            "--top-dimensions",
+            "--max-pairwise-rows",
+            "--latent-probe-report",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_eval_surprise_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("eval", "surprise", "--help")
 
@@ -292,6 +313,18 @@ class PublicCliContractTest(unittest.TestCase):
             (
                 "eval",
                 "latent-probe",
+                "--checkpoint",
+                "ckpt",
+                "--data",
+                "pack",
+                "--out",
+                "out",
+                "--device",
+                "tpu",
+            ),
+            (
+                "eval",
+                "latent-matrix",
                 "--checkpoint",
                 "ckpt",
                 "--data",

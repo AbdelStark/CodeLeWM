@@ -24,6 +24,7 @@ from codelewm.data import (
 from codelewm.eval import (
     ActionAblationError,
     ActionViewPolicyError,
+    LatentMatrixError,
     LatentProbeError,
     RetrievalEvalError,
     SurpriseEvalError,
@@ -32,6 +33,7 @@ from codelewm.eval import (
     build_downstream_benchmark_pack,
     run_downstream_rerank_evaluation,
     run_action_ablation_suite,
+    run_latent_matrix_evaluation,
     run_latent_probe_evaluation,
     run_retrieval_evaluation,
     run_surprise_evaluation,
@@ -483,6 +485,69 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     latent_probe.set_defaults(func=_eval_latent_probe_command)
+    latent_matrix = eval_subcommands.add_parser(
+        "latent-matrix", help="run latent representation matrix diagnostics"
+    )
+    latent_matrix.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted training checkpoint path",
+    )
+    latent_matrix.add_argument(
+        "--data",
+        type=Path,
+        required=True,
+        help="packed dataset directory or manifest.json",
+    )
+    latent_matrix.add_argument(
+        "--out", type=Path, required=True, help="latent matrix report artifact directory"
+    )
+    latent_matrix.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    latent_matrix.add_argument(
+        "--max-examples-per-split",
+        type=int,
+        default=1000,
+        help="maximum rows to inspect from each train/val/test split",
+    )
+    latent_matrix.add_argument(
+        "--matrix-dimension-limit",
+        type=int,
+        default=32,
+        help="maximum latent dimensions included in heatmap-ready matrix previews",
+    )
+    latent_matrix.add_argument(
+        "--top-dimensions",
+        type=int,
+        default=16,
+        help="top per-target dimensions retained for label-association diagnostics",
+    )
+    latent_matrix.add_argument(
+        "--max-pairwise-rows",
+        type=int,
+        default=512,
+        help="maximum rows used for mean pairwise cosine diagnostics",
+    )
+    latent_matrix.add_argument(
+        "--latent-probe-report",
+        type=Path,
+        help="optional codelewm.eval.latent_probe_report.v1 JSON to link probe controls",
+    )
+    latent_matrix.add_argument(
+        "--seed", type=int, default=0, help="deterministic matrix diagnostic seed"
+    )
+    latent_matrix.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing latent matrix output files",
+    )
+    latent_matrix.add_argument("--json", action="store_true", help="emit JSON output")
+    latent_matrix.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    latent_matrix.set_defaults(func=_eval_latent_matrix_command)
     surprise = eval_subcommands.add_parser(
         "surprise", help="run patch-surprise evaluation"
     )
@@ -1736,6 +1801,161 @@ def _eval_latent_probe_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_latent_matrix_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_latent_matrix_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.latent_matrix.start",
+                level="info",
+                run_id=run_id,
+                step="eval.latent_matrix",
+                message="latent matrix evaluation started",
+                fields={
+                    "checkpoint": str(args.checkpoint),
+                    "data": str(args.data),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "max_examples_per_split": args.max_examples_per_split,
+                    "matrix_dimension_limit": args.matrix_dimension_limit,
+                    "top_dimensions": args.top_dimensions,
+                    "max_pairwise_rows": args.max_pairwise_rows,
+                    "latent_probe_report": None
+                    if args.latent_probe_report is None
+                    else str(args.latent_probe_report),
+                    "seed": args.seed,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_latent_matrix_evaluation(
+            checkpoint=args.checkpoint,
+            data=args.data,
+            out=args.out,
+            device=args.device,
+            max_examples_per_split=args.max_examples_per_split,
+            matrix_dimension_limit=args.matrix_dimension_limit,
+            top_dimensions=args.top_dimensions,
+            max_pairwise_rows=args.max_pairwise_rows,
+            latent_probe_report=args.latent_probe_report,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.latent_matrix.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.latent_matrix",
+                message="latent matrix evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "row_count": result.row_count,
+                    "split_counts": dict(result.split_counts),
+                    "view_shapes": dict(result.view_shapes),
+                    "claim_boundary": dict(result.claim_boundary),
+                    "parent_artifacts": list(result.parent_artifacts),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"latent matrix optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.data),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_matrix",
+            event="evaluation.latent_matrix.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"latent matrix checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_matrix",
+            event="evaluation.latent_matrix.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"latent matrix artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training run, dataset manifests, and optional latent-probe report, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_matrix",
+            event="evaluation.latent_matrix.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (LatentMatrixError, LatentProbeError) as exc:
+        error, exit_code = _latent_matrix_eval_error(args, exc)
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_matrix",
+            event="evaluation.latent_matrix.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"latent matrix evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the latent matrix inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.latent_matrix",
+            event="evaluation.latent_matrix.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"latent_matrix_report: {args.out / result.report_path}")
+        print(f"row_count: {result.row_count}")
+        for view, shape in sorted(result.view_shapes.items()):
+            print(f"{view}: rows={shape.get('rows')} dimensions={shape.get('dimensions')}")
+        print(f"semantic_axis_claim_allowed: {result.claim_boundary.get('semantic_axis_claim_allowed')}")
+    return 0
+
+
 def _eval_surprise_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _eval_surprise_command_tuple(args)
@@ -2685,6 +2905,41 @@ def _eval_latent_probe_command_tuple(args: argparse.Namespace) -> tuple[str, ...
     return tuple(command)
 
 
+def _eval_latent_matrix_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "latent-matrix",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--data",
+        str(args.data),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples-per-split",
+        str(args.max_examples_per_split),
+        "--matrix-dimension-limit",
+        str(args.matrix_dimension_limit),
+        "--top-dimensions",
+        str(args.top_dimensions),
+        "--max-pairwise-rows",
+        str(args.max_pairwise_rows),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.latent_probe_report is not None:
+        command.extend(("--latent-probe-report", str(args.latent_probe_report)))
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
 def _eval_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
     command = [
         "codelewm",
@@ -2914,6 +3169,42 @@ def _latent_probe_eval_error(
             f"latent probe gate failed: {exc}",
             error_type="evaluation_gate_error",
             remediation="inspect probe labels, split coverage, and checkpoint artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        ),
+        6,
+    )
+
+
+def _latent_matrix_eval_error(
+    args: argparse.Namespace, exc: Exception
+) -> tuple[ScoreError, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if (
+        "output already exists" in normalized
+        or "must be a positive integer" in normalized
+        or "must be a non-negative integer" in normalized
+        or "--data" in normalized
+        or "device" in normalized
+        or "row count mismatch" in normalized
+        or "rank 2" in normalized
+    ):
+        return (
+            ScoreError(
+                f"latent matrix request is invalid: {exc}",
+                error_type="config_error",
+                remediation="repair the command flags or choose a clean output directory",
+                artifact=str(args.out),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ),
+            2,
+        )
+    return (
+        ScoreError(
+            f"latent matrix gate failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect latent matrices, probe links, split coverage, and checkpoint artifacts",
             artifact=str(args.out),
             caused_by=f"{exc.__class__.__name__}: {exc}",
         ),

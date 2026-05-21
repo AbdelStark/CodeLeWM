@@ -110,6 +110,17 @@ random-latent, no-action, and shuffled-action controls; bootstrap confidence
 intervals; and per-dimension association diagnostics. Dimension-level semantic
 claims remain blocked unless stable axes are demonstrated across seeds and
 splits.
+Latent matrix reports use
+`schema_version=codelewm.eval.latent_matrix_report.v1` and are written by
+`codelewm eval latent-matrix` as `reports/latent_matrix_report.json`. They
+record latent shape, dimension count, sample count, split/source coverage,
+finite-value status, per-dimension mean/std/variance/norm summaries, effective
+rank, effective-rank ratio, mean pairwise cosine, covariance/correlation
+summaries, bounded heatmap-ready covariance/correlation previews, inline
+dimension-label association diagnostics, optional latent-probe report links,
+and semantic-axis claim gates. Raw latent vectors are not serialized by
+default. Dimension-level semantic claims remain blocked unless axes are stable
+across seeds and splits and beat declared controls.
 Action-discriminative shard reports use
 `schema_version=codelewm.data.action_discriminative_shard_report.v1` and are
 manifested by dataset build and pack artifacts as
@@ -163,7 +174,7 @@ Planned schemas:
   structure, parameter counts, tensor shapes, dtype/device metadata,
   finite-value checks, norms, checkpoint-manifest provenance, compatibility
   metadata, and bounded summary histograms.
-- `codelewm.eval.latent_matrix_report.v1`: latent dimension count,
+- `codelewm.eval.latent_matrix_report.v1`: implemented latent dimension count,
   per-dimension statistics, effective rank, covariance/correlation summaries,
   probe associations, and semantic-axis claim gates.
 - `codelewm.run_timeline.v1`: ordered run steps, durations, command ids,
@@ -181,7 +192,11 @@ manifest with checksums. Checkpoint inspection is enabled through
 `codelewm model inspect-checkpoint`, verifies the checkpoint trust gate before
 loading unless an explicit unsafe local override is selected, writes
 `reports/model_checkpoint_inspection.json`, and includes the report in an
-artifact manifest with checksums. Visual reports are diagnostic only and cannot
+artifact manifest with checksums. Latent matrix diagnostics are enabled through
+`codelewm eval latent-matrix`, verify dataset, training-run, and checkpoint
+manifests before loading model weights, write
+`reports/latent_matrix_report.json`, and include the report in an artifact
+manifest with checksums. Visual reports are diagnostic only and cannot
 support positive semantic-latent-axis or coding-usefulness claims without the
 relevant benchmark gates.
 
