@@ -94,6 +94,8 @@ class DemoTerminalReportTest(unittest.TestCase):
 
         self.assertIn("Candidate generation", output)
         self.assertIn("World-model inference", output)
+        self.assertIn("score direction: lower transition energy is better", output)
+        self.assertIn("-0.500000 (better than no-op)", output)
         self.assertIn("codelewm.torch_transition_scorer.v1", output)
         self.assertIn("candidate_002", output)
         self.assertIn("demo_report_is_not_downstream_benchmark_evidence", output)

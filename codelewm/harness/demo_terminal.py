@@ -125,8 +125,9 @@ def render_demo_terminal_report(
             details=(
                 f"backend: {_safe_text(scores.get('model_id'))}",
                 f"warnings: {_compact_warnings(demo_report.get('warnings', ()))}",
+                "score direction: lower transition energy is better",
                 f"best candidate: {best_candidate} ({_format_score(best_score)})",
-                f"no-action: {_format_score(no_action_score)}  delta: {_format_delta(delta)}",
+                f"no-action: {_format_score(no_action_score)}  candidate - no-action: {_format_noop_delta(delta)}",
                 f"score range: {score_range}",
             ),
         )
@@ -322,6 +323,16 @@ def _format_delta(value: float | None) -> str:
         return "n/a"
     sign = "+" if value >= 0 else ""
     return f"{sign}{value:.6f}"
+
+
+def _format_noop_delta(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    if value < 0:
+        return f"{_format_delta(value)} (better than no-op)"
+    if value > 0:
+        return f"{_format_delta(value)} (worse than no-op)"
+    return f"{_format_delta(value)} (tied with no-op)"
 
 
 def _optional_float(value: Any) -> float | None:

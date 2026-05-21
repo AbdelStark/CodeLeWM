@@ -10,10 +10,13 @@ from typing import Any
 
 from codelewm.observability import (
     ArtifactManifestError,
+    RUN_TIMELINE_SCHEMA_VERSION,
+    RunTimelineRecorder,
     build_artifact_manifest,
     read_artifact_manifest,
     validate_artifact_checksums,
     write_artifact_manifest,
+    write_run_timeline_report,
 )
 from codelewm.security import require_trusted_checkpoint
 from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
@@ -100,66 +103,70 @@ def run_latent_matrix_evaluation(
     checkpoint_path = Path(checkpoint).resolve()
     out_dir = Path(out).resolve()
     _reject_existing_latent_matrix_outputs(out_dir, overwrite=overwrite)
+    timeline = RunTimelineRecorder(run_id="latent-matrix", command=command)
 
-    pack_paths = _resolve_pack_paths(data)
-    dataset_artifact = _read_verified_artifact_manifest(pack_paths.artifact_manifest_path, root=pack_paths.root)
-    if dataset_artifact.artifact_kind != "dataset":
-        raise ArtifactManifestError("latent-matrix --data manifest must be a dataset artifact")
-    training_artifact_path = _infer_training_artifact_manifest_path(checkpoint_path)
-    training_artifact = read_artifact_manifest(training_artifact_path)
-    if training_artifact.artifact_kind != "training_run":
-        raise ArtifactManifestError("checkpoint parent manifest must be a training_run artifact")
-    checkpoint_manifest = require_trusted_checkpoint(checkpoint_path)
-    validate_artifact_checksums(training_artifact, root=training_artifact_path.parent)
-    runtime = _require_torch_runtime()
-    selected_device = _resolve_device(device, runtime)
-    model, checkpoint_payload = _load_torch_checkpoint(
-        checkpoint_path,
-        device=selected_device,
-        runtime=runtime,
-    )
-    action_view = str(checkpoint_manifest.metadata.action_view)
-    if action_view != str(model.config.action_view):
-        raise LatentMatrixError(
-            "checkpoint manifest action_view does not match checkpoint payload: "
-            f"{action_view!r} != {model.config.action_view!r}"
+    with timeline.step("artifact validation", command_id="eval.latent_matrix.artifact_validation"):
+        pack_paths = _resolve_pack_paths(data)
+        dataset_artifact = _read_verified_artifact_manifest(pack_paths.artifact_manifest_path, root=pack_paths.root)
+        if dataset_artifact.artifact_kind != "dataset":
+            raise ArtifactManifestError("latent-matrix --data manifest must be a dataset artifact")
+        training_artifact_path = _infer_training_artifact_manifest_path(checkpoint_path)
+        training_artifact = read_artifact_manifest(training_artifact_path)
+        if training_artifact.artifact_kind != "training_run":
+            raise ArtifactManifestError("checkpoint parent manifest must be a training_run artifact")
+        checkpoint_manifest = require_trusted_checkpoint(checkpoint_path)
+        validate_artifact_checksums(training_artifact, root=training_artifact_path.parent)
+    with timeline.step("model load", command_id="eval.latent_matrix.model_load"):
+        runtime = _require_torch_runtime()
+        selected_device = _resolve_device(device, runtime)
+        model, checkpoint_payload = _load_torch_checkpoint(
+            checkpoint_path,
+            device=selected_device,
+            runtime=runtime,
         )
+        action_view = str(checkpoint_manifest.metadata.action_view)
+        if action_view != str(model.config.action_view):
+            raise LatentMatrixError(
+                "checkpoint manifest action_view does not match checkpoint payload: "
+                f"{action_view!r} != {model.config.action_view!r}"
+            )
 
-    rows = _load_latent_matrix_rows(
-        pack_paths,
-        action_view=model.config.action_view,
-        max_examples_per_split=max_examples_per_split,
-        seed=seed,
-    )
-    linked_probe_report = read_optional_latent_probe_report(latent_probe_report)
-    report = _evaluate_latent_matrix_rows(
-        rows,
-        model=model,
-        runtime=runtime,
-        device=selected_device,
-        seed=seed,
-        matrix_dimension_limit=matrix_dimension_limit,
-        top_dimensions=top_dimensions,
-        max_pairwise_rows=max_pairwise_rows,
-        latent_probe_report=linked_probe_report,
-        latent_probe_report_path=latent_probe_report,
-        metadata={
-            "checkpoint": {
-                "path": _display_path(checkpoint_path),
-                "sha256": checkpoint_manifest.checkpoint_sha256,
-                "step": _optional_int(checkpoint_payload.get("step")),
-                "model_class": "TorchCodeTransitionModel",
-                "backend": "torch",
+    with timeline.step("latent matrix report", command_id="eval.latent_matrix.report"):
+        rows = _load_latent_matrix_rows(
+            pack_paths,
+            action_view=model.config.action_view,
+            max_examples_per_split=max_examples_per_split,
+            seed=seed,
+        )
+        linked_probe_report = read_optional_latent_probe_report(latent_probe_report)
+        report = _evaluate_latent_matrix_rows(
+            rows,
+            model=model,
+            runtime=runtime,
+            device=selected_device,
+            seed=seed,
+            matrix_dimension_limit=matrix_dimension_limit,
+            top_dimensions=top_dimensions,
+            max_pairwise_rows=max_pairwise_rows,
+            latent_probe_report=linked_probe_report,
+            latent_probe_report_path=latent_probe_report,
+            metadata={
+                "checkpoint": {
+                    "path": _display_path(checkpoint_path),
+                    "sha256": checkpoint_manifest.checkpoint_sha256,
+                    "step": _optional_int(checkpoint_payload.get("step")),
+                    "model_class": "TorchCodeTransitionModel",
+                    "backend": "torch",
+                },
+                "dataset": {
+                    "path": _display_path(pack_paths.root),
+                    "artifact_id": dataset_artifact.artifact_id,
+                    "split_counts": dict(dataset_artifact.metadata.get("split_counts", {})),
+                },
+                "training_artifact_id": training_artifact.artifact_id,
+                "action_view": model.config.action_view,
             },
-            "dataset": {
-                "path": _display_path(pack_paths.root),
-                "artifact_id": dataset_artifact.artifact_id,
-                "split_counts": dict(dataset_artifact.metadata.get("split_counts", {})),
-            },
-            "training_artifact_id": training_artifact.artifact_id,
-            "action_view": model.config.action_view,
-        },
-    )
+        )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     config_payload = {
@@ -181,14 +188,23 @@ def run_latent_matrix_evaluation(
     }
     config_path = out_dir / "config.json"
     report_path = out_dir / "reports" / "latent_matrix_report.json"
-    _write_json(config_payload, config_path)
-    write_latent_matrix_report(report, report_path)
+    timeline_path = out_dir / "reports" / "run_timeline.json"
+    with timeline.step("artifact write", command_id="eval.latent_matrix.artifact_write"):
+        _write_json(config_payload, config_path)
+        write_latent_matrix_report(report, report_path)
+    write_run_timeline_report(
+        timeline.to_report(
+            artifact_ids=(training_artifact.artifact_id, dataset_artifact.artifact_id),
+            metadata={"report_path": "reports/latent_matrix_report.json"},
+        ),
+        timeline_path,
+    )
 
     parent_artifacts = (training_artifact.artifact_id, dataset_artifact.artifact_id)
     artifact_manifest = build_artifact_manifest(
         artifact_kind="eval_report",
         root=out_dir,
-        files=(config_path, report_path),
+        files=(config_path, report_path, timeline_path),
         command=command,
         config=config_payload,
         parent_artifacts=parent_artifacts,
@@ -198,6 +214,8 @@ def run_latent_matrix_evaluation(
             "schema_version": LATENT_MATRIX_EVAL_RUN_SCHEMA_VERSION,
             "report_schema_version": report.schema_version,
             "report_path": "reports/latent_matrix_report.json",
+            "run_timeline_schema_version": RUN_TIMELINE_SCHEMA_VERSION,
+            "run_timeline_path": "reports/run_timeline.json",
             "checkpoint_sha256": checkpoint_manifest.checkpoint_sha256,
             "checkpoint_action_view": model.config.action_view,
             "checkpoint_step": _optional_int(checkpoint_payload.get("step")),

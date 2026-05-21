@@ -192,7 +192,7 @@ claims by itself.
 | #237 | observability: add TensorBoard event export for training and checkpoints | observability/model/runtime | p1 | m | RFC-0009 | Closed |
 | #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Closed |
 | #239 | eval: add latent representation matrix diagnostics | evaluation/model/observability | p1 | l | RFC-0007 | Closed |
-| #240 | observability: add run timeline and monitoring reports | observability/runtime/results | p1 | m | RFC-0009 | Open |
+| #240 | observability: add run timeline and monitoring reports | observability/runtime/results | p1 | m | RFC-0009 | Closed |
 | #241 | harness: build optional Textual TUI for demo inspection | harness/runtime/observability | p1 | l | RFC-0013 | Open |
 | #242 | harness: keep rich terminal and JSON report parity with the TUI | harness/docs/observability | p1 | m | RFC-0013 | Open |
 | #243 | harness: connect model and latent diagnostics to demo reports | harness/model/evaluation/observability | p1 | m | RFC-0013 | Open |
@@ -310,7 +310,8 @@ harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness.
   TensorBoard-compatible training/checkpoint traces, #238 adds trusted
   checkpoint tensor/layer inspection, and #239 adds manifest-backed latent
   matrix diagnostics with bounded heatmap previews and closed semantic-axis
-  claim gates. The remaining queue is run timelines, report view-model parity,
+  claim gates, and #240 adds manifest-backed run timelines for the LLM demo and
+  latent-matrix eval paths. The remaining queue is report view-model parity,
   optional Textual TUI mode, demo diagnostic links, diagnostics-driven model
   experiment planning, and one visual artifact publication.
 - #209/#210/#211 track the scaled downstream gate; #212 tracks the next model
