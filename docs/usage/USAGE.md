@@ -61,6 +61,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm eval latent-probe` | landed | `codelewm.eval.latent_probe_run.v1`, `codelewm.eval.latent_probe_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm eval downstream-pack` | landed | `codelewm.downstream_benchmark_pack_run.v1`, `codelewm.downstream_rerank_benchmark.v1`, `codelewm.downstream_benchmark_readiness.v1`, `codelewm.artifact_manifest.v1`, `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 
 Run `codelewm <command> --help` for the current flag set. JSON
@@ -710,6 +711,44 @@ codelewm manifest verify \
   --json
 ```
 
+### `codelewm eval downstream-pack`
+
+Build a public-safe downstream reranking benchmark pack:
+
+```bash
+codelewm eval downstream-pack \
+  --config config/benchmark/downstream_rerank_fixture.json \
+  --out .artifacts/downstream-rerank-fixture \
+  --json
+```
+
+The config schema is `codelewm.downstream_rerank_benchmark_config.v1`. The
+builder copies before-states and candidate patches or after-states into a
+self-contained artifact, records source/license policy, checks split and
+repository leakage, emits a readiness report, and secret-scans publishable
+files. It does not import or execute candidate code.
+
+The fixture config has one labeled task, so
+`codelewm.downstream_benchmark_readiness.v1` reports
+`scaled_evaluation_ready=false` and `downstream_claim_allowed=false`.
+
+The artifact layout is:
+
+```
+<out>/
+  manifest.json                              codelewm.artifact_manifest.v1
+  benchmark.json                             codelewm.downstream_rerank_benchmark.v1
+  config.json                                normalized benchmark pack config
+  reports/
+    benchmark_readiness.json                 codelewm.downstream_benchmark_readiness.v1
+    source_license_policy.json               codelewm.downstream_source_license_policy.v1
+    split_leakage_report.json                codelewm.downstream_split_leakage_report.v1
+    secret_scan_report.json                  codelewm.secret_scan.v1
+  tasks/
+    <task-id>/before.py
+    <task-id>/candidates/
+```
+
 ## Python API
 
 ### Train the package-native model
@@ -928,6 +967,11 @@ field list.
 | LLM demo run | `codelewm.harness.demo_run.v1` |
 | LLM demo report | `codelewm.harness.demo_report.v1` |
 | Downstream rerank benchmark | `codelewm.downstream_rerank_benchmark.v1` |
+| Downstream rerank benchmark config | `codelewm.downstream_rerank_benchmark_config.v1` |
+| Downstream benchmark pack run | `codelewm.downstream_benchmark_pack_run.v1` |
+| Downstream benchmark readiness | `codelewm.downstream_benchmark_readiness.v1` |
+| Downstream source license policy | `codelewm.downstream_source_license_policy.v1` |
+| Downstream split leakage report | `codelewm.downstream_split_leakage_report.v1` |
 | Downstream rerank report | `codelewm.downstream_rerank_report.v1` |
 | Downstream rerank claim gate | `codelewm.downstream_rerank_claim_gate.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |

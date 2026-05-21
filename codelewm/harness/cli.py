@@ -27,6 +27,8 @@ from codelewm.eval import (
     LatentProbeError,
     RetrievalEvalError,
     SurpriseEvalError,
+    DownstreamBenchmarkPackError,
+    build_downstream_benchmark_pack,
     run_action_ablation_suite,
     run_latent_probe_evaluation,
     run_retrieval_evaluation,
@@ -498,6 +500,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="load the checkpoint without verifying its manifest (trusted local use only)",
     )
     scorer_quality.set_defaults(func=_eval_scorer_quality_command)
+    downstream_pack = eval_subcommands.add_parser(
+        "downstream-pack",
+        help="build a manifest-backed downstream candidate-reranking benchmark pack",
+    )
+    downstream_pack.add_argument(
+        "--config", type=Path, required=True, help="downstream benchmark pack config JSON"
+    )
+    downstream_pack.add_argument(
+        "--out", type=Path, required=True, help="benchmark pack artifact directory"
+    )
+    downstream_pack.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing benchmark pack output files",
+    )
+    downstream_pack.add_argument("--json", action="store_true", help="emit JSON output")
+    downstream_pack.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    downstream_pack.set_defaults(func=_eval_downstream_pack_command)
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     index = subparsers.add_parser("index", help="build a transition index artifact")
     index.add_argument(
@@ -1668,6 +1690,104 @@ def _eval_scorer_quality_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_downstream_pack_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_downstream_pack_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.downstream_pack.start",
+                level="info",
+                run_id=run_id,
+                step="eval.downstream_pack",
+                message="downstream benchmark pack build started",
+                fields={
+                    "config": str(args.config),
+                    "out": str(args.out),
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = build_downstream_benchmark_pack(
+            config_path=args.config,
+            out=args.out,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.downstream_pack.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.downstream_pack",
+                message="downstream benchmark pack build completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "benchmark_path": result.benchmark_path,
+                    "readiness_report_path": result.readiness_report_path,
+                    "example_count": result.example_count,
+                    "labeled_example_count": result.labeled_example_count,
+                    "scaled_evaluation_ready": result.scaled_evaluation_ready,
+                    "downstream_claim_allowed": result.downstream_claim_allowed,
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        DownstreamBenchmarkPackError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"downstream benchmark pack build failed: {exc}",
+            error_type="manifest_error",
+            remediation="repair the benchmark pack config or source files and retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.downstream_pack",
+            event="evaluation.downstream_pack.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"downstream benchmark pack build failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the benchmark pack inputs and retry with corrected artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.downstream_pack",
+            event="evaluation.downstream_pack.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"benchmark: {args.out / result.benchmark_path}")
+        print(f"readiness_report: {args.out / result.readiness_report_path}")
+        print(f"example_count: {result.example_count}")
+        print(f"labeled_example_count: {result.labeled_example_count}")
+        print(f"scaled_evaluation_ready: {result.scaled_evaluation_ready}")
+        print(f"downstream_claim_allowed: {result.downstream_claim_allowed}")
+    return 0
+
+
 def _index_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _index_command_tuple(args)
@@ -2107,6 +2227,25 @@ def _eval_scorer_quality_command_tuple(args: argparse.Namespace) -> tuple[str, .
         command.extend(("--log-jsonl", str(args.log_jsonl)))
     if args.allow_unsafe_checkpoint:
         command.append("--allow-unsafe-checkpoint")
+    return tuple(command)
+
+
+def _eval_downstream_pack_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "downstream-pack",
+        "--config",
+        str(args.config),
+        "--out",
+        str(args.out),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
     return tuple(command)
 
 

@@ -159,7 +159,8 @@ Stream B, downstream candidate-reranking benchmark:
 
 - #184 tracks the stream.
 - #190 defines benchmark schema and claim gates.
-- #191 builds the public-safe labeled candidate set.
+- #191 builds the public-safe labeled candidate set and claim-blocked fixture
+  benchmark pack.
 - #192 runs the downstream comparison and claim gate.
 
 Stream C, preliminary results publication:
@@ -186,7 +187,7 @@ Stream C, preliminary results publication:
 2. Land fixture-first runtime slices #187 and #188.
 3. Land demo report #189.
 4. Land benchmark contract #190 before collecting or publishing a labeled set.
-5. Land dataset and evaluation issues #191 and #192.
+5. Land evaluation issue #192 against the #191 benchmark pack.
 6. Land publication issues #193 and #194 once every public claim links to
    artifact-backed evidence.
 

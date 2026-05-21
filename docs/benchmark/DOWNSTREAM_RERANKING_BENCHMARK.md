@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-21
 
-Issue: #190. Parent tracker: #184.
+Issue: #191. Parent tracker: #184.
 
 ## Status
 
@@ -25,6 +25,24 @@ examples required for a scaled downstream usefulness claim. Therefore
 `benchmark_readiness.scaled_evaluation_ready=false` and
 `benchmark_readiness.downstream_claim_allowed=false` are expected for fixture
 runs.
+
+Issue #191 adds a public-safe benchmark pack builder:
+
+```bash
+uv run codelewm eval downstream-pack \
+  --config config/benchmark/downstream_rerank_fixture.json \
+  --out .artifacts/downstream-rerank-fixture \
+  --overwrite \
+  --json
+```
+
+The fixture pack writes `codelewm.downstream_rerank_benchmark.v1`,
+`codelewm.downstream_benchmark_readiness.v1`,
+`codelewm.downstream_source_license_policy.v1`,
+`codelewm.downstream_split_leakage_report.v1`,
+`codelewm.secret_scan.v1`, and `codelewm.artifact_manifest.v1` artifacts. The
+source policy is project-owned synthetic fixtures under the repository license.
+It is public-safe but remains smoke evidence because it has one labeled task.
 
 ## Benchmark Payload Schema
 

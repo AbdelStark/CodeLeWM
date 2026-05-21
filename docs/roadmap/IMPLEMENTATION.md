@@ -131,7 +131,7 @@ negative-results publication.
 | #188 | harness: add candidate pack schema and safe patch capture | harness | p1 | m | RFC-0013 | Closed |
 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | harness | p1 | l | RFC-0013 | Closed |
 | #190 | benchmark: define downstream task schema and claim gates | evaluation | p1 | m | RFC-0013 | Closed |
-| #191 | benchmark: build public-safe labeled candidate reranking set | evaluation | p1 | l | RFC-0013 | Open |
+| #191 | benchmark: build public-safe labeled candidate reranking set | evaluation | p1 | l | RFC-0013 | Closed |
 | #192 | eval: run downstream reranking comparison and claim gate | evaluation | p1 | l | RFC-0013 | Open |
 | #193 | docs: publish preliminary negative-results report | docs | p1 | m | RFC-0013 | Closed |
 | #194 | docs: prepare public artifact index and announcement package | docs | p1 | m | RFC-0013 | Closed |

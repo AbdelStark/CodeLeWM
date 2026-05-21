@@ -314,7 +314,7 @@ labeled examples to support or block coding-usefulness claims.
 Deliverables:
 
 - downstream task schema, baselines, metrics, and claim gates (#190)
-- public-safe labeled candidate reranking set (#191)
+- public-safe labeled candidate reranking set (#191, complete)
 - downstream reranking comparison and claim gate (#192)
 
 Minimum success bar: at least 100 labeled examples and CodeLeWM improvement
@@ -351,7 +351,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | complete |
 | 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | complete |
 | 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | complete |
-| 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | #192 |
+| 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | complete |
 | 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | public coding-usefulness claim path |
 
 Completed backlog base:
@@ -415,9 +415,10 @@ instead of creating duplicate trackers.
 - #167 v0.2 action-use and representation research intervention: complete as
   negative/diagnostic evidence through #168 through #172.
 - #183 LLM + world-model harness demo: complete; children #186 through #189.
-- #184 Downstream candidate-reranking benchmark: active; children #190 through
-  #192.
-- #185 Preliminary results publication package: active; children #193 and #194.
+- #184 Downstream candidate-reranking benchmark: active; #190 and #191 are
+  complete, #192 remains.
+- #185 Preliminary results publication package: complete; children #193 and
+  #194 are closed.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

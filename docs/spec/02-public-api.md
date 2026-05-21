@@ -296,6 +296,23 @@ report includes ranking metrics, score distributions, calibration slices by
 candidate kind, parse/patch failure counts, retrieval-prior settings, and the
 current risk-penalty caveat. Lower `final_score` remains better.
 
+`codelewm eval downstream-pack` builds a self-contained downstream reranking
+benchmark pack:
+
+```bash
+codelewm eval downstream-pack \
+  --config config/benchmark/downstream_rerank_fixture.json \
+  --out .artifacts/downstream-rerank-fixture \
+  --json
+```
+
+The config schema is `codelewm.downstream_rerank_benchmark_config.v1`. The
+command copies public-safe before-state and candidate files into the artifact,
+emits `codelewm.downstream_rerank_benchmark.v1`, source/license policy, split
+leakage, readiness, and secret-scan reports, and never imports or executes
+candidate code. The checked-in fixture has one labeled task and is explicitly
+blocked by the 100-example readiness gate.
+
 `manifest verify` validates that every file declared in an artifact manifest
 exists, matches its recorded byte size and SHA-256, and that any required parent
 artifacts are passed in with `--parent-manifest`. The verifier exits with code 2
@@ -494,6 +511,7 @@ class ArtifactManifest:
         "candidate_pack",
         "dataset",
         "demo_report",
+        "downstream_benchmark",
         "checkpoint",
         "training_run",
         "index",

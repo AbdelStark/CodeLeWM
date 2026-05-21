@@ -23,6 +23,8 @@ class PackageImportBoundaryTest(unittest.TestCase):
         self.assertIn("RetrievalReport", codelewm.eval.__all__)
         self.assertIn("DownstreamRerankBenchmark", codelewm.eval.__all__)
         self.assertIn("build_downstream_rerank_claim_gate", codelewm.eval.__all__)
+        self.assertIn("build_downstream_benchmark_pack", codelewm.eval.__all__)
+        self.assertIn("read_downstream_rerank_benchmark", codelewm.eval.__all__)
         self.assertIn("compute_retrieval_metrics", codelewm.eval.__all__)
         self.assertIn("HardNegativeSamplerConfig", codelewm.eval.__all__)
         self.assertIn("sample_hard_negatives", codelewm.eval.__all__)

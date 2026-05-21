@@ -103,6 +103,11 @@ their workflow depends on.
 | LLM demo report               | `codelewm.harness.demo_report.v1`               |
 | LLM demo run                  | `codelewm.harness.demo_run.v1`                  |
 | Downstream rerank benchmark   | `codelewm.downstream_rerank_benchmark.v1`       |
+| Downstream rerank config      | `codelewm.downstream_rerank_benchmark_config.v1` |
+| Downstream benchmark pack run | `codelewm.downstream_benchmark_pack_run.v1`     |
+| Downstream benchmark readiness | `codelewm.downstream_benchmark_readiness.v1`    |
+| Downstream source license policy | `codelewm.downstream_source_license_policy.v1` |
+| Downstream split leakage report | `codelewm.downstream_split_leakage_report.v1`   |
 | Downstream rerank report      | `codelewm.downstream_rerank_report.v1`          |
 | Downstream rerank claim gate  | `codelewm.downstream_rerank_claim_gate.v1`      |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |

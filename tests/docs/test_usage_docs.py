@@ -48,6 +48,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm eval ablation",
             "codelewm eval surprise",
             "codelewm eval scorer-quality",
+            "codelewm eval downstream-pack",
             "codelewm index",
         ):
             with self.subTest(command=command):
@@ -89,6 +90,11 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.harness.demo_report.v1",
             "codelewm.harness.demo_run.v1",
             "codelewm.downstream_rerank_benchmark.v1",
+            "codelewm.downstream_rerank_benchmark_config.v1",
+            "codelewm.downstream_benchmark_pack_run.v1",
+            "codelewm.downstream_benchmark_readiness.v1",
+            "codelewm.downstream_source_license_policy.v1",
+            "codelewm.downstream_split_leakage_report.v1",
             "codelewm.downstream_rerank_report.v1",
             "codelewm.downstream_rerank_claim_gate.v1",
             "codelewm.transition_index.v1",

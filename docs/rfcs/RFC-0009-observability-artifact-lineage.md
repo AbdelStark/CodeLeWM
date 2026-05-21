@@ -46,7 +46,17 @@ class ManifestFile:
 class ArtifactManifest:
     schema_version: str
     artifact_id: str
-    artifact_kind: Literal["dataset", "checkpoint", "index", "eval_report", "score_report"]
+    artifact_kind: Literal[
+        "candidate_pack",
+        "dataset",
+        "demo_report",
+        "downstream_benchmark",
+        "checkpoint",
+        "training_run",
+        "index",
+        "eval_report",
+        "score_report",
+    ]
     created_at: str
     source_git_sha: str
     command: tuple[str, ...]

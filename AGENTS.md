@@ -25,11 +25,11 @@ Implemented foundations:
   executor over packed CodeLeWM transition batches.
 - `codelewm.eval`: retrieval metrics, hard-negative pools, required baselines,
   action-view policy, collapse diagnostics, action ablation, surprise reports,
-  and scorer-quality reports.
+  scorer-quality reports, and downstream reranking benchmark pack contracts.
 - `codelewm.harness`: package CLI entry point with `dataset build`, `dataset
   pack`, `train`, `eval retrieval`, `eval ablation`, `eval surprise`, `eval
-  scorer-quality`, `index`, `score`, `rerank`, `manifest verify`, and
-  `secret-scan`.
+  scorer-quality`, `eval downstream-pack`, `llm-demo`, `index`, `score`,
+  `rerank`, `manifest verify`, and `secret-scan`.
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
@@ -80,6 +80,11 @@ Current evidence:
   `docs/cards/codelewm-v0-2-action-swap-dataset-2026-05-20.md`, and
   `docs/cards/codelewm-v0-2-action-swap-model-2026-05-20.md` are the
   artifact-backed record for the v0.2 run.
+- `config/benchmark/downstream_rerank_fixture.json` and
+  `codelewm eval downstream-pack` define the first public-safe downstream
+  benchmark pack. The checked-in fixture has one labeled task, emits manifest,
+  source-license, split-leakage, readiness, and secret-scan reports, and stays
+  claim-blocked below the 100-example gate.
 
 Current blocker:
 
@@ -110,7 +115,7 @@ Current blocker:
   `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
 - Stream trackers: #183 LLM + world-model harness demo, #184 downstream
   candidate-reranking benchmark, and #185 preliminary results publication
-  package. Child issues are #186 through #194.
+  package. #183 and #185 are complete; #184 remains open only for #192.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -172,10 +177,9 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. #191 benchmark: build public-safe labeled candidate reranking set.
-2. #192 eval: run downstream reranking comparison and claim gate.
+1. #192 eval: run downstream reranking comparison and claim gate.
 
-Issues #186, #187, #188, #189, #190, #193, and #194 are completed
+Issues #186, #187, #188, #189, #190, #191, #193, and #194 are completed
 preconditions for the downstream benchmark stream and publication package.
 
 The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as

@@ -224,6 +224,8 @@ published as workflow evidence only.
 
 Schema: `codelewm.downstream_rerank_benchmark.v1`.
 Report schema: `codelewm.downstream_rerank_report.v1`.
+Pack config schema: `codelewm.downstream_rerank_benchmark_config.v1`.
+Readiness schema: `codelewm.downstream_benchmark_readiness.v1`.
 
 Each example must contain:
 
@@ -248,6 +250,19 @@ Minimum scaled evidence:
 
 Usefulness claims remain blocked unless CodeLeWM improves over both no-action
 and LLM-order baselines on the agreed headline metrics.
+
+The first public-safe fixture pack is built with:
+
+```bash
+uv run codelewm eval downstream-pack \
+  --config config/benchmark/downstream_rerank_fixture.json \
+  --out .artifacts/downstream-rerank-fixture \
+  --json
+```
+
+It is a claim-blocked smoke artifact. It records source/license policy, split
+leakage checks, checksums, and a secret-scan report, but it has one labeled task
+and therefore cannot pass the 100-example gate.
 
 ## Security Boundary
 
