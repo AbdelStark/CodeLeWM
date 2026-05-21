@@ -238,9 +238,31 @@ def build_parser() -> argparse.ArgumentParser:
     llm_demo.add_argument("--overwrite", action="store_true", help="replace existing output")
     llm_demo.add_argument("--json", action="store_true", help="emit JSON output")
     llm_demo.add_argument(
+        "--tui",
+        action="store_true",
+        help="open the optional Textual TUI after the demo artifact is written",
+    )
+    llm_demo.add_argument(
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     llm_demo.set_defaults(func=_llm_demo_command)
+    llm_demo_tui = subparsers.add_parser(
+        "llm-demo-tui", help="open a Textual TUI for an existing llm-demo artifact"
+    )
+    llm_demo_tui_source = llm_demo_tui.add_mutually_exclusive_group(required=True)
+    llm_demo_tui_source.add_argument(
+        "--view-model", type=Path, help="path to reports/visual_view_model.json"
+    )
+    llm_demo_tui_source.add_argument(
+        "--demo-dir", type=Path, help="demo artifact directory containing reports/visual_view_model.json"
+    )
+    llm_demo_tui.add_argument(
+        "--snapshot-json",
+        action="store_true",
+        help="emit a deterministic JSON snapshot instead of opening Textual",
+    )
+    llm_demo_tui.add_argument("--json", action="store_true", help="emit JSON errors")
+    llm_demo_tui.set_defaults(func=_llm_demo_tui_command)
     openrouter = subparsers.add_parser("openrouter", help="OpenRouter helper utilities")
     openrouter_subcommands = openrouter.add_subparsers(dest="openrouter_command")
     byok_register = openrouter_subcommands.add_parser(
@@ -1035,6 +1057,15 @@ def _score_command(args: argparse.Namespace) -> int:
 
 def _llm_demo_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
+    if args.json and args.tui:
+        error = ScoreError(
+            "`codelewm llm-demo --json --tui` is ambiguous",
+            error_type="config_error",
+            remediation="use --json for machine output or --tui for the interactive Textual viewer",
+            artifact=str(args.out),
+        )
+        _emit_error(args, error, json_output=True)
+        return 2
     try:
         instruction = _instruction_arg_to_text(args.instruction)
         _emit_cli_log(
@@ -1116,12 +1147,58 @@ def _llm_demo_command(args: argparse.Namespace) -> int:
 
     if args.json:
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    elif args.tui:
+        try:
+            from codelewm.harness.demo_tui import TextualDemoTuiError, run_demo_tui
+
+            return run_demo_tui(args.out / result.visual_view_model_path)
+        except TextualDemoTuiError as exc:
+            error = ScoreError(
+                f"LLM demo TUI failed: {exc}",
+                error_type=exc.error_type,  # type: ignore[arg-type]
+                remediation=exc.remediation,
+                artifact=str(args.out / result.visual_view_model_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            )
+            _emit_error(args, error, json_output=False)
+            return 2
     else:
         print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
         print(f"demo_report: {args.out / result.report_path}")
         print(f"candidate_pack_manifest: {args.out / result.candidate_pack_manifest_path}")
         print(f"success: {result.success}")
     return 0
+
+
+def _llm_demo_tui_command(args: argparse.Namespace) -> int:
+    try:
+        from codelewm.harness.demo_tui import (
+            TextualDemoTuiError,
+            build_demo_tui_snapshot,
+            load_demo_tui_view_model,
+            resolve_demo_tui_view_model_path,
+            run_demo_tui,
+        )
+
+        path = resolve_demo_tui_view_model_path(
+            view_model=args.view_model,
+            demo_dir=args.demo_dir,
+        )
+        if args.snapshot_json:
+            payload = build_demo_tui_snapshot(load_demo_tui_view_model(path))
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        return run_demo_tui(path)
+    except TextualDemoTuiError as exc:
+        error = ScoreError(
+            f"LLM demo TUI failed: {exc}",
+            error_type=exc.error_type,  # type: ignore[arg-type]
+            remediation=exc.remediation,
+            artifact=str(args.view_model or args.demo_dir or ""),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=bool(args.json or args.snapshot_json))
+        return 2
 
 
 def _dataset_build_command(args: argparse.Namespace) -> int:

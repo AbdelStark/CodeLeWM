@@ -53,6 +53,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
 | `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.harness.visual_view_model.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.run_timeline.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm llm-demo-tui` | landed | `codelewm.harness.demo_tui_snapshot.v1`, `codelewm.error.v1` |
 | `codelewm openrouter byok-register` | landed | `codelewm.openrouter_byok_register.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
@@ -254,13 +255,31 @@ The JSON report schema is `codelewm.harness.demo_report.v1`; the stdout summary
 schema is `codelewm.harness.demo_run.v1`. The same artifact also writes
 `reports/visual_view_model.json` with schema
 `codelewm.harness.visual_view_model.v1`, which normalizes the state consumed by
-the JSON report, rich terminal output, HTML report, and future Textual TUI. The
+the JSON report, rich terminal output, HTML report, and optional Textual TUI. The
 report includes LLM order, CodeLeWM order, random/lexical/no-action baselines,
 candidate errors, optional check metadata, score direction, compact diff
 summaries, diagnostic slots, and a claim gate. CodeLeWM transition scores are
 lower-is-better energies; positive candidate-minus-no-action deltas mean the
 no-action baseline scored better. The claim gate remains `allowed=false`
 because the demo is workflow evidence, not downstream benchmark evidence.
+
+The optional interactive TUI is installed separately:
+
+```bash
+uv sync --group dev --group tui
+uv run --group tui codelewm llm-demo-tui \
+  --demo-dir .artifacts/llm-world-model-demo/run
+uv run scripts/llm-world-model-demo --tui
+```
+
+For deterministic headless checks, emit the TUI snapshot JSON without opening an
+interactive terminal:
+
+```bash
+uv run codelewm llm-demo-tui \
+  --view-model .artifacts/llm-world-model-demo/run/reports/visual_view_model.json \
+  --snapshot-json
+```
 
 Tracked streams #183, #184, and #185 are complete as diagnostic evidence.
 

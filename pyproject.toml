@@ -60,6 +60,9 @@ observability = [
 llm = [
   "openrouter==0.9.1"
 ]
+tui = [
+  "textual>=0.89"
+]
 docs = [
   "pytest>=8"
 ]
@@ -96,6 +99,9 @@ observability = [
 ]
 llm = [
   "openrouter==0.9.1"
+]
+tui = [
+  "textual>=0.89"
 ]
 docs = [
   "pytest>=8"

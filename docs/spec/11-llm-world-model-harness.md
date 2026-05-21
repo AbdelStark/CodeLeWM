@@ -267,10 +267,10 @@ remain available through explicit non-interactive mode.
 
 The #235 visual model observability and TUI follow-up extends the same report
 state with model/checkpoint inspection links, latent matrix diagnostics, run
-timeline artifacts, and optional Textual TUI rendering. That follow-up must use
-the same underlying JSON artifacts as terminal and HTML modes; interactive UI
-support must not replace non-interactive JSON output or require Textual for
-normal CLI execution.
+timeline artifacts, and optional Textual TUI rendering. The TUI uses the same
+underlying JSON artifacts as terminal and HTML modes; interactive UI support
+does not replace non-interactive JSON output or require Textual for normal CLI
+execution.
 
 ## Meaningful Demo Scenarios
 
@@ -317,7 +317,9 @@ The non-interactive renderer contract is
 `codelewm.harness.visual_view_model.v1`: an ANSI-free JSON view model that
 normalizes summary state, generator metadata, candidate rank rows, compact diff
 statistics, diagnostic slots, artifact gates, warnings, and the claim gate for
-terminal, HTML, raw JSON, and future Textual TUI rendering.
+terminal, HTML, raw JSON, and optional Textual TUI rendering. The optional TUI
+also exposes a deterministic `codelewm.harness.demo_tui_snapshot.v1` snapshot
+for headless tests.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank
