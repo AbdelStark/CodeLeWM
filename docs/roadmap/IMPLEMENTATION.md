@@ -6,11 +6,12 @@ filed, closed, or superseded. See `CONTRIBUTING.md` and
 `docs/spec/09-release-and-versioning.md` for how this tracker fits into the
 release lifecycle.
 
-- Last updated: 2026-05-20
+- Last updated: 2026-05-21
 - Spec corpus: `docs/spec/00-overview.md` through `docs/spec/10-glossary.md`
-- RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0012-*.md`
+- Post-v0.2 spec: `docs/spec/11-llm-world-model-harness.md`
+- RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0013-*.md`
 - Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
-- Next executable prompt: `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`
+- Next executable prompt: `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 
 ## How This Tracker Is Maintained
 
@@ -114,6 +115,27 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Closed |
 | #126 | release: run final artifact freeze and checklist | release | p1 | l | RFC-0012 | Closed |
 
+## Milestone: v1.1
+
+Post-v0.2 showcase: OpenRouter LLM candidate generation, world-model scoring
+and reranking, downstream candidate-reranking benchmark, and preliminary
+negative-results publication.
+
+| # | Title | Area | Priority | Effort | RFC | Status |
+|---|-------|------|----------|--------|-----|--------|
+| #183 | [Tracking] v0.3 LLM + world-model harness demo | harness | p1 | l | RFC-0013 | Open |
+| #184 | [Tracking] v0.3 downstream candidate-reranking benchmark | evaluation | p1 | l | RFC-0013 | Open |
+| #185 | [Tracking] preliminary results publication package | docs | p1 | m | RFC-0013 | Open |
+| #186 | spec: lock OpenRouter LLM candidate harness contract | harness | p1 | m | RFC-0013 | Open |
+| #187 | harness: add OpenRouter candidate generation adapter | harness | p1 | m | RFC-0013 | Open |
+| #188 | harness: add candidate pack schema and safe patch capture | harness | p1 | m | RFC-0013 | Open |
+| #189 | harness: build end-to-end LLM plus CodeLeWM demo report | harness | p1 | l | RFC-0013 | Open |
+| #190 | benchmark: define downstream task schema and claim gates | evaluation | p1 | m | RFC-0013 | Open |
+| #191 | benchmark: build public-safe labeled candidate reranking set | evaluation | p1 | l | RFC-0013 | Open |
+| #192 | eval: run downstream reranking comparison and claim gate | evaluation | p1 | l | RFC-0013 | Open |
+| #193 | docs: publish preliminary negative-results report | docs | p1 | m | RFC-0013 | Open |
+| #194 | docs: prepare public artifact index and announcement package | docs | p1 | m | RFC-0013 | Open |
+
 ## Tracking Issues
 
 Tracking issues group child implementation issues by subsystem and remain open
@@ -135,7 +157,10 @@ until every child issue closes or is explicitly superseded.
 Additional completion trackers: #150 [Tracking] Action-conditioned scaled
 result and release readiness, closed with the negative/diagnostic #159
 boundary; #167 [Tracking] v0.2 action-use and representation research
-intervention, closed with the negative/diagnostic #172 boundary.
+intervention, closed with the negative/diagnostic #172 boundary; #183
+[Tracking] v0.3 LLM + world-model harness demo; #184 [Tracking] v0.3
+downstream candidate-reranking benchmark; #185 [Tracking] preliminary results
+publication package.
 
 ## Cross-Cutting Dependencies
 
@@ -193,6 +218,13 @@ intervention, closed with the negative/diagnostic #172 boundary.
   `docs/release/RELEASE_FREEZE_2026-05-20.md`; public HF diagnostic artifacts
   are allowed, but public positive model-quality claims remain blocked because
   #159 did not supply claim-eligible evidence.
+- #183 through #194 define the post-v0.2 v1.1 path. The harness stream uses the
+  OpenRouter Python SDK to generate candidate patches, stores them as untrusted
+  candidate packs, and composes CodeLeWM scoring/reranking into a demo report.
+  The benchmark stream is the first path that can support coding-usefulness
+  claims, and only if it beats no-action and LLM-order baselines with at least
+  100 labeled examples. The publication stream is allowed to publish current
+  negative/diagnostic results but not positive model-quality claims.
 
 ## Cross-Reference Map
 

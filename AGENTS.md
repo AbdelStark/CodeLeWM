@@ -7,8 +7,9 @@ changes.
 
 ## Current State
 
-As of 2026-05-20, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, and four completed scaled Hugging Face Jobs runs.
+As of 2026-05-21, CodeLeWM has a working package runtime, a reproducible local
+first-results smoke loop, four completed scaled Hugging Face Jobs runs, and a
+post-v0.2 roadmap for the next public harness and benchmark milestone.
 
 Implemented foundations:
 
@@ -102,6 +103,14 @@ Current blocker:
   opened for a future positive claim.
 - The completed v0.2 research specification lives in
   `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md` and was tracked by #167.
+- The next public milestone is the LLM + world-model harness and downstream
+  reranking benchmark. It is specified by
+  `docs/spec/11-llm-world-model-harness.md`,
+  `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`, and
+  `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
+- Stream trackers: #183 LLM + world-model harness demo, #184 downstream
+  candidate-reranking benchmark, and #185 preliminary results publication
+  package. Child issues are #186 through #194.
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -117,6 +126,7 @@ Before editing, read:
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
 - `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`
+- `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 - `CONTRIBUTING.md`
 
 If security, manifests, checkpoints, logs, licensing, candidate code, configs,
@@ -129,6 +139,13 @@ training recipes are touched, also read:
 - `docs/operations/HF_ML_INTERN_TRAINING.md`
 - `docs/training/SCALED_TRAINING_RUNBOOK.md`
 - `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md`
+
+If LLM candidate generation, OpenRouter, candidate packs, downstream reranking,
+or preliminary publication wording are touched, also read:
+
+- `docs/spec/11-llm-world-model-harness.md`
+- `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`
+- `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
 
 ## Work Rules
 
@@ -155,9 +172,20 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. No active completion issue is currently required for the first public
-   evidence boundary. Future positive-claim work must open a new issue with a
-   new hypothesis, config, and validation gate.
+1. #186 spec: lock OpenRouter LLM candidate harness contract.
+2. #193 docs: publish preliminary negative-results report.
+3. #194 docs: prepare public artifact index and announcement package.
+4. #187 harness: add OpenRouter candidate generation adapter.
+5. #188 harness: add candidate pack schema and safe patch capture.
+6. #189 harness: build end-to-end LLM plus CodeLeWM demo report.
+7. #190 benchmark: define downstream task schema and claim gates.
+8. #191 benchmark: build public-safe labeled candidate reranking set.
+9. #192 eval: run downstream reranking comparison and claim gate.
+
+The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
+`anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that
+adapter. If direct Anthropic API key support is required, open a separate
+adapter issue.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training

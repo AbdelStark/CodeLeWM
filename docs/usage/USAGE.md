@@ -116,6 +116,36 @@ the completed v0.2 action-swap/inverse-action run.
 Public claim wording must keep that boundary until a later artifact passes the
 action-use claim gate.
 
+## Planned LLM + World-Model Harness
+
+The next public harness stream is specified, not yet implemented. It will let an
+LLM generate candidate patches, store them as untrusted candidate packs, and
+then call `codelewm score` / `codelewm rerank` to rank those candidates with the
+world model.
+
+The public adapter contract uses the OpenRouter Python SDK:
+
+```bash
+CODELEWM_LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=openrouter_xxx
+CODELEWM_LLM_MODEL=anthropic/claude-4.5-sonnet
+CODELEWM_LLM_DRY_RUN=1
+```
+
+The OpenRouter adapter uses `OPENROUTER_API_KEY`; it does not silently read a
+raw `ANTHROPIC_API_KEY`. To use Anthropic models, select an Anthropic model slug
+through OpenRouter or configure provider keys as OpenRouter BYOK outside the
+repo. Direct Anthropic API support requires a separate adapter issue.
+
+Tracked streams:
+
+- #183 LLM + world-model harness demo;
+- #184 downstream candidate-reranking benchmark;
+- #185 preliminary results publication package.
+
+The demo can show the workflow, but only the downstream benchmark can support a
+coding-usefulness claim.
+
 ### `codelewm score`
 
 Score a single candidate after-state against a before-state and

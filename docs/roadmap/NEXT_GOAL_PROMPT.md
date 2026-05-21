@@ -1,52 +1,57 @@
 # Next Goal Prompt
 
-Use this prompt for the next research-planning run. The v0.2 HF execution prompt
-in `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is now historical context for the
-completed negative v0.2 sweep.
+Use this prompt for the next implementation run. The v0.2 HF execution prompt
+in `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
+completed negative v0.2 sweep. The active next stream is the v1.1 LLM +
+world-model harness.
 
 ```text
-/goal Plan the next CodeLeWM research intervention after the completed v0.2
-negative result. Treat the current artifact set as public negative/diagnostic
-evidence.
+/goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
+Start with issue #186 and work one issue per branch and PR.
 
-Start from the current main branch. Ground in AGENTS.md, SPEC.md,
+Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
+docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
+docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
-docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md,
-docs/operations/HF_ML_INTERN_TRAINING.md, docs/training/SCALED_TRAINING_RUNBOOK.md,
-docs/benchmark/SCALED_HF_RESULTS_2026-05-20.md,
-docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md,
-docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md,
-docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, CONTRIBUTING.md, the
-relevant docs/spec files, and the relevant docs/rfcs files.
+docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
+docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md,
+docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md, CONTRIBUTING.md,
+and issue #186.
 
-Do not redo closed infrastructure work. Issues #109 through #126, #137, #138,
-#151 through #154, #159, and #168 through #172 are complete. The first scaled
-HF run proved the systems path. The #154 and #159 action-use runs failed the
-positive claim gate. The #172 v0.2 action-swap/inverse-action run also
-completed and verified downloaded artifacts; it reached text-action Recall@1
-`0.263` and MRR `0.370048`, but still lost to no-action Recall@1 `0.441` and
-MRR `0.533105`. Its representation and downstream gates also failed.
+Do not relaunch #159 or #172. The current public artifact set is valid
+negative/diagnostic evidence: v0.2 text-action reached Recall@1 0.263 and MRR
+0.370048, while no-action reached Recall@1 0.441 and MRR 0.533105. Latent
+probes and downstream gates also failed.
 
-Work sequentially, one issue per branch and PR:
+Implement the OpenRouter LLM candidate harness contract first. The public LLM
+adapter must use the OpenRouter Python SDK with OPENROUTER_API_KEY and model
+slugs such as anthropic/claude-4.5-sonnet. Do not silently read raw provider
+keys in the OpenRouter adapter. If direct Anthropic API key support is required,
+open a separate adapter issue or configure provider keys as OpenRouter BYOK
+outside the repo.
 
-1. Audit the v0.2 negative evidence and propose one new falsifiable research
-   hypothesis that directly addresses no-action dominance or weak action
-   supervision.
-2. Turn that hypothesis into a new GitHub issue with acceptance criteria,
-   metrics, gates, and an HF artifact plan.
-3. Do not launch compute until the new issue specifies what result would count
-   as success or falsification.
+Work in this order unless a blocker appears:
 
-For any future HF work, orchestrate the remote job lifecycle with the hf CLI:
-hf auth whoami, hf jobs run, hf jobs ps, hf jobs inspect <job-id>, hf jobs logs
-<job-id>, hf jobs stats <job-id>, and hf download. Hugging Face artifacts may
-be published publicly after source/license, secret-scan, manifest verification,
-and checkpoint-trust checks pass.
+1. #186 spec: lock OpenRouter LLM candidate harness contract.
+2. #193 docs: publish preliminary negative-results report.
+3. #194 docs: prepare public artifact index and announcement package.
+4. #187 harness: add OpenRouter candidate generation adapter.
+5. #188 harness: add candidate pack schema and safe patch capture.
+6. #189 harness: build end-to-end LLM plus CodeLeWM demo report.
+7. #190 benchmark: define downstream task schema and claim gates.
+8. #191 benchmark: build public-safe labeled candidate reranking set.
+9. #192 eval: run downstream reranking comparison and claim gate.
+
+For runtime work, keep fixture/dry-run mode first so local validation does not
+require network or paid LLM calls. Live OpenRouter mode must redact secrets,
+record SDK/model/provider metadata, and write manifest-backed candidate packs.
+
+Public docs must stay artifact-backed. The harness demo can show workflow
+value, but it must not claim CodeLeWM improves coding until the downstream
+benchmark gate in #192 passes from manifest-backed artifacts. The current
+completed boundary is explicitly negative/diagnostic.
 
 After each issue, run the strongest relevant local validation, commit, push,
 open a PR, wait for available checks, merge when clean, return to main, pull
-latest main, and continue. Public docs must stay artifact-backed and must not
-claim action-conditioned quality until text-action beats no-action on the
-agreed headline and action-contrast metrics. The current completed boundary is
-explicitly negative/diagnostic.
+latest main, and continue.
 ```

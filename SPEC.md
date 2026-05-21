@@ -28,6 +28,9 @@ code changes, not a patch generator.
 - `docs/spec/09-release-and-versioning.md` defines release, deprecation, and
   compatibility policy.
 - `docs/spec/10-glossary.md` defines canonical terms.
+- `docs/spec/11-llm-world-model-harness.md` defines the post-v0.2 LLM
+  candidate-generation, world-model reranking, downstream benchmark, and
+  publication boundary.
 
 ## RFC Index
 
@@ -43,6 +46,7 @@ code changes, not a patch generator.
 - `docs/rfcs/RFC-0010-security-licensing-trust-boundaries.md`
 - `docs/rfcs/RFC-0011-public-api-cli-and-packaging.md`
 - `docs/rfcs/RFC-0012-release-ci-and-governance.md`
+- `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`
 
 ## Milestone Boundary
 
@@ -50,7 +54,10 @@ code changes, not a patch generator.
 set, produce schema-versioned shards, train a tiny model without collapse, run
 hard retrieval evaluation, and expose a local scorer CLI. `v1.0` is the research
 artifact: mixed real/synthetic training, ablations, baselines, patch reranking,
-reproducible manifests, model card, dataset card, and release automation.
+reproducible manifests, model card, dataset card, and release automation. `v1.1`
+is the post-v0.2 showcase and evaluation layer: an LLM generates candidate
+patches, CodeLeWM scores/reranks them, and a downstream benchmark decides
+whether the score adds value over no-action and LLM-order baselines.
 
 ## Open Questions
 

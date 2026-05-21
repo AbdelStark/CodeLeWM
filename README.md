@@ -81,8 +81,12 @@ action-swap/inverse-action report lives at
 `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`. Those runs prove
 the systems path, but none supports a positive action-conditioned quality
 claim. The v0.2 run also fails the representation and downstream-usefulness
-gates. The remaining research gap is a new hypothesis beyond the completed
-v0.2 intervention, not release cleanup. Core harness
+gates. The preliminary public summary lives at
+`docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`. The next milestone is the
+LLM + world-model harness specified in
+`docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`: use an LLM to propose candidate
+patches, use CodeLeWM to score/rerank them, and only claim usefulness after a
+scaled downstream benchmark passes. Core harness
 commands can write local JSONL logs with redaction via `--log-jsonl`. Root
 `train.py`, `eval.py`, and the existing Hydra configs are inherited from the
 original LeWorldModel seed and are kept for compatibility while the package
@@ -110,6 +114,7 @@ Scaled evidence is recorded separately:
 - `docs/benchmark/ACTION_USE_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
+- `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
 - `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - `docs/cards/codelewm-scaled-model-2026-05-20.md`
 - `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
@@ -124,6 +129,18 @@ evidence. The Hugging Face artifact repositories are public diagnostic repos.
 They do not support a public positive action-conditioning claim because
 text-action still does not beat no-action on the agreed headline metrics or the
 v0.2 action-contrast slices.
+
+The next showcase is tracked as v1.1 work:
+
+- #183 LLM + world-model harness demo;
+- #184 downstream candidate-reranking benchmark;
+- #185 preliminary results publication package.
+
+The planned public LLM path uses the OpenRouter Python SDK with
+`OPENROUTER_API_KEY` and a configurable model slug such as
+`anthropic/claude-4.5-sonnet`. The OpenRouter adapter should not silently read a
+raw `ANTHROPIC_API_KEY`; use OpenRouter BYOK or a separate direct-provider
+adapter if that becomes necessary.
 
 ## Core Concepts
 

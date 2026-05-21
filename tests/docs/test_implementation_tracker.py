@@ -52,7 +52,7 @@ class ImplementationTrackerStructureTest(unittest.TestCase):
     def test_tracker_milestone_tables_have_canonical_header(self) -> None:
         header = "| # | Title | Area | Priority | Effort | RFC | Status |"
 
-        self.assertEqual(self.text.count(header), 2, "two milestone tables expected")
+        self.assertEqual(self.text.count(header), 3, "three milestone tables expected")
 
 
 class ImplementationTrackerContentTest(unittest.TestCase):

@@ -1,6 +1,6 @@
 # Full Completion Roadmap
 
-Last updated: 2026-05-20
+Last updated: 2026-05-21
 
 This roadmap tracks the current completion boundary for CodeLeWM's first
 meaningful scaled training and evaluation artifacts. GitHub issues remain the
@@ -12,7 +12,8 @@ The next research-planning `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md`. The v0.2 HF/ml-intern prompt in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
 completed #172 run. The v0.2 research intervention spec lives in
-`docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`.
+`docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`. The post-v0.2 harness and
+publication roadmap lives in `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
 
 ## Project Status
 
@@ -85,6 +86,9 @@ Current blocker:
   downstream coding-usefulness claims remain blocked. Future positive-claim
   work requires a new research hypothesis beyond the completed v0.2
   intervention.
+- The next logical milestone is not another training run. The next milestone is
+  the v1.1 LLM + world-model harness and downstream benchmark: #183, #184, and
+  #185 track the streams, with child issues #186 through #194.
 
 Current landed CLI commands:
 
@@ -281,13 +285,67 @@ Deliverables:
 - final artifact freeze, release checklist, and release notes (#126, complete
   as a private diagnostic freeze)
 
+### Phase 9: LLM + World-Model Harness Demo
+
+Status: open.
+
+Goal: showcase the intended use case without claiming model improvement. An LLM
+generates candidate patches through the OpenRouter Python SDK, CodeLeWM
+scores/reranks the candidates, and a demo report records all baselines and
+candidate errors.
+
+Deliverables:
+
+- OpenRouter candidate harness contract (#186)
+- OpenRouter candidate generation adapter (#187)
+- candidate-pack schema and safe patch capture (#188)
+- end-to-end LLM + CodeLeWM demo report (#189)
+
+Claim boundary: this can prove the workflow, but not model usefulness.
+
+### Phase 10: Downstream Candidate-Reranking Benchmark
+
+Status: open.
+
+Goal: turn the harness into a falsifiable downstream benchmark with enough
+labeled examples to support or block coding-usefulness claims.
+
+Deliverables:
+
+- downstream task schema, baselines, metrics, and claim gates (#190)
+- public-safe labeled candidate reranking set (#191)
+- downstream reranking comparison and claim gate (#192)
+
+Minimum success bar: at least 100 labeled examples and CodeLeWM improvement
+over no-action and LLM-order baselines on the agreed headline metrics.
+
+### Phase 11: Preliminary Results Publication
+
+Status: open.
+
+Goal: publish the current project state as verified infrastructure and a
+negative/diagnostic result, not as a positive model-quality claim.
+
+Deliverables:
+
+- preliminary negative-results report (#193)
+- public artifact index and announcement package (#194)
+
 ## Ordered Backlog
 
 Keep this table in implementation order and update it when issue scope changes.
 
 | Order | Issue | Title | Milestone | Blocks |
 | ----- | ----- | ----- | --------- | ------ |
-| 1 | Future issue | New hypothesis after v0.2 negative result | Action-Use Research | public positive model-quality claim path |
+| 1 | #186 | spec: lock OpenRouter LLM candidate harness contract | Harness Demo | #187, #188, #189 |
+| 2 | #193 | docs: publish preliminary negative-results report | Publication | #194 |
+| 3 | #194 | docs: prepare public artifact index and announcement package | Publication | public sharing |
+| 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | #189 |
+| 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | #189 |
+| 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | #192 |
+| 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | #191, #192 |
+| 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | #192 |
+| 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | public coding-usefulness claim path |
 
 Completed backlog base:
 
@@ -316,6 +374,9 @@ Completed backlog base:
   Jobs job `6a0dea258229e585f969c808`; artifacts were downloaded and verified
   locally, and the result remained negative across action-use, representation,
   and downstream-readiness gates.
+- #183 tracks the v1.1 LLM + world-model harness demo stream.
+- #184 tracks the v1.1 downstream candidate-reranking benchmark stream.
+- #185 tracks the preliminary results publication stream.
 - #123 added wheel/sdist build, metadata, clean-install, typed marker, and
   manual publishing gates for the Python package.
 - #124 added release dependency audit, provenance JSON, CI gates, and release
@@ -346,6 +407,10 @@ instead of creating duplicate trackers.
   closed with the negative/diagnostic boundary.
 - #167 v0.2 action-use and representation research intervention: complete as
   negative/diagnostic evidence through #168 through #172.
+- #183 LLM + world-model harness demo: active; children #186 through #189.
+- #184 Downstream candidate-reranking benchmark: active; children #190 through
+  #192.
+- #185 Preliminary results publication package: active; children #193 and #194.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
