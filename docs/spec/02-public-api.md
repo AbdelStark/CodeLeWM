@@ -402,8 +402,10 @@ codelewm llm-demo \
 It builds an OpenRouter request from environment variables, captures generated
 candidate patches as `codelewm.llm_candidate_pack.v1`, writes a manifest-backed
 candidate-pack artifact, scores/reranks candidates without executing them, and
-writes `codelewm.harness.demo_report.v1` plus `codelewm.run_timeline.v1` under
-`reports/run_timeline.json`. The command emits
+writes `codelewm.harness.demo_report.v1`,
+`codelewm.harness.visual_view_model.v1`, and `codelewm.run_timeline.v1` under
+`reports/`. The visual view model is the normalized, ANSI-free adapter consumed
+by JSON, rich terminal, HTML, and the future Textual TUI surface. The command emits
 `codelewm.harness.demo_run.v1` on stdout and writes a self-contained
 `demo.html` visual report into the demo artifact. Demo score payloads include
 `score_direction=lower_is_better`; candidate-minus-no-action deltas are better

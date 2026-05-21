@@ -98,6 +98,8 @@ class DemoTerminalReportTest(unittest.TestCase):
         self.assertIn("-0.500000 (better than no-op)", output)
         self.assertIn("codelewm.torch_transition_scorer.v1", output)
         self.assertIn("candidate_002", output)
+        self.assertIn("Diagnostics", output)
+        self.assertIn("view model:", output)
         self.assertIn("demo_report_is_not_downstream_benchmark_evidence", output)
         self.assertIn("uv run scripts/llm-world-model-demo --json", output)
         self.assertNotIn("do not print this patch", output)

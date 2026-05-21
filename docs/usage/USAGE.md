@@ -52,7 +52,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | ------- | ------ | ---------------------- |
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
-| `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.run_timeline.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.harness.visual_view_model.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.run_timeline.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm openrouter byok-register` | landed | `codelewm.openrouter_byok_register.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
@@ -241,6 +241,7 @@ The command writes:
   manifest.json
   demo.html
   reports/llm_world_model_demo_report.json
+  reports/visual_view_model.json
   reports/run_timeline.json
   candidate_pack/
     manifest.json
@@ -250,11 +251,15 @@ The command writes:
 ```
 
 The JSON report schema is `codelewm.harness.demo_report.v1`; the stdout summary
-schema is `codelewm.harness.demo_run.v1`. The report includes LLM order,
-CodeLeWM order, random/lexical/no-action baselines, candidate errors, optional
-check metadata, score direction, and a claim gate. CodeLeWM transition scores
-are lower-is-better energies; positive candidate-minus-no-action deltas mean
-the no-action baseline scored better. The claim gate remains `allowed=false`
+schema is `codelewm.harness.demo_run.v1`. The same artifact also writes
+`reports/visual_view_model.json` with schema
+`codelewm.harness.visual_view_model.v1`, which normalizes the state consumed by
+the JSON report, rich terminal output, HTML report, and future Textual TUI. The
+report includes LLM order, CodeLeWM order, random/lexical/no-action baselines,
+candidate errors, optional check metadata, score direction, compact diff
+summaries, diagnostic slots, and a claim gate. CodeLeWM transition scores are
+lower-is-better energies; positive candidate-minus-no-action deltas mean the
+no-action baseline scored better. The claim gate remains `allowed=false`
 because the demo is workflow evidence, not downstream benchmark evidence.
 
 Tracked streams #183, #184, and #185 are complete as diagnostic evidence.
@@ -1160,6 +1165,7 @@ field list.
 | OpenRouter BYOK registration | `codelewm.openrouter_byok_register.v1` |
 | LLM demo run | `codelewm.harness.demo_run.v1` |
 | LLM demo report | `codelewm.harness.demo_report.v1` |
+| LLM demo visual view model | `codelewm.harness.visual_view_model.v1` |
 | Downstream rerank benchmark | `codelewm.downstream_rerank_benchmark.v1` |
 | Downstream rerank benchmark config | `codelewm.downstream_rerank_benchmark_config.v1` |
 | Downstream benchmark pack run | `codelewm.downstream_benchmark_pack_run.v1` |

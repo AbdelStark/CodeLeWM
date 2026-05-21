@@ -11,6 +11,7 @@ from pathlib import Path
 from codelewm.harness import (
     LLM_WORLD_MODEL_DEMO_REPORT_SCHEMA_VERSION,
     LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION,
+    read_demo_visual_view_model,
     read_llm_world_model_demo_report,
     run_llm_world_model_demo,
 )
@@ -51,6 +52,7 @@ class LLMWorldModelDemoTest(unittest.TestCase):
             )
             validate_artifact_checksums(candidate_manifest, root=root / "demo" / "candidate_pack")
             report = read_llm_world_model_demo_report(root / "demo" / result.report_path)
+            view_model = read_demo_visual_view_model(root / "demo" / result.visual_view_model_path)
             timeline = json.loads((root / "demo" / "reports" / "run_timeline.json").read_text(encoding="utf-8"))
             html = (root / "demo" / result.html_path).read_text(encoding="utf-8")
 
@@ -60,9 +62,22 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertEqual(demo_manifest.artifact_kind, "demo_report")
         self.assertEqual(candidate_manifest.artifact_kind, "candidate_pack")
         self.assertEqual(demo_manifest.parent_artifacts, (candidate_manifest.artifact_id,))
-        self.assertEqual({path.name for path in checked}, {"llm_world_model_demo_report.json", "demo.html", "run_timeline.json"})
+        self.assertEqual(
+            {path.name for path in checked},
+            {
+                "llm_world_model_demo_report.json",
+                "demo.html",
+                "visual_view_model.json",
+                "run_timeline.json",
+            },
+        )
         self.assertEqual(result.html_path, "demo.html")
+        self.assertEqual(result.visual_view_model_path, "reports/visual_view_model.json")
+        self.assertEqual(report["artifacts"]["visual_view_model_path"], "reports/visual_view_model.json")
         self.assertEqual(report["artifacts"]["run_timeline_path"], "reports/run_timeline.json")
+        self.assertEqual(view_model["schema_version"], "codelewm.harness.visual_view_model.v1")
+        self.assertEqual(view_model["summary"]["score_direction"], "lower_is_better")
+        self.assertEqual(view_model["diagnostics"]["run_timeline"]["status"], "available")
         self.assertEqual(timeline["schema_version"], "codelewm.run_timeline.v1")
         self.assertEqual(timeline["status"], "completed")
         self.assertIn("candidate generation", [step["name"] for step in timeline["steps"]])
@@ -137,7 +152,9 @@ class LLMWorldModelDemoTest(unittest.TestCase):
         self.assertTrue(payload["success"])
         self.assertEqual(payload["schema_version"], LLM_WORLD_MODEL_DEMO_RUN_SCHEMA_VERSION)
         self.assertEqual(payload["html_path"], "demo.html")
+        self.assertEqual(payload["visual_view_model_path"], "reports/visual_view_model.json")
         self.assertIn("Visual demo report", html)
+        self.assertIn("Model and latent", html)
         self.assertEqual(report["candidate_summary"]["candidate_count"], 2)
         self.assertFalse(report["claim_gate"]["allowed"])
 

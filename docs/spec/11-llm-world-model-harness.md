@@ -313,6 +313,11 @@ delta interpretation, scorer backend/checkpoint metadata, optional check
 metadata, artifact gates, and claim gate. Current CodeLeWM transition scores
 are lower-is-better energies, so a positive candidate-minus-no-action delta
 means the no-action baseline scored better.
+The non-interactive renderer contract is
+`codelewm.harness.visual_view_model.v1`: an ANSI-free JSON view model that
+normalizes summary state, generator metadata, candidate rank rows, compact diff
+statistics, diagnostic slots, artifact gates, warnings, and the claim gate for
+terminal, HTML, raw JSON, and future Textual TUI rendering.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank
