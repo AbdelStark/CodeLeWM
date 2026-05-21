@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
+export CODELEWM_LLM_PROVIDER="${CODELEWM_LLM_PROVIDER:-openrouter}"
+export CODELEWM_LLM_MODEL="${CODELEWM_LLM_MODEL:-anthropic/claude-4.5-sonnet}"
+export CODELEWM_LLM_MAX_CANDIDATES="${CODELEWM_LLM_MAX_CANDIDATES:-2}"
+export CODELEWM_LLM_TIMEOUT_SECONDS="${CODELEWM_LLM_TIMEOUT_SECONDS:-120}"
+export CODELEWM_LLM_TEMPERATURE="${CODELEWM_LLM_TEMPERATURE:-0.2}"
+export CODELEWM_LLM_DRY_RUN="${CODELEWM_LLM_DRY_RUN:-1}"
+export CODELEWM_LLM_RETRY_LIMIT="${CODELEWM_LLM_RETRY_LIMIT:-2}"
+export OPENROUTER_APP_TITLE="${OPENROUTER_APP_TITLE:-CodeLeWM}"
+
+demo_root="${CODELEWM_LLM_DEMO_ROOT:-.artifacts/llm-world-model-demo}"
+before_path="${CODELEWM_LLM_DEMO_BEFORE:-$demo_root/input/app.py}"
+checkpoint="${CODELEWM_LLM_DEMO_CHECKPOINT:-.artifacts/first-results/train/checkpoints/checkpoint.pt}"
+task_id="${CODELEWM_LLM_DEMO_TASK_ID:-codelewm-llm-world-model-demo}"
+instruction="${CODELEWM_LLM_DEMO_INSTRUCTION:-Add a deterministic comment candidate while preserving the value assignment.}"
+out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
+
+if [[ ! -f "$checkpoint" ]]; then
+  uv run scripts/first-results --overwrite
+fi
+
+mkdir -p "$(dirname "$before_path")"
+cat > "$before_path" <<'PY'
+value = 1
+PY
+
+rm -rf "$out_dir"
+uv run codelewm llm-demo \
+  --before "$before_path" \
+  --instruction "$instruction" \
+  --checkpoint "$checkpoint" \
+  --out "$out_dir" \
+  --task-id "$task_id" \
+  --context-path app.py \
+  --allow-unsafe-checkpoint \
+  --overwrite \
+  --json
+
+uv run codelewm manifest verify \
+  --manifest "$out_dir/manifest.json" \
+  --parent-manifest "$out_dir/candidate_pack/manifest.json" \
+  --json
+
+uv run codelewm secret-scan "$out_dir" --json

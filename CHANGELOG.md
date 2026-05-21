@@ -38,6 +38,10 @@ earliest one minor release after the deprecation notice.
 - Initial governance documents: `CONTRIBUTING.md`, `SECURITY.md`,
   `CHANGELOG.md`, and a pull-request template at
   `.github/PULL_REQUEST_TEMPLATE.md`.
+- OpenRouter Anthropic BYOK helper through
+  `codelewm openrouter byok-register`, redacted BYOK request metadata, and the
+  local `uv run scripts/llm-world-model-demo` task for the LLM + world-model
+  fixture demo.
 
 ### Changed
 
@@ -100,6 +104,7 @@ their workflow depends on.
 | Scorer quality report         | `codelewm.harness.scorer_quality_report.v1`     |
 | Scorer quality run            | `codelewm.harness.scorer_quality_run.v1`        |
 | LLM candidate pack            | `codelewm.llm_candidate_pack.v1`                |
+| OpenRouter BYOK registration  | `codelewm.openrouter_byok_register.v1`          |
 | LLM demo report               | `codelewm.harness.demo_report.v1`               |
 | LLM demo run                  | `codelewm.harness.demo_run.v1`                  |
 | Downstream rerank benchmark   | `codelewm.downstream_rerank_benchmark.v1`       |

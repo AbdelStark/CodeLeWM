@@ -52,6 +52,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm score` | landed | `codelewm.score.v1`, `codelewm.error.v1` |
 | `codelewm rerank` | landed | `codelewm.rerank.v1`, `codelewm.error.v1` |
 | `codelewm llm-demo` | landed | `codelewm.harness.demo_run.v1`, `codelewm.harness.demo_report.v1`, `codelewm.llm_candidate_pack.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
+| `codelewm openrouter byok-register` | landed | `codelewm.openrouter_byok_register.v1`, `codelewm.error.v1` |
 | `codelewm manifest verify` | landed | `codelewm.manifest_verify.v1`, `codelewm.error.v1` |
 | `codelewm secret-scan` | landed | `codelewm.secret_scan.v1`, `codelewm.error.v1` |
 | `codelewm dataset build` | landed | `codelewm.dataset_build_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.transition.v1`, `codelewm.error.v1` |
@@ -137,15 +138,57 @@ CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price","zdr":true}'
 ```
 
 The OpenRouter adapter uses `OPENROUTER_API_KEY`; it does not silently read a
-raw `ANTHROPIC_API_KEY`. To use Anthropic models, select an Anthropic model slug
-through OpenRouter or configure provider keys as OpenRouter BYOK outside the
-repo. Direct Anthropic API support requires a separate adapter issue.
+raw `ANTHROPIC_API_KEY` as a chat credential. To use Anthropic models, select
+an Anthropic model slug through OpenRouter. To use a local Anthropic provider
+key through OpenRouter BYOK, make the BYOK mode explicit:
+
+```bash
+OPENROUTER_API_KEY=<openrouter-api-key>
+ANTHROPIC_API_KEY=<anthropic-provider-key>
+CODELEWM_OPENROUTER_BYOK=1
+CODELEWM_OPENROUTER_BYOK_PROVIDER=anthropic
+CODELEWM_OPENROUTER_BYOK_KEY_ENV=ANTHROPIC_API_KEY
+CODELEWM_OPENROUTER_BYOK_REQUIRE=1
+CODELEWM_OPENROUTER_BYOK_REGISTER=1
+CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
+```
+
+`CODELEWM_OPENROUTER_BYOK_REGISTER=1` creates an encrypted Anthropic BYOK
+credential in the OpenRouter workspace through OpenRouter's BYOK API before a
+live run. Keep `CODELEWM_OPENROUTER_BYOK_DRY_RUN=1` to validate the registration
+contract without sending the provider key. Chat requests still authenticate to OpenRouter with
+`OPENROUTER_API_KEY`; reports record redacted BYOK metadata and never write the
+raw provider key. Direct Anthropic API support still requires a separate
+adapter issue.
 
 OpenRouter is an optional dependency pinned to `openrouter==0.9.1`. Live runs
 record the SDK version in `codelewm.llm_candidate_pack.v1` artifacts. Dry-run
 mode remains the default and must not import the SDK or make network calls.
 
-Run a deterministic fixture demo:
+Dry-run the BYOK registration contract without sending secrets:
+
+```bash
+uv run codelewm openrouter byok-register \
+  --provider anthropic \
+  --key-env ANTHROPIC_API_KEY \
+  --name "CodeLeWM Anthropic BYOK" \
+  --allowed-model anthropic/claude-4.5-sonnet \
+  --dry-run \
+  --json
+```
+
+Run the end-to-end uv demo task:
+
+```bash
+uv run scripts/llm-world-model-demo
+```
+
+The task loads `.env` if present, keeps `CODELEWM_LLM_DRY_RUN=1` by default,
+generates fixture candidates, writes the candidate pack, runs the world-model
+reranker, verifies the demo manifest against the candidate-pack parent
+manifest, and secret-scans the output.
+
+Run the underlying deterministic fixture command directly:
 
 ```bash
 CODELEWM_LLM_PROVIDER=openrouter \
@@ -163,7 +206,7 @@ uv run codelewm llm-demo \
 The command writes:
 
 ```text
-.artifacts/llm-demo/
+.artifacts/llm-world-model-demo/run/
   manifest.json
   reports/llm_world_model_demo_report.json
   candidate_pack/
@@ -179,11 +222,7 @@ CodeLeWM order, random/lexical/no-action baselines, candidate errors, optional
 check metadata, and a claim gate. The claim gate remains `allowed=false`
 because the demo is workflow evidence, not downstream benchmark evidence.
 
-Tracked streams:
-
-- #183 LLM + world-model harness demo;
-- #184 downstream candidate-reranking benchmark;
-- #185 preliminary results publication package.
+Tracked streams #183, #184, and #185 are complete as diagnostic evidence.
 
 The demo can show the workflow, but only the downstream benchmark can support a
 coding-usefulness claim.
@@ -992,6 +1031,7 @@ field list.
 | Scorer quality run | `codelewm.harness.scorer_quality_run.v1` |
 | Scorer quality report | `codelewm.harness.scorer_quality_report.v1` |
 | LLM candidate pack | `codelewm.llm_candidate_pack.v1` |
+| OpenRouter BYOK registration | `codelewm.openrouter_byok_register.v1` |
 | LLM demo run | `codelewm.harness.demo_run.v1` |
 | LLM demo report | `codelewm.harness.demo_report.v1` |
 | Downstream rerank benchmark | `codelewm.downstream_rerank_benchmark.v1` |

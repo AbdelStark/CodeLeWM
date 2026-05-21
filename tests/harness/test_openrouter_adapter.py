@@ -15,11 +15,13 @@ except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback
 from codelewm.harness import (
     DEFAULT_OPENROUTER_MODEL,
     LLM_CANDIDATE_PACK_SCHEMA_VERSION,
+    OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION,
     OPENROUTER_CANDIDATE_REQUEST_SCHEMA_VERSION,
     OPENROUTER_SDK_VERSION_PIN,
     OpenRouterAdapterError,
     OpenRouterCandidateRequest,
     generate_candidate_pack,
+    register_openrouter_byok_credential,
 )
 
 
@@ -38,7 +40,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         )
 
         first = generate_candidate_pack(request, env={}).to_dict()
-        second = generate_candidate_pack(request, env={"ANTHROPIC_API_KEY": "sk-ant-secret"}).to_dict()
+        second = generate_candidate_pack(request, env={"ANTHROPIC_API_KEY": "anthropic-secret-value"}).to_dict()
 
         self.assertEqual(first, second)
         self.assertEqual(first["schema_version"], LLM_CANDIDATE_PACK_SCHEMA_VERSION)
@@ -49,7 +51,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(len(first["candidates"]), 2)
         self.assertEqual(first["candidates"][0]["candidate_id"], "candidate_001")
         self.assertIn("CodeLeWM dry-run candidate", first["candidates"][0]["patch_text"])
-        self.assertNotIn("sk-ant-secret", json.dumps(first, sort_keys=True))
+        self.assertNotIn("anthropic-secret-value", json.dumps(first, sort_keys=True))
 
     def test_request_from_env_reads_only_documented_openrouter_settings(self) -> None:
         request = OpenRouterCandidateRequest.from_env(
@@ -59,7 +61,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
             env={
                 "CODELEWM_LLM_PROVIDER": "openrouter",
                 "OPENROUTER_API_KEY": "openrouter_xxx",
-                "ANTHROPIC_API_KEY": "sk-ant-secret",
+                "ANTHROPIC_API_KEY": "anthropic-secret-value",
                 "CODELEWM_LLM_MODEL": "anthropic/claude-4.5-sonnet",
                 "CODELEWM_LLM_MAX_CANDIDATES": "3",
                 "CODELEWM_LLM_TIMEOUT_SECONDS": "45",
@@ -81,7 +83,106 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(request.retry_limit, 1)
         self.assertEqual(request.provider_options, {"sort": "price", "zdr": True})
         self.assertNotIn("ANTHROPIC_API_KEY", json.dumps(payload, sort_keys=True))
-        self.assertNotIn("sk-ant-secret", json.dumps(payload, sort_keys=True))
+        self.assertNotIn("anthropic-secret-value", json.dumps(payload, sort_keys=True))
+
+    def test_byok_env_adds_anthropic_only_routing_without_serializing_keys(self) -> None:
+        request = OpenRouterCandidateRequest.from_env(
+            task_id="task-byok",
+            instruction="update parser",
+            context_bundle={"parser.py": "value = 1\n"},
+            env={
+                "CODELEWM_LLM_PROVIDER": "openrouter",
+                "OPENROUTER_API_KEY": "openrouter_xxx",
+                "ANTHROPIC_API_KEY": "anthropic-secret-value",
+                "CODELEWM_LLM_MODEL": "anthropic/claude-4.5-sonnet",
+                "CODELEWM_LLM_DRY_RUN": "1",
+                "CODELEWM_OPENROUTER_BYOK": "1",
+                "CODELEWM_OPENROUTER_BYOK_PROVIDER": "anthropic",
+                "CODELEWM_OPENROUTER_BYOK_KEY_ENV": "ANTHROPIC_API_KEY",
+                "CODELEWM_OPENROUTER_BYOK_REQUIRE": "1",
+                "CODELEWM_OPENROUTER_BYOK_REGISTER": "1",
+                "CODELEWM_OPENROUTER_BYOK_DRY_RUN": "1",
+            },
+        )
+
+        payload = request.to_dict()
+
+        self.assertEqual(request.provider_options["order"], ["anthropic"])
+        self.assertEqual(request.provider_options["only"], ["anthropic"])
+        self.assertFalse(request.provider_options["allow_fallbacks"])
+        self.assertTrue(payload["byok"]["enabled"])
+        self.assertTrue(payload["byok"]["register"])
+        self.assertTrue(payload["byok"]["registration_dry_run"])
+        self.assertEqual(payload["byok"]["allowed_models"], ["anthropic/claude-4.5-sonnet"])
+        self.assertNotIn("anthropic-secret-value", json.dumps(payload, sort_keys=True))
+
+    def test_byok_registration_dry_run_does_not_require_secrets(self) -> None:
+        result = register_openrouter_byok_credential(
+            env={},
+            provider="anthropic",
+            key_env="ANTHROPIC_API_KEY",
+            name="CodeLeWM Anthropic BYOK",
+            allowed_models=("anthropic/claude-4.5-sonnet",),
+            dry_run=True,
+        ).to_dict()
+
+        self.assertEqual(result["schema_version"], OPENROUTER_BYOK_REGISTER_SCHEMA_VERSION)
+        self.assertEqual(result["provider"], "anthropic")
+        self.assertEqual(result["key_env"], "ANTHROPIC_API_KEY")
+        self.assertEqual(result["allowed_models"], ["anthropic/claude-4.5-sonnet"])
+        self.assertTrue(result["dry_run"])
+        self.assertFalse(result["registered"])
+
+    def test_byok_registration_posts_redacted_payload_summary(self) -> None:
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *exc: object) -> bool:
+                return False
+
+            def read(self) -> bytes:
+                return json.dumps(
+                    {
+                        "data": {
+                            "id": "11111111-2222-3333-4444-555555555555",
+                            "provider": "anthropic",
+                            "label": "sk-...test",
+                            "name": "CodeLeWM Anthropic BYOK",
+                        }
+                    }
+                ).encode("utf-8")
+
+        captured: dict[str, object] = {}
+
+        def fake_urlopen(request: object, timeout: int) -> FakeResponse:
+            captured["timeout"] = timeout
+            captured["request"] = request
+            return FakeResponse()
+
+        with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            result = register_openrouter_byok_credential(
+                env={
+                    "OPENROUTER_API_KEY": "openrouter_live_secret_value",
+                    "ANTHROPIC_API_KEY": "anthropic-secret-value",
+                },
+                provider="anthropic",
+                key_env="ANTHROPIC_API_KEY",
+                name="CodeLeWM Anthropic BYOK",
+                allowed_models=("anthropic/claude-4.5-sonnet",),
+            ).to_dict()
+
+        self.assertTrue(result["registered"])
+        self.assertFalse(result["dry_run"])
+        self.assertEqual(captured["timeout"], 30)
+        request = captured["request"]
+        body = json.loads(request.data.decode("utf-8"))  # type: ignore[attr-defined]
+        self.assertEqual(body["provider"], "anthropic")
+        self.assertEqual(body["key"], "anthropic-secret-value")
+        self.assertEqual(body["allowed_models"], ["anthropic/claude-4.5-sonnet"])
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertNotIn("openrouter_live_secret_value", serialized)
+        self.assertNotIn("anthropic-secret-value", serialized)
 
     def test_live_mode_requires_openrouter_api_key_and_ignores_direct_provider_key(self) -> None:
         request = OpenRouterCandidateRequest(
@@ -92,11 +193,11 @@ class OpenRouterAdapterTest(unittest.TestCase):
         )
 
         with self.assertRaises(OpenRouterAdapterError) as raised:
-            generate_candidate_pack(request, env={"ANTHROPIC_API_KEY": "sk-ant-secret"})
+            generate_candidate_pack(request, env={"ANTHROPIC_API_KEY": "anthropic-secret-value"})
 
         report = raised.exception.to_error_report()
         self.assertEqual(report["error_type"], "missing_openrouter_api_key")
-        self.assertNotIn("sk-ant-secret", json.dumps(report, sort_keys=True))
+        self.assertNotIn("anthropic-secret-value", json.dumps(report, sort_keys=True))
         self.assertNotIn("ANTHROPIC_API_KEY", json.dumps(report, sort_keys=True))
 
     def test_live_mode_passes_generation_controls_to_openrouter_sdk(self) -> None:
@@ -154,7 +255,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
                 request,
                 env={
                     "OPENROUTER_API_KEY": "openrouter_live_secret_value",
-                    "ANTHROPIC_API_KEY": "sk-ant-secret",
+                    "ANTHROPIC_API_KEY": "anthropic-secret-value",
                 },
             ).to_dict()
 
@@ -169,7 +270,7 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertFalse(calls["send"]["stream"])
         serialized = json.dumps(pack, sort_keys=True)
         self.assertNotIn("openrouter_live_secret_value", serialized)
-        self.assertNotIn("sk-ant-secret", serialized)
+        self.assertNotIn("anthropic-secret-value", serialized)
 
     def test_provider_options_reject_unknown_keys(self) -> None:
         with self.assertRaises(OpenRouterAdapterError) as raised:

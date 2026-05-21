@@ -41,6 +41,10 @@ from codelewm.harness.llm_demo import (
     LLMWorldModelDemoError,
     run_llm_world_model_demo,
 )
+from codelewm.harness.openrouter_adapter import (
+    OpenRouterAdapterError,
+    register_openrouter_byok_credential,
+)
 from codelewm.harness.quality import (
     ScorerQualityError,
     run_scorer_quality_evaluation,
@@ -229,6 +233,41 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     llm_demo.set_defaults(func=_llm_demo_command)
+    openrouter = subparsers.add_parser("openrouter", help="OpenRouter helper utilities")
+    openrouter_subcommands = openrouter.add_subparsers(dest="openrouter_command")
+    byok_register = openrouter_subcommands.add_parser(
+        "byok-register",
+        help="create an OpenRouter BYOK provider credential from local env secrets",
+    )
+    byok_register.add_argument("--provider", default=None, help="provider slug; default: anthropic")
+    byok_register.add_argument(
+        "--key-env",
+        default=None,
+        help="environment variable containing the raw provider key; default: ANTHROPIC_API_KEY",
+    )
+    byok_register.add_argument("--name", default=None, help="OpenRouter BYOK key name")
+    byok_register.add_argument(
+        "--allowed-model",
+        action="append",
+        default=None,
+        help="model slug allowlist for the BYOK credential; may be repeated",
+    )
+    byok_register.add_argument("--workspace-id", default=None, help="OpenRouter workspace UUID")
+    byok_register.add_argument(
+        "--fallback",
+        action="store_true",
+        default=None,
+        help="register as a fallback key",
+    )
+    byok_register.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=None,
+        help="validate inputs without sending keys",
+    )
+    byok_register.add_argument("--json", action="store_true", help="emit JSON output")
+    byok_register.set_defaults(func=_openrouter_byok_register_command)
+    openrouter.set_defaults(func=_openrouter_help_command, openrouter_parser=openrouter)
     train_parser = subparsers.add_parser(
         "train", help="run manifest-backed CodeLeWM training"
     )
@@ -737,6 +776,41 @@ def _dataset_help_command(args: argparse.Namespace) -> int:
 
 def _eval_help_command(args: argparse.Namespace) -> int:
     args.eval_parser.print_help()
+    return 0
+
+
+def _openrouter_help_command(args: argparse.Namespace) -> int:
+    args.openrouter_parser.print_help()
+    return 0
+
+
+def _openrouter_byok_register_command(args: argparse.Namespace) -> int:
+    try:
+        result = register_openrouter_byok_credential(
+            provider=args.provider,
+            key_env=args.key_env,
+            name=args.name,
+            allowed_models=tuple(args.allowed_model or ()),
+            workspace_id=args.workspace_id,
+            is_fallback=args.fallback,
+            dry_run=args.dry_run,
+        )
+    except OpenRouterAdapterError as exc:
+        if args.json:
+            print(json.dumps(exc.to_error_report(), indent=2, sort_keys=True))
+        else:
+            print(str(exc), file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        status = "dry-run" if result.dry_run else "registered"
+        print(f"status: {status}")
+        print(f"provider: {result.provider}")
+        print(f"key_env: {result.key_env}")
+        if result.credential_name:
+            print(f"name: {result.credential_name}")
     return 0
 
 

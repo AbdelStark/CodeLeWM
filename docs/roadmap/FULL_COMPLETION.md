@@ -88,7 +88,11 @@ Current blocker:
   intervention.
 - The v1.1 LLM + world-model harness and downstream benchmark milestone is
   complete as a claim-safe diagnostic workflow: #183, #184, and #185 tracked
-  the streams, with child issues #186 through #194.
+  the streams, with child issues #186 through #194. Issue #206 adds the
+  public BYOK/local-demo usability pass.
+- The next open streams are live harness evidence (#207/#208), scaled
+  downstream benchmark evidence (#209/#210/#211), and a future positive-model
+  research hypothesis (#212, related to #178).
 
 Current landed CLI commands:
 
@@ -99,9 +103,13 @@ Current landed CLI commands:
 - `codelewm eval ablation`
 - `codelewm eval surprise`
 - `codelewm eval scorer-quality`
+- `codelewm eval downstream-pack`
+- `codelewm eval downstream-rerank`
 - `codelewm index`
 - `codelewm score`
 - `codelewm rerank`
+- `codelewm llm-demo`
+- `codelewm openrouter byok-register`
 - `codelewm manifest verify`
 - `codelewm secret-scan`
 
@@ -301,6 +309,8 @@ Deliverables:
 - OpenRouter candidate generation adapter (#187)
 - candidate-pack schema and safe patch capture (#188)
 - end-to-end LLM + CodeLeWM demo report (#189)
+- OpenRouter BYOK helper, local `uv run scripts/llm-world-model-demo` task,
+  and public README polish (#206)
 
 Claim boundary: this can prove the workflow, but not model usefulness.
 
@@ -317,6 +327,8 @@ Deliverables:
 - downstream task schema, baselines, metrics, and claim gates (#190)
 - public-safe labeled candidate reranking set (#191, complete)
 - downstream reranking comparison and claim gate (#192, complete)
+- scaled public-safe 100-example reranking set (#210, open)
+- scaled downstream comparison and claim gate (#211, open)
 
 Minimum success bar: at least 100 labeled examples and CodeLeWM improvement
 over no-action and LLM-order baselines on the agreed headline metrics.
@@ -354,6 +366,11 @@ Keep this table in implementation order and update it when issue scope changes.
 | 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | complete |
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | complete |
 | 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | complete |
+| 10 | #206 | harness: add OpenRouter BYOK demo task and public README polish | Harness Demo | complete |
+| 11 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | Live Harness Evidence | #207 |
+| 12 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
+| 13 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
+| 14 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
 
 Completed backlog base:
 
@@ -420,6 +437,11 @@ instead of creating duplicate trackers.
   through #192 are closed.
 - #185 Preliminary results publication package: complete; children #193 and
   #194 are closed.
+- #207 Live LLM plus world-model harness evidence: open; child #208 remains.
+- #209 Scaled downstream reranking benchmark: open; children #210 and #211
+  remain.
+- #212 Next positive-model research hypothesis: open; related issue #178
+  remains.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

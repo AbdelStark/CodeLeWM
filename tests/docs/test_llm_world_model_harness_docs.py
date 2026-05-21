@@ -12,6 +12,7 @@ RESULTS = ROOT / "docs" / "benchmark" / "PRELIMINARY_RESULTS_2026-05-21.md"
 ARTIFACT_INDEX = ROOT / "docs" / "benchmark" / "PUBLIC_ARTIFACT_INDEX_2026-05-21.md"
 ANNOUNCEMENT = ROOT / "docs" / "announcements" / "PRELIMINARY_RESULTS_2026-05-21.md"
 ENV_EXAMPLE = ROOT / ".env.example"
+DEMO_SCRIPT = ROOT / "scripts" / "llm-world-model-demo"
 
 
 class LLMWorldModelHarnessDocsTest(unittest.TestCase):
@@ -31,7 +32,9 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "codelewm.downstream_rerank_report.v1",
             "codelewm eval downstream-pack",
             "codelewm eval downstream-rerank",
-            "must not read a raw `ANTHROPIC_API_KEY`",
+            "codelewm.openrouter_byok_register.v1",
+            "CODELEWM_OPENROUTER_BYOK_REGISTER",
+            "`ANTHROPIC_API_KEY` may be read only by the explicit BYOK registration helper",
             "OPENROUTER_DEBUG",
             "provider_routing",
             "Demo success requires",
@@ -52,6 +55,8 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "OpenRouter SDK is beta",
             "openrouter==0.9.1",
             "codelewm.openrouter_candidate_request.v1",
+            "codelewm.openrouter_byok_register.v1",
+            "explicit OpenRouter\nBYOK registration helper",
             "Demo success proves only",
         ):
             with self.subTest(marker=marker):
@@ -70,6 +75,13 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "#193",
             "#194",
             "#192",
+            "#206",
+            "#207",
+            "#208",
+            "#209",
+            "#210",
+            "#211",
+            "#212",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -142,6 +154,23 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "CODELEWM_LLM_PROVIDER_OPTIONS_JSON=",
             "CODELEWM_LLM_RETRY_LIMIT=2",
             "OPENROUTER_APP_TITLE=CodeLeWM",
+            "ANTHROPIC_API_KEY=anthropic_provider_key_here",
+            "CODELEWM_OPENROUTER_BYOK=0",
+            "CODELEWM_OPENROUTER_BYOK_REGISTER=0",
+            "CODELEWM_OPENROUTER_BYOK_DRY_RUN=1",
+            "CODELEWM_LLM_DEMO_ROOT=.artifacts/llm-world-model-demo",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, text)
+
+    def test_llm_world_model_demo_script_is_public_entrypoint(self) -> None:
+        self.assertTrue(DEMO_SCRIPT.is_file(), f"missing: {DEMO_SCRIPT}")
+        self.assertTrue(DEMO_SCRIPT.stat().st_mode & 0o111, f"not executable: {DEMO_SCRIPT}")
+        text = DEMO_SCRIPT.read_text(encoding="utf-8")
+        for marker in (
+            "codelewm llm-demo",
+            "codelewm manifest verify",
+            "codelewm secret-scan",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

@@ -8,8 +8,9 @@ changes.
 ## Current State
 
 As of 2026-05-21, CodeLeWM has a working package runtime, a reproducible local
-first-results smoke loop, four completed scaled Hugging Face Jobs runs, and a
-post-v0.2 roadmap for the next public harness and benchmark milestone.
+first-results smoke loop, four completed scaled Hugging Face Jobs runs, a
+fixture-proven LLM + world-model harness, and explicit OpenRouter BYOK support
+for live demo experiments.
 
 Implemented foundations:
 
@@ -30,7 +31,8 @@ Implemented foundations:
 - `codelewm.harness`: package CLI entry point with `dataset build`, `dataset
   pack`, `train`, `eval retrieval`, `eval ablation`, `eval surprise`, `eval
   scorer-quality`, `eval downstream-pack`, `eval downstream-rerank`, `llm-demo`,
-  `index`, `score`, `rerank`, `manifest verify`, and `secret-scan`.
+  `openrouter byok-register`, `index`, `score`, `rerank`, `manifest verify`,
+  and `secret-scan`.
 - `codelewm.observability` and `codelewm.security`: artifact manifests,
   structured logs, redaction, public license gates, checkpoint trust checks,
   non-execution guards, and secret scanning.
@@ -90,6 +92,11 @@ Current evidence:
   `codelewm.downstream_rerank_report.v1` plus
   `codelewm.downstream_rerank_claim_gate.v1`. On the checked-in fixture, the
   claim gate remains closed because `example_count=1`.
+- `uv run scripts/llm-world-model-demo` runs the local LLM + world-model fixture
+  path, verifies manifests, and secret-scans outputs. Live mode uses
+  `OPENROUTER_API_KEY`; Anthropic BYOK is explicit through
+  `codelewm openrouter byok-register` or
+  `CODELEWM_OPENROUTER_BYOK_REGISTER=1`.
 
 Current blocker:
 
@@ -119,8 +126,11 @@ Current blocker:
   `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`, and
   `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
 - Stream trackers #183, #184, and #185 are complete. The current public
-  boundary remains negative/diagnostic; future positive claims need a new
-  research issue or a scaled downstream dataset above the 100-example gate.
+  boundary remains negative/diagnostic.
+- Issue #206 completed the public BYOK/local-demo/readme usability pass. The
+  open next streams are live harness evidence (#207/#208), scaled downstream
+  benchmarking (#209/#210/#211), and a future positive-model research
+  hypothesis (#212, related to #178).
 
 Root `train.py`, root `eval.py`, and the Hydra configs are inherited from the
 original image/LeWM seed. They are compatibility artifacts, not the source of
@@ -171,6 +181,9 @@ or preliminary publication wording are touched, also read:
   applicable, checksum-verifiable, and secret-scanned.
 - Do not print, commit, paste, or summarize Hugging Face token values. Treat
   `.env` as local secret state.
+- Do not print, commit, paste, or summarize OpenRouter or Anthropic provider
+  token values. BYOK helpers may read `ANTHROPIC_API_KEY` only when explicitly
+  configured; reports must serialize only redacted BYOK metadata.
 - Hugging Face dataset/model/results repositories may be public by default after
   license/source, manifest, secret-scan, and checkpoint-trust gates pass. Public
   visibility does not permit unsupported positive model-quality claims.
@@ -182,16 +195,19 @@ Use GitHub issues as the authoritative queue. The closed #109 through #122 and
 
 Current completion order:
 
-1. No active completion issue is required for the current public evidence
-   boundary. Future positive-claim work needs a new hypothesis and issue.
+1. #208 for one live OpenRouter BYOK harness artifact.
+2. #210 then #211 for the scaled downstream reranking benchmark gate.
+3. #178/#212 for CWM comparison and the next falsifiable positive-model
+   research hypothesis.
 
 Issues #186, #187, #188, #189, #190, #191, #192, #193, and #194 are completed
 preconditions for the downstream benchmark stream and publication package.
+Issue #206 is the completed BYOK/local-demo/readme usability pass.
 
 The OpenRouter public adapter uses `OPENROUTER_API_KEY` and model slugs such as
 `anthropic/claude-4.5-sonnet`. Do not silently read raw provider keys in that
-adapter. If direct Anthropic API key support is required, open a separate
-adapter issue.
+adapter. Anthropic BYOK is allowed only through the explicit registration helper
+and redacted request metadata.
 
 Issues #152 and #153 are completed preconditions for action-use remediation: the
 dataset pipeline now emits action-discriminative diagnostics and the training
@@ -218,6 +234,8 @@ uv sync --group dev
 uv run pytest tests/
 uv run python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
 uv run codelewm --help
+uv run codelewm openrouter byok-register --dry-run --json
+uv run scripts/llm-world-model-demo
 ```
 
 HF Jobs orchestration must use the `hf` CLI for launch, monitoring, logs, stats,
