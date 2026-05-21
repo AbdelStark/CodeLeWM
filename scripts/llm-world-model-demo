@@ -54,3 +54,6 @@ uv run codelewm manifest verify \
   --json
 
 uv run codelewm secret-scan "$out_dir" --json
+uv run codelewm secret-scan "$out_dir/demo.html" --include-suffix .html --json
+
+printf 'visual_report: %s\n' "$out_dir/demo.html"

@@ -348,11 +348,12 @@ It builds an OpenRouter request from environment variables, captures generated
 candidate patches as `codelewm.llm_candidate_pack.v1`, writes a manifest-backed
 candidate-pack artifact, scores/reranks candidates without executing them, and
 writes `codelewm.harness.demo_report.v1`. The command emits
-`codelewm.harness.demo_run.v1` on stdout. Fixture mode remains the default with
+`codelewm.harness.demo_run.v1` on stdout and writes a self-contained
+`demo.html` visual report into the demo artifact. Fixture mode remains the default with
 `CODELEWM_LLM_DRY_RUN=1`; live mode requires `OPENROUTER_API_KEY`. Use
 `uv run scripts/llm-world-model-demo` for the end-to-end local task that creates
 a tiny input file, ensures a first-results checkpoint exists, runs the demo,
-verifies manifests, and secret-scans the output.
+verifies manifests, secret-scans the output, and prints the visual report path.
 
 `codelewm openrouter byok-register` creates or dry-runs an OpenRouter BYOK
 provider credential from local environment secrets:

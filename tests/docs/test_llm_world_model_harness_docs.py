@@ -171,6 +171,7 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "codelewm llm-demo",
             "codelewm manifest verify",
             "codelewm secret-scan",
+            "visual_report:",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

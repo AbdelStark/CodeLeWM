@@ -186,7 +186,8 @@ uv run scripts/llm-world-model-demo
 The task loads `.env` if present, keeps `CODELEWM_LLM_DRY_RUN=1` by default,
 generates fixture candidates, writes the candidate pack, runs the world-model
 reranker, verifies the demo manifest against the candidate-pack parent
-manifest, and secret-scans the output.
+manifest, secret-scans the output, and writes a self-contained visual report at
+`.artifacts/llm-world-model-demo/run/demo.html`.
 
 Run the underlying deterministic fixture command directly:
 
@@ -208,6 +209,7 @@ The command writes:
 ```text
 .artifacts/llm-world-model-demo/run/
   manifest.json
+  demo.html
   reports/llm_world_model_demo_report.json
   candidate_pack/
     manifest.json

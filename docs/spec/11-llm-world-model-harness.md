@@ -238,6 +238,10 @@ Demo success requires:
 - manifest verification over the candidate pack and demo report;
 - secret scan with zero findings over publishable artifacts.
 
+The demo artifact must also include `demo.html`, a self-contained visual report
+that makes dry-run versus live mode, candidate patches, CodeLeWM ranking,
+baseline orders, and the claim gate visible without reading JSON by hand.
+
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank
 errors, and claim-gate failures.
