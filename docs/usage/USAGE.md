@@ -62,6 +62,7 @@ following subcommands. Commands marked **landed** are runnable today.
 | `codelewm eval surprise` | landed | `codelewm.eval.surprise_run.v1`, `codelewm.eval.surprise_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval scorer-quality` | landed | `codelewm.harness.scorer_quality_run.v1`, `codelewm.harness.scorer_quality_report.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm eval downstream-pack` | landed | `codelewm.downstream_benchmark_pack_run.v1`, `codelewm.downstream_rerank_benchmark.v1`, `codelewm.downstream_benchmark_readiness.v1`, `codelewm.artifact_manifest.v1`, `codelewm.secret_scan.v1`, `codelewm.error.v1` |
+| `codelewm eval downstream-rerank` | landed | `codelewm.downstream_rerank_eval_run.v1`, `codelewm.downstream_rerank_report.v1`, `codelewm.downstream_rerank_claim_gate.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 | `codelewm index` | landed | `codelewm.index_build.v1`, `codelewm.transition_index.v1`, `codelewm.artifact_manifest.v1`, `codelewm.error.v1` |
 
 Run `codelewm <command> --help` for the current flag set. JSON
@@ -749,6 +750,33 @@ The artifact layout is:
     <task-id>/candidates/
 ```
 
+### `codelewm eval downstream-rerank`
+
+Run the downstream reranking comparison and claim gate from a benchmark
+artifact:
+
+```bash
+codelewm eval downstream-rerank \
+  --benchmark-manifest .artifacts/downstream-rerank-fixture/manifest.json \
+  --checkpoint .artifacts/tiny-train/checkpoints/checkpoint.pt \
+  --out .artifacts/downstream-rerank-report \
+  --allow-unsafe-checkpoint \
+  --json
+```
+
+The command verifies the benchmark manifest, optionally verifies repeated
+`--candidate-pack-manifest` inputs, scores each materialized candidate, compares
+LLM order, random, lexical, no-action, CodeLeWM energy, retrieval prior, and
+score-ensemble rankings, and writes `codelewm.downstream_rerank_report.v1`.
+The report includes pass@1, pass@k, MRR, valid-patch rate, check-pass rate,
+baseline availability status, task/source/failure slices, confidence intervals
+when enough examples exist, and `codelewm.downstream_rerank_claim_gate.v1`.
+The retrieval-prior baseline is marked blocked unless `--index` produces finite
+retrieval-prior scores.
+
+The fixture report remains claim-blocked because it has one labeled example,
+not the required 100.
+
 ## Python API
 
 ### Train the package-native model
@@ -972,6 +1000,7 @@ field list.
 | Downstream benchmark readiness | `codelewm.downstream_benchmark_readiness.v1` |
 | Downstream source license policy | `codelewm.downstream_source_license_policy.v1` |
 | Downstream split leakage report | `codelewm.downstream_split_leakage_report.v1` |
+| Downstream rerank eval run | `codelewm.downstream_rerank_eval_run.v1` |
 | Downstream rerank report | `codelewm.downstream_rerank_report.v1` |
 | Downstream rerank claim gate | `codelewm.downstream_rerank_claim_gate.v1` |
 | Surprise eval run | `codelewm.eval.surprise_run.v1` |

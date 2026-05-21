@@ -226,6 +226,7 @@ Schema: `codelewm.downstream_rerank_benchmark.v1`.
 Report schema: `codelewm.downstream_rerank_report.v1`.
 Pack config schema: `codelewm.downstream_rerank_benchmark_config.v1`.
 Readiness schema: `codelewm.downstream_benchmark_readiness.v1`.
+Eval run schema: `codelewm.downstream_rerank_eval_run.v1`.
 
 Each example must contain:
 
@@ -263,6 +264,22 @@ uv run codelewm eval downstream-pack \
 It is a claim-blocked smoke artifact. It records source/license policy, split
 leakage checks, checksums, and a secret-scan report, but it has one labeled task
 and therefore cannot pass the 100-example gate.
+
+The downstream comparison is run with:
+
+```bash
+uv run codelewm eval downstream-rerank \
+  --benchmark-manifest .artifacts/downstream-rerank-fixture/manifest.json \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
+  --out .artifacts/downstream-rerank-report \
+  --json
+```
+
+It consumes the benchmark manifest and optional candidate-pack manifests,
+compares the required baselines, reports confidence intervals when the sample
+count permits, records baseline availability status, and writes the same claim
+gate used for public wording. Retrieval-prior baselines are marked blocked
+unless an index produces finite retrieval-prior scores.
 
 ## Security Boundary
 

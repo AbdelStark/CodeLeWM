@@ -28,7 +28,9 @@ from codelewm.eval import (
     RetrievalEvalError,
     SurpriseEvalError,
     DownstreamBenchmarkPackError,
+    DownstreamRerankEvalError,
     build_downstream_benchmark_pack,
+    run_downstream_rerank_evaluation,
     run_action_ablation_suite,
     run_latent_probe_evaluation,
     run_retrieval_evaluation,
@@ -520,6 +522,70 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     downstream_pack.set_defaults(func=_eval_downstream_pack_command)
+    downstream_rerank = eval_subcommands.add_parser(
+        "downstream-rerank",
+        help="run downstream candidate-reranking evaluation and claim gate",
+    )
+    downstream_rerank.add_argument(
+        "--benchmark-manifest",
+        type=Path,
+        required=True,
+        help="downstream benchmark artifact manifest.json",
+    )
+    downstream_rerank.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
+    downstream_rerank.add_argument(
+        "--out", type=Path, required=True, help="downstream rerank report artifact directory"
+    )
+    downstream_rerank.add_argument(
+        "--candidate-pack-manifest",
+        action="append",
+        type=Path,
+        default=[],
+        help="candidate-pack artifact manifest to verify and record; may be repeated",
+    )
+    downstream_rerank.add_argument(
+        "--device", default="auto", choices=("cpu", "cuda", "mps", "auto")
+    )
+    downstream_rerank.add_argument(
+        "--index",
+        type=Path,
+        help="transition index directory for retrieval-prior scoring",
+    )
+    downstream_rerank.add_argument(
+        "--retrieval-prior-weight",
+        type=float,
+        default=0.0,
+        help="non-negative weight applied to the retrieval prior",
+    )
+    downstream_rerank.add_argument(
+        "--retrieval-prior-k",
+        type=int,
+        default=10,
+        help="nearest index hits used for the prior",
+    )
+    downstream_rerank.add_argument("--pass-at-k", type=int, default=5, help="k for pass@k")
+    downstream_rerank.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=200,
+        help="bootstrap samples for confidence intervals when sample count permits",
+    )
+    downstream_rerank.add_argument("--seed", type=int, default=0, help="deterministic evaluation seed")
+    downstream_rerank.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
+    downstream_rerank.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing downstream rerank output files",
+    )
+    downstream_rerank.add_argument("--json", action="store_true", help="emit JSON output")
+    downstream_rerank.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    downstream_rerank.set_defaults(func=_eval_downstream_rerank_command)
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     index = subparsers.add_parser("index", help="build a transition index artifact")
     index.add_argument(
@@ -1788,6 +1854,121 @@ def _eval_downstream_pack_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_downstream_rerank_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.downstream_rerank.start",
+                level="info",
+                run_id=run_id,
+                step="eval.downstream_rerank",
+                message="downstream rerank evaluation started",
+                fields={
+                    "benchmark_manifest": str(args.benchmark_manifest),
+                    "checkpoint": str(args.checkpoint),
+                    "out": str(args.out),
+                    "candidate_pack_manifests": [
+                        str(path) for path in args.candidate_pack_manifest
+                    ],
+                    "device": args.device,
+                    "index": None if args.index is None else str(args.index),
+                    "retrieval_prior_weight": args.retrieval_prior_weight,
+                    "retrieval_prior_k": args.retrieval_prior_k,
+                    "pass_at_k": args.pass_at_k,
+                    "bootstrap_samples": args.bootstrap_samples,
+                    "seed": args.seed,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_downstream_rerank_evaluation(
+            benchmark_manifest=args.benchmark_manifest,
+            checkpoint=args.checkpoint,
+            out=args.out,
+            device=args.device,
+            index=args.index,
+            retrieval_prior_weight=args.retrieval_prior_weight,
+            retrieval_prior_k=args.retrieval_prior_k,
+            candidate_pack_manifests=args.candidate_pack_manifest,
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            pass_at_k=args.pass_at_k,
+            bootstrap_samples=args.bootstrap_samples,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.downstream_rerank.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.downstream_rerank",
+                message="downstream rerank evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "example_count": result.example_count,
+                    "claim_allowed": result.claim_allowed,
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        DownstreamRerankEvalError,
+        ScoreError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"downstream rerank evaluation failed: {exc}",
+            error_type="scoring_error",
+            remediation="verify the benchmark, candidate-pack, and checkpoint artifacts, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.downstream_rerank",
+            event="evaluation.downstream_rerank.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"downstream rerank evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the downstream rerank inputs and retry with corrected artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.downstream_rerank",
+            event="evaluation.downstream_rerank.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"downstream_report: {args.out / result.report_path}")
+        print(f"example_count: {result.example_count}")
+        print(f"claim_allowed: {result.claim_allowed}")
+    return 0
+
+
 def _index_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _index_command_tuple(args)
@@ -2240,6 +2421,40 @@ def _eval_downstream_pack_command_tuple(args: argparse.Namespace) -> tuple[str, 
         "--out",
         str(args.out),
     ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_downstream_rerank_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "downstream-rerank",
+        "--benchmark-manifest",
+        str(args.benchmark_manifest),
+        "--checkpoint",
+        str(args.checkpoint),
+        "--out",
+        str(args.out),
+        "--device",
+        args.device,
+    ]
+    for manifest in args.candidate_pack_manifest:
+        command.extend(("--candidate-pack-manifest", str(manifest)))
+    if args.index is not None:
+        command.extend(("--index", str(args.index)))
+    command.extend(("--retrieval-prior-weight", str(args.retrieval_prior_weight)))
+    command.extend(("--retrieval-prior-k", str(args.retrieval_prior_k)))
+    command.extend(("--pass-at-k", str(args.pass_at_k)))
+    command.extend(("--bootstrap-samples", str(args.bootstrap_samples)))
+    command.extend(("--seed", str(args.seed)))
+    if args.allow_unsafe_checkpoint:
+        command.append("--allow-unsafe-checkpoint")
     if args.overwrite:
         command.append("--overwrite")
     if args.json:

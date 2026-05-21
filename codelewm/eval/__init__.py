@@ -160,6 +160,13 @@ from .downstream_pack import (
     load_downstream_benchmark_pack_config,
     read_downstream_rerank_benchmark,
 )
+from .downstream_rerank import (
+    DOWNSTREAM_RERANK_EVAL_RUN_SCHEMA_VERSION,
+    DownstreamRerankEvalError,
+    DownstreamRerankEvalResult,
+    read_downstream_rerank_report,
+    run_downstream_rerank_evaluation,
+)
 from .surprise_runner import (
     SURPRISE_EVAL_RUN_SCHEMA_VERSION,
     SurpriseEvalResult,
@@ -190,6 +197,7 @@ __all__ = [
     "DOWNSTREAM_REQUIRED_METRICS",
     "DOWNSTREAM_RERANK_BENCHMARK_SCHEMA_VERSION",
     "DOWNSTREAM_RERANK_CLAIM_GATE_SCHEMA_VERSION",
+    "DOWNSTREAM_RERANK_EVAL_RUN_SCHEMA_VERSION",
     "DOWNSTREAM_RERANK_REPORT_SCHEMA_VERSION",
     "DOWNSTREAM_SOURCE_LICENSE_POLICY_SCHEMA_VERSION",
     "DOWNSTREAM_SPLIT_LEAKAGE_REPORT_SCHEMA_VERSION",
@@ -229,6 +237,8 @@ __all__ = [
     "DownstreamBenchmarkPackError",
     "DownstreamBenchmarkPackResult",
     "DownstreamCandidate",
+    "DownstreamRerankEvalError",
+    "DownstreamRerankEvalResult",
     "DownstreamRerankBenchmark",
     "DownstreamTask",
     "EvaluationGateError",
@@ -278,10 +288,12 @@ __all__ = [
     "read_action_contrast_pool_report",
     "read_latent_probe_report",
     "read_downstream_rerank_benchmark",
+    "read_downstream_rerank_report",
     "read_retrieval_report",
     "run_action_ablation_suite",
     "run_latent_probe_evaluation",
     "load_downstream_benchmark_pack_config",
+    "run_downstream_rerank_evaluation",
     "run_retrieval_evaluation",
     "run_surprise_evaluation",
     "read_surprise_report",

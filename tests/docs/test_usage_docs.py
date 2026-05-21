@@ -49,6 +49,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm eval surprise",
             "codelewm eval scorer-quality",
             "codelewm eval downstream-pack",
+            "codelewm eval downstream-rerank",
             "codelewm index",
         ):
             with self.subTest(command=command):
@@ -95,6 +96,7 @@ class UsageGuideContentTest(unittest.TestCase):
             "codelewm.downstream_benchmark_readiness.v1",
             "codelewm.downstream_source_license_policy.v1",
             "codelewm.downstream_split_leakage_report.v1",
+            "codelewm.downstream_rerank_eval_run.v1",
             "codelewm.downstream_rerank_report.v1",
             "codelewm.downstream_rerank_claim_gate.v1",
             "codelewm.transition_index.v1",

@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-21
 
-Issue: #191. Parent tracker: #184.
+Issue: #192. Parent tracker: #184.
 
 ## Status
 
@@ -43,6 +43,27 @@ The fixture pack writes `codelewm.downstream_rerank_benchmark.v1`,
 `codelewm.secret_scan.v1`, and `codelewm.artifact_manifest.v1` artifacts. The
 source policy is project-owned synthetic fixtures under the repository license.
 It is public-safe but remains smoke evidence because it has one labeled task.
+
+Issue #192 adds the downstream comparison and claim gate:
+
+```bash
+uv run codelewm eval downstream-rerank \
+  --benchmark-manifest .artifacts/downstream-rerank-fixture/manifest.json \
+  --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt \
+  --out .artifacts/downstream-rerank-report \
+  --allow-unsafe-checkpoint \
+  --overwrite \
+  --json
+```
+
+The report schema is `codelewm.downstream_rerank_report.v1`; the stdout run
+schema is `codelewm.downstream_rerank_eval_run.v1`. The report compares LLM
+order, random, lexical, no-action, CodeLeWM energy, retrieval prior, and score
+ensemble baselines, records baseline availability status, then writes
+`codelewm.downstream_rerank_claim_gate.v1`. The retrieval-prior baseline is
+marked blocked when no `--index` produces finite retrieval-prior scores.
+For the fixture, the expected claim gate remains closed because
+`example_count=1`.
 
 ## Benchmark Payload Schema
 

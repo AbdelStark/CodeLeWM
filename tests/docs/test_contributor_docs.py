@@ -101,6 +101,7 @@ class ChangelogContentTest(unittest.TestCase):
             "codelewm.downstream_rerank_benchmark_config.v1",
             "codelewm.downstream_benchmark_pack_run.v1",
             "codelewm.downstream_benchmark_readiness.v1",
+            "codelewm.downstream_rerank_eval_run.v1",
             "codelewm.eval.collapse_report.v1",
             "codelewm.eval.kill_report.v1",
             "codelewm.public_license_gate.v1",

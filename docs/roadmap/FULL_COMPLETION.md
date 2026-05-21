@@ -315,7 +315,7 @@ Deliverables:
 
 - downstream task schema, baselines, metrics, and claim gates (#190)
 - public-safe labeled candidate reranking set (#191, complete)
-- downstream reranking comparison and claim gate (#192)
+- downstream reranking comparison and claim gate (#192, complete)
 
 Minimum success bar: at least 100 labeled examples and CodeLeWM improvement
 over no-action and LLM-order baselines on the agreed headline metrics.
@@ -352,7 +352,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | complete |
 | 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | complete |
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | complete |
-| 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | public coding-usefulness claim path |
+| 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | complete |
 
 Completed backlog base:
 
@@ -415,8 +415,8 @@ instead of creating duplicate trackers.
 - #167 v0.2 action-use and representation research intervention: complete as
   negative/diagnostic evidence through #168 through #172.
 - #183 LLM + world-model harness demo: complete; children #186 through #189.
-- #184 Downstream candidate-reranking benchmark: active; #190 and #191 are
-  complete, #192 remains.
+- #184 Downstream candidate-reranking benchmark: complete; children #190
+  through #192 are closed.
 - #185 Preliminary results publication package: complete; children #193 and
   #194 are closed.
 
