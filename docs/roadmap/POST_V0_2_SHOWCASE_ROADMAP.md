@@ -71,6 +71,8 @@ Minimum scaled benchmark gate:
 
 Tracker: #185.
 
+Status: complete as of #194.
+
 Purpose: publish the project in a way that is useful and honest. The right story
 is an infrastructure and negative-result milestone, plus a clear next
 downstream test.
@@ -79,8 +81,8 @@ Issues:
 
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
-| C1 | #193 | docs: publish preliminary negative-results report | Open |
-| C2 | #194 | docs: prepare public artifact index and announcement package | Open |
+| C1 | #193 | docs: publish preliminary negative-results report | Closed |
+| C2 | #194 | docs: prepare public artifact index and announcement package | Closed |
 
 Publication boundary:
 
@@ -88,6 +90,12 @@ Publication boundary:
   action-use result, and the harness roadmap;
 - blocked: positive action-conditioned quality, semantic latent-axis, or
   coding-usefulness claims.
+
+Publication artifacts:
+
+- `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
+- `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md`
+- `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`
 
 ## Implementation Order
 

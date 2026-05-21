@@ -82,8 +82,10 @@ action-swap/inverse-action report lives at
 the systems path, but none supports a positive action-conditioned quality
 claim. The v0.2 run also fails the representation and downstream-usefulness
 gates. The preliminary public summary lives at
-`docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`. The next milestone is the
-LLM + world-model harness specified in
+`docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`, with the public HF artifact
+index in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md` and reusable
+announcement copy in `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`.
+The next milestone is the LLM + world-model harness specified in
 `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`: use an LLM to propose candidate
 patches, use CodeLeWM to score/rerank them, and only claim usefulness after a
 scaled downstream benchmark passes. Core harness
@@ -115,6 +117,8 @@ Scaled evidence is recorded separately:
 - `docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
 - `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md`
+- `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md`
+- `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`
 - `docs/cards/codelewm-scaled-dataset-2026-05-20.md`
 - `docs/cards/codelewm-scaled-model-2026-05-20.md`
 - `docs/cards/codelewm-action-use-dataset-2026-05-20.md`
