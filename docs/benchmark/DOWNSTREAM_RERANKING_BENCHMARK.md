@@ -1,8 +1,8 @@
 # Downstream Reranking Benchmark
 
-Last updated: 2026-05-20
+Last updated: 2026-05-21
 
-Issue: #169. Parent tracker: #167.
+Issue: #190. Parent tracker: #184.
 
 ## Status
 
@@ -26,6 +26,43 @@ examples required for a scaled downstream usefulness claim. Therefore
 `benchmark_readiness.downstream_claim_allowed=false` are expected for fixture
 runs.
 
+## Benchmark Payload Schema
+
+Benchmark schema: `codelewm.downstream_rerank_benchmark.v1`.
+
+Each benchmark payload records:
+
+- `benchmark_id`;
+- `tasks[]`;
+- `required_baselines`;
+- `required_metrics`;
+- `min_labeled_examples`;
+- `provenance`.
+
+Each task records:
+
+- `task_id`;
+- `task_type`;
+- `prompt`;
+- `before_path`;
+- `candidates[]`;
+- task-level provenance, including source dataset and candidate-pack lineage.
+
+Each candidate records:
+
+- stable `candidate_id`;
+- original `llm_rank`;
+- human or check-derived label: `pass`, `fail`, or `unknown`;
+- `patch_path` or `after_state_path`;
+- static-check status: `pass`, `fail`, `not_run`, or `not_applicable`;
+- test-check status: `pass`, `fail`, `not_run`, or `not_applicable`;
+- candidate source metadata;
+- provenance, including LLM model, candidate-pack artifact, and checksum data.
+
+Report schema: `codelewm.downstream_rerank_report.v1`.
+
+Claim gate schema: `codelewm.downstream_rerank_claim_gate.v1`.
+
 ## Minimum Scaled Contract
 
 A scaled downstream claim needs:
@@ -34,10 +71,28 @@ A scaled downstream claim needs:
 - candidates for `true_after`, `hard_negative`, `syntax_failure`,
   `patch_failure`, and plausible wrong edits where available;
 - non-execution parsing and patch-application checks;
-- top-1, Recall@5, Recall@10, MRR, mean/median true rank, and failure counts;
-- controls for random, lexical, no-action, #159 replay, retrieval-prior-only,
-  transition-energy-only, and final combined score;
+- pass@1, pass@k, MRR, valid-patch rate, static/test check-pass rate,
+  mean/median true rank, and failure counts;
+- slices by task type, candidate source, and failure type;
+- required baselines: LLM order, random, lexical, no-action, CodeLeWM,
+  retrieval prior, and score ensemble;
 - runs from downloaded Hugging Face artifacts, not a job working directory.
+
+## Claim Gate
+
+The downstream claim gate defaults to `allowed=false`.
+
+It may flip to `allowed=true` only when all of the following are true:
+
+- `example_count >= 100`;
+- CodeLeWM is strictly above LLM order on pass@1 and MRR;
+- CodeLeWM is strictly above no-action on pass@1 and MRR;
+- valid-patch and check-pass rates are reported for the evaluated set;
+- slices do not show that the improvement comes only from invalid, unchecked, or
+  unsupported candidate categories.
+
+This explicitly falsifies the downstream usefulness hypothesis if CodeLeWM does
+not improve over LLM order or no-action after the 100-example gate is met.
 
 ## Fixture Command
 

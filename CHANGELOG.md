@@ -102,6 +102,9 @@ their workflow depends on.
 | LLM candidate pack            | `codelewm.llm_candidate_pack.v1`                |
 | LLM demo report               | `codelewm.harness.demo_report.v1`               |
 | LLM demo run                  | `codelewm.harness.demo_run.v1`                  |
+| Downstream rerank benchmark   | `codelewm.downstream_rerank_benchmark.v1`       |
+| Downstream rerank report      | `codelewm.downstream_rerank_report.v1`          |
+| Downstream rerank claim gate  | `codelewm.downstream_rerank_claim_gate.v1`      |
 | Collapse report               | `codelewm.eval.collapse_report.v1`              |
 | Kill-switch report            | `codelewm.eval.kill_report.v1`                  |
 | Public license gate           | `codelewm.public_license_gate.v1`               |

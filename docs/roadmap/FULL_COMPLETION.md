@@ -350,7 +350,7 @@ Keep this table in implementation order and update it when issue scope changes.
 | 4 | #187 | harness: add OpenRouter candidate generation adapter | Harness Demo | complete |
 | 5 | #188 | harness: add candidate pack schema and safe patch capture | Harness Demo | complete |
 | 6 | #189 | harness: build end-to-end LLM plus CodeLeWM demo report | Harness Demo | complete |
-| 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | #191, #192 |
+| 7 | #190 | benchmark: define downstream task schema and claim gates | Downstream Benchmark | complete |
 | 8 | #191 | benchmark: build public-safe labeled candidate reranking set | Downstream Benchmark | #192 |
 | 9 | #192 | eval: run downstream reranking comparison and claim gate | Downstream Benchmark | public coding-usefulness claim path |
 

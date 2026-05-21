@@ -14,16 +14,22 @@ class DownstreamRerankingBenchmarkDocsTest(unittest.TestCase):
         text = BENCHMARK.read_text(encoding="utf-8")
 
         for marker in (
-            "#169",
+            "#190",
+            "#184",
+            "codelewm.downstream_rerank_benchmark.v1",
+            "codelewm.downstream_rerank_report.v1",
+            "codelewm.downstream_rerank_claim_gate.v1",
             "codelewm.harness.scorer_quality_report.v1",
             "component_metrics.final_score",
             "component_metrics.transition_energy_only",
             "component_metrics.retrieval_prior_only",
             "baseline_controls",
-            "random, lexical, no-action, #159 replay",
+            "required baselines: LLM order, random, lexical, no-action, CodeLeWM",
+            "retrieval prior, and score ensemble",
             "benchmark_readiness.scaled_evaluation_ready=false",
             "benchmark_readiness.downstream_claim_allowed=false",
             "at least `100` labeled reranking examples",
+            "CodeLeWM is strictly above LLM order on pass@1 and MRR",
             "Downstream reranking usefulness is **not supported yet**",
         ):
             with self.subTest(marker=marker):
