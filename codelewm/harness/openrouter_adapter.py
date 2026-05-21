@@ -6,6 +6,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from collections.abc import Mapping, Sequence
@@ -41,6 +42,7 @@ MAX_SERIALIZED_TEXT_CHARS = 50_000
 ALLOWED_PROVIDER_OPTION_KEYS = frozenset(
     {"order", "only", "sort", "allow_fallbacks", "require_parameters", "zdr"}
 )
+OPENROUTER_SECRET_RE = re.compile(r"\bsk-or-v1-[A-Za-z0-9_-]+\b")
 
 
 class OpenRouterAdapterError(ValueError):
@@ -350,7 +352,9 @@ class LLMCandidate:
             "candidate_id": self.candidate_id,
             "patch_text": _redacted_text_preview(self.patch_text),
             "patch_path": self.patch_path,
-            "normalized_patch_sha256": _sha256_text(_normalize_patch(self.patch_text)),
+            "normalized_patch_sha256": _sha256_text(
+                _normalize_patch(_unified_diff_payload(self.patch_text))
+            ),
             "parser_status": self.parser_status,
             "dry_run_patch_status": self.dry_run_patch_status,
             "generation_error": None
@@ -567,18 +571,20 @@ def generate_candidate_pack(
                 }
             break
         except Exception as exc:  # pragma: no cover - live provider failure path
+            detail = _redact_provider_error_detail(str(exc))
             errors.append(
                 {
                     "error_type": "provider_request_error",
                     "attempt": attempt,
-                    "message": redact_text(str(exc)),
+                    "message": detail,
                 }
             )
             if attempt >= request.retry_limit:
+                message, remediation = _provider_request_error_details(detail)
                 raise OpenRouterAdapterError(
-                    "OpenRouter provider request failed",
+                    message,
                     error_type="provider_request_error",
-                    remediation="check model slug, provider options, quota, and network",
+                    remediation=remediation,
                 ) from exc
 
     candidates = _candidates_from_response_text(response_text, request.max_candidates)
@@ -791,10 +797,10 @@ def write_candidate_pack_artifact(
     candidate_files: list[Path] = []
     for candidate in captured.candidates:
         patch_path = candidates_dir / f"{candidate.candidate_id}.patch"
-        patch_text = candidate.patch_text
+        patch_text = _unified_diff_payload(candidate.patch_text)
         if len(patch_text) > max_patch_chars or scan_text(patch_text, path=str(patch_path)):
             patch_path = candidates_dir / f"{candidate.candidate_id}.patch.redacted.txt"
-            patch_text = _redacted_text_preview(patch_text)
+            patch_text = _redacted_text_preview(candidate.patch_text)
         patch_path.write_text(patch_text.rstrip("\n") + "\n", encoding="utf-8")
         candidate_files.append(patch_path)
         candidates_with_paths.append(
@@ -860,7 +866,8 @@ def render_candidate_prompt(request: OpenRouterCandidateRequest) -> str:
 
     context_lines = []
     for path, content in sorted(request.context_bundle.items()):
-        context_lines.append(f"### File: {path}\n```python\n{content}\n```")
+        content_block = content if content.endswith("\n") else f"{content}\n"
+        context_lines.append(f"### File: {path}\n```python\n{content_block}```")
     context_block = "\n\n".join(context_lines) if context_lines else "No repository context provided."
     return (
         "You are generating candidate unified diffs for CodeLeWM.\n"
@@ -950,10 +957,11 @@ def _capture_candidate(
     parser_status = "not_parsed"
     dry_run_patch_status = "not_applied"
     try:
-        before_path = _patch_context_path(candidate.patch_text, context_bundle)
+        patch_payload = _unified_diff_payload(candidate.patch_text)
+        before_path = _patch_context_path(patch_payload, context_bundle)
         after_text = _apply_unified_diff(
             context_bundle[before_path],
-            candidate.patch_text,
+            patch_payload,
             artifact=candidate.candidate_id,
         )
         dry_run_patch_status = "applied"
@@ -1008,7 +1016,7 @@ def _capture_candidate(
 
 
 def _patch_context_path(patch_text: str, context_bundle: Mapping[str, str]) -> str:
-    source_path, target_path = _patch_header_paths(patch_text)
+    source_path, target_path = _patch_header_paths(_unified_diff_payload(patch_text))
     for candidate_path in (target_path, source_path):
         if candidate_path in context_bundle:
             return candidate_path
@@ -1089,6 +1097,42 @@ def _candidate_error(
         "artifact": artifact,
         "caused_by": caused_by,
     }
+
+
+def _provider_request_error_details(detail: str) -> tuple[str, str]:
+    message = "OpenRouter provider request failed"
+    if detail:
+        message = f"{message}: {detail}"
+    lowered = detail.lower()
+    if "zero data retention" in lowered or "data policy" in lowered or "zdr" in lowered:
+        return (
+            message,
+            (
+                "remove provider.zdr from CODELEWM_LLM_PROVIDER_OPTIONS_JSON or configure "
+                "OpenRouter privacy/ZDR settings for a matching endpoint"
+            ),
+        )
+    return message, "check model slug, provider options, quota, and network"
+
+
+def _redact_provider_error_detail(detail: str) -> str:
+    return OPENROUTER_SECRET_RE.sub("[REDACTED_OPENROUTER_KEY]", redact_text(detail)).strip()
+
+
+def _unified_diff_payload(text: str) -> str:
+    """Extract the unified diff body from common markdown-fenced LLM output."""
+
+    stripped = text.strip()
+    lines = stripped.splitlines()
+    start = next((index for index, line in enumerate(lines) if line.startswith("--- ")), None)
+    if start is None:
+        return stripped
+    payload: list[str] = []
+    for line in lines[start:]:
+        if line.strip().startswith("```"):
+            break
+        payload.append(line)
+    return "\n".join(payload).strip("\n") + ("\n" if payload else "")
 
 
 def _candidates_from_response_text(text: str, max_candidates: int) -> list[LLMCandidate]:

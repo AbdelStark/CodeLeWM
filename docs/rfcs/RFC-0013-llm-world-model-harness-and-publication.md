@@ -126,6 +126,12 @@ support local debug mode later, but any enabled debug mode must be rejected by
 publication gates unless request and response content are separately redacted
 and secret-scanned.
 
+Per-request Zero Data Retention routing is optional. If `provider.zdr=true` is
+set and the pinned provider/BYOK route has no matching ZDR endpoint, OpenRouter
+returns a provider-routing error before generation. The adapter should surface
+that redacted provider detail and tell the user to remove `zdr` or configure a
+matching OpenRouter privacy route.
+
 ## Artifact Schemas
 
 New schemas:

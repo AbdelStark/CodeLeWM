@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import types
 import unittest
 from pathlib import Path
@@ -21,8 +22,11 @@ from codelewm.harness import (
     OPENROUTER_SDK_VERSION_PIN,
     OpenRouterAdapterError,
     OpenRouterCandidateRequest,
+    capture_candidate_pack,
     generate_candidate_pack,
     register_openrouter_byok_credential,
+    render_candidate_prompt,
+    write_candidate_pack_artifact,
 )
 
 
@@ -85,6 +89,18 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(request.provider_options, {"sort": "price", "zdr": True})
         self.assertNotIn("ANTHROPIC_API_KEY", json.dumps(payload, sort_keys=True))
         self.assertNotIn("anthropic-secret-value", json.dumps(payload, sort_keys=True))
+
+    def test_prompt_rendering_does_not_add_phantom_context_blank_line(self) -> None:
+        request = OpenRouterCandidateRequest(
+            task_id="task-prompt",
+            instruction="add a comment",
+            context_bundle={"app.py": "value = 1\n"},
+        )
+
+        prompt = render_candidate_prompt(request)
+
+        self.assertIn("```python\nvalue = 1\n```", prompt)
+        self.assertNotIn("value = 1\n\n```", prompt)
 
     def test_byok_env_adds_anthropic_only_routing_without_serializing_keys(self) -> None:
         request = OpenRouterCandidateRequest.from_env(
@@ -299,6 +315,118 @@ class OpenRouterAdapterTest(unittest.TestCase):
         serialized = json.dumps(pack, sort_keys=True)
         self.assertNotIn("openrouter_live_secret_value", serialized)
         self.assertNotIn("anthropic-secret-value", serialized)
+
+    def test_live_provider_error_includes_redacted_zdr_cause(self) -> None:
+        class FakeChat:
+            def send(self, **kwargs: object) -> object:
+                raise RuntimeError(
+                    "No endpoints found matching your data policy "
+                    "(Zero data retention). key sk-or-v1-secret"
+                )
+
+        class FakeOpenRouter:
+            def __init__(self, **kwargs: object) -> None:
+                self.chat = FakeChat()
+
+            def __enter__(self) -> "FakeOpenRouter":
+                return self
+
+            def __exit__(self, *exc: object) -> bool:
+                return False
+
+        fake_module = types.ModuleType("openrouter")
+        fake_module.OpenRouter = FakeOpenRouter  # type: ignore[attr-defined]
+        request = OpenRouterCandidateRequest(
+            task_id="task-live-zdr",
+            instruction="change behavior",
+            context_bundle={"app.py": "value = 1\n"},
+            provider_options={"zdr": True},
+            dry_run=False,
+            retry_limit=0,
+        )
+
+        with mock.patch.dict(sys.modules, {"openrouter": fake_module}):
+            with self.assertRaises(OpenRouterAdapterError) as raised:
+                generate_candidate_pack(
+                    request,
+                    env={"OPENROUTER_API_KEY": "openrouter_live_secret_value"},
+                )
+
+        report = raised.exception.to_error_report()
+        serialized = json.dumps(report, sort_keys=True)
+        self.assertEqual(report["error_type"], "provider_request_error")
+        self.assertIn("Zero data retention", report["message"])
+        self.assertIn("provider.zdr", report["remediation"])
+        self.assertNotIn("sk-or-v1-secret", serialized)
+        self.assertNotIn("openrouter_live_secret_value", serialized)
+
+    def test_capture_candidate_accepts_markdown_fenced_unified_diff(self) -> None:
+        class FakeChat:
+            def send(self, **kwargs: object) -> dict[str, object]:
+                return {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": (
+                                    "### Candidate 1\n"
+                                    "```diff\n"
+                                    "--- app.py\n"
+                                    "+++ app.py\n"
+                                    "@@ -1,1 +1,2 @@\n"
+                                    "+# Initialize value\n"
+                                    " value = 1\n"
+                                    "```\n"
+                                )
+                            }
+                        }
+                    ],
+                }
+
+        class FakeOpenRouter:
+            def __init__(self, **kwargs: object) -> None:
+                self.chat = FakeChat()
+
+            def __enter__(self) -> "FakeOpenRouter":
+                return self
+
+            def __exit__(self, *exc: object) -> bool:
+                return False
+
+        fake_module = types.ModuleType("openrouter")
+        fake_module.OpenRouter = FakeOpenRouter  # type: ignore[attr-defined]
+        request = OpenRouterCandidateRequest(
+            task_id="task-live-fenced",
+            instruction="add a comment",
+            context_bundle={"app.py": "value = 1\n"},
+            max_candidates=1,
+            dry_run=False,
+            retry_limit=0,
+        )
+
+        with mock.patch.dict(sys.modules, {"openrouter": fake_module}):
+            pack = generate_candidate_pack(
+                request,
+                env={"OPENROUTER_API_KEY": "openrouter_live_secret_value"},
+            )
+        captured = capture_candidate_pack(pack).to_dict()
+
+        self.assertEqual(captured["candidates"][0]["dry_run_patch_status"], "applied")
+        self.assertEqual(
+            captured["candidates"][0]["parser_status"],
+            "parseable_python_after_state",
+        )
+        self.assertEqual(captured["candidates"][0]["errors"], [])
+        self.assertIn("```diff", captured["candidates"][0]["patch_text"])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            result = write_candidate_pack_artifact(pack, Path(tmp), overwrite=True)
+            patch_file = Path(tmp) / "candidates" / "candidate_001.patch"
+            patch_text = patch_file.read_text(encoding="utf-8")
+            candidate_pack = json.loads((Path(tmp) / result.candidate_pack_path).read_text())
+
+        self.assertTrue(patch_text.startswith("--- app.py\n+++ app.py\n"))
+        self.assertNotIn("```diff", patch_text)
+        self.assertIn("```diff", candidate_pack["candidates"][0]["patch_text"])
 
     def test_provider_options_reject_unknown_keys(self) -> None:
         with self.assertRaises(OpenRouterAdapterError) as raised:
