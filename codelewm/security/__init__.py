@@ -7,6 +7,12 @@ from .checkpoint_trust import (
     default_checkpoint_manifest_path,
     require_trusted_checkpoint,
 )
+from .claim_boundaries import (
+    ClaimBoundaryError,
+    available_claim_boundaries,
+    claim_boundary_fingerprint,
+    load_claim_boundary,
+)
 from .license_policy import (
     DEFAULT_PUBLIC_LICENSE_POLICY,
     LicenseDecision,
@@ -40,6 +46,7 @@ from .secret_scan import (
 
 __all__ = [
     "CheckpointTrustError",
+    "ClaimBoundaryError",
     "DEFAULT_PUBLIC_LICENSE_POLICY",
     "FORBIDDEN_EXECUTION_CONFIG_KEYS",
     "LicenseDecision",
@@ -52,10 +59,13 @@ __all__ = [
     "SecretScanError",
     "SecretScanReport",
     "SourceLicensePolicy",
+    "available_claim_boundaries",
     "build_public_license_gate_report",
+    "claim_boundary_fingerprint",
     "decide_license",
     "default_checkpoint_manifest_path",
     "enforce_public_license_gate",
+    "load_claim_boundary",
     "normalize_license",
     "parse_python_source_text",
     "reject_code_execution_config",
