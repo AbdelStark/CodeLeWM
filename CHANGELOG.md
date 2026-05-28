@@ -16,6 +16,14 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Source adapters for the execution-substrate ingestion path:
+  `codelewm.data.execution_sources` with `SourceSubmission`,
+  `InputCase`, `ExecutionSourceAdapter` protocol, and concrete adapters
+  for CodeNet, MBPP, MBPP-Plus, APPS, and HumanEval. MBPP-Plus and
+  HumanEval are flagged `held_out_for_eval=True` so the pack builder
+  (#262) refuses to put them in train/val splits. New CLI:
+  `codelewm dataset ingest --source <name> --input <jsonl> --output
+  <out.jsonl>`. New schema: `codelewm.execution_source_record.v1`. (#261)
 - Sandboxed deterministic Python executor for execution-substrate data
   prep: `codelewm.data.sandbox` with `run_one`, `SandboxPolicy`,
   `SandboxResult`, `SandboxExitCode`, `SandboxPolicyError`,

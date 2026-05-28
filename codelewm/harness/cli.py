@@ -977,6 +977,40 @@ def build_parser() -> argparse.ArgumentParser:
     )
     execute.add_argument("--json", action="store_true", help="emit JSON output")
     execute.set_defaults(func=_dataset_execute_command)
+    ingest = dataset_subcommands.add_parser(
+        "ingest",
+        help=(
+            "ingest one execution-substrate upstream source into a normalized "
+            "JSONL of SourceSubmission records (codenet/mbpp/mbpp_plus/apps/humaneval)"
+        ),
+    )
+    ingest.add_argument(
+        "--source",
+        choices=("codenet", "mbpp", "mbpp_plus", "apps", "humaneval"),
+        required=True,
+        help="upstream dataset name",
+    )
+    ingest.add_argument(
+        "--input",
+        dest="input_path",
+        type=Path,
+        required=True,
+        help="path to the upstream flattened JSONL or directory the adapter expects",
+    )
+    ingest.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="output JSONL path for normalized SourceSubmission records",
+    )
+    ingest.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="cap the number of submissions written (default: no limit)",
+    )
+    ingest.add_argument("--json", action="store_true", help="emit JSON output")
+    ingest.set_defaults(func=_dataset_ingest_command)
     dataset.set_defaults(func=_dataset_help_command, dataset_parser=dataset)
     manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
     manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
@@ -3015,6 +3049,66 @@ def _dataset_execute_command(args: argparse.Namespace) -> int:
         print(f"wall_time_ms: {payload['wall_time_ms']:.2f}")
         print(f"determinism_check: {payload['determinism_check']}")
     return 0 if result.ok else 1
+
+
+def _dataset_ingest_command(args: argparse.Namespace) -> int:
+    """Normalize one upstream dataset's JSONL into SourceSubmission records."""
+
+    from codelewm.data.execution_sources import (  # noqa: PLC0415
+        ExecutionSourceError,
+        load_execution_source,
+    )
+
+    if not args.input_path.exists():
+        error = ScoreError(
+            f"upstream source path does not exist: {args.input_path}",
+            error_type="input_missing",
+            remediation="pass --input pointing to the adapter's expected file or directory",
+            artifact=str(args.input_path),
+            caused_by="FileNotFoundError",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    if args.limit is not None and args.limit < 1:
+        error = ScoreError(
+            "--limit must be a positive integer",
+            error_type="invalid_arguments",
+            remediation="omit --limit or pass a value >= 1",
+            artifact=str(args.input_path),
+            caused_by="ValueError",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    try:
+        result = load_execution_source(
+            source=args.source,
+            source_path=args.input_path,
+            output_path=args.output,
+            limit=args.limit,
+        )
+    except ExecutionSourceError as exc:
+        error = ScoreError(
+            f"ingestion failed: {exc}",
+            error_type="dataset_build_error",
+            remediation="verify the upstream JSONL format matches the adapter docstring",
+            artifact=str(args.input_path),
+            caused_by=f"ExecutionSourceError: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+
+    if args.json:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        print(f"source: {result['source']}")
+        print(f"submission_count: {result['submission_count']}")
+        print(f"unique_problem_count: {result['unique_problem_count']}")
+        print(f"unique_submission_count: {result['unique_submission_count']}")
+        print(f"held_out_for_eval: {result['held_out_for_eval']}")
+        print(f"license: {result['license']}")
+        print(f"output_path: {result['output_path']}")
+    return 0
 
 
 def _manifest_verify_command(args: argparse.Namespace) -> int:

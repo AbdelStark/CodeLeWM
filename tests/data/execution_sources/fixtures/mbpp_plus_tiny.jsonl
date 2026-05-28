@@ -1,0 +1,1 @@
+{"task_id": "Mbpp/1", "prompt": "Square", "canonical_solution": "def square(n):\n    return n * n\n", "entry_point": "square", "base_input": [[2], [3]], "plus_input": [[10], [-4]], "expected_output": [4, 9, 100, 16]}
