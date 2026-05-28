@@ -25,12 +25,18 @@ from codelewm.data.sandbox import (
 
 
 def _fast_policy(**overrides: object) -> SandboxPolicy:
-    """Return a policy tuned for unit tests: short timeout, no determinism."""
+    """Return a policy tuned for unit tests: short timeout, no determinism.
+
+    Memory cap is held generous (``memory_mb=1024``) because Python's own
+    allocator arenas, library mappings, and per-thread stacks regularly
+    pass 128 MB even for trivial payloads. A tight cap exercises the
+    rlimit code path but not the policy semantics we want to test.
+    """
 
     base = dict(
         timeout_ms=3000,
         determinism_check=False,
-        memory_mb=128,
+        memory_mb=1024,
         cpu_seconds=2,
     )
     base.update(overrides)
@@ -275,7 +281,7 @@ class SandboxRunnerDeterminismTest(unittest.TestCase):
             policy=SandboxPolicy(
                 timeout_ms=3000,
                 determinism_check=True,
-                memory_mb=128,
+                memory_mb=1024,
                 cpu_seconds=2,
             ),
         )
@@ -298,7 +304,7 @@ class SandboxRunnerDeterminismTest(unittest.TestCase):
             policy=SandboxPolicy(
                 timeout_ms=3000,
                 determinism_check=True,
-                memory_mb=128,
+                memory_mb=1024,
                 cpu_seconds=2,
             ),
         )
