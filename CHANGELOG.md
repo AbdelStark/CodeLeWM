@@ -16,6 +16,20 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Sandboxed deterministic Python executor for execution-substrate data
+  prep: `codelewm.data.sandbox` with `run_one`, `SandboxPolicy`,
+  `SandboxResult`, `SandboxExitCode`, `SandboxPolicyError`,
+  `SandboxRunnerError`, and the `codelewm.sandbox_result.v1` schema. The
+  child process enforces a stdlib-only import allowlist, denies network
+  and subprocess primitives, audits filesystem writes outside the
+  scratch directory, applies `RLIMIT_AS` and `RLIMIT_CPU` rlimits on
+  POSIX, and performs a determinism re-run. The runner enforces the
+  wall-clock budget. New CLI: `codelewm dataset execute`. New harness
+  error types: `input_missing`, `invalid_arguments`,
+  `sandbox_runner_error`. The sandbox is data-prep only; a structural
+  test in `tests/security/test_sandbox_import_boundary.py` blocks
+  training, model, eval, observability, scorer, index, and quality
+  paths from importing it. (#260)
 - Execution-substrate governance scaffolding: RFC-0014
   (`docs/rfcs/RFC-0014-execution-trace-world-model-substrate.md`), the
   substrate roadmap (`docs/roadmap/EXECUTION_TRACE_WORLD_MODEL.md`), the
