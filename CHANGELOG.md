@@ -16,6 +16,15 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Crash-prediction binary classification eval:
+  `codelewm.eval.crash_prediction` adds `evaluate_crash_prediction()`,
+  `CrashSample`, `CrashPredictionReport`, `MethodMetrics`,
+  `CrashPredictionError`, `LATENT_METHODS`, `NON_LATENT_METHODS`.
+  The eval computes per-method accuracy, AUC-ROC, AUC-PR, F1 (at 0.5
+  threshold), per-exception-class AUC, and per-source-dataset AUC.
+  The scoped claim is allowed when the best latent-based method beats
+  the best non-latent method by ≥0.05 absolute AUC. New schema:
+  `codelewm.eval.crash_prediction_report.v1`. (#269)
 - Execution-substrate rerank evaluation:
   `codelewm.eval.execution_rerank` adds `rerank_completions()`,
   `CompletionLabel`, `ScoredCompletion`, `ExecutionRerankReport`,
