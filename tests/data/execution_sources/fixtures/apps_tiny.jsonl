@@ -1,0 +1,1 @@
+{"problem_id": "apps/intro/0001", "difficulty": "introductory", "solutions": ["n = int(input())\nprint(n * n)\n", "x = int(input())\nprint(x ** 2)\n"], "input_output": {"inputs": ["3\n", "5\n"], "outputs": ["9\n", "25\n"]}, "license": "MIT"}
