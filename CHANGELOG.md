@@ -16,6 +16,19 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate rerank evaluation:
+  `codelewm.eval.execution_rerank` adds `rerank_completions()`,
+  `CompletionLabel`, `ScoredCompletion`, `ExecutionRerankReport`,
+  `BaselineSummary`, `ExecutionRerankError`, `load_completion_labels()`,
+  `EXECUTION_RERANK_BASELINES`. The protocol computes pass@1 under
+  random / lexical / `llm_order` / `no_action` / `shuffled_action` /
+  `codelewm` baselines, reports the CodeLeWM lift over LLM original
+  order, and emits a bootstrap 95% CI on the lift. The claim gate
+  fires only when both `lift >= min_lift_for_claim` (default 3.0
+  absolute points) and the lower CI bound exceeds zero. The module
+  is model-agnostic: callers supply scored completions and ground-
+  truth pass/fail labels. New schema:
+  `codelewm.eval.execution_rerank_report.v1`. (#268)
 - Execution-substrate surprise-eval decoy generators:
   `codelewm.eval.execution_surprise_decoys` adds two new categories
   that test program semantics rather than surface code similarity:

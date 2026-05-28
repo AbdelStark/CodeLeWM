@@ -206,10 +206,30 @@ from .execution_surprise_decoys import (
     generate_same_code_different_input_pairs,
     generate_same_problem_different_submission_pairs,
 )
+from .execution_rerank import (
+    EXECUTION_RERANK_BASELINES,
+    EXECUTION_RERANK_REPORT_SCHEMA_VERSION,
+    BaselineSummary,
+    CompletionLabel,
+    ExecutionRerankError,
+    ExecutionRerankReport,
+    ScoredCompletion,
+    load_completion_labels,
+    rerank_completions,
+)
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
     "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
+    "BaselineSummary",
+    "CompletionLabel",
+    "EXECUTION_RERANK_BASELINES",
+    "EXECUTION_RERANK_REPORT_SCHEMA_VERSION",
+    "ExecutionRerankError",
+    "ExecutionRerankReport",
+    "ScoredCompletion",
+    "load_completion_labels",
+    "rerank_completions",
     "DecoyGenerationReport",
     "DecoyPair",
     "EXECUTION_SURPRISE_DECOY_CATEGORIES",
