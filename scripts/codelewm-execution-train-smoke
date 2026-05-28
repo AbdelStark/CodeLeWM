@@ -1,0 +1,227 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["numpy>=1.24", "torch>=2.1"]
+# ///
+"""Local CPU/MPS smoke for the v0.6 execution-substrate training path.
+
+Ingests an MBPP-shape JSONL via the existing source adapter, builds a
+deterministic execution pack via the sandbox, runs the bridge torch
+training loop for ``--max-steps`` and emits a structured smoke report.
+
+This is the falsifiable evidence that the JEPA architecture + objective
+registry transfers to the new substrate. The v0.6 HF Jobs run (#265)
+runs the same forward+backward at scale; this script runs it on the
+laptop in seconds.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from codelewm.data.execution_pack import build_execution_pack  # noqa: E402
+from codelewm.data.execution_sources import load_execution_source  # noqa: E402
+from codelewm.data.sandbox import SandboxPolicy  # noqa: E402
+from codelewm.training import (  # noqa: E402
+    ExecutionTorchTrainConfig,
+    train_execution_smoke,
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--ingestion",
+        type=Path,
+        default=Path(
+            "tests/data/execution_sources/fixtures/mbpp_tiny.jsonl"
+        ),
+        help="MBPP-shape JSONL fixture (default: checked-in 3-row mbpp_tiny)",
+    )
+    parser.add_argument(
+        "--out", type=Path, required=True, help="output directory"
+    )
+    parser.add_argument(
+        "--source",
+        choices=("mbpp",),
+        default="mbpp",
+        help="source adapter (only mbpp is wired in v0.6 first cut)",
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=8, help="training batch size"
+    )
+    parser.add_argument(
+        "--max-steps", type=int, default=500, help="training step budget"
+    )
+    parser.add_argument(
+        "--warmup-steps", type=int, default=30, help="lr-warmup step count"
+    )
+    parser.add_argument(
+        "--lr", type=float, default=3e-4, help="peak AdamW learning rate"
+    )
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "mps", "cuda"),
+        default="cpu",
+        help="training device",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="training seed"
+    )
+    parser.add_argument(
+        "--sandbox-timeout-ms",
+        type=int,
+        default=3000,
+        help="sandbox wall-clock timeout per record",
+    )
+    parser.add_argument(
+        "--sandbox-memory-mb",
+        type=int,
+        default=1024,
+        help="sandbox memory cap",
+    )
+    parser.add_argument(
+        "--sandbox-cpu-seconds",
+        type=int,
+        default=2,
+        help="sandbox cpu cap",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="emit JSON-only output"
+    )
+    args = parser.parse_args()
+
+    args.out.mkdir(parents=True, exist_ok=True)
+
+    t0 = time.perf_counter()
+    ingest_path = args.out / "ingestion.jsonl"
+    load_execution_source(
+        source=args.source,
+        source_path=args.ingestion,
+        output_path=ingest_path,
+    )
+    t_ingest = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    pack_dir = args.out / "pack"
+    pack_result = build_execution_pack(
+        ingestion_paths=[ingest_path],
+        output_dir=pack_dir,
+        sandbox_policy=SandboxPolicy(
+            timeout_ms=args.sandbox_timeout_ms,
+            memory_mb=args.sandbox_memory_mb,
+            cpu_seconds=args.sandbox_cpu_seconds,
+            determinism_check=True,
+        ),
+        seed=args.seed,
+        train_frac=0.7,
+        val_frac=0.15,
+    )
+    t_pack = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    report = train_execution_smoke(
+        ExecutionTorchTrainConfig(
+            pack_jsonl=pack_dir / "pack.jsonl",
+            output_dir=args.out / "smoke-out",
+            batch_size=args.batch_size,
+            max_steps=args.max_steps,
+            warmup_steps=args.warmup_steps,
+            lr=args.lr,
+            seed=args.seed,
+            device=args.device,
+        )
+    )
+    t_train = time.perf_counter() - t0
+
+    summary = {
+        "schema_version": "codelewm.execution_train_smoke.v1",
+        "ingestion_path": str(ingest_path),
+        "pack_dir": str(pack_dir),
+        "report_path": str(args.out / "smoke-out" / "execution_train_report.json"),
+        "wall_time_seconds": {
+            "ingest": round(t_ingest, 3),
+            "pack": round(t_pack, 3),
+            "train": round(t_train, 3),
+        },
+        "pack_record_count": pack_result.record_count,
+        "training_steps": len(report.steps),
+        "device": report.device,
+        "seed": report.seed,
+        "initial_metrics": report.initial_metrics,
+        "final_metrics": report.final_metrics,
+        "deltas": report.deltas,
+        "z_diagnostics": report.z_diagnostics,
+        "passed": _smoke_gate(report),
+    }
+
+    if args.json:
+        print(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        print(f"ingestion: {ingest_path} ({t_ingest:.2f}s)")
+        print(
+            f"sandbox-pack: {pack_dir} "
+            f"({t_pack:.2f}s; {pack_result.record_count} records)"
+        )
+        print(
+            f"train ({args.max_steps} steps on {report.device}, {t_train:.2f}s):"
+        )
+        print(
+            f"  prediction_mse: "
+            f"{report.initial_metrics['loss_prediction_mse']:.4f} -> "
+            f"{report.final_metrics['loss_prediction_mse']:.4f}"
+        )
+        print(
+            f"  no_action_margin: "
+            f"{report.initial_metrics['margin_no_action_minus_pred']:+.4f} -> "
+            f"{report.final_metrics['margin_no_action_minus_pred']:+.4f}"
+        )
+        print(
+            f"  sigreg: "
+            f"{report.initial_metrics['loss_sigreg']:.4f} -> "
+            f"{report.final_metrics['loss_sigreg']:.4f}"
+        )
+        print(
+            f"  z_pred_effective_rank: "
+            f"{report.z_diagnostics.get('z_pred_effective_rank', 0):.2f} / "
+            f"{report.z_diagnostics.get('latent_dim', 0)}"
+        )
+        print(f"smoke gate: {'PASS' if summary['passed'] else 'FAIL'}")
+    return 0 if summary["passed"] else 1
+
+
+def _smoke_gate(report) -> bool:
+    """Smoke-level acceptance: the four loss-trajectory checks from M1's spec.
+
+    These do not promise model quality; they verify the bridge.
+    """
+
+    mse_decreased = (
+        report.final_metrics["loss_prediction_mse"]
+        < report.initial_metrics["loss_prediction_mse"] * 0.5
+    )
+    no_action_flipped = (
+        report.initial_metrics["margin_no_action_minus_pred"] < 0
+        and report.final_metrics["margin_no_action_minus_pred"] > 0
+    )
+    sigreg_decreased = (
+        report.final_metrics["loss_sigreg"]
+        < report.initial_metrics["loss_sigreg"]
+    )
+    finite_losses = all(
+        v == v and v != float("inf")
+        for v in report.final_metrics.values()
+    )
+    return bool(
+        mse_decreased and no_action_flipped and sigreg_decreased and finite_losses
+    )
+
+
+if __name__ == "__main__":
+    sys.exit(main())
