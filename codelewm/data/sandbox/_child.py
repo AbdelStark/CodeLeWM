@@ -391,14 +391,24 @@ def _execute(job: dict[str, Any]) -> dict[str, object]:
     )
 
     if exit_code == "ok":
-        try:
-            output_repr = repr(output_value)
-        except BaseException as exc:  # noqa: BLE001 - repr of pathological objects
-            output_repr = f"<unreprable: {type(exc).__name__}>"
-        output_truncated_to, output_was_truncated = _truncate(
-            output_repr, int(policy["output_truncation_bytes"])
-        )
-        output_type = _classify_output_type(output_value)
+        if output_kind == "stdout":
+            # Script-style execution: the "output" the model has to learn
+            # is the captured stdout (the deterministic effect of running
+            # the program on stdin). ``output_value`` stays ``None`` and
+            # is not the object the pack should record.
+            output_repr = stdout_truncated_to
+            output_was_truncated = stdout_was_truncated
+            output_truncated_to = output_repr
+            output_type = "str"
+        else:
+            try:
+                output_repr = repr(output_value)
+            except BaseException as exc:  # noqa: BLE001 - repr of pathological objects
+                output_repr = f"<unreprable: {type(exc).__name__}>"
+            output_truncated_to, output_was_truncated = _truncate(
+                output_repr, int(policy["output_truncation_bytes"])
+            )
+            output_type = _classify_output_type(output_value)
     else:
         output_truncated_to, output_was_truncated = None, False
         output_type = "exception" if exit_code == "raised" else "none"

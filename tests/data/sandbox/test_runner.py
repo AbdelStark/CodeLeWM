@@ -132,6 +132,37 @@ class SandboxRunnerHappyPathTest(unittest.TestCase):
         self.assertEqual(result.output_kind, "stdout")
         self.assertIn("hello", result.stdout)
 
+    def test_stdin_feeds_script_input_call(self) -> None:
+        # CodeNet/APPS-style: read int from stdin, print n*n.
+        code = "n = int(input())\nprint(n * n)\n"
+        result = run_one(code, stdin_text="3\n", policy=_fast_policy())
+        self.assertEqual(result.exit_code, SandboxExitCode.OK)
+        self.assertEqual(result.output_kind, "stdout")
+        self.assertEqual(result.output_type, "str")
+        # output_repr is the canonical "output" for stdin/script-style:
+        # the captured stdout, not repr(None).
+        self.assertEqual(result.output_repr, "9\n")
+        self.assertEqual(result.stdout, "9\n")
+
+    def test_stdin_with_multiline_input(self) -> None:
+        code = (
+            "import sys\n"
+            "values = [int(line) for line in sys.stdin.read().split()]\n"
+            "print(sum(values))\n"
+        )
+        result = run_one(
+            code, stdin_text="1 2 3 4\n", policy=_fast_policy()
+        )
+        self.assertEqual(result.exit_code, SandboxExitCode.OK)
+        self.assertEqual(result.output_repr, "10\n")
+
+    def test_stdin_exception_recorded(self) -> None:
+        # Reads from stdin then raises ValueError on the parse.
+        code = "n = int(input())\nprint(n / 0)\n"
+        result = run_one(code, stdin_text="3\n", policy=_fast_policy())
+        self.assertEqual(result.exit_code, SandboxExitCode.RAISED)
+        self.assertEqual(result.exception_class, "ZeroDivisionError")
+
 
 class SandboxRunnerExceptionTest(unittest.TestCase):
     def test_raised_exception_is_reported(self) -> None:

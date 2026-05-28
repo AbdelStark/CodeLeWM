@@ -152,9 +152,28 @@ def _parse_function_assertion(
     expected_literal = _try_literal_eval(expected_node)
     if expected_literal is _Sentinel:
         return None
-    args_json = json.dumps(args_value, ensure_ascii=False)
+    try:
+        args_json = json.dumps(args_value, ensure_ascii=False, default=_json_default)
+    except (TypeError, ValueError):
+        # Some assertions use literal shapes JSON cannot represent — e.g.
+        # dicts keyed by tuples. Skip those rather than abort the row.
+        return None
     expected_repr = repr(expected_literal)
     return args_json, expected_repr
+
+
+def _json_default(value: object) -> object:
+    # ``ast.literal_eval`` returns Python tuples / sets / frozensets that
+    # JSON does not natively support. Coerce them to list shapes so the
+    # input_repr round-trips through ``json.dumps``; ``ast.literal_eval``
+    # on the receiving side recovers the structural shape.
+    if isinstance(value, (set, frozenset)):
+        return sorted(value, key=repr)
+    if isinstance(value, tuple):
+        return list(value)
+    raise TypeError(
+        f"unsupported literal in MBPP assertion: {type(value).__name__}"
+    )
 
 
 class _SentinelType:
