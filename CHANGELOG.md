@@ -16,6 +16,16 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate surprise-eval decoy generators:
+  `codelewm.eval.execution_surprise_decoys` adds two new categories
+  that test program semantics rather than surface code similarity:
+  `same_problem_different_submission` (different submission for the
+  same problem and input; outputs must differ) and
+  `same_code_different_input` (same submission, different input;
+  outputs must differ). Each generator returns a list of `DecoyPair`
+  and a `DecoyGenerationReport` with `pair_count`,
+  `eligible_query_count`, and per-reason skip tallies. New schema:
+  `codelewm.eval.execution_surprise_decoy.v1`. (#267)
 - Execution-substrate latent probe target label extractors:
   `codelewm.eval.execution_probe_targets` exposes `label_record`,
   `extract_labels`, `LabelExtraction`, `EXECUTION_PROBE_TARGETS`

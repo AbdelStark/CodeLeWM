@@ -197,10 +197,26 @@ from .execution_probe_targets import (
     extract_labels,
     label_record,
 )
+from .execution_surprise_decoys import (
+    EXECUTION_SURPRISE_DECOY_CATEGORIES,
+    EXECUTION_SURPRISE_DECOY_SCHEMA_VERSION,
+    DecoyGenerationReport,
+    DecoyPair,
+    ExecutionSurpriseDecoyError,
+    generate_same_code_different_input_pairs,
+    generate_same_problem_different_submission_pairs,
+)
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
     "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
+    "DecoyGenerationReport",
+    "DecoyPair",
+    "EXECUTION_SURPRISE_DECOY_CATEGORIES",
+    "EXECUTION_SURPRISE_DECOY_SCHEMA_VERSION",
+    "ExecutionSurpriseDecoyError",
+    "generate_same_code_different_input_pairs",
+    "generate_same_problem_different_submission_pairs",
     "ACTION_ABLATION_RUN_SCHEMA_VERSION",
     "EXECUTION_PROBE_TARGETS",
     "EXECUTION_PROBE_TARGET_SCHEMA_VERSION",
