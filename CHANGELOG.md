@@ -16,6 +16,17 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-pack publish workflow: pre-publish gate
+  (`codelewm.data.execution_pack.run_pre_publish_gate`) that verifies
+  manifest schema, pack.jsonl checksum, claim-boundary embedding and
+  fingerprint, permissive-license-only policy, and attribution
+  completeness; dataset-card renderer
+  (`render_dataset_card`, `context_from_manifest`,
+  `DatasetCardContext`); `PrePublishGateError`, `PrePublishReport`
+  classes; new script `scripts/hf-publish-execution-pack` with
+  dry-run-by-default safety; dataset-card template at
+  `docs/cards/dataset_card.execution_pack.v1.md`. New schema:
+  `codelewm.execution_pack_publish_plan.v1`. (#263)
 - Execution-substrate pack builder:
   `codelewm.data.execution_pack` with `build_execution_pack()`,
   `PackedExecutionRecord`, `ExecutionPackManifest`,

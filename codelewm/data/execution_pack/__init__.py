@@ -37,6 +37,16 @@ from .manifest import (
     EXECUTION_PACK_RECORD_SCHEMA_VERSION,
     ExecutionPackManifest,
 )
+from .publish import (
+    CLAIM_BOUNDARY_NAME,
+    PERMISSIVE_LICENSES,
+    DatasetCardContext,
+    PrePublishGateError,
+    PrePublishReport,
+    context_from_manifest,
+    render_dataset_card,
+    run_pre_publish_gate,
+)
 from .record import (
     PackedExecutionRecord,
     SplitName,
@@ -45,13 +55,21 @@ from .record import (
 
 
 __all__ = [
+    "CLAIM_BOUNDARY_NAME",
     "EXECUTION_PACK_MANIFEST_SCHEMA_VERSION",
     "EXECUTION_PACK_RECORD_SCHEMA_VERSION",
+    "DatasetCardContext",
     "ExecutionPackBuilderError",
     "ExecutionPackManifest",
     "ExecutionPackResult",
+    "PERMISSIVE_LICENSES",
     "PackedExecutionRecord",
+    "PrePublishGateError",
+    "PrePublishReport",
     "SplitName",
     "build_execution_pack",
     "classify_record_kind",
+    "context_from_manifest",
+    "render_dataset_card",
+    "run_pre_publish_gate",
 ]

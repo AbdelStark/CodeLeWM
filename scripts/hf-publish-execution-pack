@@ -1,0 +1,184 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["huggingface_hub>=1.0"]
+# ///
+"""Publish a CodeLeWM execution-substrate pack to Hugging Face.
+
+The flow follows ``scripts/hf-publish-codelewm-artifacts``:
+
+1. Run :func:`codelewm.data.execution_pack.run_pre_publish_gate` against
+   ``--pack-dir``. If any check fails, abort.
+2. Render the dataset card via
+   :func:`codelewm.data.execution_pack.render_dataset_card` and write it
+   into the pack directory as ``README.md``.
+3. In dry-run mode (the default in CI), emit the publish plan and exit
+   without touching Hugging Face.
+4. With ``--no-dry-run`` and ``HF_TOKEN`` in the environment, upload the
+   pack directory to ``--repo-id`` under ``--revision``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+# Allow the script to be run from the repository root without installing the
+# package, mirroring sibling scripts.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from codelewm.data.execution_pack import (  # noqa: E402
+    PrePublishGateError,
+    context_from_manifest,
+    render_dataset_card,
+    run_pre_publish_gate,
+)
+
+
+SCHEMA_VERSION = "codelewm.execution_pack_publish_plan.v1"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--pack-dir",
+        type=Path,
+        required=True,
+        help="path to the execution-pack directory produced by `codelewm dataset execution-pack`",
+    )
+    parser.add_argument(
+        "--repo-id",
+        default=os.getenv("CODELEWM_EXECUTION_PACK_REPO_ID")
+        or "abdelstark/codelewm-execution-pack",
+        help="target Hugging Face dataset repository",
+    )
+    parser.add_argument(
+        "--revision",
+        default=os.getenv("CODELEWM_EXECUTION_PACK_REVISION") or "v0.6.0",
+        help="release revision / tag",
+    )
+    parser.add_argument(
+        "--private",
+        action="store_true",
+        default=_truthy(os.getenv("CODELEWM_HF_PRIVATE", "1")),
+        help="publish privately (default true; pass --public to flip)",
+    )
+    parser.add_argument(
+        "--public",
+        dest="private",
+        action="store_false",
+        help="publish publicly",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=_truthy(os.getenv("CODELEWM_HF_PUBLISH_DRY_RUN", "1")),
+        help="render the plan and exit without uploading (default in CI)",
+    )
+    parser.add_argument(
+        "--no-dry-run",
+        dest="dry_run",
+        action="store_false",
+        help="perform the upload",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="emit a JSON publish plan",
+    )
+    args = parser.parse_args()
+
+    try:
+        report = run_pre_publish_gate(args.pack_dir)
+    except PrePublishGateError as exc:
+        print(f"pre-publish gate refused to run: {exc}", file=sys.stderr)
+        return 2
+
+    context = context_from_manifest(
+        manifest_path=args.pack_dir / "manifest.json",
+        attribution_path=args.pack_dir / "attribution.json",
+        repo_id=args.repo_id,
+        revision=args.revision,
+    )
+    card_text = render_dataset_card(context=context)
+
+    plan = {
+        "schema_version": SCHEMA_VERSION,
+        "repo_id": args.repo_id,
+        "revision": args.revision,
+        "private": bool(args.private),
+        "pack_dir": str(args.pack_dir),
+        "dry_run": bool(args.dry_run),
+        "gate": report.as_dict(),
+        "card_preview": card_text[:1024],
+    }
+
+    if not report.allowed:
+        print("pre-publish gate rejected the pack:", file=sys.stderr)
+        for finding in report.findings:
+            print(f"  - {finding}", file=sys.stderr)
+        if args.json:
+            print(json.dumps(plan, indent=2, sort_keys=True))
+        return 3
+
+    readme = args.pack_dir / "README.md"
+    readme.write_text(card_text, encoding="utf-8")
+    plan["readme_path"] = str(readme)
+
+    if args.dry_run:
+        if args.json:
+            print(json.dumps(plan, indent=2, sort_keys=True))
+        else:
+            print(f"DRY RUN: would publish {args.pack_dir} -> {args.repo_id}@{args.revision}")
+            print(f"  records: {report.record_count}")
+            print(f"  licenses: {report.license_breakdown}")
+            print(f"  readme: {readme}")
+        return 0
+
+    token = os.getenv("HF_TOKEN")
+    if not token:
+        print("HF_TOKEN is required for --no-dry-run", file=sys.stderr)
+        return 4
+
+    try:
+        from huggingface_hub import HfApi  # type: ignore[import-not-found]
+    except ImportError:
+        print(
+            "huggingface_hub is required for --no-dry-run; install codelewm[release]",
+            file=sys.stderr,
+        )
+        return 5
+
+    api = HfApi(token=token)
+    api.create_repo(
+        repo_id=args.repo_id,
+        repo_type="dataset",
+        private=bool(args.private),
+        exist_ok=True,
+    )
+    api.upload_folder(
+        folder_path=str(args.pack_dir),
+        repo_id=args.repo_id,
+        repo_type="dataset",
+        revision=args.revision,
+        commit_message=f"publish execution-pack {args.revision}",
+    )
+    plan["uploaded"] = True
+    if args.json:
+        print(json.dumps(plan, indent=2, sort_keys=True))
+    else:
+        print(f"published {args.pack_dir} -> {args.repo_id}@{args.revision}")
+    return 0
+
+
+def _truthy(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() not in {"", "0", "false", "no", "off"}
+
+
+if __name__ == "__main__":
+    sys.exit(main())
