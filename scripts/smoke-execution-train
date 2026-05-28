@@ -1,0 +1,169 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["numpy>=1.24"]
+# ///
+"""Smoke runner for the v0.6 execution-substrate pipeline.
+
+Builds a tiny pack from the MBPP fixture, streams it through
+:func:`codelewm.training.iter_batches`, and emits a diagnostics report.
+This is the pre-flight check before the v0.6 HF Jobs run (#265).
+
+The smoke does **not** run the torch executor. Its job is to surface any
+data-path or tokenization breakage on a laptop in under a minute. Real
+training and gradient diagnostics land in #265.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from codelewm.data.execution_pack import (  # noqa: E402
+    build_execution_pack,
+)
+from codelewm.data.execution_sources import load_execution_source  # noqa: E402
+from codelewm.data.sandbox import SandboxPolicy  # noqa: E402
+from codelewm.training import (  # noqa: E402
+    ExecutionPackLoaderConfig,
+    LoaderDiagnostics,
+    collect_diagnostics,
+)
+
+
+SCHEMA_VERSION = "codelewm.execution_smoke_report.v1"
+DEFAULT_FIXTURE = (
+    Path(__file__).resolve().parents[1]
+    / "tests"
+    / "data"
+    / "execution_sources"
+    / "fixtures"
+    / "mbpp_tiny.jsonl"
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--ingestion",
+        type=Path,
+        default=DEFAULT_FIXTURE,
+        help="upstream MBPP fixture JSONL (default: checked-in mbpp_tiny)",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="output directory; a temp dir is used when omitted",
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=4, help="loader batch size"
+    )
+    parser.add_argument(
+        "--code-sequence-length", type=int, default=1024
+    )
+    parser.add_argument(
+        "--action-sequence-length", type=int, default=256
+    )
+    parser.add_argument(
+        "--output-sequence-length", type=int, default=256
+    )
+    parser.add_argument(
+        "--timeout-ms", type=int, default=3000, help="sandbox timeout"
+    )
+    parser.add_argument(
+        "--memory-mb", type=int, default=1024, help="sandbox memory cap"
+    )
+    parser.add_argument(
+        "--cpu-seconds", type=int, default=2, help="sandbox cpu cap"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="emit JSON report"
+    )
+    args = parser.parse_args()
+
+    if args.out is None:
+        tmp_root = Path(tempfile.mkdtemp(prefix="codelewm-execution-smoke-"))
+        cleanup = True
+    else:
+        tmp_root = args.out
+        tmp_root.mkdir(parents=True, exist_ok=True)
+        cleanup = False
+
+    try:
+        ingest_path = tmp_root / "ingestion.jsonl"
+        load_execution_source(
+            source="mbpp",
+            source_path=args.ingestion,
+            output_path=ingest_path,
+        )
+
+        pack_dir = tmp_root / "pack"
+        result = build_execution_pack(
+            ingestion_paths=[ingest_path],
+            output_dir=pack_dir,
+            sandbox_policy=SandboxPolicy(
+                timeout_ms=args.timeout_ms,
+                memory_mb=args.memory_mb,
+                cpu_seconds=args.cpu_seconds,
+                determinism_check=True,
+            ),
+            seed=24,
+            train_frac=0.5,
+            val_frac=0.25,
+        )
+
+        loader_config = ExecutionPackLoaderConfig(
+            pack_jsonl=pack_dir / "pack.jsonl",
+            code_sequence_length=args.code_sequence_length,
+            action_sequence_length=args.action_sequence_length,
+            output_sequence_length=args.output_sequence_length,
+            batch_size=args.batch_size,
+            shuffle=False,
+        )
+        diagnostics: LoaderDiagnostics = collect_diagnostics(loader_config)
+
+        report = {
+            "schema_version": SCHEMA_VERSION,
+            "fixture": str(args.ingestion),
+            "pack_dir": str(pack_dir),
+            "record_count": result.record_count,
+            "split_counts": dict(result.manifest.split_counts),
+            "sandbox_reject_counts": dict(result.sandbox_reject_counts),
+            "loader_config": {
+                "batch_size": loader_config.batch_size,
+                "code_sequence_length": loader_config.code_sequence_length,
+                "action_sequence_length": loader_config.action_sequence_length,
+                "output_sequence_length": loader_config.output_sequence_length,
+            },
+            "loader_diagnostics": diagnostics.as_dict(),
+            "passed": result.record_count > 0 and diagnostics.record_count > 0,
+        }
+        if args.json:
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            print(f"fixture: {report['fixture']}")
+            print(f"pack_dir: {report['pack_dir']}")
+            print(f"record_count: {report['record_count']}")
+            print(f"split_counts: {report['split_counts']}")
+            print(f"loader records seen: {diagnostics.record_count}")
+            print(f"output_type histogram: {diagnostics.output_type_histogram}")
+            print(f"output_kind histogram: {diagnostics.output_kind_histogram}")
+            print(f"truncated_code: {diagnostics.truncated_code}")
+            print(f"truncated_input: {diagnostics.truncated_input}")
+            print(f"truncated_output: {diagnostics.truncated_output}")
+            print(f"passed: {report['passed']}")
+        return 0 if report["passed"] else 1
+    finally:
+        if cleanup:
+            shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

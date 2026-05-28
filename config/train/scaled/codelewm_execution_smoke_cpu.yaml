@@ -1,0 +1,48 @@
+# CodeLeWM v0.6 execution-substrate smoke profile (CPU).
+#
+# This config exists to verify the data path: ingestion JSONL -> sandbox ->
+# pack.jsonl -> iter_batches -> tensorizable shapes. It is intentionally
+# tiny so the full loop runs on a laptop in under a minute.
+#
+# The actual v0.6 A10G training config (#265) will swap the data path to
+# point at the published execution pack at
+# abdelstark/codelewm-execution-pack@v0.6.0 and the executor to the torch
+# package-native runner.
+schema_version: codelewm.execution_smoke_config.v1
+name: codelewm_execution_smoke_cpu
+seed: 240528
+substrate: execution_trace_v1
+parent_issue: 259
+implementing_issue: 264
+
+data:
+  ingestion_paths:
+    - tests/data/execution_sources/fixtures/mbpp_tiny.jsonl
+  ingestion_source: mbpp
+  pack_dir: .artifacts/v0_6_smoke/pack
+  pack_target_records: null
+
+sandbox:
+  import_allowlist: stdlib_only
+  timeout_ms: 3000
+  memory_mb: 1024
+  cpu_seconds: 2
+  determinism_check: true
+
+loader:
+  code_sequence_length: 1024
+  action_sequence_length: 256
+  output_sequence_length: 256
+  batch_size: 4
+  shuffle: false
+  shuffle_seed: 7
+
+diagnostics:
+  target_min_records: 1
+  max_truncated_code_ratio: 0.50
+  max_truncated_input_ratio: 0.50
+  max_truncated_output_ratio: 0.50
+
+claim_boundary:
+  name: execution_substrate.v1
+  scope: smoke-only
