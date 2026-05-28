@@ -77,6 +77,15 @@ from .execution_launch_plan import (
     build_launch_plans,
     load_v0_6_config,
 )
+from .execution_torch_runner import (
+    EXECUTION_TRAIN_REPORT_SCHEMA_VERSION,
+    EXECUTION_TRAIN_STEP_SCHEMA_VERSION,
+    ExecutionTorchReport,
+    ExecutionTorchRunnerError,
+    ExecutionTorchStep,
+    ExecutionTorchTrainConfig,
+    train_execution_smoke,
+)
 
 __all__ = [
     "CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION",
@@ -84,9 +93,15 @@ __all__ = [
     "CheckpointResumePlan",
     "EXECUTION_LAUNCH_PLAN_SCHEMA_VERSION",
     "EXECUTION_PACK_BATCH_SCHEMA_VERSION",
+    "EXECUTION_TRAIN_REPORT_SCHEMA_VERSION",
+    "EXECUTION_TRAIN_STEP_SCHEMA_VERSION",
     "ExecutionLaunchPlanError",
     "ExecutionPackBatch",
     "ExecutionPackLoaderConfig",
+    "ExecutionTorchReport",
+    "ExecutionTorchRunnerError",
+    "ExecutionTorchStep",
+    "ExecutionTorchTrainConfig",
     "LaunchPlan",
     "LoaderDiagnostics",
     "OUTPUT_TYPE_VOCAB",
@@ -95,6 +110,7 @@ __all__ = [
     "iter_batches",
     "iter_records",
     "load_v0_6_config",
+    "train_execution_smoke",
     "DEFAULT_SMALL_TRAIN_CONFIG",
     "DEFAULT_TINY_TRAIN_CONFIG",
     "DEFAULT_TRAINING_VOCAB_SIZE",

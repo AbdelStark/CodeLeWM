@@ -16,6 +16,26 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 execution-substrate torch training bridge:
+  `codelewm.training.execution_torch_runner` adds
+  `train_execution_smoke()`, `ExecutionTorchTrainConfig`,
+  `ExecutionTorchReport`, `ExecutionTorchStep`,
+  `ExecutionTorchRunnerError`. The bridge reuses the existing
+  `TorchCodeTransitionModel` and `compute_transition_objective` end
+  to end and wires them to `ExecutionPackBatch`. Output tokens are
+  padded up to `STATE_SEQUENCE_LENGTH` so the same state encoder
+  produces `z_output` with shared weights. Action-swap contrastive
+  is built via intra-batch input rolling. New CLI:
+  `scripts/codelewm-execution-train-smoke` (ingest → sandbox-pack →
+  train → JSON report with a built-in smoke gate). New schemas:
+  `codelewm.execution_train_report.v1`,
+  `codelewm.execution_train_step.v1`,
+  `codelewm.execution_train_smoke.v1`. Local smoke evidence in
+  `docs/benchmark/EXECUTION_V0_6_LOCAL_SMOKE_2026-05-28.md`:
+  prediction MSE 1.01 → 0.04 (24×), SIGReg 5.21 → 1.36 (4×),
+  no-action margin −0.77 → +0.55 (the substrate-pivot's headline
+  prediction). Tests under `tests/training/` skip cleanly without
+  torch installed and run end-to-end under `uv sync --group train`.
 - v0.6 benchmark report template and two-substrate paper outline:
   `docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md` mirrors
   `docs/benchmark/REPORT_TEMPLATE.md` scoped to the
