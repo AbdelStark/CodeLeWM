@@ -16,6 +16,17 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate rerank visual view model:
+  `codelewm.harness.execution_rerank_view_model` adds
+  `build_execution_rerank_view_model()`, `ExecutionRerankViewModel`,
+  `CompletionPanelEntry`, `ExecutionRerankViewModelError`. The view
+  model is the JSON-shape contract between the rerank report (#268)
+  and the HTML / terminal / TUI renderers. It exposes a headline
+  panel (pass@1 lift, bootstrap CI, claim status), per-completion
+  panels (predicted output latent norm, test results, scores per
+  baseline, ranks under each baseline), and a notes block that
+  surfaces blocked-claim warnings. New schema:
+  `codelewm.harness.execution_rerank_view_model.v1`. (#271)
 - Execution-substrate rerank LLM demo scenario:
   `execution-rerank-mbpp` is registered alongside `bugfix-edge-case`
   in `codelewm.harness.demo_scenarios`. The scenario ships a stub
