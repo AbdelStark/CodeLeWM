@@ -159,18 +159,39 @@ def main() -> int:
         private=bool(args.private),
         exist_ok=True,
     )
-    api.upload_folder(
+    # Upload to main first, then create the revision tag pointing at it.
+    # HF Hub's ``upload_folder(..., revision=X)`` only works when ``X``
+    # already exists as a branch; tagging after the fact is the
+    # idiomatic pattern.
+    upload_info = api.upload_folder(
         folder_path=str(args.pack_dir),
         repo_id=args.repo_id,
         repo_type="dataset",
-        revision=args.revision,
         commit_message=f"publish execution-pack {args.revision}",
     )
+    try:
+        api.create_tag(
+            repo_id=args.repo_id,
+            repo_type="dataset",
+            tag=args.revision,
+            tag_message=f"execution-pack {args.revision}",
+            exist_ok=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        # Tag creation is best-effort; the upload itself is what
+        # matters. Surface the failure but do not abort.
+        print(
+            f"warning: failed to create tag {args.revision!r}: {exc}",
+            file=sys.stderr,
+        )
+
     plan["uploaded"] = True
+    plan["commit_url"] = getattr(upload_info, "commit_url", None) or str(upload_info)
     if args.json:
-        print(json.dumps(plan, indent=2, sort_keys=True))
+        print(json.dumps(plan, indent=2, sort_keys=True, default=str))
     else:
         print(f"published {args.pack_dir} -> {args.repo_id}@{args.revision}")
+        print(f"commit: {plan['commit_url']}")
     return 0
 
 
