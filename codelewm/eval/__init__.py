@@ -189,11 +189,25 @@ from .surprise_runner import (
     SurpriseEvalResult,
     run_surprise_evaluation,
 )
+from .execution_probe_targets import (
+    EXECUTION_PROBE_TARGETS,
+    EXECUTION_PROBE_TARGET_SCHEMA_VERSION,
+    ExecutionProbeTargetError,
+    LabelExtraction,
+    extract_labels,
+    label_record,
+)
 
 __all__ = [
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
     "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
     "ACTION_ABLATION_RUN_SCHEMA_VERSION",
+    "EXECUTION_PROBE_TARGETS",
+    "EXECUTION_PROBE_TARGET_SCHEMA_VERSION",
+    "ExecutionProbeTargetError",
+    "LabelExtraction",
+    "extract_labels",
+    "label_record",
     "LATENT_PROBE_BASELINES",
     "LATENT_PROBE_EVAL_RUN_SCHEMA_VERSION",
     "LATENT_PROBE_REPORT_SCHEMA_VERSION",

@@ -16,6 +16,17 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate latent probe target label extractors:
+  `codelewm.eval.execution_probe_targets` exposes `label_record`,
+  `extract_labels`, `LabelExtraction`, `EXECUTION_PROBE_TARGETS`
+  tuple, `ExecutionProbeTargetError`, and a new schema marker
+  `codelewm.eval.execution_probe_target.v1`. Six targets are
+  supported: `output_type`, `will_raise`, `output_magnitude_bucket`,
+  `output_length_bucket`, `arithmetic_vs_string_vs_collection`, and
+  `judge_verdict`. Records outside a target's domain return `None`
+  and are excluded from the probe's eval — matching the
+  applicable-only policy already used by the commit-edit probe
+  runner. (#266)
 - v0.6 execution-substrate HF Jobs launcher: a config-driven launch
   plan generator (`codelewm.training.execution_launch_plan` exports
   `load_v0_6_config`, `build_launch_plans`, `LaunchPlan`,
