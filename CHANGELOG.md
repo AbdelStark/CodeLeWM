@@ -16,6 +16,15 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate governance scaffolding: RFC-0014
+  (`docs/rfcs/RFC-0014-execution-trace-world-model-substrate.md`), the
+  substrate roadmap (`docs/roadmap/EXECUTION_TRACE_WORLD_MODEL.md`), the
+  claim boundary at
+  `codelewm/security/claim_boundaries/execution_substrate.v1.md`, the
+  `codelewm.security.claim_boundaries` loader module, and the operations
+  doc `docs/operations/sandbox_policy.md`. The new module exports
+  `load_claim_boundary`, `claim_boundary_fingerprint`,
+  `available_claim_boundaries`, and `ClaimBoundaryError`. (#273)
 - Reproducible first-results workflow through `scripts/first-results`, the
   `config/first_results/` bundle, `codelewm.results`, and
   `docs/benchmark/FIRST_RESULTS.md`.

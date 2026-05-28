@@ -61,10 +61,34 @@ Examples of issues that are in scope:
 - license-policy bypass that promotes a non-permissive row into a
   public artifact;
 - non-execution policy violation (any code path that imports,
-  evaluates, or runs untrusted project code);
+  evaluates, or runs untrusted project code, except for the
+  data-prep sandbox documented below);
 - path traversal in manifest or artifact handling;
 - deserialization of untrusted serialized objects from a checkpoint
-  manifest mismatch.
+  manifest mismatch;
+- bypass of the data-prep sandbox policy (network access, filesystem
+  write outside scratch, stdlib-only import allowlist, or determinism
+  re-run) that leaks state into a published artifact.
+
+## Data-Prep Sandbox
+
+The execution-substrate data builder runs licensed public Python
+submissions in an isolated subprocess under a stdlib-only policy at
+data-build time. It is a separate, named subsystem from the non-execution
+contract. The sandbox is governed by:
+
+- the claim boundary at
+  `codelewm/security/claim_boundaries/execution_substrate.v1.md`;
+- the operations doc at `docs/operations/sandbox_policy.md`;
+- RFC-0014 at `docs/rfcs/RFC-0014-execution-trace-world-model-substrate.md`;
+- the spec section that anticipates this subsystem in
+  `docs/spec/06-security.md`.
+
+The sandbox is **not** invoked at training, inference, scoring, indexing,
+or evaluation time. The single second use is the dedicated
+`execution-rerank` downstream evaluation scenario, which runs hidden
+tests against LLM-sampled completions on operator-reviewed problem sets
+under the same policy.
 
 ## Out of Scope
 

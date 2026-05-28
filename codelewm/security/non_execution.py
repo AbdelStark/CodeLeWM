@@ -1,4 +1,26 @@
-"""Non-execution parsing and configuration guards."""
+"""Non-execution parsing and configuration guards.
+
+These helpers cover the **training, inference, scoring, indexing, evaluation,
+and dataset-construction** paths. They make sure those paths never compile,
+import, evaluate, or run untrusted Python.
+
+The execution-substrate data builder introduced by RFC-0014 is a separate,
+named subsystem that lives at :mod:`codelewm.data.sandbox` (added in #260).
+The sandbox executes licensed public Python submissions at data-build time
+inside an isolated subprocess to capture deterministic outputs. It is **not**
+governed by the helpers in this module; it has its own claim boundary at
+``codelewm/security/claim_boundaries/execution_substrate.v1.md`` and its own
+operations policy at ``docs/operations/sandbox_policy.md``.
+
+The two contracts are complementary, not contradictory:
+
+- :mod:`codelewm.security.non_execution` keeps untrusted code from running on
+  the model paths.
+- :mod:`codelewm.data.sandbox` is the one-shot, operator-controlled data-prep
+  component that the spec section 06 anticipates ("CodeLeWM may support
+  sandboxed execution later, but that must be a separate opt-in subsystem with
+  its own isolation, manifest, and logging contract").
+"""
 
 from __future__ import annotations
 
