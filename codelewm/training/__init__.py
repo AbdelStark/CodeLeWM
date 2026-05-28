@@ -60,11 +60,29 @@ from .torch_executor import (
     torch_training_executor,
     train_torch,
 )
+from .execution_pack_loader import (
+    EXECUTION_PACK_BATCH_SCHEMA_VERSION,
+    OUTPUT_TYPE_VOCAB,
+    ExecutionPackBatch,
+    ExecutionPackLoaderConfig,
+    LoaderDiagnostics,
+    collect_diagnostics,
+    iter_batches,
+    iter_records,
+)
 
 __all__ = [
     "CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION",
     "CPU_SMOKE_REPORT_SCHEMA_VERSION",
     "CheckpointResumePlan",
+    "EXECUTION_PACK_BATCH_SCHEMA_VERSION",
+    "ExecutionPackBatch",
+    "ExecutionPackLoaderConfig",
+    "LoaderDiagnostics",
+    "OUTPUT_TYPE_VOCAB",
+    "collect_diagnostics",
+    "iter_batches",
+    "iter_records",
     "DEFAULT_SMALL_TRAIN_CONFIG",
     "DEFAULT_TINY_TRAIN_CONFIG",
     "DEFAULT_TRAINING_VOCAB_SIZE",

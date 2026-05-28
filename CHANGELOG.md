@@ -16,6 +16,23 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate smoke pipeline:
+  `codelewm.training.execution_pack_loader` reads `pack.jsonl` (from
+  #262), pads/truncates each tokenized field to configured
+  `code_sequence_length` / `action_sequence_length` /
+  `output_sequence_length`, and yields `ExecutionPackBatch` instances
+  with NumPy `int32` token arrays and `bool` attention masks. Stable
+  `OUTPUT_TYPE_VOCAB` indexes the per-batch `output_type_index`
+  consumed by the upcoming probe target (#266). Diagnostics counter
+  tracks truncation rates, output_type/output_kind/execution_status
+  histograms, and per-split counts. New schemas:
+  `codelewm.execution_pack_batch.v1`,
+  `codelewm.execution_smoke_report.v1`,
+  `codelewm.execution_smoke_config.v1`. New script:
+  `scripts/smoke-execution-train` builds a tiny MBPP pack and runs
+  the loader end-to-end, surfacing tokenization breakage before the
+  v0.6 HF Jobs run (#265). New config:
+  `config/train/scaled/codelewm_execution_smoke_cpu.yaml`. (#264)
 - Execution-pack publish workflow: pre-publish gate
   (`codelewm.data.execution_pack.run_pre_publish_gate`) that verifies
   manifest schema, pack.jsonl checksum, claim-boundary embedding and
