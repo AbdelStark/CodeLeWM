@@ -76,6 +76,7 @@ from .visual_view_model import (
 from .demo_scenarios import (
     DEFAULT_DEMO_SCENARIO_ID,
     DEMO_SCENARIO_SCHEMA_VERSION,
+    EXECUTION_RERANK_SCENARIO_ID,
     DemoScenario,
     DemoScenarioError,
     DemoScenarioFile,
@@ -120,6 +121,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 __all__ = [
     "ERROR_REPORT_SCHEMA_VERSION",
+    "EXECUTION_RERANK_SCENARIO_ID",
     "INDEX_BUILD_RESULT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_SCHEMA_VERSION",

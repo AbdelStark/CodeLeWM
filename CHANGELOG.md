@@ -16,6 +16,15 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate rerank LLM demo scenario:
+  `execution-rerank-mbpp` is registered alongside `bugfix-edge-case`
+  in `codelewm.harness.demo_scenarios`. The scenario ships a stub
+  `compute_square` function with example input `[3]` and expected
+  output `9`; the prompt template id is
+  `codelewm.openrouter.demo_scenario.execution_rerank.v1`. New
+  export: `codelewm.harness.EXECUTION_RERANK_SCENARIO_ID`. The
+  scenario's publication notes explicitly scope sandbox use to the
+  operator-reviewed example input. (#270)
 - Crash-prediction binary classification eval:
   `codelewm.eval.crash_prediction` adds `evaluate_crash_prediction()`,
   `CrashSample`, `CrashPredictionReport`, `MethodMetrics`,

@@ -223,6 +223,9 @@ def _json_native_mapping(value: Mapping[str, Any]) -> dict[str, Any]:
     return dict(value)
 
 
+EXECUTION_RERANK_SCENARIO_ID = "execution-rerank-mbpp"
+
+
 _SCENARIOS: dict[str, DemoScenario] = {
     DEFAULT_DEMO_SCENARIO_ID: DemoScenario(
         scenario_id=DEFAULT_DEMO_SCENARIO_ID,
@@ -253,7 +256,55 @@ _SCENARIOS: dict[str, DemoScenario] = {
             "Candidate code is parsed and patch-applied as text; it is not executed.",
             "Demo artifacts remain workflow evidence and do not prove model usefulness.",
         ),
-    )
+    ),
+    EXECUTION_RERANK_SCENARIO_ID: DemoScenario(
+        scenario_id=EXECUTION_RERANK_SCENARIO_ID,
+        title="Execution-substrate rerank: complete the MBPP-style function",
+        instruction=(
+            "Implement compute_square so it returns n * n for any integer n. "
+            "The harness samples N completions from the configured LLM, scores "
+            "each candidate with the v0.6 execution-substrate world model "
+            "(conditioned on the example input), and reports pass@1 lift over "
+            "the LLM's own sampling order."
+        ),
+        files=(
+            DemoScenarioFile(
+                path="app.py",
+                primary=True,
+                content=(
+                    "def compute_square(n):\n"
+                    "    # TODO: return n * n for any integer n.\n"
+                    "    pass\n"
+                ),
+            ),
+        ),
+        prompt_template_id="codelewm.openrouter.demo_scenario.execution_rerank.v1",
+        expected_static_constraints={
+            "changed_files": ["app.py"],
+            "touched_symbols": ["compute_square"],
+            "non_comment_change_required": True,
+            "expected_terms": ["return", "n"],
+            "example_input_repr": "[3]",
+            "expected_output_repr": "9",
+            "benchmark_id": "mbpp_demo",
+        },
+        publication_notes=(
+            "Single-problem demo of the execution-substrate rerank protocol.",
+            (
+                "Candidate code is parsed statically and scored with the "
+                "execution-substrate world model. Hidden-test execution that "
+                "labels candidate correctness runs only through the named "
+                "data-prep sandbox subsystem (codelewm.data.sandbox) and only "
+                "on the operator-reviewed example input shipped in this "
+                "scenario."
+            ),
+            (
+                "The HumanEval / MBPP-Plus full-benchmark rerank is the "
+                "operator-driven flow documented in the v0.6 runbook; the "
+                "demo is a single-problem walkthrough of the same protocol."
+            ),
+        ),
+    ),
 }
 
 
