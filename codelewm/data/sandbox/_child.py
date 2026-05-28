@@ -214,16 +214,35 @@ def _install_audit_hook(
 
 
 def _apply_rlimits(*, memory_mb: int, cpu_seconds: int) -> None:
+    """Apply CPU and memory rlimits, best-effort.
+
+    ``RLIMIT_DATA`` caps the heap-style data segment, which correlates with
+    real memory usage. ``RLIMIT_AS`` caps the entire virtual address space,
+    which on 64-bit Linux is misleading because Python's libraries reserve
+    far more VAS than they actually use — capping VAS at 128 MB triggers
+    a spurious ``MemoryError`` during interpreter startup. We prefer
+    ``RLIMIT_DATA`` and fall back to ``RLIMIT_AS`` only when it is not
+    available.
+    """
+
     try:
         import resource  # type: ignore[import-not-found]
     except ImportError:
         return
     bytes_cap = memory_mb * 1024 * 1024
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (bytes_cap, bytes_cap))
-    except (ValueError, OSError):
-        # macOS often refuses RLIMIT_AS; treat as best-effort.
-        pass
+    set_memory = False
+    if hasattr(resource, "RLIMIT_DATA"):
+        try:
+            resource.setrlimit(resource.RLIMIT_DATA, (bytes_cap, bytes_cap))
+            set_memory = True
+        except (ValueError, OSError):
+            pass
+    if not set_memory:
+        try:
+            resource.setrlimit(resource.RLIMIT_AS, (bytes_cap, bytes_cap))
+        except (ValueError, OSError):
+            # macOS often refuses RLIMIT_AS; treat as best-effort.
+            pass
     try:
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
     except (ValueError, OSError):
