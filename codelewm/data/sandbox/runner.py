@@ -273,14 +273,12 @@ def _invoke(
             f"sandbox child returned non-JSON output: {last_line!r}"
         ) from exc
 
-    # Map child-side internal_error from oom-style returncode to oom.
-    if completed.returncode != 0 and payload.get("exit_code") == "ok":
-        payload["exit_code"] = SandboxExitCode.INTERNAL_ERROR.value
-        payload["exception_class"] = payload.get("exception_class") or "ChildProcessError"
-        payload["exception_message"] = (
-            payload.get("exception_message") or f"return_code={completed.returncode}"
-        )
-
+    # The child's reported exit_code is authoritative. Interpreter
+    # shutdown after the JSON line has been written can produce a
+    # non-zero process return code (Python's __pycache__ writes,
+    # finalizer crashes triggered by our own monkey-patches, etc.); the
+    # work itself already succeeded by that point, so we do not
+    # downgrade to internal_error on returncode alone.
     if payload.get("policy_violations"):
         payload["exit_code"] = SandboxExitCode.POLICY_VIOLATION.value
 

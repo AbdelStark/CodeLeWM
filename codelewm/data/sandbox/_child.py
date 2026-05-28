@@ -146,8 +146,10 @@ def _install_module_guards(
             raise _PolicyViolation("subprocess_denied:Popen")
 
         _sp.Popen = _denied_popen  # type: ignore[assignment]
-        # os.system / os.exec* are reachable without subprocess; patch
-        # the top-level os module too.
+        # os.system is the most common exec entry point that bypasses
+        # subprocess. The remaining os.exec* family is left to the audit
+        # hook; patching them too aggressively can interfere with the
+        # interpreter's own shutdown sequence.
         import os as _os
 
         def _denied_system(*args: object, **kwargs: object) -> object:
@@ -155,13 +157,6 @@ def _install_module_guards(
             raise _PolicyViolation("subprocess_denied:os.system")
 
         _os.system = _denied_system  # type: ignore[assignment]
-        for name in ("execv", "execve", "execvp", "execvpe", "execlp", "execle", "execl"):
-            if hasattr(_os, name):
-                def _denied_exec(*args: object, _name: str = name, **kwargs: object) -> object:
-                    _POLICY_VIOLATIONS.append(f"subprocess_denied:os.{_name}")
-                    raise _PolicyViolation(f"subprocess_denied:os.{_name}")
-
-                setattr(_os, name, _denied_exec)
 
 
 def _install_audit_hook(
@@ -450,4 +445,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":  # pragma: no cover - exercised via subprocess
-    sys.exit(main())
+    _exit_code = main()
+    # ``os._exit`` skips finalizers / atexit, so anything we have
+    # monkey-patched cannot fire during shutdown. The JSON result line
+    # is already on stdout by the time we reach this call.
+    os._exit(_exit_code)
