@@ -217,8 +217,26 @@ from .execution_rerank import (
     load_completion_labels,
     rerank_completions,
 )
+from .crash_prediction import (
+    CRASH_PREDICTION_REPORT_SCHEMA_VERSION,
+    LATENT_METHODS,
+    NON_LATENT_METHODS,
+    CrashPredictionError,
+    CrashPredictionReport,
+    CrashSample,
+    MethodMetrics,
+    evaluate_crash_prediction,
+)
 
 __all__ = [
+    "CRASH_PREDICTION_REPORT_SCHEMA_VERSION",
+    "CrashPredictionError",
+    "CrashPredictionReport",
+    "CrashSample",
+    "LATENT_METHODS",
+    "MethodMetrics",
+    "NON_LATENT_METHODS",
+    "evaluate_crash_prediction",
     "ACTION_VIEW_POLICY_SCHEMA_VERSION",
     "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
     "BaselineSummary",
