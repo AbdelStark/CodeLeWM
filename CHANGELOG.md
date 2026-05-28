@@ -16,6 +16,17 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 benchmark report template and two-substrate paper outline:
+  `docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md` mirrors
+  `docs/benchmark/REPORT_TEMPLATE.md` scoped to the
+  execution-substrate pivot, with explicit claim-gate tables for
+  retrieval, collapse, surprise, latent probes, downstream
+  rerank, and crash prediction.
+  `docs/papers/two_substrate_outline.md` defines the publishable
+  comparison between Substrate A (commit-edit, v0.2) and Substrate B
+  (execution-trace, v0.6), structured so it ships under either
+  outcome (gates pass or gates fail). `docs/PROJECT_EXPLAINER.md`
+  links the substrate-pivot stack. (#272)
 - Execution-substrate rerank visual view model:
   `codelewm.harness.execution_rerank_view_model` adds
   `build_execution_rerank_view_model()`, `ExecutionRerankViewModel`,
