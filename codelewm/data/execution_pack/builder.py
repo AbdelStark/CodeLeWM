@@ -156,6 +156,15 @@ def build_execution_pack(
             attribution=attribution,
             audit=audit,
         )
+        # Embed the claim-boundary text + emit the wrapping
+        # ``codelewm.artifact_manifest.v1`` even on empty packs so the
+        # directory shape is uniform for downstream gates.
+        (output_dir / "claim_boundary.md").write_text(
+            load_claim_boundary(CLAIM_BOUNDARY_NAME), encoding="utf-8"
+        )
+        _write_wrapping_artifact_manifest(
+            output_dir=output_dir, manifest=manifest, pack_id=pack_id
+        )
         return ExecutionPackResult(
             output_dir=output_dir,
             manifest=manifest,
@@ -231,6 +240,10 @@ def build_execution_pack(
     # without needing to import codelewm.security.
     (output_dir / "claim_boundary.md").write_text(
         load_claim_boundary(CLAIM_BOUNDARY_NAME), encoding="utf-8"
+    )
+
+    _write_wrapping_artifact_manifest(
+        output_dir=output_dir, manifest=manifest, pack_id=pack_id
     )
 
     return ExecutionPackResult(
@@ -352,23 +365,33 @@ def _run_one_case(
     raised_code: Any,
     audit: _AuditCounters,
 ) -> PackedExecutionRecord | None:
-    """Invoke the sandbox for one input case and tokenize the survivors."""
+    """Invoke the sandbox for one input case and tokenize the survivors.
 
-    # The sandbox supports function_call directly. For stdin / argv inputs
-    # we plug into stdin_text only when the policy says so; stdin / argv
-    # are deferred to a future PR that adds a stdin wrapper. For now we
-    # skip non-function-call cases so the first execution-pack run can
-    # focus on MBPP-style inputs.
-    if case.input_kind != "function_call":
+    Supports ``function_call`` (MBPP-style) and ``stdin`` (CodeNet /
+    APPS-style) input kinds. ``argv`` is still deferred; the audit
+    summary tallies it as ``unsupported_input_kind:argv`` so the
+    operator can see the gap.
+    """
+
+    if case.input_kind == "function_call":
+        result = run_one(
+            submission.code,
+            input_repr=case.input_repr,
+            function_name=case.function_name,
+            policy=sandbox_policy,
+        )
+    elif case.input_kind == "stdin":
+        # The sandbox's script-style branch runs ``exec(code)`` with the
+        # provided ``stdin_text`` feeding ``sys.stdin``; captured stdout
+        # becomes the output_repr.
+        result = run_one(
+            submission.code,
+            stdin_text=case.input_repr,
+            policy=sandbox_policy,
+        )
+    else:
         audit.reject(f"unsupported_input_kind:{case.input_kind}")
         return None
-
-    result = run_one(
-        submission.code,
-        input_repr=case.input_repr,
-        function_name=case.function_name,
-        policy=sandbox_policy,
-    )
     exit_value = (
         result.exit_code.value if hasattr(result.exit_code, "value") else str(result.exit_code)
     )
@@ -577,3 +600,55 @@ def _default_pack_id() -> str:
     return "codelewm-execution-pack-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%SZ"
     )
+
+
+def _write_wrapping_artifact_manifest(
+    *,
+    output_dir: Path,
+    manifest: ExecutionPackManifest,
+    pack_id: str,
+) -> None:
+    """Emit ``artifact_manifest.json`` so ``codelewm manifest verify`` passes.
+
+    The execution-pack manifest (``manifest.json``) stays the canonical
+    contents record; this wrapping `codelewm.artifact_manifest.v1`
+    carries the per-file SHA-256 lineage the release gates verify.
+    """
+
+    # Lazy import: keeps the substrate-pivot package layout clean.
+    from codelewm.observability import (  # noqa: PLC0415
+        build_artifact_manifest,
+        write_artifact_manifest,
+    )
+
+    pack_files = sorted(
+        p.relative_to(output_dir).as_posix()
+        for p in output_dir.iterdir()
+        if p.is_file() and p.name != "artifact_manifest.json"
+    )
+    # ``parent_artifacts`` here is reserved for *other artifact
+    # manifests* that the verify step resolves via ``--parent-manifest``.
+    # The raw ingestion JSONLs that fed this pack are tracked in the
+    # canonical execution-pack manifest under its ``parent_artifacts``
+    # field instead.
+    artifact_manifest = build_artifact_manifest(
+        artifact_kind="dataset",
+        root=output_dir,
+        files=pack_files,
+        command=("codelewm", "dataset", "execution-pack"),
+        config=dict(manifest.sandbox_policy),
+        parent_artifacts=(),
+        artifact_id=pack_id,
+        metadata={
+            "execution_pack_manifest_schema": manifest.schema_version,
+            "record_count": manifest.record_count,
+            "claim_boundary_name": CLAIM_BOUNDARY_NAME,
+            "claim_boundary_fingerprint": manifest.claim_boundary.get(
+                "fingerprint", ""
+            ),
+            "ingestion_source_artifacts": [
+                p["path"] for p in manifest.parent_artifacts
+            ],
+        },
+    )
+    write_artifact_manifest(artifact_manifest, output_dir / "artifact_manifest.json")

@@ -1,0 +1,126 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["datasets>=3"]
+# ///
+"""Flatten the MBPP HuggingFace dataset into adapter-ready JSONL.
+
+The existing :mod:`codelewm.data.execution_sources` MBPP adapter
+already consumes the canonical MBPP row shape (``task_id``, ``code``,
+``test_list``, ``test_setup_code``, ``challenge_test_list``). This
+script pulls those rows from HF Hub and writes them to disk as JSONL
+so the pack builder (#262) can ingest them through the existing
+adapter.
+
+The MBPP dataset is permissive-licensed (CC-BY-4.0 on the
+mbpp/mbpp-plus releases). ~974 problems across train+val+test.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        default="mbpp",
+        help="HF dataset id (default: mbpp)",
+    )
+    parser.add_argument(
+        "--config",
+        default="full",
+        help="MBPP config variant (default: full; sanitized is also common)",
+    )
+    parser.add_argument(
+        "--splits",
+        default="train,validation,test,prompt",
+        help="comma-separated split names to include",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="output JSONL path",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="cap total rows written",
+    )
+    args = parser.parse_args()
+
+    try:
+        from datasets import load_dataset  # noqa: PLC0415
+    except ImportError as exc:
+        print(
+            f"datasets package is required: {exc}\nInstall with: uv pip install datasets",
+            file=sys.stderr,
+        )
+        return 2
+
+    requested_splits = [s.strip() for s in args.splits.split(",") if s.strip()]
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    skipped = 0
+    by_split: dict[str, int] = {}
+    with args.output.open("w", encoding="utf-8") as fh:
+        for split in requested_splits:
+            try:
+                ds = load_dataset(args.dataset, args.config, split=split)
+            except Exception as exc:  # noqa: BLE001
+                print(
+                    f"warning: split {split!r} unavailable for {args.dataset}/{args.config}: {exc}",
+                    file=sys.stderr,
+                )
+                continue
+            for row in ds:
+                if args.limit is not None and written >= args.limit:
+                    break
+                normalized = _normalize_mbpp_row(row)
+                if normalized is None:
+                    skipped += 1
+                    continue
+                fh.write(json.dumps(normalized, ensure_ascii=False))
+                fh.write("\n")
+                written += 1
+                by_split[split] = by_split.get(split, 0) + 1
+            if args.limit is not None and written >= args.limit:
+                break
+
+    summary = {
+        "dataset": args.dataset,
+        "config": args.config,
+        "splits": dict(sorted(by_split.items())),
+        "rows_written": written,
+        "rows_skipped": skipped,
+        "output": str(args.output),
+    }
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if written > 0 else 1
+
+
+def _normalize_mbpp_row(row: Any) -> dict[str, Any] | None:
+    task_id = row.get("task_id")
+    code = row.get("code")
+    test_list = row.get("test_list")
+    if task_id is None or not isinstance(code, str) or not isinstance(test_list, list):
+        return None
+    return {
+        "task_id": task_id,
+        "text": row.get("text", "") or row.get("prompt", "") or "",
+        "code": code,
+        "test_list": list(test_list),
+        "test_setup_code": row.get("test_setup_code", "") or "",
+        "challenge_test_list": list(row.get("challenge_test_list") or []),
+    }
+
+
+if __name__ == "__main__":
+    sys.exit(main())

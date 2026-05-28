@@ -1,0 +1,204 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["datasets>=3"]
+# ///
+"""Flatten the APPS HuggingFace dataset into adapter-ready JSONL.
+
+The existing :mod:`codelewm.data.execution_sources` APPS adapter
+consumes a flattened JSONL with ``problem_id``, ``difficulty``,
+``solutions``, ``input_output`` (with ``inputs`` + ``outputs`` arrays),
+and ``license``. The APPS HF dataset ships those fields but stringifies
+``solutions`` and ``input_output`` as JSON. This script decodes them.
+
+APPS is MIT-licensed. The ``introductory`` difficulty is the smallest
+slice and the most amenable to single-stdin programs.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        default="codeparrot/apps",
+        help="HF dataset id (default: codeparrot/apps)",
+    )
+    parser.add_argument(
+        "--splits",
+        default="train,test",
+        help="comma-separated split names",
+    )
+    parser.add_argument(
+        "--difficulty",
+        choices=("introductory", "interview", "competition", "any"),
+        default="introductory",
+        help="filter by difficulty (default: introductory)",
+    )
+    parser.add_argument(
+        "--max-solutions-per-problem",
+        type=int,
+        default=3,
+        help="cap solutions kept per problem",
+    )
+    parser.add_argument(
+        "--max-input-bytes",
+        type=int,
+        default=4096,
+        help="drop test inputs larger than this many UTF-8 bytes",
+    )
+    parser.add_argument(
+        "--output", type=Path, required=True, help="output JSONL path"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None, help="cap problems written"
+    )
+    args = parser.parse_args()
+
+    try:
+        from datasets import load_dataset  # noqa: PLC0415
+    except ImportError as exc:
+        print(
+            f"datasets package is required: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+
+    requested_splits = [s.strip() for s in args.splits.split(",") if s.strip()]
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    rows_written = 0
+    skipped: dict[str, int] = {}
+    by_split: dict[str, int] = {}
+    with args.output.open("w", encoding="utf-8") as fh:
+        for split in requested_splits:
+            try:
+                # APPS ships with a loading script. The current
+                # ``datasets`` package refuses scripts, so we fall back
+                # to the ``refs/convert/parquet`` revision the Hub
+                # auto-maintains for every dataset.
+                ds = load_dataset(
+                    args.dataset, split=split, revision="refs/convert/parquet"
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(
+                    f"warning: split {split!r} unavailable: {exc}",
+                    file=sys.stderr,
+                )
+                continue
+            for row in ds:
+                if args.limit is not None and rows_written >= args.limit:
+                    break
+                normalized = _normalize_apps_row(
+                    row,
+                    difficulty=args.difficulty,
+                    max_solutions=args.max_solutions_per_problem,
+                    max_input_bytes=args.max_input_bytes,
+                    skipped=skipped,
+                )
+                if normalized is None:
+                    continue
+                fh.write(json.dumps(normalized, ensure_ascii=False))
+                fh.write("\n")
+                rows_written += 1
+                by_split[split] = by_split.get(split, 0) + 1
+            if args.limit is not None and rows_written >= args.limit:
+                break
+
+    summary = {
+        "dataset": args.dataset,
+        "difficulty_filter": args.difficulty,
+        "max_solutions_per_problem": args.max_solutions_per_problem,
+        "splits": dict(sorted(by_split.items())),
+        "rows_written": rows_written,
+        "rows_skipped_by_reason": dict(sorted(skipped.items())),
+        "output": str(args.output),
+    }
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if rows_written > 0 else 1
+
+
+def _normalize_apps_row(
+    row: Any,
+    *,
+    difficulty: str,
+    max_solutions: int,
+    max_input_bytes: int,
+    skipped: dict[str, int],
+) -> dict[str, Any] | None:
+    if difficulty != "any" and row.get("difficulty") != difficulty:
+        skipped["difficulty_filter"] = skipped.get("difficulty_filter", 0) + 1
+        return None
+
+    raw_solutions = row.get("solutions")
+    raw_io = row.get("input_output")
+    if not raw_solutions or not raw_io:
+        skipped["missing_solutions_or_io"] = (
+            skipped.get("missing_solutions_or_io", 0) + 1
+        )
+        return None
+
+    try:
+        solutions = (
+            json.loads(raw_solutions) if isinstance(raw_solutions, str) else raw_solutions
+        )
+        io_blob = json.loads(raw_io) if isinstance(raw_io, str) else raw_io
+    except (json.JSONDecodeError, TypeError):
+        skipped["json_decode_error"] = skipped.get("json_decode_error", 0) + 1
+        return None
+
+    if not isinstance(solutions, list) or not solutions:
+        skipped["no_solutions"] = skipped.get("no_solutions", 0) + 1
+        return None
+    if not isinstance(io_blob, dict):
+        skipped["io_not_dict"] = skipped.get("io_not_dict", 0) + 1
+        return None
+
+    inputs = io_blob.get("inputs") or []
+    outputs = io_blob.get("outputs") or []
+    if not isinstance(inputs, list) or not inputs:
+        skipped["no_test_inputs"] = skipped.get("no_test_inputs", 0) + 1
+        return None
+
+    # Filter oversized inputs so the sandbox doesn't choke.
+    kept_io_pairs: list[tuple[str, str]] = []
+    for idx, raw_input in enumerate(inputs):
+        if not isinstance(raw_input, str):
+            continue
+        if len(raw_input.encode("utf-8")) > max_input_bytes:
+            continue
+        expected = outputs[idx] if idx < len(outputs) and isinstance(outputs[idx], str) else ""
+        kept_io_pairs.append((raw_input, expected))
+    if not kept_io_pairs:
+        skipped["all_inputs_oversized"] = (
+            skipped.get("all_inputs_oversized", 0) + 1
+        )
+        return None
+
+    kept_solutions = [
+        s for s in solutions[:max_solutions] if isinstance(s, str) and s.strip()
+    ]
+    if not kept_solutions:
+        skipped["no_valid_solutions"] = skipped.get("no_valid_solutions", 0) + 1
+        return None
+
+    return {
+        "problem_id": str(row.get("problem_id", row.get("id", ""))) or f"apps/{row.get('problem_id', '?')}",
+        "difficulty": row.get("difficulty"),
+        "solutions": kept_solutions,
+        "input_output": {
+            "inputs": [pair[0] for pair in kept_io_pairs],
+            "outputs": [pair[1] for pair in kept_io_pairs],
+        },
+        "license": "MIT",
+    }
+
+
+if __name__ == "__main__":
+    sys.exit(main())

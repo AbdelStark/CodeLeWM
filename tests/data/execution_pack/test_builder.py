@@ -94,6 +94,19 @@ class ExecutionPackHappyPathTest(unittest.TestCase):
             self.assertTrue((out / "attribution.json").is_file())
             self.assertTrue((out / "sandbox_audit_summary.json").is_file())
             self.assertTrue((out / "claim_boundary.md").is_file())
+            # Wrapping ``codelewm.artifact_manifest.v1`` exists and
+            # verifies under ``codelewm manifest verify``.
+            self.assertTrue((out / "artifact_manifest.json").is_file())
+            from codelewm.observability import (
+                read_artifact_manifest,
+                validate_artifact_checksums,
+            )
+            wrap = read_artifact_manifest(out / "artifact_manifest.json")
+            self.assertEqual(wrap.artifact_kind, "dataset")
+            self.assertEqual(wrap.artifact_id, result.manifest.pack_id)
+            # The wrapping manifest's per-file SHA-256 lineage matches
+            # the on-disk pack contents.
+            validate_artifact_checksums(wrap, root=out)
             # Claim boundary fingerprint matches the registered file.
             from codelewm.security import claim_boundary_fingerprint
 
