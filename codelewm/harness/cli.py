@@ -1011,6 +1011,74 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest.add_argument("--json", action="store_true", help="emit JSON output")
     ingest.set_defaults(func=_dataset_ingest_command)
+    execution_pack = dataset_subcommands.add_parser(
+        "execution-pack",
+        help=(
+            "build the execution-substrate pack (pack.jsonl + manifest + sidecars) "
+            "from one or more ingestion JSONL files"
+        ),
+    )
+    execution_pack.add_argument(
+        "--ingestion",
+        dest="ingestion_paths",
+        type=Path,
+        action="append",
+        required=True,
+        help="ingestion JSONL path (from `codelewm dataset ingest`); repeatable",
+    )
+    execution_pack.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="empty output directory for the pack",
+    )
+    execution_pack.add_argument(
+        "--seed", type=int, default=42, help="split RNG seed"
+    )
+    execution_pack.add_argument(
+        "--train-frac", type=float, default=0.85, help="fraction of problems in train"
+    )
+    execution_pack.add_argument(
+        "--val-frac", type=float, default=0.05, help="fraction of problems in val"
+    )
+    execution_pack.add_argument(
+        "--max-inputs-per-problem",
+        type=int,
+        default=None,
+        help="cap inputs kept per problem (default: no cap)",
+    )
+    execution_pack.add_argument(
+        "--target-records",
+        type=int,
+        default=None,
+        help="stop early once this many records have been written",
+    )
+    execution_pack.add_argument(
+        "--timeout-ms",
+        type=int,
+        default=5000,
+        help="sandbox per-invocation wall-clock budget (ms)",
+    )
+    execution_pack.add_argument(
+        "--memory-mb", type=int, default=1024, help="sandbox memory cap (MB)"
+    )
+    execution_pack.add_argument(
+        "--cpu-seconds",
+        type=int,
+        default=10,
+        help="sandbox CPU-time cap (seconds)",
+    )
+    execution_pack.add_argument(
+        "--no-determinism-check",
+        dest="determinism_check",
+        action="store_false",
+        default=True,
+        help="skip the sandbox determinism re-run (default: enabled)",
+    )
+    execution_pack.add_argument(
+        "--json", action="store_true", help="emit JSON output"
+    )
+    execution_pack.set_defaults(func=_dataset_execution_pack_command)
     dataset.set_defaults(func=_dataset_help_command, dataset_parser=dataset)
     manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
     manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
@@ -3108,6 +3176,93 @@ def _dataset_ingest_command(args: argparse.Namespace) -> int:
         print(f"held_out_for_eval: {result['held_out_for_eval']}")
         print(f"license: {result['license']}")
         print(f"output_path: {result['output_path']}")
+    return 0
+
+
+def _dataset_execution_pack_command(args: argparse.Namespace) -> int:
+    """Build an execution-substrate pack from one or more ingestion JSONLs."""
+
+    from codelewm.data.execution_pack import (  # noqa: PLC0415
+        ExecutionPackBuilderError,
+        build_execution_pack,
+    )
+    from codelewm.data.sandbox import (  # noqa: PLC0415
+        SandboxPolicy,
+        SandboxPolicyError,
+    )
+
+    paths: list[Path] = list(args.ingestion_paths or ())
+    missing = [p for p in paths if not p.is_file()]
+    if missing:
+        error = ScoreError(
+            f"ingestion file(s) missing: {missing}",
+            error_type="input_missing",
+            remediation="pass --ingestion <path> for each ingestion JSONL produced by `codelewm dataset ingest`",
+            artifact=str(missing[0]),
+            caused_by="FileNotFoundError",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    try:
+        policy = SandboxPolicy(
+            import_allowlist="stdlib_only",
+            timeout_ms=args.timeout_ms,
+            memory_mb=args.memory_mb,
+            cpu_seconds=args.cpu_seconds,
+            determinism_check=args.determinism_check,
+        )
+    except SandboxPolicyError as exc:
+        error = ScoreError(
+            f"invalid sandbox policy: {exc}",
+            error_type="invalid_arguments",
+            remediation="check the sandbox policy bounds against docs/operations/sandbox_policy.md",
+            artifact=str(paths[0]) if paths else "",
+            caused_by=f"SandboxPolicyError: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    try:
+        result = build_execution_pack(
+            ingestion_paths=paths,
+            output_dir=args.output,
+            sandbox_policy=policy,
+            seed=args.seed,
+            train_frac=args.train_frac,
+            val_frac=args.val_frac,
+            max_inputs_per_problem=args.max_inputs_per_problem,
+            target_records=args.target_records,
+        )
+    except ExecutionPackBuilderError as exc:
+        error = ScoreError(
+            f"execution-pack build failed: {exc}",
+            error_type="dataset_build_error",
+            remediation="verify --output is empty and ingestion files are valid",
+            artifact=str(args.output),
+            caused_by=f"ExecutionPackBuilderError: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+
+    if args.json:
+        payload = {
+            "pack_dir": str(result.output_dir),
+            "record_count": result.record_count,
+            "sandbox_reject_counts": dict(result.sandbox_reject_counts),
+            "manifest": result.manifest.as_dict(),
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"pack_dir: {result.output_dir}")
+        print(f"record_count: {result.record_count}")
+        print("splits:")
+        for split, count in sorted(result.manifest.split_counts.items()):
+            print(f"  {split}: {count}")
+        if result.sandbox_reject_counts:
+            print("sandbox_reject_counts:")
+            for reason, count in sorted(result.sandbox_reject_counts.items()):
+                print(f"  {reason}: {count}")
     return 0
 
 

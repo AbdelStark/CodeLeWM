@@ -16,6 +16,22 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Execution-substrate pack builder:
+  `codelewm.data.execution_pack` with `build_execution_pack()`,
+  `PackedExecutionRecord`, `ExecutionPackManifest`,
+  `ExecutionPackResult`, and `ExecutionPackBuilderError`. The builder
+  reads ingestion JSONLs (from `codelewm dataset ingest`), drives the
+  sandbox per `(code, input)` case, drops records that fail the
+  determinism / policy / OOM / timeout / output-truncation gates,
+  tokenizes the surviving code / input repr / output repr, partitions
+  by `source_problem_id`, and writes `pack.jsonl`, `manifest.json`,
+  `attribution.json`, `sandbox_audit_summary.json`, and a copy of the
+  execution-substrate claim boundary. Held-out ingestion records
+  (MBPP-Plus, HumanEval) are tallied but not packed. New CLI:
+  `codelewm dataset execution-pack --ingestion <jsonl> --output <dir>`
+  with sandbox policy, split, balance, and target-record flags. New
+  schemas: `codelewm.execution_pack_manifest.v1`,
+  `codelewm.execution_pack_record.v1`. (#262)
 - Source adapters for the execution-substrate ingestion path:
   `codelewm.data.execution_sources` with `SourceSubmission`,
   `InputCase`, `ExecutionSourceAdapter` protocol, and concrete adapters
