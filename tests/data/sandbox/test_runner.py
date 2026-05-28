@@ -80,7 +80,16 @@ class SandboxRunnerHappyPathTest(unittest.TestCase):
             policy=_fast_policy(),
         )
         self.assertEqual(result.schema_version, SANDBOX_RESULT_SCHEMA_VERSION)
-        self.assertEqual(result.exit_code, SandboxExitCode.OK)
+        self.assertEqual(
+            result.exit_code,
+            SandboxExitCode.OK,
+            msg=(
+                f"exit_code={result.exit_code.value} "
+                f"exception_class={result.exception_class} "
+                f"exception_message={result.exception_message} "
+                f"policy_violations={result.policy_violations}"
+            ),
+        )
         self.assertEqual(result.output_repr, "5")
         self.assertEqual(result.output_type, "int")
         self.assertEqual(result.exception_class, None)
