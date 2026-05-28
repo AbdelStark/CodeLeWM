@@ -16,6 +16,20 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 execution-substrate HF Jobs launcher: a config-driven launch
+  plan generator (`codelewm.training.execution_launch_plan` exports
+  `load_v0_6_config`, `build_launch_plans`, `LaunchPlan`,
+  `ExecutionLaunchPlanError`, `EXECUTION_LAUNCH_PLAN_SCHEMA_VERSION`),
+  an operator-facing dry-run-by-default script
+  `scripts/hf-launch-execution-run` that prints one plan per
+  configured seed, the v0.6 training config at
+  `config/train/scaled/codelewm_execution_v0_6_a10g.yaml` carrying
+  loader/trainer/optimizer/objective/seeds/hf_jobs/claim_gates/
+  claim_boundary sections, and the operator runbook
+  `docs/operations/V0_6_EXECUTION_RUN_RUNBOOK.md`. New schemas:
+  `codelewm.execution_train_config.v1`,
+  `codelewm.execution_launch_plan.v1`. Live runs are operator
+  triggered; the launcher itself never contacts HF. (#265)
 - Execution-substrate smoke pipeline:
   `codelewm.training.execution_pack_loader` reads `pack.jsonl` (from
   #262), pads/truncates each tokenized field to configured

@@ -1,0 +1,113 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
+"""Launch the v0.6 execution-substrate HF Jobs run (one plan per seed).
+
+Dry-run by default. Prints the JSON launch plan an operator can review
+before firing the live ``hf jobs run`` command. The script does not
+execute the command itself — that step is operator-driven so the
+authentication, billing, and run-name approval all stay explicit.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from codelewm.training import (  # noqa: E402
+    ExecutionLaunchPlanError,
+    build_launch_plans,
+    load_v0_6_config,
+)
+
+
+def _git_sha() -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(Path(__file__).resolve().parents[1]),
+            stderr=subprocess.DEVNULL,
+        )
+        return out.decode("utf-8").strip() or "unset"
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return "unset"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path(
+            "config/train/scaled/codelewm_execution_v0_6_a10g.yaml"
+        ),
+        help="path to the v0.6 execution training config",
+    )
+    parser.add_argument(
+        "--git-sha",
+        default=os.getenv("CODELEWM_GIT_SHA") or _git_sha(),
+        help="short git SHA to embed in run names",
+    )
+    parser.add_argument(
+        "--date",
+        default=os.getenv("CODELEWM_RUN_DATE"),
+        help="UTC date stamp (YYYYMMDD) for run names",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        action="append",
+        default=None,
+        help="restrict to one or more seeds (default: all configured seeds)",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="emit JSON plan list"
+    )
+    args = parser.parse_args()
+
+    try:
+        config = load_v0_6_config(args.config)
+    except (ExecutionLaunchPlanError, FileNotFoundError) as exc:
+        print(f"config invalid: {exc}", file=sys.stderr)
+        return 2
+
+    plans = build_launch_plans(
+        config=config,
+        config_path=args.config,
+        git_sha=args.git_sha,
+        date=args.date,
+    )
+
+    if args.seed is not None:
+        wanted = set(args.seed)
+        plans = tuple(p for p in plans if p.seed in wanted)
+        if not plans:
+            print(f"no configured seed matches {sorted(wanted)}", file=sys.stderr)
+            return 2
+
+    payload = [plan.as_dict() for plan in plans]
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        for plan in plans:
+            print(f"--- seed {plan.seed} ---")
+            print(f"run_name: {plan.run_name}")
+            print(f"pack: {plan.pack_repo_id}@{plan.pack_revision}")
+            print(f"flavor: {plan.flavor}")
+            print(f"timeout: {plan.timeout_hours}h")
+            print("command:")
+            print("  " + " ".join(plan.command))
+            print()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

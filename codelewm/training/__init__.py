@@ -70,19 +70,31 @@ from .execution_pack_loader import (
     iter_batches,
     iter_records,
 )
+from .execution_launch_plan import (
+    EXECUTION_LAUNCH_PLAN_SCHEMA_VERSION,
+    ExecutionLaunchPlanError,
+    LaunchPlan,
+    build_launch_plans,
+    load_v0_6_config,
+)
 
 __all__ = [
     "CPU_SMOKE_CHECKPOINT_SCHEMA_VERSION",
     "CPU_SMOKE_REPORT_SCHEMA_VERSION",
     "CheckpointResumePlan",
+    "EXECUTION_LAUNCH_PLAN_SCHEMA_VERSION",
     "EXECUTION_PACK_BATCH_SCHEMA_VERSION",
+    "ExecutionLaunchPlanError",
     "ExecutionPackBatch",
     "ExecutionPackLoaderConfig",
+    "LaunchPlan",
     "LoaderDiagnostics",
     "OUTPUT_TYPE_VOCAB",
+    "build_launch_plans",
     "collect_diagnostics",
     "iter_batches",
     "iter_records",
+    "load_v0_6_config",
     "DEFAULT_SMALL_TRAIN_CONFIG",
     "DEFAULT_TINY_TRAIN_CONFIG",
     "DEFAULT_TRAINING_VOCAB_SIZE",
