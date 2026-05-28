@@ -63,6 +63,9 @@ HarnessErrorType = Literal[
     "checkpoint_error",
     "evaluation_gate_error",
     "scoring_error",
+    "input_missing",
+    "invalid_arguments",
+    "sandbox_runner_error",
 ]
 
 

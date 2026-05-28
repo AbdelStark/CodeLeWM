@@ -899,6 +899,84 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pack.add_argument("--json", action="store_true", help="emit JSON output")
     pack.set_defaults(func=_dataset_pack_command)
+    execute = dataset_subcommands.add_parser(
+        "execute",
+        help=(
+            "run one (code, input) pair in the sandboxed deterministic Python "
+            "executor and emit a JSON result"
+        ),
+    )
+    execute.add_argument(
+        "--code-file",
+        type=Path,
+        required=True,
+        help="path to a Python source file containing the payload",
+    )
+    execute.add_argument(
+        "--input-file",
+        type=Path,
+        help=(
+            "path to a JSON file holding the function arguments. Required when "
+            "--function-name is provided."
+        ),
+    )
+    execute.add_argument(
+        "--function-name",
+        type=str,
+        default=None,
+        help=(
+            "name of a function defined by the payload to invoke. If omitted, the "
+            "payload runs script-style and its stdout becomes the captured output."
+        ),
+    )
+    execute.add_argument(
+        "--stdin-file",
+        type=Path,
+        default=None,
+        help="path to a text file fed to the payload's stdin (script-style only)",
+    )
+    execute.add_argument(
+        "--policy",
+        choices=("stdlib-only",),
+        default="stdlib-only",
+        help="sandbox policy preset (only stdlib-only is supported)",
+    )
+    execute.add_argument(
+        "--timeout-ms",
+        type=int,
+        default=5000,
+        help="wall-clock timeout in milliseconds (10..60000)",
+    )
+    execute.add_argument(
+        "--memory-mb",
+        type=int,
+        default=256,
+        help="RSS cap in megabytes (16..4096)",
+    )
+    execute.add_argument(
+        "--cpu-seconds",
+        type=int,
+        default=10,
+        help="CPU-time cap in seconds (1..120)",
+    )
+    execute.add_argument(
+        "--no-determinism-check",
+        dest="determinism_check",
+        action="store_false",
+        default=True,
+        help="skip the determinism re-run (default: enabled)",
+    )
+    execute.add_argument(
+        "--scratch-dir",
+        type=Path,
+        default=None,
+        help=(
+            "directory the sandboxed process may write to. A fresh temporary "
+            "directory is used when omitted."
+        ),
+    )
+    execute.add_argument("--json", action="store_true", help="emit JSON output")
+    execute.set_defaults(func=_dataset_execute_command)
     dataset.set_defaults(func=_dataset_help_command, dataset_parser=dataset)
     manifest = subparsers.add_parser("manifest", help="artifact manifest utilities")
     manifest_subcommands = manifest.add_subparsers(dest="manifest_command")
@@ -2809,6 +2887,134 @@ def _dataset_pack_command(args: argparse.Namespace) -> int:
         print(f"dataset_manifest: {result.output_dir / 'dataset_manifest.json'}")
         print(f"row_count: {result.dataset_manifest.row_count}")
     return 0
+
+
+def _dataset_execute_command(args: argparse.Namespace) -> int:
+    """Run one (code, input) pair in the sandbox and emit a JSON result.
+
+    The sandbox is loaded lazily so that ``codelewm --help`` and unrelated
+    commands do not pay the import cost.
+    """
+
+    # Lazy import: the sandbox is a data-prep module and we keep its
+    # surface out of the import graph of unrelated CLI commands.
+    from codelewm.data.sandbox import (  # noqa: PLC0415
+        SandboxPolicy,
+        SandboxPolicyError,
+        SandboxRunnerError,
+        run_one,
+    )
+
+    code_path: Path = args.code_file
+    if not code_path.is_file():
+        error = ScoreError(
+            f"code file does not exist: {code_path}",
+            error_type="input_missing",
+            remediation="pass --code-file pointing to a valid Python source file",
+            artifact=str(code_path),
+            caused_by="FileNotFoundError",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    code = code_path.read_text(encoding="utf-8")
+
+    input_repr: str | None = None
+    if args.input_file is not None:
+        if not args.input_file.is_file():
+            error = ScoreError(
+                f"input file does not exist: {args.input_file}",
+                error_type="input_missing",
+                remediation="pass --input-file pointing to a JSON file",
+                artifact=str(args.input_file),
+                caused_by="FileNotFoundError",
+            )
+            _emit_error(args, error, json_output=args.json)
+            return 2
+        input_repr = args.input_file.read_text(encoding="utf-8")
+
+    if args.function_name is not None and input_repr is None:
+        error = ScoreError(
+            "--function-name requires --input-file",
+            error_type="invalid_arguments",
+            remediation="pass --input-file when --function-name is used",
+            artifact=str(code_path),
+            caused_by="ValueError",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    stdin_text = ""
+    if args.stdin_file is not None:
+        if not args.stdin_file.is_file():
+            error = ScoreError(
+                f"stdin file does not exist: {args.stdin_file}",
+                error_type="input_missing",
+                remediation="pass --stdin-file pointing to a text file",
+                artifact=str(args.stdin_file),
+                caused_by="FileNotFoundError",
+            )
+            _emit_error(args, error, json_output=args.json)
+            return 2
+        stdin_text = args.stdin_file.read_text(encoding="utf-8")
+
+    try:
+        policy = SandboxPolicy(
+            import_allowlist="stdlib_only",
+            timeout_ms=args.timeout_ms,
+            memory_mb=args.memory_mb,
+            cpu_seconds=args.cpu_seconds,
+            determinism_check=args.determinism_check,
+        )
+    except SandboxPolicyError as exc:
+        error = ScoreError(
+            f"invalid sandbox policy: {exc}",
+            error_type="invalid_arguments",
+            remediation="check timeout, memory, and cpu bounds against docs/operations/sandbox_policy.md",
+            artifact=str(code_path),
+            caused_by=f"SandboxPolicyError: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    try:
+        result = run_one(
+            code,
+            input_repr=input_repr,
+            function_name=args.function_name,
+            stdin_text=stdin_text,
+            policy=policy,
+            scratch_dir=args.scratch_dir,
+        )
+    except SandboxRunnerError as exc:
+        error = ScoreError(
+            f"sandbox runner error: {exc}",
+            error_type="sandbox_runner_error",
+            remediation="rerun with a fresh scratch dir or inspect the child stderr",
+            artifact=str(code_path),
+            caused_by=f"SandboxRunnerError: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 4
+
+    payload = result.as_dict()
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"exit_code: {payload['exit_code']}")
+        print(f"output_type: {payload['output_type']}")
+        print(f"output_kind: {payload['output_kind']}")
+        if payload["output_repr"] is not None:
+            print(f"output_repr: {payload['output_repr']}")
+        if payload["exception_class"]:
+            print(f"exception: {payload['exception_class']}: {payload['exception_message']}")
+        if payload["policy_violations"]:
+            print("policy_violations:")
+            for violation in payload["policy_violations"]:
+                print(f"  - {violation}")
+        print(f"wall_time_ms: {payload['wall_time_ms']:.2f}")
+        print(f"determinism_check: {payload['determinism_check']}")
+    return 0 if result.ok else 1
 
 
 def _manifest_verify_command(args: argparse.Namespace) -> int:
