@@ -106,6 +106,64 @@ def _install_import_hook() -> None:
     sys.meta_path.insert(0, finder)
 
 
+def _install_module_guards(
+    *,
+    deny_network: bool,
+    deny_subprocess: bool,
+) -> None:
+    """Belt-and-suspenders monkey-patches for network and subprocess primitives.
+
+    Audit events (``socket.connect``, ``subprocess.Popen``, …) are the
+    primary defense but their firing semantics vary slightly across Python
+    builds and OSes. Replacing the canonical constructors with stubs that
+    raise :class:`_PolicyViolation` guarantees the same observable
+    behavior across CPython versions, kernels, and CI environments.
+    """
+
+    if deny_network:
+        import socket as _socket
+
+        def _denied_socket(*args: object, **kwargs: object) -> object:
+            _POLICY_VIOLATIONS.append("network_denied:socket")
+            raise _PolicyViolation("network_denied:socket")
+
+        _socket.socket = _denied_socket  # type: ignore[assignment]
+        # gethostbyname, create_connection, getaddrinfo round out the
+        # high-level entry points that bypass socket.socket.
+        for name in ("create_connection", "gethostbyname", "gethostbyname_ex"):
+            if hasattr(_socket, name):
+                def _denied_net(*args: object, _name: str = name, **kwargs: object) -> object:
+                    _POLICY_VIOLATIONS.append(f"network_denied:socket.{_name}")
+                    raise _PolicyViolation(f"network_denied:socket.{_name}")
+
+                setattr(_socket, name, _denied_net)
+
+    if deny_subprocess:
+        import subprocess as _sp
+
+        def _denied_popen(*args: object, **kwargs: object) -> object:
+            _POLICY_VIOLATIONS.append("subprocess_denied:Popen")
+            raise _PolicyViolation("subprocess_denied:Popen")
+
+        _sp.Popen = _denied_popen  # type: ignore[assignment]
+        # os.system / os.exec* are reachable without subprocess; patch
+        # the top-level os module too.
+        import os as _os
+
+        def _denied_system(*args: object, **kwargs: object) -> object:
+            _POLICY_VIOLATIONS.append("subprocess_denied:os.system")
+            raise _PolicyViolation("subprocess_denied:os.system")
+
+        _os.system = _denied_system  # type: ignore[assignment]
+        for name in ("execv", "execve", "execvp", "execvpe", "execlp", "execle", "execl"):
+            if hasattr(_os, name):
+                def _denied_exec(*args: object, _name: str = name, **kwargs: object) -> object:
+                    _POLICY_VIOLATIONS.append(f"subprocess_denied:os.{_name}")
+                    raise _PolicyViolation(f"subprocess_denied:os.{_name}")
+
+                setattr(_os, name, _denied_exec)
+
+
 def _install_audit_hook(
     *,
     deny_network: bool,
@@ -238,6 +296,10 @@ def _execute(job: dict[str, Any]) -> dict[str, object]:
     scratch_dir = job["scratch_dir"]
 
     _apply_rlimits(memory_mb=int(policy["memory_mb"]), cpu_seconds=int(policy["cpu_seconds"]))
+    _install_module_guards(
+        deny_network=bool(policy.get("deny_network", True)),
+        deny_subprocess=bool(policy.get("deny_subprocess", True)),
+    )
     _install_audit_hook(
         deny_network=bool(policy.get("deny_network", True)),
         deny_subprocess=bool(policy.get("deny_subprocess", True)),
