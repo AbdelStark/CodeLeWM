@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOCKERFILE = REPO_ROOT / "containers" / "v0_6" / "Dockerfile"
+ENTRYPOINT = REPO_ROOT / "containers" / "v0_6" / "entrypoint.sh"
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build-codelewm-runtime"
 
 
@@ -79,9 +80,41 @@ class RuntimeImageDockerfileTest(unittest.TestCase):
             "codelewm-execution-train-smoke",
             "registry.hf.co",
             "linux/amd64",
+            "CODELEWM_EXECUTION_PACK_LOCAL_DIR",
+            "codelewm-runtime-entrypoint",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
+
+    def test_entrypoint_script_exists_and_is_executable(self) -> None:
+        self.assertTrue(ENTRYPOINT.is_file(), f"missing {ENTRYPOINT}")
+        self.assertTrue(
+            os.access(ENTRYPOINT, os.X_OK),
+            f"entrypoint {ENTRYPOINT} is not executable",
+        )
+        body = ENTRYPOINT.read_text(encoding="utf-8")
+        for marker in (
+            "CODELEWM_EXECUTION_PACK_LOCAL_DIR",
+            "CODELEWM_EXECUTION_PACK_REPO_ID",
+            "CODELEWM_EXECUTION_PACK_REVISION",
+            "HF_TOKEN",
+            "hf download",
+            "exec \"$@\"",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
+    def test_dockerfile_wires_entrypoint(self) -> None:
+        content = DOCKERFILE.read_text(encoding="utf-8")
+        self.assertIn(
+            "containers/v0_6/entrypoint.sh /usr/local/bin/codelewm-runtime-entrypoint",
+            content,
+        )
+        self.assertIn(
+            'ENTRYPOINT ["/usr/local/bin/codelewm-runtime-entrypoint"]',
+            content,
+        )
+        self.assertIn("CODELEWM_EXECUTION_PACK_LOCAL_DIR=", content)
 
 
 @unittest.skipUnless(

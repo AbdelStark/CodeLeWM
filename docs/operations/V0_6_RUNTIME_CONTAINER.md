@@ -17,8 +17,17 @@ smoke, and publish workflow.
 - The `codelewm` console script and the project's helper scripts on
   PATH for the launcher's command vector.
 - Non-root `codelewm` user (uid 1000) by default.
-- Empty `ENTRYPOINT` so the launcher's exact `codelewm train ...`
-  command vector runs unmodified.
+- A thin entrypoint
+  (`/usr/local/bin/codelewm-runtime-entrypoint`) that pre-downloads
+  the execution pack into `$CODELEWM_EXECUTION_PACK_LOCAL_DIR`
+  (default `/workspace/pack`) when
+  `CODELEWM_EXECUTION_PACK_REPO_ID`, `CODELEWM_EXECUTION_PACK_REVISION`,
+  and `HF_TOKEN` are all set. The production runner (#293)
+  short-circuits its own HF download when that directory holds the
+  pack; this keeps the runner off the network for the dataset
+  round-trip even when the operator's CMD does not pass through
+  `HF_TOKEN`. A bind-mounted pre-built pack with a `.populated`
+  marker skips the download.
 - OCI labels recording the image title, version, source URL, and
   build-time `CODELEWM_GIT_SHA`.
 
@@ -28,10 +37,13 @@ The expected env vars the launcher passes are declared as documentary
 | Variable | Set by | Used by |
 |----------|--------|---------|
 | `CODELEWM_HF_RUN_NAME` | launcher | run-name embedded into the manifest |
-| `CODELEWM_EXECUTION_PACK_REPO_ID` | launcher | dataset download |
-| `CODELEWM_EXECUTION_PACK_REVISION` | launcher | dataset download |
+| `CODELEWM_EXECUTION_PACK_REPO_ID` | launcher | dataset download (entrypoint) |
+| `CODELEWM_EXECUTION_PACK_REVISION` | launcher | dataset download (entrypoint) |
 | `CODELEWM_TRAIN_SEED` | launcher | seed override |
 | `CODELEWM_TRAIN_CONFIG` | launcher | config path |
+| `CODELEWM_EXECUTION_PACK_LOCAL_DIR` | image default `/workspace/pack` | runner reads this directory directly |
+| `CODELEWM_RUN_OUTPUT_DIR` | image default `/workspace/runs` | the operator-supplied `--out` should write under here |
+| `HF_TOKEN` | launcher | required by entrypoint to hit the Hub |
 
 ## Build
 
@@ -71,6 +83,28 @@ The third command runs the same end-to-end smoke as
 `docs/benchmark/EXECUTION_V0_6_LOCAL_SMOKE_2026-05-28.md` but from
 inside the container, validating that the image really can run the
 v0.6 path.
+
+### End-to-end with the production runner
+
+To exercise the path that HF Jobs takes (entrypoint pre-downloads the
+pack, then runs `codelewm train`), pass `HF_TOKEN` and the pack env
+vars:
+
+```bash
+docker run --rm \
+  -e HF_TOKEN \
+  -e CODELEWM_EXECUTION_PACK_REPO_ID=abdelstark/codelewm-execution-pack \
+  -e CODELEWM_EXECUTION_PACK_REVISION=v0.6.0 \
+  abdelstark/codelewm-runtime:v0.6 \
+  uv run codelewm train \
+    --config config/train/scaled/codelewm_execution_v0_6_a10g.yaml \
+    --seed 42
+```
+
+The entrypoint logs `[codelewm-runtime] downloading <repo>@<rev>` and
+then hands control to the operator's command. The runner reads
+`CODELEWM_EXECUTION_PACK_LOCAL_DIR=/workspace/pack` and skips its
+own HF download.
 
 ## Publish To A Registry
 

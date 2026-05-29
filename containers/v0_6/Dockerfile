@@ -56,27 +56,41 @@ COPY pyproject.toml uv.lock README.md LICENSE /workspace/
 COPY codelewm /workspace/codelewm/
 COPY config /workspace/config/
 COPY scripts /workspace/scripts/
+COPY containers/v0_6/entrypoint.sh /usr/local/bin/codelewm-runtime-entrypoint
+RUN chmod +x /usr/local/bin/codelewm-runtime-entrypoint
 
 # Install codelewm with the runtime extras the launch plan + smoke
 # runner need. ``--system`` installs into the base image's Python,
-# matching the existing torch + cuda toolchain.
+# matching the existing torch + cuda toolchain. ``--no-deps .`` keeps
+# the project layer cacheable; the explicit dep list pins the runtime
+# surface so a pyproject change can't silently drift the image.
 RUN uv pip install --system --no-cache --no-deps . \
     && uv pip install --system --no-cache \
         "numpy>=1.24" "h5py>=3.10" "pyarrow>=15" \
         "einops>=0.7" "hydra-core>=1.3" "omegaconf>=2.3" \
         "tensorboard>=2.16" \
-        "datasets>=3" "huggingface_hub>=0.24"
+        "datasets>=3" "huggingface_hub>=1.0"
 
 # Smoke-test that the package imports cleanly in this image.
 RUN python -c "import codelewm; print('codelewm', codelewm.__version__)"
+
+# Pack workspace + cache dirs the entrypoint will populate.
+RUN mkdir -p /workspace/pack /workspace/runs
 
 # Run as a non-root user.
 RUN useradd -m -u 1000 codelewm \
     && chown -R codelewm:codelewm /workspace
 
+# Document the pack-local-dir env var the runner reads first. The
+# production runner (#293) short-circuits its HF download when this
+# directory holds the pack JSONL + manifest.
+ENV CODELEWM_EXECUTION_PACK_LOCAL_DIR="/workspace/pack" \
+    CODELEWM_RUN_OUTPUT_DIR="/workspace/runs"
+
 USER codelewm
 
-# Default entry is the project CLI so an ``hf jobs run ... codelewm
-# train ...`` invocation works without an explicit interpreter shell.
-ENTRYPOINT []
+# Default entry pre-downloads the pack (if not already populated)
+# and then forwards the operator's CMD. The launcher's HF Jobs
+# invocation overrides CMD with ``uv run codelewm train ...``.
+ENTRYPOINT ["/usr/local/bin/codelewm-runtime-entrypoint"]
 CMD ["codelewm", "--help"]
