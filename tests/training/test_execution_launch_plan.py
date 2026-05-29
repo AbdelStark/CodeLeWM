@@ -113,6 +113,45 @@ class LaunchPlanBuilderTest(unittest.TestCase):
             command_str = " ".join(plan.command)
             self.assertIn(plan.runtime_image, command_str)
 
+    def test_command_invokes_entrypoint_then_codelewm(self) -> None:
+        """HF Jobs strips ENTRYPOINT when COMMAND is supplied.
+
+        The launcher's command vector must therefore invoke the
+        entrypoint script explicitly, then run ``codelewm`` directly
+        (skipping ``uv run`` whose cache dir fails on HF Jobs' non-
+        root runtime). The runner is the same in either case; this
+        keeps the pack-download pre-step intact.
+        """
+
+        config = load_v0_6_config(CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+        for plan in plans:
+            cmd = list(plan.command)
+            image_idx = cmd.index(plan.runtime_image)
+            after_image = cmd[image_idx + 1 :]
+            self.assertEqual(
+                after_image[0], "/usr/local/bin/codelewm-runtime-entrypoint"
+            )
+            self.assertEqual(after_image[1], "codelewm")
+            self.assertEqual(after_image[2], "train")
+            self.assertNotIn("uv", after_image)
+
+    def test_command_includes_hf_token_secret(self) -> None:
+        """The entrypoint's HF download needs HF_TOKEN, so the command
+        must pass it as a secret on every invocation."""
+
+        config = load_v0_6_config(CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+        for plan in plans:
+            cmd = list(plan.command)
+            self.assertIn("--secrets", cmd)
+            secret_idx = cmd.index("--secrets")
+            self.assertEqual(cmd[secret_idx + 1], "HF_TOKEN")
+
     def test_runtime_image_falls_back_to_default_when_missing(self) -> None:
         from codelewm.training.execution_launch_plan import DEFAULT_RUNTIME_IMAGE
 

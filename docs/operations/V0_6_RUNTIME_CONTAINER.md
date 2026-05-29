@@ -96,10 +96,30 @@ docker run --rm \
   -e CODELEWM_EXECUTION_PACK_REPO_ID=abdelstark/codelewm-execution-pack \
   -e CODELEWM_EXECUTION_PACK_REVISION=v0.6.0 \
   abdelstark/codelewm-runtime:v0.6 \
-  uv run codelewm train \
+  codelewm train \
     --config config/train/scaled/codelewm_execution_v0_6_a10g.yaml \
     --seed 42
 ```
+
+`docker run` preserves the image's `ENTRYPOINT`, so the entrypoint
+runs the pack pre-download automatically; the operator's CMD is
+forwarded as `codelewm train …`.
+
+Under HF Jobs the entrypoint is overridden by the `hf jobs run`
+COMMAND. The launcher therefore prepends
+`/usr/local/bin/codelewm-runtime-entrypoint` to the command vector so
+the pack pre-download still runs:
+
+```text
+ghcr.io/abdelstark/codelewm-runtime:v0.6 \
+  /usr/local/bin/codelewm-runtime-entrypoint codelewm train ...
+```
+
+The `codelewm` console script is installed system-wide (via `uv pip
+install --system` at build), so `uv run` is unnecessary and avoided
+— its cache dir cannot be created under HF Jobs' read-only HOME, so
+calling `uv run` directly fails with "Permission denied" on
+`/root/.cache/uv`.
 
 The entrypoint logs `[codelewm-runtime] downloading <repo>@<rev>` and
 then hands control to the operator's command. The runner reads

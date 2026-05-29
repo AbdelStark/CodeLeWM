@@ -455,12 +455,27 @@ def _train_one_step(
     z_pred_after = model.predict_after(z_before, action_emb)
     z_pred_after_swapped = model.predict_after(z_before, action_emb_swapped)
 
+    # The inverse-action head reconstructs the action embedding from
+    # (z_before, z_after); the objective compares it against the true
+    # ``action_emb``. The head only exists when the model was built
+    # with ``enable_inverse_action_head=True`` (see
+    # :func:`codelewm.training.execution_runner.train_execution_run`).
+    action_reconstruction = None
+    if objective_config.enable_inverse_action_reconstruction:
+        action_reconstruction = model.reconstruct_action(z_before, z_after)
+
     terms = compute_transition_objective(
         z_before,
         z_after,
         z_pred_after,
         config=objective_config,
-        z_pred_after_swapped=z_pred_after_swapped if objective_config.enable_action_swap_contrastive else None,
+        z_pred_after_swapped=(
+            z_pred_after_swapped
+            if objective_config.enable_action_swap_contrastive
+            else None
+        ),
+        action_emb=action_emb if objective_config.enable_inverse_action_reconstruction else None,
+        action_reconstruction=action_reconstruction,
     )
 
     # No-action baseline: how well would the identity "z_pred = z_before"
