@@ -14,8 +14,41 @@ earliest one minor release after the deprecation notice.
 
 ## [Unreleased]
 
+### Fixed
+
+- v0.6 runner: `_train_one_step` now passes `action_emb` and
+  `action_reconstruction` to `compute_transition_objective` when
+  the v0.6 config sets a non-zero
+  `inverse_action_reconstruction_weight` (the default since #289).
+  Without the fix the production runner aborted on the first batch
+  with `ValueError: enable_inverse_action_reconstruction requires
+  action_emb and action_reconstruction`. The smoke runner path was
+  unaffected because its `ExecutionTorchTrainConfig` defaults the
+  inverse-reconstruction weight to 0. New test in
+  `tests/training/test_execution_runner.py` covers the
+  inverse-reconstruction branch end-to-end on the MBPP fixture.
+- v0.6 runtime container: `UV_CACHE_DIR` and `HF_HOME` default to
+  `/tmp/uv-cache` and `/tmp/huggingface` respectively. HF Jobs runs
+  the container as a UID without write access to the build-time
+  HOME, so writes to `/root/.cache/uv` and `~/.cache/huggingface`
+  fail with `Permission denied`. Pinning the cache dirs to `/tmp`
+  fixes both `uv` invocations and the entrypoint's `hf download`.
+
 ### Changed
 
+- v0.6 launch plan: the `LaunchPlan.command` vector now prepends
+  `/usr/local/bin/codelewm-runtime-entrypoint` and invokes
+  `codelewm train` directly (replacing the previous `uv run codelewm
+  train`). Two reasons:
+  (1) HF Jobs strips the image's `ENTRYPOINT` when a COMMAND is
+  supplied, so the entrypoint script that pre-downloads the
+  execution pack must be invoked explicitly;
+  (2) `codelewm` is installed system-wide at image build time, so
+  `uv run` adds nothing useful and its cache-dir creation fails on
+  HF Jobs' read-only HOME. The command also passes
+  `--secrets HF_TOKEN` so the entrypoint can authenticate against
+  the Hub. Two new launcher tests cover both invariants. The legacy
+  command vector (`uv run codelewm train …`) is no longer emitted.
 - v0.6 launch plan: the runtime image reference is now configurable
   via `hf_jobs.runtime_image` in
   `codelewm.execution_train_config.v1`. The v0.6 config now points at

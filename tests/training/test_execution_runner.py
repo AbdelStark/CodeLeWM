@@ -53,7 +53,12 @@ def _build_pack(tmpdir: Path) -> Path:
     return pack_dir
 
 
-def _config(*, max_steps: int = 6, collapse_every: int = 2) -> "ExecutionTrainConfig":
+def _config(
+    *,
+    max_steps: int = 6,
+    collapse_every: int = 2,
+    inverse_action_reconstruction_weight: float = 0.0,
+) -> "ExecutionTrainConfig":
     from codelewm.training import (
         ExecutionTrainClaimBoundaryConfig,
         ExecutionTrainClaimGatesConfig,
@@ -119,7 +124,9 @@ def _config(*, max_steps: int = 6, collapse_every: int = 2) -> "ExecutionTrainCo
             prediction_mse_weight=1.0,
             sigreg_weight=0.09,
             action_swap_contrastive_weight=0.1,
-            inverse_action_reconstruction_weight=0.0,
+            inverse_action_reconstruction_weight=(
+                inverse_action_reconstruction_weight
+            ),
         ),
         seeds=(42,),
         hf_jobs=ExecutionTrainHfJobsConfig(
@@ -234,6 +241,41 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             # cadence=2, max_steps=6 -> rows at steps 2, 4, 6.
             self.assertEqual(len(collapse_rows), 3)
             self.assertIn("z_pred_effective_rank", collapse_rows[0]["diagnostics"])
+
+    def test_runner_with_inverse_action_reconstruction(self) -> None:
+        """The v0.6 config sets inverse_action_reconstruction_weight=0.05.
+
+        The runner must wire the inverse-action head and pass
+        ``action_emb`` + ``action_reconstruction`` to the objective so
+        the loss surface actually fires (a regression that broke the
+        first HF Jobs invocation: see #289 follow-up).
+        """
+
+        from codelewm.training import train_execution_run
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir = _build_pack(tmp)
+            output_dir = tmp / "run-inverse"
+            cfg = _config(
+                max_steps=4,
+                collapse_every=2,
+                inverse_action_reconstruction_weight=0.05,
+            )
+            result = train_execution_run(
+                cfg,
+                seed=42,
+                output_dir=output_dir,
+                root=tmp,
+                pack_local_dir=pack_dir,
+            )
+            self.assertTrue(result.training_manifest_path.is_file())
+            metric_rows = [
+                json.loads(line)
+                for line in result.metrics_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(len(metric_rows), 4)
 
     def test_runner_respects_env_pack_local_dir(self) -> None:
         from codelewm.training import train_execution_run

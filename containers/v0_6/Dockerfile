@@ -21,6 +21,10 @@ ARG BASE_IMAGE=pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 FROM ${BASE_IMAGE} AS base
 
 # Documentary env vars — the launcher (#280) sets these per-run.
+# Cache dirs are pinned to /tmp because HF Jobs runs the container as a
+# non-root UID with HOME read-only (a /root/.cache write fails with
+# Permission denied even though the USER directive says root). /tmp is
+# always writable.
 ENV CODELEWM_HF_RUN_NAME="" \
     CODELEWM_EXECUTION_PACK_REPO_ID="" \
     CODELEWM_EXECUTION_PACK_REVISION="" \
@@ -28,8 +32,10 @@ ENV CODELEWM_HF_RUN_NAME="" \
     CODELEWM_TRAIN_CONFIG="" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UV_CACHE_DIR=/root/.cache/uv \
-    UV_LINK_MODE=copy
+    UV_CACHE_DIR=/tmp/uv-cache \
+    UV_LINK_MODE=copy \
+    HF_HOME=/tmp/huggingface \
+    HF_HUB_CACHE=/tmp/huggingface/hub
 
 ARG CODELEWM_GIT_SHA=unset
 LABEL org.opencontainers.image.title="codelewm-runtime"

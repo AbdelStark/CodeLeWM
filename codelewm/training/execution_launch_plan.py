@@ -183,6 +183,18 @@ def build_launch_plans(
         runtime_image = str(
             config["hf_jobs"].get("runtime_image") or DEFAULT_RUNTIME_IMAGE
         )
+        # HF Jobs overrides the image's ENTRYPOINT when COMMAND is
+        # supplied, so the entrypoint script that pre-downloads the
+        # execution pack is invoked explicitly here. Without it the
+        # runner falls through to its in-process HF download path,
+        # which works but requires HF_TOKEN to be readable by the
+        # codelewm CLI (which `--secrets HF_TOKEN` happens to give
+        # us, but for explicitness and to keep the pack on disk for
+        # checkpoint resume we still call the entrypoint).
+        # HF Jobs runs the container as a non-root UID with HOME
+        # read-only, so `uv run` cannot create its cache at /root.
+        # We bypass uv: codelewm is already installed in the system
+        # python via `uv pip install --system` at build time.
         command = (
             "hf",
             "jobs",
@@ -191,6 +203,8 @@ def build_launch_plans(
             str(config["hf_jobs"]["flavor"]),
             "--timeout",
             f"{int(config['hf_jobs']['timeout_hours'])}h",
+            "--secrets",
+            "HF_TOKEN",
             "--env",
             f"CODELEWM_HF_RUN_NAME={run_name}",
             "--env",
@@ -202,8 +216,7 @@ def build_launch_plans(
             "--env",
             f"CODELEWM_TRAIN_CONFIG={config_path}",
             runtime_image,
-            "uv",
-            "run",
+            "/usr/local/bin/codelewm-runtime-entrypoint",
             "codelewm",
             "train",
             "--config",

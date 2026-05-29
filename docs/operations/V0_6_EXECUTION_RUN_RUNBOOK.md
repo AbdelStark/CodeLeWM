@@ -37,14 +37,24 @@ hf auth whoami
 hf jobs run \
   --flavor a10g-small \
   --timeout 24h \
+  --secrets HF_TOKEN \
   --env CODELEWM_HF_RUN_NAME=<run_name from plan> \
   --env CODELEWM_EXECUTION_PACK_REPO_ID=abdelstark/codelewm-execution-pack \
   --env CODELEWM_EXECUTION_PACK_REVISION=v0.6.0 \
   --env CODELEWM_TRAIN_SEED=42 \
   --env CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_execution_v0_6_a10g.yaml \
   ghcr.io/abdelstark/codelewm-runtime:v0.6 \
-  uv run codelewm train --config config/train/scaled/codelewm_execution_v0_6_a10g.yaml --seed 42
+  /usr/local/bin/codelewm-runtime-entrypoint \
+    codelewm train --config config/train/scaled/codelewm_execution_v0_6_a10g.yaml --seed 42
 ```
+
+The entrypoint script is invoked explicitly because HF Jobs overrides
+the image's `ENTRYPOINT` when a command is supplied. The entrypoint
+pre-downloads the execution pack into
+`$CODELEWM_EXECUTION_PACK_LOCAL_DIR` (default `/workspace/pack`), then
+hands off to `codelewm train`. The `codelewm` console script is
+installed system-wide at image build time, so `uv run` is unnecessary
+(and its cache dir cannot be created under HF Jobs' read-only HOME).
 
 Capture the job ID. Verify state with `hf jobs inspect <id>` and tail
 the logs with `hf jobs logs <id>`.
