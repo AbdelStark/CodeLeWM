@@ -63,12 +63,17 @@ from codelewm.observability import (
 )
 from codelewm.security import CheckpointTrustError, scan_paths
 from codelewm.training import (
+    EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+    ExecutionTrainConfigError,
     TrainConfigError,
     TrainingRunError,
     cpu_smoke_training_executor,
+    load_execution_train_config,
     load_train_config,
     make_torch_training_executor,
+    peek_train_config_schema_version,
     train,
+    train_execution_run,
     validate_train_config,
 )
 
@@ -375,6 +380,26 @@ def build_parser() -> argparse.ArgumentParser:
         "--overwrite",
         action="store_true",
         help="overwrite an existing CodeLeWM run output",
+    )
+    train_parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help=(
+            "training seed override; required for "
+            "codelewm.execution_train_config.v1 configs, "
+            "ignored by the legacy HDF5 path"
+        ),
+    )
+    train_parser.add_argument(
+        "--pack-local-dir",
+        type=Path,
+        default=None,
+        help=(
+            "override CODELEWM_EXECUTION_PACK_LOCAL_DIR for execution-config "
+            "runs; the directory must already contain the pack.jsonl and "
+            "manifest.json"
+        ),
     )
     train_parser.add_argument("--json", action="store_true", help="emit JSON output")
     train_parser.add_argument(
@@ -1512,6 +1537,9 @@ def _train_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _train_command_tuple(args)
     tensorboard_enabled = bool(args.tensorboard or args.tensorboard_dir is not None)
+    schema_version = peek_train_config_schema_version(args.config)
+    if schema_version == EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION:
+        return _train_execution_command(args, run_id=run_id, command=command)
     try:
         config = _load_cli_train_config(args)
         _validate_train_cli_executor(args)
@@ -1660,6 +1688,232 @@ def _train_command(args: argparse.Namespace) -> int:
         print(f"training_manifest: {config.output.manifest_path}")
         print(f"metrics: {config.output.metrics_path}")
         print(f"step_count: {manifest.step_count}")
+    return 0
+
+
+def _train_execution_command(
+    args: argparse.Namespace, *, run_id: str, command: tuple[str, ...]
+) -> int:
+    """Dispatch ``codelewm train`` against a ``codelewm.execution_train_config.v1`` file.
+
+    The execution-substrate path is intentionally distinct from the
+    legacy HDF5 path: different pack contract, different runner, and a
+    different artifact directory layout. The two paths share the manifest
+    + checkpoint schemas so manifest verify and the publish scripts work
+    against either.
+    """
+
+    if args.resume_from is not None:
+        error = ScoreError(
+            "--resume-from is not supported for execution-substrate configs in v0.6",
+            error_type="config_error",
+            remediation=(
+                "remove --resume-from; checkpoint resume for the execution "
+                "runner ships in a follow-on issue"
+            ),
+            artifact=str(args.config),
+            caused_by="ExecutionTrainConfigError: --resume-from not implemented",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    if args.executor != "torch":
+        error = ScoreError(
+            "execution-substrate configs only run with --executor torch",
+            error_type="config_error",
+            remediation="drop --executor cpu-smoke or pass --executor torch explicitly",
+            artifact=str(args.config),
+            caused_by="ExecutionTrainConfigError: cpu-smoke executor not supported",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    try:
+        execution_config = load_execution_train_config(args.config)
+    except ExecutionTrainConfigError as exc:
+        error = ScoreError(
+            f"execution-train config is invalid: {exc}",
+            error_type="config_error",
+            remediation="repair the execution-train config and retry",
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    seed = args.seed if args.seed is not None else execution_config.seeds[0]
+    if seed not in execution_config.seeds:
+        # Allow off-list seeds but emit a warning so the operator can
+        # tell from the log whether the run will count toward the
+        # claim-gate variance requirement.
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="training.warning",
+                level="warning",
+                run_id=run_id,
+                step="train",
+                message=(
+                    f"seed {seed} is not in the config's declared seeds list "
+                    f"{list(execution_config.seeds)!r}; this run will not count "
+                    "toward the required-seeds claim gate"
+                ),
+                fields={"seed": seed, "declared_seeds": list(execution_config.seeds)},
+            ),
+        )
+
+    tensorboard_override: bool | None
+    if args.tensorboard:
+        tensorboard_override = True
+    elif args.tensorboard_dir is not None:
+        tensorboard_override = True
+    else:
+        tensorboard_override = None  # let the config decide
+
+    output_dir = args.out if args.out is not None else (
+        Path("runs") / "v0_6" / f"seed-{seed}"
+    )
+
+    _emit_cli_log(
+        args,
+        LogEvent(
+            event="training.start",
+            level="info",
+            run_id=run_id,
+            step="train",
+            message="execution-substrate train command started",
+            fields={
+                "config": str(args.config),
+                "schema_version": EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+                "seed": seed,
+                "out": str(output_dir),
+                "pack_local_dir": (
+                    None if args.pack_local_dir is None else str(args.pack_local_dir)
+                ),
+                "device": args.device or execution_config.trainer.accelerator,
+                "tensorboard": (
+                    execution_config.trainer.tensorboard_enabled
+                    if tensorboard_override is None
+                    else tensorboard_override
+                ),
+            },
+        ),
+    )
+
+    try:
+        result = train_execution_run(
+            execution_config,
+            seed=seed,
+            output_dir=output_dir,
+            root=Path.cwd(),
+            command=command,
+            overwrite=args.overwrite,
+            pack_local_dir=args.pack_local_dir,
+            device=args.device,
+            tensorboard=tensorboard_override,
+            tensorboard_dir=args.tensorboard_dir,
+        )
+    except OptionalDependencyError as exc:
+        remediation = (
+            "install the required groups with "
+            "`uv sync --group train --group data --group dev --group observability --group release`"
+        )
+        error = ScoreError(
+            f"execution-substrate training optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation=remediation,
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except SourceUnavailableError as exc:
+        error = ScoreError(
+            f"execution pack is unavailable: {exc}",
+            error_type="source_unavailable",
+            remediation=(
+                "set CODELEWM_EXECUTION_PACK_LOCAL_DIR to the pack directory, "
+                "or ensure HF_TOKEN is exported and the pack repo is reachable"
+            ),
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 3
+    except TrainingRunError as exc:
+        runtime_error, exit_code = _training_run_error(args, exc)
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="train",
+            event="training.error",
+            exc=runtime_error,
+        )
+        _emit_error(args, runtime_error, json_output=args.json)
+        return exit_code
+    except Exception as exc:
+        error = ScoreError(
+            f"execution-substrate training failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation=(
+                "inspect the training logs and the config; verify pack contents "
+                "are well-formed"
+            ),
+            artifact=str(args.config),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args, run_id=run_id, step="train", event="training.error", exc=error
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    manifest = result.training_manifest
+    _emit_cli_log(
+        args,
+        LogEvent(
+            event="training.complete",
+            level="info",
+            run_id=run_id,
+            artifact_id=manifest.artifact_manifest_id,
+            step="train",
+            message="execution-substrate train command completed",
+            fields={
+                "run_id": manifest.run_id,
+                "seed": seed,
+                "step_count": manifest.step_count,
+                "final_metrics": dict(manifest.final_metrics),
+                "artifact_manifest_path": str(result.artifact_manifest_path),
+                "training_manifest_path": str(result.training_manifest_path),
+            },
+        ),
+    )
+
+    if args.json:
+        print(json.dumps(manifest.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"run_id: {manifest.run_id}")
+        print(f"seed: {seed}")
+        print(f"artifact_manifest: {result.artifact_manifest_path}")
+        print(f"training_manifest: {result.training_manifest_path}")
+        print(f"metrics: {result.metrics_path}")
+        print(f"step_count: {manifest.step_count}")
+        for ckpt in result.checkpoint_paths:
+            print(f"checkpoint: {ckpt}")
     return 0
 
 
@@ -3387,6 +3641,10 @@ def _train_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         command.extend(("--tensorboard-dir", str(args.tensorboard_dir)))
     if args.overwrite:
         command.append("--overwrite")
+    if getattr(args, "seed", None) is not None:
+        command.extend(("--seed", str(args.seed)))
+    if getattr(args, "pack_local_dir", None) is not None:
+        command.extend(("--pack-local-dir", str(args.pack_local_dir)))
     if args.json:
         command.append("--json")
     if args.log_jsonl is not None:

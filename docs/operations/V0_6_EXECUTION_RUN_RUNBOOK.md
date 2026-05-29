@@ -49,6 +49,16 @@ hf jobs run \
 Capture the job ID. Verify state with `hf jobs inspect <id>` and tail
 the logs with `hf jobs logs <id>`.
 
+### How the container resolves the pack
+
+The runtime container's entrypoint pre-downloads the pack to
+`/workspace/pack` and exports `CODELEWM_EXECUTION_PACK_LOCAL_DIR=/workspace/pack`
+before invoking `codelewm train`. The runner short-circuits the HF
+download in that case. When running locally, pass `--pack-local-dir
+/path/to/pack` or set `CODELEWM_EXECUTION_PACK_LOCAL_DIR` to the same
+value; the runner falls back to `huggingface_hub.snapshot_download`
+only when neither is set.
+
 ## Step 3 — Fire the seed-1729 run
 
 Repeat Step 2 with `--seed 1729`. The two seeds are required by the
