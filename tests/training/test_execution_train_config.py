@@ -1,0 +1,362 @@
+"""Tests for the v0.6 execution-substrate training config schema."""
+
+from __future__ import annotations
+
+import json
+import textwrap
+import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+_VALID_CONFIG_DICT = {
+    "schema_version": "codelewm.execution_train_config.v1",
+    "name": "codelewm_execution_v0_6_test",
+    "substrate": "execution_trace_v1",
+    "parent_issue": 259,
+    "implementing_issue": 265,
+    "target_substrate_run": "v0.6.0",
+    "data": {
+        "pack_repo_id": "abdelstark/codelewm-execution-pack",
+        "pack_revision": "v0.6.0",
+        "pack_jsonl": "pack.jsonl",
+        "manifest_filename": "manifest.json",
+        "claim_boundary_filename": "claim_boundary.md",
+        "ingestion_sources": ["mbpp"],
+        "held_out_for_eval": ["mbpp_plus"],
+    },
+    "loader": {
+        "code_sequence_length": 1024,
+        "action_sequence_length": 256,
+        "output_sequence_length": 256,
+        "batch_size": 4,
+        "gradient_accumulation_steps": 2,
+        "effective_batch_size": 8,
+        "shuffle": True,
+    },
+    "trainer": {
+        "accelerator": "cpu",
+        "devices": 1,
+        "precision": "float32",
+        "max_steps": 100,
+        "warmup_steps": 10,
+        "cosine_decay_to": 0.0,
+        "gradient_clip_val": 1.0,
+        "checkpoint_every_n_steps": 50,
+        "keep_last_n_checkpoints": 2,
+        "keep_best_by_metric": "loss_prediction_mse",
+        "tensorboard_enabled": False,
+        "collapse_diagnostics_every_n_steps": 25,
+    },
+    "optimizer": {
+        "name": "adamw",
+        "lr": 3.0e-4,
+        "betas": [0.9, 0.95],
+        "weight_decay": 0.1,
+    },
+    "wm": {"history_size": 1, "num_preds": 1, "embed_dim": 256},
+    "objective": {
+        "prediction_mse_weight": 1.0,
+        "sigreg_weight": 0.09,
+        "action_swap_contrastive_weight": 0.1,
+        "inverse_action_reconstruction_weight": 0.05,
+    },
+    "seeds": [42, 1729],
+    "hf_jobs": {
+        "flavor": "a10g-small",
+        "region": "us-east-1",
+        "timeout_hours": 24,
+        "run_name_template": "codelewm-test-{date}-{sha}-seed-{seed}",
+        "artifact_repo_id": "abdelstark/codelewm-runs",
+        "checkpoint_repo_id": "abdelstark/codelewm-transition-model",
+        "checkpoint_revision_template": "v0.6.0-seed-{seed}",
+    },
+    "claim_gates": {
+        "retrieval_min_recall_at_1_lift_over_no_action": 0.05,
+        "retrieval_min_mrr_lift_over_no_action": 0.05,
+        "collapse_effective_rank_ratio_min": 0.20,
+        "collapse_per_dim_variance_median_min": 1.0e-8,
+        "collapse_nearest_neighbor_entropy_min": 0.10,
+        "surprise_mutation_auc_min": 0.65,
+        "surprise_same_problem_different_submission_auc_min": 0.60,
+        "surprise_same_code_different_input_auc_min": 0.70,
+        "downstream_rerank_pass_at_1_lift_min": 3.0,
+        "required_seeds": 2,
+    },
+    "claim_boundary": {
+        "name": "execution_substrate.v1",
+        "scope": "v0_6_full_run",
+    },
+}
+
+
+def _config_payload(**overrides):
+    payload = json.loads(json.dumps(_VALID_CONFIG_DICT))
+    for dotted_key, value in overrides.items():
+        head, _, tail = dotted_key.partition(".")
+        if tail:
+            payload[head][tail] = value
+        else:
+            payload[head] = value
+    return payload
+
+
+class ExecutionTrainConfigLoadTest(unittest.TestCase):
+    def test_loads_checked_in_v0_6_yaml(self) -> None:
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_6_a10g.yaml"
+        cfg = load_execution_train_config(path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_6_a10g")
+        self.assertEqual(cfg.seeds, (42, 1729))
+        self.assertEqual(cfg.loader.batch_size, 64)
+        self.assertEqual(cfg.loader.effective_batch_size, 256)
+        self.assertEqual(cfg.trainer.max_steps, 50000)
+        self.assertEqual(cfg.trainer.precision, "bf16-mixed")
+        self.assertEqual(cfg.wm.embed_dim, 256)
+        self.assertEqual(cfg.objective.sigreg_weight, 0.09)
+        self.assertEqual(cfg.claim_boundary.name, "execution_substrate.v1")
+
+    def test_loads_json_round_trip(self) -> None:
+        from codelewm.training import (
+            ExecutionTrainConfig,
+            load_execution_train_config,
+        )
+
+        with TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.json"
+            cfg_path.write_text(
+                json.dumps(_config_payload(), indent=2), encoding="utf-8"
+            )
+            cfg = load_execution_train_config(cfg_path)
+            self.assertIsInstance(cfg, ExecutionTrainConfig)
+            # to_dict round-trips
+            self.assertEqual(
+                cfg.to_dict()["loader"]["effective_batch_size"], 8
+            )
+
+    def test_peek_returns_schema_version_for_execution_config(self) -> None:
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            peek_train_config_schema_version,
+        )
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_6_a10g.yaml"
+        self.assertEqual(
+            peek_train_config_schema_version(path),
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+        )
+
+    def test_peek_returns_legacy_schema_for_v1_config(self) -> None:
+        from codelewm.training import peek_train_config_schema_version
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_scaled_cpu.yaml"
+        if not path.exists():
+            self.skipTest(f"legacy config not checked in at {path}")
+        self.assertEqual(
+            peek_train_config_schema_version(path),
+            "codelewm.train_config.v1",
+        )
+
+    def test_peek_returns_none_for_missing_file(self) -> None:
+        from codelewm.training import peek_train_config_schema_version
+
+        self.assertIsNone(
+            peek_train_config_schema_version("/tmp/nonexistent-codelewm-cfg.yaml")
+        )
+
+
+class ExecutionTrainConfigRejectionTest(unittest.TestCase):
+    """Each test poisons one field and asserts the validator rejects it."""
+
+    def setUp(self) -> None:
+        from codelewm.training import (
+            ExecutionTrainConfigError,
+            load_execution_train_config,
+        )
+
+        self.Error = ExecutionTrainConfigError
+        self.load = load_execution_train_config
+
+    def _load_payload(self, payload):
+        with TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.json"
+            cfg_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            return self.load(cfg_path)
+
+    def test_unknown_top_level_key_rejected(self) -> None:
+        payload = _config_payload()
+        payload["mystery"] = 1
+        with self.assertRaisesRegex(self.Error, "unknown key"):
+            self._load_payload(payload)
+
+    def test_unknown_loader_key_rejected(self) -> None:
+        payload = _config_payload()
+        payload["loader"]["mystery"] = True
+        with self.assertRaisesRegex(self.Error, "loader.*unknown"):
+            self._load_payload(payload)
+
+    def test_wrong_schema_version_rejected(self) -> None:
+        with self.assertRaisesRegex(self.Error, "schema_version"):
+            self._load_payload(_config_payload(schema_version="codelewm.train_config.v1"))
+
+    def test_empty_seeds_rejected(self) -> None:
+        payload = _config_payload()
+        payload["seeds"] = []
+        with self.assertRaisesRegex(self.Error, "seeds"):
+            self._load_payload(payload)
+
+    def test_non_integer_seed_rejected(self) -> None:
+        payload = _config_payload()
+        payload["seeds"] = [42, "1729"]
+        # Plain int(value) coercion happens during build, but the
+        # __post_init__ won't accept strings; we surface via the helper.
+        with self.assertRaises((self.Error, ValueError)):
+            self._load_payload(payload)
+
+    def test_effective_batch_mismatch_rejected(self) -> None:
+        payload = _config_payload()
+        payload["loader"]["effective_batch_size"] = 32  # != 4 * 2
+        with self.assertRaisesRegex(self.Error, "effective_batch_size"):
+            self._load_payload(payload)
+
+    def test_warmup_steps_must_be_less_than_max_steps(self) -> None:
+        payload = _config_payload()
+        payload["trainer"]["warmup_steps"] = 100  # == max_steps
+        with self.assertRaisesRegex(self.Error, "warmup_steps"):
+            self._load_payload(payload)
+
+    def test_history_size_must_be_one(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["history_size"] = 2
+        with self.assertRaisesRegex(self.Error, "history_size"):
+            self._load_payload(payload)
+
+    def test_negative_objective_weight_rejected(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["sigreg_weight"] = -0.1
+        with self.assertRaisesRegex(self.Error, "sigreg_weight"):
+            self._load_payload(payload)
+
+    def test_zero_collapse_diag_cadence_rejected(self) -> None:
+        payload = _config_payload()
+        payload["trainer"]["collapse_diagnostics_every_n_steps"] = 0
+        with self.assertRaisesRegex(self.Error, "collapse_diagnostics_every_n_steps"):
+            self._load_payload(payload)
+
+    def test_unsupported_optimizer_rejected(self) -> None:
+        payload = _config_payload()
+        payload["optimizer"]["name"] = "sgd"
+        with self.assertRaisesRegex(self.Error, "optimizer"):
+            self._load_payload(payload)
+
+    def test_unsupported_extension_rejected(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.txt"
+            cfg_path.write_text("schema_version: x\n", encoding="utf-8")
+            with self.assertRaisesRegex(self.Error, "extension"):
+                self.load(cfg_path)
+
+
+class ExecutionTrainConfigYamlEdgeTest(unittest.TestCase):
+    def test_strict_yaml_subset_parses_minimal_doc(self) -> None:
+        from codelewm.training import load_execution_train_config
+
+        yaml_text = textwrap.dedent(
+            """
+            schema_version: codelewm.execution_train_config.v1
+            name: tiny
+            substrate: execution_trace_v1
+            parent_issue: 1
+            implementing_issue: 2
+            target_substrate_run: v0.6.0
+            data:
+              pack_repo_id: a/b
+              pack_revision: v1
+              pack_jsonl: pack.jsonl
+              manifest_filename: manifest.json
+              claim_boundary_filename: claim_boundary.md
+              ingestion_sources:
+                - mbpp
+              held_out_for_eval:
+                - mbpp_plus
+            loader:
+              code_sequence_length: 1024
+              action_sequence_length: 256
+              output_sequence_length: 256
+              batch_size: 4
+              gradient_accumulation_steps: 2
+              effective_batch_size: 8
+              shuffle: true
+            trainer:
+              accelerator: cpu
+              devices: 1
+              precision: float32
+              max_steps: 10
+              warmup_steps: 2
+              cosine_decay_to: 0.0
+              gradient_clip_val: 1.0
+              checkpoint_every_n_steps: 5
+              keep_last_n_checkpoints: 1
+              keep_best_by_metric: loss_prediction_mse
+              tensorboard_enabled: false
+              collapse_diagnostics_every_n_steps: 5
+            optimizer:
+              name: adamw
+              lr: 0.001
+              betas:
+                - 0.9
+                - 0.95
+              weight_decay: 0.1
+            wm:
+              history_size: 1
+              num_preds: 1
+              embed_dim: 256
+            objective:
+              prediction_mse_weight: 1.0
+              sigreg_weight: 0.09
+              action_swap_contrastive_weight: 0.1
+              inverse_action_reconstruction_weight: 0.0
+            seeds:
+              - 42
+            hf_jobs:
+              flavor: a10g-small
+              region: us-east-1
+              timeout_hours: 1
+              run_name_template: r-{seed}
+              artifact_repo_id: a/b
+              checkpoint_repo_id: a/c
+              checkpoint_revision_template: v1-seed-{seed}
+            claim_gates:
+              retrieval_min_recall_at_1_lift_over_no_action: 0.05
+              retrieval_min_mrr_lift_over_no_action: 0.05
+              collapse_effective_rank_ratio_min: 0.20
+              collapse_per_dim_variance_median_min: 0.00000001
+              collapse_nearest_neighbor_entropy_min: 0.10
+              surprise_mutation_auc_min: 0.65
+              surprise_same_problem_different_submission_auc_min: 0.60
+              surprise_same_code_different_input_auc_min: 0.70
+              downstream_rerank_pass_at_1_lift_min: 3.0
+              required_seeds: 1
+            claim_boundary:
+              name: execution_substrate.v1
+              scope: v0_6_smoke
+            """
+        ).strip()
+        with TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.yaml"
+            cfg_path.write_text(yaml_text + "\n", encoding="utf-8")
+            cfg = load_execution_train_config(cfg_path)
+            self.assertEqual(cfg.seeds, (42,))
+            self.assertEqual(cfg.wm.embed_dim, 256)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    unittest.main()
