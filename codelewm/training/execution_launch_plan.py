@@ -66,6 +66,9 @@ class ExecutionLaunchPlanError(ValueError):
     """Raised when a v0.6 config does not satisfy the launch contract."""
 
 
+DEFAULT_RUNTIME_IMAGE = "ghcr.io/abdelstark/codelewm-runtime:v0.6"
+
+
 @dataclass(frozen=True)
 class LaunchPlan:
     """One seed's launch plan, ready for the operator to fire."""
@@ -81,6 +84,7 @@ class LaunchPlan:
     artifact_repo_id: str
     checkpoint_repo_id: str
     checkpoint_revision: str
+    runtime_image: str
     objective: dict[str, float]
     loader: dict[str, Any]
     trainer: dict[str, Any]
@@ -103,6 +107,7 @@ class LaunchPlan:
             "artifact_repo_id": self.artifact_repo_id,
             "checkpoint_repo_id": self.checkpoint_repo_id,
             "checkpoint_revision": self.checkpoint_revision,
+            "runtime_image": self.runtime_image,
             "objective": dict(self.objective),
             "loader": dict(self.loader),
             "trainer": dict(self.trainer),
@@ -175,6 +180,9 @@ def build_launch_plans(
             )
         run_name = name_template.format(date=date_str, sha=git_sha, seed=seed)
         checkpoint_revision = rev_template.format(seed=seed)
+        runtime_image = str(
+            config["hf_jobs"].get("runtime_image") or DEFAULT_RUNTIME_IMAGE
+        )
         command = (
             "hf",
             "jobs",
@@ -193,7 +201,7 @@ def build_launch_plans(
             f"CODELEWM_TRAIN_SEED={seed}",
             "--env",
             f"CODELEWM_TRAIN_CONFIG={config_path}",
-            "abdelstark/codelewm-runtime:v0.6",
+            runtime_image,
             "uv",
             "run",
             "codelewm",
@@ -216,6 +224,7 @@ def build_launch_plans(
                 artifact_repo_id=str(config["hf_jobs"]["artifact_repo_id"]),
                 checkpoint_repo_id=str(config["hf_jobs"]["checkpoint_repo_id"]),
                 checkpoint_revision=checkpoint_revision,
+                runtime_image=runtime_image,
                 objective=dict(config["objective"]),
                 loader=dict(config["loader"]),
                 trainer=dict(config["trainer"]),

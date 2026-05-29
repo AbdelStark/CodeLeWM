@@ -85,6 +85,7 @@ hf_jobs:
   artifact_repo_id: abdelstark/codelewm-runs
   checkpoint_repo_id: abdelstark/codelewm-transition-model
   checkpoint_revision_template: v0.6.0-seed-{seed}
+  runtime_image: ghcr.io/abdelstark/codelewm-runtime:v0.6
 
 claim_gates:
   retrieval_min_recall_at_1_lift_over_no_action: 0.05

@@ -14,6 +14,18 @@ earliest one minor release after the deprecation notice.
 
 ## [Unreleased]
 
+### Changed
+
+- v0.6 launch plan: the runtime image reference is now configurable
+  via `hf_jobs.runtime_image` in
+  `codelewm.execution_train_config.v1`. The v0.6 config now points at
+  `ghcr.io/abdelstark/codelewm-runtime:v0.6` (the GHCR registry the
+  CodeLeWM maintainers publish to). When the field is absent the
+  launcher falls back to `DEFAULT_RUNTIME_IMAGE` (also pointed at
+  GHCR), preserving backwards compatibility with any in-flight
+  consumers of older configs. Tests in
+  `tests/training/test_execution_launch_plan.py` cover both branches.
+
 ### Added
 
 - v0.6 execution-substrate production training runner:
