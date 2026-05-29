@@ -42,7 +42,7 @@ hf jobs run \
   --env CODELEWM_EXECUTION_PACK_REVISION=v0.6.0 \
   --env CODELEWM_TRAIN_SEED=42 \
   --env CODELEWM_TRAIN_CONFIG=config/train/scaled/codelewm_execution_v0_6_a10g.yaml \
-  abdelstark/codelewm-runtime:v0.6 \
+  ghcr.io/abdelstark/codelewm-runtime:v0.6 \
   uv run codelewm train --config config/train/scaled/codelewm_execution_v0_6_a10g.yaml --seed 42
 ```
 

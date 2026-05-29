@@ -121,6 +121,7 @@ class ExecutionTrainHfJobsConfig:
     artifact_repo_id: str
     checkpoint_repo_id: str
     checkpoint_revision_template: str
+    runtime_image: str | None = None
 
 
 @dataclass(frozen=True)
@@ -415,6 +416,7 @@ class ExecutionTrainConfig:
                 "checkpoint_revision_template": (
                     self.hf_jobs.checkpoint_revision_template
                 ),
+                "runtime_image": self.hf_jobs.runtime_image,
             },
             "claim_gates": {
                 "retrieval_min_recall_at_1_lift_over_no_action": (
@@ -639,6 +641,7 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "artifact_repo_id",
             "checkpoint_repo_id",
             "checkpoint_revision_template",
+            "runtime_image",
         },
         "config.hf_jobs",
     )
@@ -788,6 +791,9 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         ),
         checkpoint_revision_template=_require_string(
             hf_jobs_payload, "checkpoint_revision_template", "config.hf_jobs"
+        ),
+        runtime_image=_optional_string(
+            hf_jobs_payload, "runtime_image", "config.hf_jobs"
         ),
     )
 

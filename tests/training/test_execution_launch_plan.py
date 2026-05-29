@@ -100,6 +100,31 @@ class LaunchPlanBuilderTest(unittest.TestCase):
                 plan.claim_gates["collapse_effective_rank_ratio_min"], 0.20
             )
 
+    def test_runtime_image_from_config(self) -> None:
+        config = load_v0_6_config(CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+        for plan in plans:
+            self.assertEqual(
+                plan.runtime_image,
+                "ghcr.io/abdelstark/codelewm-runtime:v0.6",
+            )
+            command_str = " ".join(plan.command)
+            self.assertIn(plan.runtime_image, command_str)
+
+    def test_runtime_image_falls_back_to_default_when_missing(self) -> None:
+        from codelewm.training.execution_launch_plan import DEFAULT_RUNTIME_IMAGE
+
+        config = load_v0_6_config(CONFIG_PATH)
+        config["hf_jobs"] = dict(config["hf_jobs"])
+        config["hf_jobs"].pop("runtime_image", None)
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+        for plan in plans:
+            self.assertEqual(plan.runtime_image, DEFAULT_RUNTIME_IMAGE)
+
 
 class V0_6ConfigErrorsTest(unittest.TestCase):
     def test_missing_top_level_key_rejected(self) -> None:
