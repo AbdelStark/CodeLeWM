@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Build the abdelstark/codelewm-runtime:v0.6 container image.
+#
+# Usage:
+#   scripts/build-codelewm-runtime [--tag <name>] [--push] [--platform <plat>]
+#
+# Default tag: ``abdelstark/codelewm-runtime:v0.6``.
+# Default platform: ``linux/amd64`` (HF Jobs runs amd64 only).
+#
+# This script wraps ``docker build`` so the git SHA + label set is
+# uniform across local builds and CI. It prints the resulting image
+# digest to stdout. Pushing is opt-in via ``--push``.
+
+set -euo pipefail
+
+TAG="${CODELEWM_RUNTIME_TAG:-abdelstark/codelewm-runtime:v0.6}"
+PLATFORM="${CODELEWM_RUNTIME_PLATFORM:-linux/amd64}"
+PUSH=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --tag) TAG="$2"; shift 2 ;;
+        --platform) PLATFORM="$2"; shift 2 ;;
+        --push) PUSH=1; shift ;;
+        -h|--help)
+            sed -n '2,/^set/p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *) echo "unknown arg: $1" >&2; exit 2 ;;
+    esac
+done
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+GIT_SHA="$(git rev-parse HEAD 2>/dev/null || echo unset)"
+DOCKERFILE="containers/v0_6/Dockerfile"
+
+if [[ ! -f "$DOCKERFILE" ]]; then
+    echo "error: $DOCKERFILE not found" >&2
+    exit 2
+fi
+
+echo "building $TAG (platform=$PLATFORM git_sha=$GIT_SHA)"
+DOCKER_BUILDKIT=1 docker build \
+    --platform "$PLATFORM" \
+    --build-arg "CODELEWM_GIT_SHA=$GIT_SHA" \
+    -t "$TAG" \
+    -f "$DOCKERFILE" \
+    .
+
+DIGEST="$(docker image inspect "$TAG" --format '{{index .Id}}')"
+echo "image: $TAG"
+echo "digest: $DIGEST"
+
+if [[ "$PUSH" -eq 1 ]]; then
+    echo "pushing $TAG ..."
+    docker push "$TAG"
+fi

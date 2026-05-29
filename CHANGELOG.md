@@ -16,6 +16,20 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 runtime container entrypoint:
+  `containers/v0_6/entrypoint.sh` pre-downloads the execution pack
+  into `$CODELEWM_EXECUTION_PACK_LOCAL_DIR` (default
+  `/workspace/pack`) when `CODELEWM_EXECUTION_PACK_REPO_ID`,
+  `CODELEWM_EXECUTION_PACK_REVISION`, and `HF_TOKEN` are present.
+  The production runner (#293) short-circuits its HF download when
+  that directory holds the pack, so an `hf jobs run` invocation can
+  consume the dataset without re-authenticating with the Hub inside
+  the runner process. A bind-mounted pack with a `.populated`
+  marker skips the download. The Dockerfile now wires this script
+  as `ENTRYPOINT` and bumps `huggingface_hub` to `>=1.0`. Tests:
+  static checks on entrypoint presence, executable bit, and the
+  Dockerfile wiring are part of
+  `tests/containers/test_runtime_image.py`. (#292)
 - v0.6 execution-substrate torch training bridge:
   `codelewm.training.execution_torch_runner` adds
   `train_execution_smoke()`, `ExecutionTorchTrainConfig`,
