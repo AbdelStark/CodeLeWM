@@ -152,6 +152,45 @@ class LaunchPlanBuilderTest(unittest.TestCase):
             secret_idx = cmd.index("--secrets")
             self.assertEqual(cmd[secret_idx + 1], "HF_TOKEN")
 
+    def test_command_wires_artifact_upload(self) -> None:
+        """HF Jobs containers don't persist /tmp past completion.
+
+        The launcher must pass the env vars the entrypoint reads to
+        upload the run output dir to the configured artifact repo,
+        plus the matching ``--out`` flag so the runner writes to a
+        path the entrypoint knows to read.
+        """
+
+        config = load_v0_6_config(CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+        for plan in plans:
+            cmd = list(plan.command)
+            expected_run_dir = f"/tmp/runs/{plan.run_name}"
+            # Env vars: run-output-dir, upload-repo-id, upload path.
+            command_env_pairs = [
+                cmd[i + 1] for i, tok in enumerate(cmd) if tok == "--env"
+            ]
+            self.assertIn(
+                f"CODELEWM_RUN_OUTPUT_DIR={expected_run_dir}",
+                command_env_pairs,
+            )
+            self.assertIn(
+                f"CODELEWM_UPLOAD_REPO_ID={plan.artifact_repo_id}",
+                command_env_pairs,
+            )
+            self.assertIn(
+                f"CODELEWM_UPLOAD_PATH_IN_REPO={plan.run_name}",
+                command_env_pairs,
+            )
+            # --out flag matches.
+            self.assertIn("--out", cmd)
+            out_idx = cmd.index("--out")
+            self.assertEqual(cmd[out_idx + 1], expected_run_dir)
+            # --json so the training_manifest is captured in stdout.
+            self.assertIn("--json", cmd)
+
     def test_runtime_image_falls_back_to_default_when_missing(self) -> None:
         from codelewm.training.execution_launch_plan import DEFAULT_RUNTIME_IMAGE
 
