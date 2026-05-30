@@ -99,7 +99,13 @@ class RuntimeImageDockerfileTest(unittest.TestCase):
             "CODELEWM_EXECUTION_PACK_REVISION",
             "HF_TOKEN",
             "hf download",
-            "exec \"$@\"",
+            # Operator's command is run (not ``exec``ed) so the
+            # entrypoint can run the post-training upload.
+            '"$@"',
+            # Post-run upload knobs the launcher wires.
+            "CODELEWM_UPLOAD_REPO_ID",
+            "CODELEWM_RUN_OUTPUT_DIR",
+            "hf upload",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, body)

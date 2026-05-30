@@ -14,6 +14,25 @@ earliest one minor release after the deprecation notice.
 
 ## [Unreleased]
 
+### Added
+
+- v0.6 runtime entrypoint: post-training artifact upload to the
+  configured `hf_jobs.artifact_repo_id` dataset repo. The HF Jobs
+  container's `/tmp` is ephemeral, so without an explicit upload
+  step the checkpoints + `metrics.jsonl` + reports written by the
+  runner disappear when the job exits. The entrypoint now runs the
+  operator's command (no longer via `exec`), captures its exit
+  code, and on success uploads `$CODELEWM_RUN_OUTPUT_DIR` to
+  `$CODELEWM_UPLOAD_REPO_ID:$CODELEWM_UPLOAD_PATH_IN_REPO` via
+  `hf upload`. Crashed runs are kept out of the dataset. The
+  launcher (`codelewm.training.execution_launch_plan`) wires the
+  three new env vars and adds `--out <run_dir>` + `--json` to the
+  command vector so the runner writes to a known path and the
+  training_manifest is captured in stdout. Two new launcher tests
+  (`test_command_wires_artifact_upload`) and two new entrypoint
+  static checks (`CODELEWM_UPLOAD_REPO_ID`, `hf upload`) cover
+  every wiring point.
+
 ### Fixed
 
 - v0.6 runner: `_train_one_step` now passes `action_emb` and

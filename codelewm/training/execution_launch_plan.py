@@ -185,16 +185,18 @@ def build_launch_plans(
         )
         # HF Jobs overrides the image's ENTRYPOINT when COMMAND is
         # supplied, so the entrypoint script that pre-downloads the
-        # execution pack is invoked explicitly here. Without it the
-        # runner falls through to its in-process HF download path,
-        # which works but requires HF_TOKEN to be readable by the
-        # codelewm CLI (which `--secrets HF_TOKEN` happens to give
-        # us, but for explicitness and to keep the pack on disk for
-        # checkpoint resume we still call the entrypoint).
+        # execution pack is invoked explicitly here. The entrypoint
+        # also uploads the run output dir to a HF dataset repo after
+        # training, which is required for the v0.6 experiment because
+        # HF Jobs containers don't persist /tmp past run completion.
+        # Without the upload step the headline evals have no
+        # checkpoint to load.
+        #
         # HF Jobs runs the container as a non-root UID with HOME
         # read-only, so `uv run` cannot create its cache at /root.
         # We bypass uv: codelewm is already installed in the system
         # python via `uv pip install --system` at build time.
+        run_output_dir = f"/tmp/runs/{run_name}"
         command = (
             "hf",
             "jobs",
@@ -215,6 +217,12 @@ def build_launch_plans(
             f"CODELEWM_TRAIN_SEED={seed}",
             "--env",
             f"CODELEWM_TRAIN_CONFIG={config_path}",
+            "--env",
+            f"CODELEWM_RUN_OUTPUT_DIR={run_output_dir}",
+            "--env",
+            f"CODELEWM_UPLOAD_REPO_ID={config['hf_jobs']['artifact_repo_id']}",
+            "--env",
+            f"CODELEWM_UPLOAD_PATH_IN_REPO={run_name}",
             runtime_image,
             "/usr/local/bin/codelewm-runtime-entrypoint",
             "codelewm",
@@ -223,6 +231,9 @@ def build_launch_plans(
             str(config_path),
             "--seed",
             str(seed),
+            "--out",
+            run_output_dir,
+            "--json",
         )
         plans.append(
             LaunchPlan(
