@@ -1,0 +1,57 @@
+{
+  "artifact_id": "eval_report-48380fb96f1de96d",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "crash-prediction",
+    "--checkpoint",
+    ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt",
+    "--pack",
+    ".artifacts/v0_6/execution-pack",
+    "--out",
+    ".artifacts/v0_6/eval-305/seed-42/crash_prediction",
+    "--device",
+    "cpu",
+    "--max-examples",
+    "1000",
+    "--seed",
+    "42",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "d7cca5cc1bfb55d2c6b5f6eb6ad71bc9a03498e81d796f2cbce64273d772a728",
+  "created_at": "2026-05-31T11:00:50Z",
+  "files": [
+    {
+      "bytes": 336,
+      "path": "config.json",
+      "sha256": "97380a94e1411ae85f9678a7b10c159a0a6a143f8aa0252e223a9ff3022a68ab"
+    },
+    {
+      "bytes": 498,
+      "path": "reports/crash_prediction_report.json",
+      "sha256": "1f18d8a1b8ade1be0c966cdbcd379cd85446ff7b2313d8ff6ff2ea1ffce0d147"
+    }
+  ],
+  "metadata": {
+    "checkpoint_sha256": "c4aaae5ad5ebae7a32c7a79520496a2ca039b3a1b9a4a6d3c6199f1274fc2b20",
+    "checkpoint_step": 50000,
+    "claim_allowed": false,
+    "claim_reason": "not_evaluable: need both positive and negative val/test samples; got positives=0, negatives=236",
+    "dataset_artifact_id": "codelewm-execution-pack-20260528T102625Z",
+    "negatives": 236,
+    "positives": 0,
+    "report_path": "reports/crash_prediction_report.json",
+    "report_schema_version": "codelewm.eval.crash_prediction_report.v1",
+    "sample_count": 236,
+    "schema_version": "codelewm.eval.crash_prediction_run.v1",
+    "training_artifact_id": "training_run-cb62408f881eff8c"
+  },
+  "parent_artifacts": [
+    "training_run-cb62408f881eff8c",
+    "codelewm-execution-pack-20260528T102625Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "61128da170c8453147f35ac5f3b8528d82365d01"
+}

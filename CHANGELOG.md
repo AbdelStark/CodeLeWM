@@ -16,6 +16,21 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 downloaded-artifact eval pass for #305: committed per-seed
+  eval artifacts under `docs/benchmark/v0_6/` for seed 42 and seed
+  1729 across `execution-retrieval`, `execution-surprise`,
+  `execution-probe`, and `crash-prediction`. The v0.6 results report
+  now includes concrete cross-seed retrieval, surprise, latent-probe,
+  and crash-prediction tables. Retrieval passes the no-action gates
+  on both seeds (Recall@1 lift +0.6186 / +0.6102; MRR lift +0.6628 /
+  +0.6547), generated-decoy surprise AUC is 1.0 on all configured
+  decoy categories, latent probes remain claim-blocked because lexical
+  controls beat the latent view, crash prediction is not evaluable
+  because the val/test slice has zero positives, and HumanEval /
+  MBPP-Plus rerank remains blocked until live completion-label
+  artifacts exist. The eval-report tree is mirrored to
+  `abdelstark/codelewm-runs/runs/codelewm-v0-6-eval-pass-20260531`
+  at HF commit `396a8fab5b86c16764bec0090e8af7518de41fbc`.
 - v0.6 downstream-rerank completion sampler:
   `scripts/sample-execution-rerank-completions` now emits
   manifest-backed HumanEval / MBPP-Plus completion-label JSONL artifacts
@@ -33,29 +48,25 @@ earliest one minor release after the deprecation notice.
   schema-versioned, manifest-backed reports for retrieval, surprise,
   latent probes, and crash prediction (#302).
 - v0.6 execution-substrate end-to-end results report:
-  `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` documents the
-  first complete v0.6 HF Jobs run for tracker #289. Two seeds (42,
-  1729) trained to 50k steps each on `a10g-small`. Headline
-  substrate-pivot prediction confirmed across both seeds: prediction
-  MSE drops 1500× (0.95 → 6e-4), SIGReg drops 1200× (44 → 0.036),
-  no-action margin flips from −0.77 to +1.24, effective-rank ratio
-  of predicted latents reaches 0.47 (2.3× the 0.20 collapse gate).
-  Cross-seed margin spread is 0.013 (~1% of mean). Artifacts
-  published at `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-{42,1729}`.
-  Downstream-utility evaluations (retrieval, surprise, latent probe,
-  downstream rerank) are scoped for a follow-up CLI wiring; the
-  evaluator libraries (`codelewm.eval.execution_probe_targets`,
-  `codelewm.eval.execution_surprise_decoys`,
-  `codelewm.eval.execution_rerank`, `codelewm.eval.crash_prediction`)
-  already exist as library APIs.
+  `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` documents both
+  the first complete v0.6 HF Jobs run for tracker #289 and the #305
+  downloaded-artifact eval pass. Two seeds (42, 1729) trained to 50k
+  steps each on `a10g-small`. Headline substrate-pivot prediction
+  confirmed across both seeds: prediction MSE drops 1500× (0.95 →
+  6e-4), SIGReg drops 1200× (44 → 0.036), no-action margin flips from
+  −0.77 to +1.24, effective-rank ratio of predicted latents reaches
+  0.47 (2.3× the 0.20 collapse gate), and execution-pack retrieval
+  now beats no-action by +61.4 Recall@1 points / +65.9 MRR points on
+  average across seeds. The allowed public framing is partial
+  positive: internal substrate and execution-pack gates pass, broader
+  downstream utility remains unsupported. Artifacts are published at
+  `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-{42,1729}`.
 - Two-substrate paper outline updated for the v0.6 first end-to-end
-  run: abstract, §6.1 (retrieval — Substrate B deferred with
-  no-action-margin proxy), §6.2 (collapse — Substrate B numbers
-  filled in), and §11 (framing — locked in as "partial positive:
-  substrate-pivot's headline-shape claim confirmed,
-  downstream-utility evaluations deferred"). The two framings remain
-  available from the same artifact set; the deferred tables fill in
-  once the eval harness wiring follow-up ships.
+  run and the #305 eval pass: abstract, §6.1 (retrieval), §6.2
+  (collapse and surprise), §6.3 (latent probes), §6.4 (downstream
+  rerank status), §6.5 (crash prediction), and §11 now commit to the
+  partial-positive framing with concrete numbers and explicit blocked
+  claim surfaces.
 
 - v0.6 runtime entrypoint: post-training artifact upload to the
   configured `hf_jobs.artifact_repo_id` dataset repo. The HF Jobs
@@ -76,6 +87,11 @@ earliest one minor release after the deprecation notice.
 
 ### Fixed
 
+- `codelewm manifest verify --parent-manifest` now accepts the
+  historical v0.6 `execution_pack:<artifact_id>` parent reference when
+  the provided parent manifest has the raw execution-pack artifact id.
+  The compatibility alias lets immutable seed-42 and seed-1729 run
+  manifests verify cleanly after #303 fixed future runner output.
 - HumanEval source ingestion now strips trailing indentation placeholders
   from `prompt` before appending `canonical_solution`, preventing
   fixture and dry-run canonical completions from producing duplicated

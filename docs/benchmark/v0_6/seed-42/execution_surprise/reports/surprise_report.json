@@ -1,0 +1,3277 @@
+{
+  "decoy_seed": 42,
+  "examples": [
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          39.70067596435547
+        ],
+        "same_code_different_input": [
+          83.8272705078125
+        ]
+      },
+      "transition_id": "mbpp/607::mbpp/607/reference::mbpp/607/0",
+      "true_rank": 1,
+      "true_score": 0.027137618511915207
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          27.308992385864258
+        ],
+        "same_code_different_input": [
+          222.89010620117188
+        ]
+      },
+      "transition_id": "mbpp/607::mbpp/607/reference::mbpp/607/1",
+      "true_rank": 1,
+      "true_score": 0.01797914132475853
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          36.205928802490234
+        ],
+        "same_code_different_input": [
+          222.33953857421875
+        ]
+      },
+      "transition_id": "mbpp/607::mbpp/607/reference::mbpp/607/2",
+      "true_rank": 1,
+      "true_score": 0.016556143760681152
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          12.376127243041992
+        ],
+        "same_code_different_input": [
+          225.88058471679688
+        ]
+      },
+      "transition_id": "mbpp/610::mbpp/610/reference::mbpp/610/0",
+      "true_rank": 1,
+      "true_score": 0.04086330533027649
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.6187961101531982
+        ],
+        "same_code_different_input": [
+          151.8014373779297
+        ]
+      },
+      "transition_id": "mbpp/610::mbpp/610/reference::mbpp/610/1",
+      "true_rank": 1,
+      "true_score": 0.04859132692217827
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.6231396198272705
+        ],
+        "same_code_different_input": [
+          151.85008239746094
+        ]
+      },
+      "transition_id": "mbpp/610::mbpp/610/reference::mbpp/610/2",
+      "true_rank": 1,
+      "true_score": 0.04763361066579819
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.82753324508667
+        ],
+        "same_code_different_input": [
+          391.73248291015625
+        ]
+      },
+      "transition_id": "mbpp/612::mbpp/612/reference::mbpp/612/0",
+      "true_rank": 1,
+      "true_score": 0.04537201672792435
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          6.087568283081055
+        ],
+        "same_code_different_input": [
+          392.34991455078125
+        ]
+      },
+      "transition_id": "mbpp/612::mbpp/612/reference::mbpp/612/1",
+      "true_rank": 1,
+      "true_score": 0.03866168111562729
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.2104291915893555
+        ],
+        "same_code_different_input": [
+          395.1709899902344
+        ]
+      },
+      "transition_id": "mbpp/612::mbpp/612/reference::mbpp/612/2",
+      "true_rank": 1,
+      "true_score": 0.027257923036813736
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.845718383789062
+        ],
+        "same_code_different_input": [
+          73.7789535522461
+        ]
+      },
+      "transition_id": "mbpp/615::mbpp/615/reference::mbpp/615/0",
+      "true_rank": 1,
+      "true_score": 0.020524732768535614
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          11.834249496459961
+        ],
+        "same_code_different_input": [
+          74.11668395996094
+        ]
+      },
+      "transition_id": "mbpp/615::mbpp/615/reference::mbpp/615/1",
+      "true_rank": 1,
+      "true_score": 0.02339569479227066
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.912452697753906
+        ],
+        "same_code_different_input": [
+          111.55613708496094
+        ]
+      },
+      "transition_id": "mbpp/615::mbpp/615/reference::mbpp/615/2",
+      "true_rank": 1,
+      "true_score": 0.018056578934192657
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.6865692138672
+        ],
+        "same_code_different_input": [
+          229.8961944580078
+        ]
+      },
+      "transition_id": "mbpp/620::mbpp/620/reference::mbpp/620/0",
+      "true_rank": 1,
+      "true_score": 0.0067588817328214645
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          267.8584899902344
+        ],
+        "same_code_different_input": [
+          231.08322143554688
+        ]
+      },
+      "transition_id": "mbpp/620::mbpp/620/reference::mbpp/620/1",
+      "true_rank": 1,
+      "true_score": 0.01177634485065937
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          237.41220092773438
+        ],
+        "same_code_different_input": [
+          230.92648315429688
+        ]
+      },
+      "transition_id": "mbpp/620::mbpp/620/reference::mbpp/620/2",
+      "true_rank": 1,
+      "true_score": 0.007597779855132103
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          9.62346076965332
+        ],
+        "same_code_different_input": [
+          244.980712890625
+        ]
+      },
+      "transition_id": "mbpp/623::mbpp/623/reference::mbpp/623/0",
+      "true_rank": 1,
+      "true_score": 0.031306978315114975
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          41.60531997680664
+        ],
+        "same_code_different_input": [
+          127.34249877929688
+        ]
+      },
+      "transition_id": "mbpp/623::mbpp/623/reference::mbpp/623/1",
+      "true_rank": 1,
+      "true_score": 0.023949040099978447
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          122.09748840332031
+        ],
+        "same_code_different_input": [
+          128.232177734375
+        ]
+      },
+      "transition_id": "mbpp/623::mbpp/623/reference::mbpp/623/2",
+      "true_rank": 1,
+      "true_score": 0.013266222551465034
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          41.53690719604492
+        ],
+        "same_code_different_input": [
+          98.21822357177734
+        ]
+      },
+      "transition_id": "mbpp/625::mbpp/625/reference::mbpp/625/0",
+      "true_rank": 1,
+      "true_score": 0.012661410495638847
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          16.843080520629883
+        ],
+        "same_code_different_input": [
+          128.05052185058594
+        ]
+      },
+      "transition_id": "mbpp/625::mbpp/625/reference::mbpp/625/1",
+      "true_rank": 1,
+      "true_score": 0.06049036607146263
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          34.70245361328125
+        ],
+        "same_code_different_input": [
+          128.55154418945312
+        ]
+      },
+      "transition_id": "mbpp/625::mbpp/625/reference::mbpp/625/2",
+      "true_rank": 1,
+      "true_score": 0.009446488693356514
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          354.04180908203125
+        ],
+        "same_code_different_input": [
+          561.7488403320312
+        ]
+      },
+      "transition_id": "mbpp/638::mbpp/638/reference::mbpp/638/0",
+      "true_rank": 1,
+      "true_score": 0.016064424067735672
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          351.84503173828125
+        ],
+        "same_code_different_input": [
+          229.29824829101562
+        ]
+      },
+      "transition_id": "mbpp/638::mbpp/638/reference::mbpp/638/1",
+      "true_rank": 1,
+      "true_score": 0.008697791025042534
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          437.07708740234375
+        ],
+        "same_code_different_input": [
+          229.833251953125
+        ]
+      },
+      "transition_id": "mbpp/638::mbpp/638/reference::mbpp/638/2",
+      "true_rank": 1,
+      "true_score": 0.005606887396425009
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          26.70735740661621
+        ],
+        "same_code_different_input": [
+          247.9710693359375
+        ]
+      },
+      "transition_id": "mbpp/659::mbpp/659/reference::mbpp/659/0",
+      "true_rank": 1,
+      "true_score": 0.02250320091843605
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          173.5655975341797
+        ],
+        "same_code_different_input": [
+          53.79909133911133
+        ]
+      },
+      "transition_id": "mbpp/659::mbpp/659/reference::mbpp/659/1",
+      "true_rank": 1,
+      "true_score": 0.03220510855317116
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          74.49856567382812
+        ],
+        "same_code_different_input": [
+          54.0112419128418
+        ]
+      },
+      "transition_id": "mbpp/659::mbpp/659/reference::mbpp/659/2",
+      "true_rank": 1,
+      "true_score": 0.07504721730947495
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          6.449576377868652
+        ],
+        "same_code_different_input": [
+          110.796875
+        ]
+      },
+      "transition_id": "mbpp/662::mbpp/662/reference::mbpp/662/0",
+      "true_rank": 1,
+      "true_score": 0.04321767017245293
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.2599942684173584
+        ],
+        "same_code_different_input": [
+          117.08050537109375
+        ]
+      },
+      "transition_id": "mbpp/662::mbpp/662/reference::mbpp/662/1",
+      "true_rank": 1,
+      "true_score": 0.021770145744085312
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          5.37178897857666
+        ],
+        "same_code_different_input": [
+          109.68318176269531
+        ]
+      },
+      "transition_id": "mbpp/662::mbpp/662/reference::mbpp/662/2",
+      "true_rank": 1,
+      "true_score": 0.02535994164645672
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          334.75115966796875
+        ],
+        "same_code_different_input": [
+          155.81138610839844
+        ]
+      },
+      "transition_id": "mbpp/670::mbpp/670/reference::mbpp/670/0",
+      "true_rank": 1,
+      "true_score": 0.014698751270771027
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          333.21868896484375
+        ],
+        "same_code_different_input": [
+          156.21719360351562
+        ]
+      },
+      "transition_id": "mbpp/670::mbpp/670/reference::mbpp/670/1",
+      "true_rank": 1,
+      "true_score": 0.031024480238556862
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          397.1036682128906
+        ],
+        "same_code_different_input": [
+          157.13040161132812
+        ]
+      },
+      "transition_id": "mbpp/670::mbpp/670/reference::mbpp/670/2",
+      "true_rank": 1,
+      "true_score": 0.0046367039903998375
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          53.03700637817383
+        ]
+      },
+      "transition_id": "mbpp/674::mbpp/674/reference::mbpp/674/0",
+      "true_rank": 1,
+      "true_score": 0.012213261798024178
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          53.025291442871094
+        ]
+      },
+      "transition_id": "mbpp/674::mbpp/674/reference::mbpp/674/1",
+      "true_rank": 1,
+      "true_score": 0.011967792175710201
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          52.88392639160156
+        ]
+      },
+      "transition_id": "mbpp/674::mbpp/674/reference::mbpp/674/2",
+      "true_rank": 1,
+      "true_score": 0.014528173953294754
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          329.0856628417969
+        ],
+        "same_code_different_input": [
+          181.79315185546875
+        ]
+      },
+      "transition_id": "mbpp/675::mbpp/675/reference::mbpp/675/0",
+      "true_rank": 1,
+      "true_score": 0.024334538727998734
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          267.5092468261719
+        ],
+        "same_code_different_input": [
+          180.578369140625
+        ]
+      },
+      "transition_id": "mbpp/675::mbpp/675/reference::mbpp/675/1",
+      "true_rank": 1,
+      "true_score": 0.01660151407122612
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          328.75506591796875
+        ],
+        "same_code_different_input": [
+          180.3782196044922
+        ]
+      },
+      "transition_id": "mbpp/675::mbpp/675/reference::mbpp/675/2",
+      "true_rank": 1,
+      "true_score": 0.07065246254205704
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          13.805654525756836
+        ],
+        "same_code_different_input": [
+          96.6693115234375
+        ]
+      },
+      "transition_id": "mbpp/686::mbpp/686/reference::mbpp/686/0",
+      "true_rank": 1,
+      "true_score": 0.027650438249111176
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          11.171493530273438
+        ],
+        "same_code_different_input": [
+          16.651744842529297
+        ]
+      },
+      "transition_id": "mbpp/686::mbpp/686/reference::mbpp/686/1",
+      "true_rank": 1,
+      "true_score": 0.03042680397629738
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          6.311894416809082
+        ],
+        "same_code_different_input": [
+          16.72119903564453
+        ]
+      },
+      "transition_id": "mbpp/686::mbpp/686/reference::mbpp/686/2",
+      "true_rank": 1,
+      "true_score": 0.045710571110248566
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          13.538938522338867
+        ],
+        "same_code_different_input": [
+          117.32060241699219
+        ]
+      },
+      "transition_id": "mbpp/690::mbpp/690/reference::mbpp/690/0",
+      "true_rank": 1,
+      "true_score": 0.02641317993402481
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          20.35588264465332
+        ],
+        "same_code_different_input": [
+          117.07048797607422
+        ]
+      },
+      "transition_id": "mbpp/690::mbpp/690/reference::mbpp/690/1",
+      "true_rank": 1,
+      "true_score": 0.018158167600631714
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          7.753043174743652
+        ],
+        "same_code_different_input": [
+          54.10917663574219
+        ]
+      },
+      "transition_id": "mbpp/690::mbpp/690/reference::mbpp/690/2",
+      "true_rank": 1,
+      "true_score": 0.033930324018001556
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          396.8265380859375
+        ]
+      },
+      "transition_id": "mbpp/703::mbpp/703/reference::mbpp/703/0",
+      "true_rank": 1,
+      "true_score": 0.004853395279496908
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          396.9245300292969
+        ]
+      },
+      "transition_id": "mbpp/703::mbpp/703/reference::mbpp/703/1",
+      "true_rank": 1,
+      "true_score": 0.004194303881376982
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.99267578125
+        ]
+      },
+      "transition_id": "mbpp/703::mbpp/703/reference::mbpp/703/2",
+      "true_rank": 1,
+      "true_score": 0.009857285767793655
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          137.92669677734375
+        ],
+        "same_code_different_input": [
+          169.1527557373047
+        ]
+      },
+      "transition_id": "mbpp/717::mbpp/717/reference::mbpp/717/0",
+      "true_rank": 1,
+      "true_score": 0.013634152710437775
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          73.60572814941406
+        ],
+        "same_code_different_input": [
+          168.4129638671875
+        ]
+      },
+      "transition_id": "mbpp/717::mbpp/717/reference::mbpp/717/1",
+      "true_rank": 1,
+      "true_score": 0.019779006019234657
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          100.2677230834961
+        ],
+        "same_code_different_input": [
+          149.82656860351562
+        ]
+      },
+      "transition_id": "mbpp/717::mbpp/717/reference::mbpp/717/2",
+      "true_rank": 1,
+      "true_score": 0.012814322486519814
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          15.841285705566406
+        ],
+        "same_code_different_input": [
+          4.086726188659668
+        ]
+      },
+      "transition_id": "mbpp/719::mbpp/719/reference::mbpp/719/0",
+      "true_rank": 1,
+      "true_score": 0.0203478392213583
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          60.45351028442383
+        ],
+        "same_code_different_input": [
+          4.210625171661377
+        ]
+      },
+      "transition_id": "mbpp/719::mbpp/719/reference::mbpp/719/1",
+      "true_rank": 1,
+      "true_score": 0.006796794943511486
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          15.822513580322266
+        ],
+        "same_code_different_input": [
+          4.110288143157959
+        ]
+      },
+      "transition_id": "mbpp/719::mbpp/719/reference::mbpp/719/2",
+      "true_rank": 1,
+      "true_score": 0.01003429014235735
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          260.27008056640625
+        ],
+        "same_code_different_input": [
+          104.64069366455078
+        ]
+      },
+      "transition_id": "mbpp/737::mbpp/737/reference::mbpp/737/0",
+      "true_rank": 1,
+      "true_score": 0.007579829543828964
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          168.85052490234375
+        ],
+        "same_code_different_input": [
+          104.72358703613281
+        ]
+      },
+      "transition_id": "mbpp/737::mbpp/737/reference::mbpp/737/1",
+      "true_rank": 1,
+      "true_score": 0.013440990820527077
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          260.37109375
+        ],
+        "same_code_different_input": [
+          104.73294067382812
+        ]
+      },
+      "transition_id": "mbpp/737::mbpp/737/reference::mbpp/737/2",
+      "true_rank": 1,
+      "true_score": 0.008093933574855328
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.5766296386719
+        ],
+        "same_code_different_input": [
+          156.0945587158203
+        ]
+      },
+      "transition_id": "mbpp/741::mbpp/741/reference::mbpp/741/0",
+      "true_rank": 1,
+      "true_score": 0.03694912791252136
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          336.03466796875
+        ],
+        "same_code_different_input": [
+          156.91275024414062
+        ]
+      },
+      "transition_id": "mbpp/741::mbpp/741/reference::mbpp/741/1",
+      "true_rank": 1,
+      "true_score": 0.003633294254541397
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          399.7207336425781
+        ],
+        "same_code_different_input": [
+          158.8266143798828
+        ]
+      },
+      "transition_id": "mbpp/741::mbpp/741/reference::mbpp/741/2",
+      "true_rank": 1,
+      "true_score": 0.057070471346378326
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          14.129405975341797
+        ],
+        "same_code_different_input": [
+          18.712594985961914
+        ]
+      },
+      "transition_id": "mbpp/743::mbpp/743/reference::mbpp/743/0",
+      "true_rank": 1,
+      "true_score": 0.06450410187244415
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.870701789855957
+        ],
+        "same_code_different_input": [
+          6.531023025512695
+        ]
+      },
+      "transition_id": "mbpp/743::mbpp/743/reference::mbpp/743/1",
+      "true_rank": 1,
+      "true_score": 0.044517338275909424
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.105287551879883
+        ],
+        "same_code_different_input": [
+          5.0569610595703125
+        ]
+      },
+      "transition_id": "mbpp/743::mbpp/743/reference::mbpp/743/2",
+      "true_rank": 1,
+      "true_score": 0.056513670831918716
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.1885986328125
+        ],
+        "same_code_different_input": [
+          298.71527099609375
+        ]
+      },
+      "transition_id": "mbpp/745::mbpp/745/reference::mbpp/745/0",
+      "true_rank": 1,
+      "true_score": 0.03687126934528351
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.284367561340332
+        ],
+        "same_code_different_input": [
+          321.4273376464844
+        ]
+      },
+      "transition_id": "mbpp/745::mbpp/745/reference::mbpp/745/1",
+      "true_rank": 1,
+      "true_score": 0.042711373418569565
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          34.13812255859375
+        ],
+        "same_code_different_input": [
+          298.02398681640625
+        ]
+      },
+      "transition_id": "mbpp/745::mbpp/745/reference::mbpp/745/2",
+      "true_rank": 1,
+      "true_score": 0.025744028389453888
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          15.852182388305664
+        ],
+        "same_code_different_input": [
+          4.055820465087891
+        ]
+      },
+      "transition_id": "mbpp/756::mbpp/756/reference::mbpp/756/0",
+      "true_rank": 1,
+      "true_score": 0.01897938922047615
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          60.64088439941406
+        ],
+        "same_code_different_input": [
+          4.756191253662109
+        ]
+      },
+      "transition_id": "mbpp/756::mbpp/756/reference::mbpp/756/1",
+      "true_rank": 1,
+      "true_score": 0.029315706342458725
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          15.817909240722656
+        ],
+        "same_code_different_input": [
+          4.147006034851074
+        ]
+      },
+      "transition_id": "mbpp/756::mbpp/756/reference::mbpp/756/2",
+      "true_rank": 1,
+      "true_score": 0.007148655131459236
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          123.85757446289062
+        ],
+        "same_code_different_input": [
+          143.71527099609375
+        ]
+      },
+      "transition_id": "mbpp/760::mbpp/760/reference::mbpp/760/0",
+      "true_rank": 1,
+      "true_score": 0.012118800543248653
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          60.526397705078125
+        ],
+        "same_code_different_input": [
+          143.80136108398438
+        ]
+      },
+      "transition_id": "mbpp/760::mbpp/760/reference::mbpp/760/1",
+      "true_rank": 1,
+      "true_score": 0.020244959741830826
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          60.96978759765625
+        ],
+        "same_code_different_input": [
+          144.28256225585938
+        ]
+      },
+      "transition_id": "mbpp/760::mbpp/760/reference::mbpp/760/2",
+      "true_rank": 1,
+      "true_score": 0.021913886070251465
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.84326171875
+        ],
+        "same_code_different_input": [
+          262.1029052734375
+        ]
+      },
+      "transition_id": "mbpp/763::mbpp/763/reference::mbpp/763/0",
+      "true_rank": 1,
+      "true_score": 0.006674508564174175
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.4148864746094
+        ],
+        "same_code_different_input": [
+          261.615966796875
+        ]
+      },
+      "transition_id": "mbpp/763::mbpp/763/reference::mbpp/763/1",
+      "true_rank": 1,
+      "true_score": 0.015449303202331066
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.65184020996094
+        ],
+        "same_code_different_input": [
+          263.3285827636719
+        ]
+      },
+      "transition_id": "mbpp/763::mbpp/763/reference::mbpp/763/2",
+      "true_rank": 1,
+      "true_score": 0.00396374985575676
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          0.9553244113922119
+        ],
+        "same_code_different_input": [
+          46.87879943847656
+        ]
+      },
+      "transition_id": "mbpp/766::mbpp/766/reference::mbpp/766/0",
+      "true_rank": 1,
+      "true_score": 0.05023682862520218
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.0506978034973145
+        ],
+        "same_code_different_input": [
+          46.74469757080078
+        ]
+      },
+      "transition_id": "mbpp/766::mbpp/766/reference::mbpp/766/1",
+      "true_rank": 1,
+      "true_score": 0.049394987523555756
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          0.5286849737167358
+        ],
+        "same_code_different_input": [
+          28.498252868652344
+        ]
+      },
+      "transition_id": "mbpp/766::mbpp/766/reference::mbpp/766/2",
+      "true_rank": 1,
+      "true_score": 0.1157371997833252
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          66.62393188476562
+        ],
+        "same_code_different_input": [
+          441.6614990234375
+        ]
+      },
+      "transition_id": "mbpp/772::mbpp/772/reference::mbpp/772/0",
+      "true_rank": 1,
+      "true_score": 0.009582940489053726
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          56.46881866455078
+        ],
+        "same_code_different_input": [
+          441.0226745605469
+        ]
+      },
+      "transition_id": "mbpp/772::mbpp/772/reference::mbpp/772/1",
+      "true_rank": 1,
+      "true_score": 0.011244935914874077
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          34.64131164550781
+        ],
+        "same_code_different_input": [
+          353.460205078125
+        ]
+      },
+      "transition_id": "mbpp/772::mbpp/772/reference::mbpp/772/2",
+      "true_rank": 1,
+      "true_score": 0.01557790208607912
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          3.098386764526367
+        ],
+        "same_code_different_input": [
+          45.46590805053711
+        ]
+      },
+      "transition_id": "mbpp/780::mbpp/780/reference::mbpp/780/0",
+      "true_rank": 1,
+      "true_score": 0.04047379642724991
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.6812881231307983
+        ],
+        "same_code_different_input": [
+          45.58275604248047
+        ]
+      },
+      "transition_id": "mbpp/780::mbpp/780/reference::mbpp/780/1",
+      "true_rank": 1,
+      "true_score": 0.04801568388938904
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.2692575454711914
+        ],
+        "same_code_different_input": [
+          70.9684066772461
+        ]
+      },
+      "transition_id": "mbpp/780::mbpp/780/reference::mbpp/780/2",
+      "true_rank": 1,
+      "true_score": 0.028817659243941307
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          420.85546875
+        ],
+        "same_code_different_input": [
+          322.61907958984375
+        ]
+      },
+      "transition_id": "mbpp/782::mbpp/782/reference::mbpp/782/0",
+      "true_rank": 1,
+      "true_score": 0.016590729355812073
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          285.8042297363281
+        ],
+        "same_code_different_input": [
+          551.8826293945312
+        ]
+      },
+      "transition_id": "mbpp/782::mbpp/782/reference::mbpp/782/1",
+      "true_rank": 1,
+      "true_score": 0.019289445132017136
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          417.53704833984375
+        ],
+        "same_code_different_input": [
+          323.1405334472656
+        ]
+      },
+      "transition_id": "mbpp/782::mbpp/782/reference::mbpp/782/2",
+      "true_rank": 1,
+      "true_score": 0.035281646996736526
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.01319885253906
+        ],
+        "same_code_different_input": [
+          306.36767578125
+        ]
+      },
+      "transition_id": "mbpp/786::mbpp/786/reference::mbpp/786/0",
+      "true_rank": 1,
+      "true_score": 0.010322272777557373
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          296.23419189453125
+        ],
+        "same_code_different_input": [
+          308.7749328613281
+        ]
+      },
+      "transition_id": "mbpp/786::mbpp/786/reference::mbpp/786/1",
+      "true_rank": 1,
+      "true_score": 0.007639237679541111
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.0614471435547
+        ],
+        "same_code_different_input": [
+          306.6143798828125
+        ]
+      },
+      "transition_id": "mbpp/786::mbpp/786/reference::mbpp/786/2",
+      "true_rank": 1,
+      "true_score": 0.0028818438295274973
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.314453125
+        ],
+        "same_code_different_input": [
+          154.89744567871094
+        ]
+      },
+      "transition_id": "mbpp/790::mbpp/790/reference::mbpp/790/0",
+      "true_rank": 1,
+      "true_score": 0.020063843578100204
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          397.53582763671875
+        ],
+        "same_code_different_input": [
+          157.435546875
+        ]
+      },
+      "transition_id": "mbpp/790::mbpp/790/reference::mbpp/790/1",
+      "true_rank": 1,
+      "true_score": 0.015184290707111359
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          336.6227722167969
+        ],
+        "same_code_different_input": [
+          157.45965576171875
+        ]
+      },
+      "transition_id": "mbpp/790::mbpp/790/reference::mbpp/790/2",
+      "true_rank": 1,
+      "true_score": 0.004535084590315819
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          94.64493560791016
+        ],
+        "same_code_different_input": [
+          100.09414672851562
+        ]
+      },
+      "transition_id": "mbpp/814::mbpp/814/reference::mbpp/814/0",
+      "true_rank": 1,
+      "true_score": 0.018323156982660294
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          77.9129867553711
+        ],
+        "same_code_different_input": [
+          99.53651428222656
+        ]
+      },
+      "transition_id": "mbpp/814::mbpp/814/reference::mbpp/814/1",
+      "true_rank": 1,
+      "true_score": 0.024284154176712036
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          193.31912231445312
+        ],
+        "same_code_different_input": [
+          89.57257080078125
+        ]
+      },
+      "transition_id": "mbpp/814::mbpp/814/reference::mbpp/814/2",
+      "true_rank": 1,
+      "true_score": 0.03412317857146263
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          30.27622413635254
+        ],
+        "same_code_different_input": [
+          66.16957092285156
+        ]
+      },
+      "transition_id": "mbpp/823::mbpp/823/reference::mbpp/823/0",
+      "true_rank": 1,
+      "true_score": 0.012744397856295109
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          27.647275924682617
+        ],
+        "same_code_different_input": [
+          66.26864624023438
+        ]
+      },
+      "transition_id": "mbpp/823::mbpp/823/reference::mbpp/823/1",
+      "true_rank": 1,
+      "true_score": 0.015789451077580452
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          30.39636993408203
+        ],
+        "same_code_different_input": [
+          66.0528793334961
+        ]
+      },
+      "transition_id": "mbpp/823::mbpp/823/reference::mbpp/823/2",
+      "true_rank": 1,
+      "true_score": 0.014082151465117931
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          40.47447204589844
+        ],
+        "same_code_different_input": [
+          128.03439331054688
+        ]
+      },
+      "transition_id": "mbpp/825::mbpp/825/reference::mbpp/825/0",
+      "true_rank": 1,
+      "true_score": 0.02525939792394638
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          76.54915618896484
+        ],
+        "same_code_different_input": [
+          115.8260269165039
+        ]
+      },
+      "transition_id": "mbpp/825::mbpp/825/reference::mbpp/825/1",
+      "true_rank": 1,
+      "true_score": 0.03685862571001053
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          40.998714447021484
+        ],
+        "same_code_different_input": [
+          116.55168151855469
+        ]
+      },
+      "transition_id": "mbpp/825::mbpp/825/reference::mbpp/825/2",
+      "true_rank": 1,
+      "true_score": 0.029743023216724396
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          45.40480422973633
+        ],
+        "same_code_different_input": [
+          72.10688781738281
+        ]
+      },
+      "transition_id": "mbpp/826::mbpp/826/reference::mbpp/826/0",
+      "true_rank": 1,
+      "true_score": 0.01940871775150299
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          72.23640441894531
+        ],
+        "same_code_different_input": [
+          84.11984252929688
+        ]
+      },
+      "transition_id": "mbpp/826::mbpp/826/reference::mbpp/826/1",
+      "true_rank": 1,
+      "true_score": 0.012254779227077961
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          64.45951843261719
+        ],
+        "same_code_different_input": [
+          72.2286605834961
+        ]
+      },
+      "transition_id": "mbpp/826::mbpp/826/reference::mbpp/826/2",
+      "true_rank": 1,
+      "true_score": 0.014585774391889572
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          608.0518798828125
+        ],
+        "same_code_different_input": [
+          562.6964111328125
+        ]
+      },
+      "transition_id": "mbpp/853::mbpp/853/reference::mbpp/853/0",
+      "true_rank": 1,
+      "true_score": 0.03173458203673363
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          334.3560791015625
+        ],
+        "same_code_different_input": [
+          562.1945190429688
+        ]
+      },
+      "transition_id": "mbpp/853::mbpp/853/reference::mbpp/853/1",
+      "true_rank": 1,
+      "true_score": 0.026688778772950172
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          291.4554443359375
+        ],
+        "same_code_different_input": [
+          262.2003479003906
+        ]
+      },
+      "transition_id": "mbpp/853::mbpp/853/reference::mbpp/853/2",
+      "true_rank": 1,
+      "true_score": 0.011296453885734081
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          276.7525939941406
+        ],
+        "same_code_different_input": [
+          226.97250366210938
+        ]
+      },
+      "transition_id": "mbpp/858::mbpp/858/reference::mbpp/858/0",
+      "true_rank": 1,
+      "true_score": 0.015706922858953476
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          358.8728942871094
+        ],
+        "same_code_different_input": [
+          226.42625427246094
+        ]
+      },
+      "transition_id": "mbpp/858::mbpp/858/reference::mbpp/858/1",
+      "true_rank": 1,
+      "true_score": 0.02165389247238636
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          303.8440856933594
+        ],
+        "same_code_different_input": [
+          534.0880126953125
+        ]
+      },
+      "transition_id": "mbpp/858::mbpp/858/reference::mbpp/858/2",
+      "true_rank": 1,
+      "true_score": 0.01833309978246689
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          26.752410888671875
+        ],
+        "same_code_different_input": [
+          200.10391235351562
+        ]
+      },
+      "transition_id": "mbpp/864::mbpp/864/reference::mbpp/864/0",
+      "true_rank": 1,
+      "true_score": 0.017990658059716225
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          40.857730865478516
+        ],
+        "same_code_different_input": [
+          29.517486572265625
+        ]
+      },
+      "transition_id": "mbpp/864::mbpp/864/reference::mbpp/864/1",
+      "true_rank": 1,
+      "true_score": 0.023103564977645874
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          10.412191390991211
+        ],
+        "same_code_different_input": [
+          200.34158325195312
+        ]
+      },
+      "transition_id": "mbpp/864::mbpp/864/reference::mbpp/864/2",
+      "true_rank": 1,
+      "true_score": 0.019427677616477013
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          292.4916687011719
+        ],
+        "same_code_different_input": [
+          59.368263244628906
+        ]
+      },
+      "transition_id": "mbpp/867::mbpp/867/reference::mbpp/867/0",
+      "true_rank": 1,
+      "true_score": 0.011387954466044903
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          294.8302917480469
+        ],
+        "same_code_different_input": [
+          59.74921417236328
+        ]
+      },
+      "transition_id": "mbpp/867::mbpp/867/reference::mbpp/867/1",
+      "true_rank": 1,
+      "true_score": 0.03169998526573181
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          295.9083251953125
+        ],
+        "same_code_different_input": [
+          60.07132339477539
+        ]
+      },
+      "transition_id": "mbpp/867::mbpp/867/reference::mbpp/867/2",
+      "true_rank": 1,
+      "true_score": 0.008383465930819511
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          265.3175354003906
+        ],
+        "same_code_different_input": [
+          210.32179260253906
+        ]
+      },
+      "transition_id": "mbpp/908::mbpp/908/reference::mbpp/908/0",
+      "true_rank": 1,
+      "true_score": 0.020757287740707397
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          163.39752197265625
+        ],
+        "same_code_different_input": [
+          280.6235046386719
+        ]
+      },
+      "transition_id": "mbpp/908::mbpp/908/reference::mbpp/908/1",
+      "true_rank": 1,
+      "true_score": 0.028011895716190338
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          417.8811950683594
+        ],
+        "same_code_different_input": [
+          274.6422424316406
+        ]
+      },
+      "transition_id": "mbpp/908::mbpp/908/reference::mbpp/908/2",
+      "true_rank": 1,
+      "true_score": 0.008292872458696365
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.5035095214844
+        ],
+        "same_code_different_input": [
+          156.07687377929688
+        ]
+      },
+      "transition_id": "mbpp/913::mbpp/913/reference::mbpp/913/0",
+      "true_rank": 1,
+      "true_score": 0.009290657937526703
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          336.2533264160156
+        ],
+        "same_code_different_input": [
+          157.05006408691406
+        ]
+      },
+      "transition_id": "mbpp/913::mbpp/913/reference::mbpp/913/1",
+      "true_rank": 1,
+      "true_score": 0.005086751189082861
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          398.7928161621094
+        ],
+        "same_code_different_input": [
+          160.67977905273438
+        ]
+      },
+      "transition_id": "mbpp/913::mbpp/913/reference::mbpp/913/2",
+      "true_rank": 1,
+      "true_score": 0.055280908942222595
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          334.8555603027344
+        ],
+        "same_code_different_input": [
+          155.87750244140625
+        ]
+      },
+      "transition_id": "mbpp/914::mbpp/914/reference::mbpp/914/0",
+      "true_rank": 1,
+      "true_score": 0.007603246718645096
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          399.9999084472656
+        ],
+        "same_code_different_input": [
+          159.17440795898438
+        ]
+      },
+      "transition_id": "mbpp/914::mbpp/914/reference::mbpp/914/1",
+      "true_rank": 1,
+      "true_score": 0.018071936443448067
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.0594482421875
+        ],
+        "same_code_different_input": [
+          154.90074157714844
+        ]
+      },
+      "transition_id": "mbpp/914::mbpp/914/reference::mbpp/914/2",
+      "true_rank": 1,
+      "true_score": 0.023788416758179665
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.350153923034668
+        ],
+        "same_code_different_input": [
+          17.01158905029297
+        ]
+      },
+      "transition_id": "mbpp/936::mbpp/936/reference::mbpp/936/0",
+      "true_rank": 1,
+      "true_score": 0.04101362079381943
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          3.469697952270508
+        ],
+        "same_code_different_input": [
+          15.082155227661133
+        ]
+      },
+      "transition_id": "mbpp/936::mbpp/936/reference::mbpp/936/1",
+      "true_rank": 1,
+      "true_score": 0.02489589899778366
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          3.0655055046081543
+        ],
+        "same_code_different_input": [
+          15.070830345153809
+        ]
+      },
+      "transition_id": "mbpp/936::mbpp/936/reference::mbpp/936/2",
+      "true_rank": 1,
+      "true_score": 0.03476472571492195
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          0.5928216576576233
+        ],
+        "same_code_different_input": [
+          71.58615112304688
+        ]
+      },
+      "transition_id": "mbpp/939::mbpp/939/reference::mbpp/939/0",
+      "true_rank": 1,
+      "true_score": 0.02070821076631546
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          0.9204546213150024
+        ],
+        "same_code_different_input": [
+          60.383541107177734
+        ]
+      },
+      "transition_id": "mbpp/939::mbpp/939/reference::mbpp/939/1",
+      "true_rank": 1,
+      "true_score": 0.026793744415044785
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.155437707901001
+        ],
+        "same_code_different_input": [
+          60.832271575927734
+        ]
+      },
+      "transition_id": "mbpp/939::mbpp/939/reference::mbpp/939/2",
+      "true_rank": 1,
+      "true_score": 0.021299343556165695
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.1577839851379395
+        ],
+        "same_code_different_input": [
+          36.03490447998047
+        ]
+      },
+      "transition_id": "mbpp/946::mbpp/946/reference::mbpp/946/0",
+      "true_rank": 1,
+      "true_score": 0.0332474559545517
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          11.361103057861328
+        ],
+        "same_code_different_input": [
+          11.91815185546875
+        ]
+      },
+      "transition_id": "mbpp/946::mbpp/946/reference::mbpp/946/1",
+      "true_rank": 1,
+      "true_score": 0.03188161924481392
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.175453782081604
+        ],
+        "same_code_different_input": [
+          36.14369201660156
+        ]
+      },
+      "transition_id": "mbpp/946::mbpp/946/reference::mbpp/946/2",
+      "true_rank": 1,
+      "true_score": 0.037588879466056824
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.31671142578125
+        ],
+        "same_code_different_input": [
+          344.8708190917969
+        ]
+      },
+      "transition_id": "mbpp/952::mbpp/952/reference::mbpp/952/0",
+      "true_rank": 1,
+      "true_score": 0.007683238014578819
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          263.4424133300781
+        ],
+        "same_code_different_input": [
+          384.49334716796875
+        ]
+      },
+      "transition_id": "mbpp/952::mbpp/952/reference::mbpp/952/1",
+      "true_rank": 1,
+      "true_score": 0.015106507577002048
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          291.4869079589844
+        ],
+        "same_code_different_input": [
+          383.9539489746094
+        ]
+      },
+      "transition_id": "mbpp/952::mbpp/952/reference::mbpp/952/2",
+      "true_rank": 1,
+      "true_score": 0.005985151045024395
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          184.15585327148438
+        ],
+        "same_code_different_input": [
+          71.9576644897461
+        ]
+      },
+      "transition_id": "mbpp/958::mbpp/958/reference::mbpp/958/0",
+      "true_rank": 1,
+      "true_score": 0.01945764571428299
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          385.8923645019531
+        ],
+        "same_code_different_input": [
+          268.8783874511719
+        ]
+      },
+      "transition_id": "mbpp/958::mbpp/958/reference::mbpp/958/1",
+      "true_rank": 1,
+      "true_score": 0.013707391917705536
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          78.037353515625
+        ],
+        "same_code_different_input": [
+          72.29367065429688
+        ]
+      },
+      "transition_id": "mbpp/958::mbpp/958/reference::mbpp/958/2",
+      "true_rank": 1,
+      "true_score": 0.0196284931153059
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          183.42977905273438
+        ],
+        "same_code_different_input": [
+          89.83012390136719
+        ]
+      },
+      "transition_id": "mbpp/959::mbpp/959/reference::mbpp/959/0",
+      "true_rank": 1,
+      "true_score": 0.015283137559890747
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          162.70123291015625
+        ],
+        "same_code_different_input": [
+          147.82156372070312
+        ]
+      },
+      "transition_id": "mbpp/959::mbpp/959/reference::mbpp/959/1",
+      "true_rank": 1,
+      "true_score": 0.01435907930135727
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          66.64871978759766
+        ],
+        "same_code_different_input": [
+          148.44850158691406
+        ]
+      },
+      "transition_id": "mbpp/959::mbpp/959/reference::mbpp/959/2",
+      "true_rank": 1,
+      "true_score": 0.03253989294171333
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          162.69314575195312
+        ],
+        "same_code_different_input": [
+          138.09164428710938
+        ]
+      },
+      "transition_id": "mbpp/965::mbpp/965/reference::mbpp/965/0",
+      "true_rank": 1,
+      "true_score": 0.013340653851628304
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          135.39736938476562
+        ],
+        "same_code_different_input": [
+          195.76153564453125
+        ]
+      },
+      "transition_id": "mbpp/965::mbpp/965/reference::mbpp/965/1",
+      "true_rank": 1,
+      "true_score": 0.015763403847813606
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          286.35430908203125
+        ],
+        "same_code_different_input": [
+          218.07823181152344
+        ]
+      },
+      "transition_id": "mbpp/965::mbpp/965/reference::mbpp/965/2",
+      "true_rank": 1,
+      "true_score": 0.012607965618371964
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          98.7417221069336
+        ],
+        "same_code_different_input": [
+          99.28005981445312
+        ]
+      },
+      "transition_id": "mbpp/967::mbpp/967/reference::mbpp/967/0",
+      "true_rank": 1,
+      "true_score": 0.01519742887467146
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          80.88449096679688
+        ],
+        "same_code_different_input": [
+          99.68376159667969
+        ]
+      },
+      "transition_id": "mbpp/967::mbpp/967/reference::mbpp/967/1",
+      "true_rank": 1,
+      "true_score": 0.019658446311950684
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          81.02423858642578
+        ],
+        "same_code_different_input": [
+          99.69792175292969
+        ]
+      },
+      "transition_id": "mbpp/967::mbpp/967/reference::mbpp/967/2",
+      "true_rank": 1,
+      "true_score": 0.019481517374515533
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          303.7510986328125
+        ],
+        "same_code_different_input": [
+          333.2932434082031
+        ]
+      },
+      "transition_id": "mbpp/968::mbpp/968/reference::mbpp/968/0",
+      "true_rank": 1,
+      "true_score": 0.00708498852327466
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          293.73394775390625
+        ],
+        "same_code_different_input": [
+          58.80357360839844
+        ]
+      },
+      "transition_id": "mbpp/968::mbpp/968/reference::mbpp/968/1",
+      "true_rank": 1,
+      "true_score": 0.01252184808254242
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.8948974609375
+        ],
+        "same_code_different_input": [
+          60.30549621582031
+        ]
+      },
+      "transition_id": "mbpp/968::mbpp/968/reference::mbpp/968/2",
+      "true_rank": 1,
+      "true_score": 0.008302259258925915
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.88058471679688
+        ],
+        "same_code_different_input": [
+          301.940185546875
+        ]
+      },
+      "transition_id": "mbpp/517::mbpp/517/reference::mbpp/517/0",
+      "true_rank": 1,
+      "true_score": 0.009844709187746048
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.88690185546875
+        ],
+        "same_code_different_input": [
+          300.80889892578125
+        ]
+      },
+      "transition_id": "mbpp/517::mbpp/517/reference::mbpp/517/1",
+      "true_rank": 1,
+      "true_score": 0.005760760512202978
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.3886413574219
+        ],
+        "same_code_different_input": [
+          262.02874755859375
+        ]
+      },
+      "transition_id": "mbpp/517::mbpp/517/reference::mbpp/517/2",
+      "true_rank": 1,
+      "true_score": 0.010724575258791447
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          325.6441650390625
+        ],
+        "same_code_different_input": [
+          100.74781799316406
+        ]
+      },
+      "transition_id": "mbpp/522::mbpp/522/reference::mbpp/522/0",
+      "true_rank": 1,
+      "true_score": 0.022005757316946983
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.277587890625
+        ],
+        "same_code_different_input": [
+          100.3572998046875
+        ]
+      },
+      "transition_id": "mbpp/522::mbpp/522/reference::mbpp/522/1",
+      "true_rank": 1,
+      "true_score": 0.00548590486869216
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          315.30523681640625
+        ],
+        "same_code_different_input": [
+          275.7453918457031
+        ]
+      },
+      "transition_id": "mbpp/522::mbpp/522/reference::mbpp/522/2",
+      "true_rank": 1,
+      "true_score": 0.0112808458507061
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          295.74114990234375
+        ],
+        "same_code_different_input": [
+          222.9420928955078
+        ]
+      },
+      "transition_id": "mbpp/540::mbpp/540/reference::mbpp/540/0",
+      "true_rank": 1,
+      "true_score": 0.006669902242720127
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          268.005615234375
+        ],
+        "same_code_different_input": [
+          192.3243865966797
+        ]
+      },
+      "transition_id": "mbpp/540::mbpp/540/reference::mbpp/540/1",
+      "true_rank": 1,
+      "true_score": 0.011861098930239677
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          415.8673095703125
+        ],
+        "same_code_different_input": [
+          211.61276245117188
+        ]
+      },
+      "transition_id": "mbpp/540::mbpp/540/reference::mbpp/540/2",
+      "true_rank": 1,
+      "true_score": 0.07077951729297638
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          479.3034973144531
+        ],
+        "same_code_different_input": [
+          531.3552856445312
+        ]
+      },
+      "transition_id": "mbpp/546::mbpp/546/reference::mbpp/546/0",
+      "true_rank": 1,
+      "true_score": 0.029106631875038147
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          323.85174560546875
+        ],
+        "same_code_different_input": [
+          371.2294616699219
+        ]
+      },
+      "transition_id": "mbpp/546::mbpp/546/reference::mbpp/546/1",
+      "true_rank": 1,
+      "true_score": 0.012850500643253326
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          426.1544189453125
+        ],
+        "same_code_different_input": [
+          534.14501953125
+        ]
+      },
+      "transition_id": "mbpp/546::mbpp/546/reference::mbpp/546/2",
+      "true_rank": 1,
+      "true_score": 0.010277901776134968
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.42706298828125
+        ],
+        "same_code_different_input": [
+          205.27346801757812
+        ]
+      },
+      "transition_id": "mbpp/549::mbpp/549/reference::mbpp/549/0",
+      "true_rank": 1,
+      "true_score": 0.02522106096148491
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          249.78672790527344
+        ],
+        "same_code_different_input": [
+          136.80108642578125
+        ]
+      },
+      "transition_id": "mbpp/549::mbpp/549/reference::mbpp/549/1",
+      "true_rank": 1,
+      "true_score": 0.028604306280612946
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          361.79217529296875
+        ],
+        "same_code_different_input": [
+          100.90345001220703
+        ]
+      },
+      "transition_id": "mbpp/549::mbpp/549/reference::mbpp/549/2",
+      "true_rank": 1,
+      "true_score": 0.019688379019498825
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          234.81619262695312
+        ],
+        "same_code_different_input": [
+          308.18310546875
+        ]
+      },
+      "transition_id": "mbpp/577::mbpp/577/reference::mbpp/577/0",
+      "true_rank": 1,
+      "true_score": 0.039580948650836945
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          417.7013854980469
+        ],
+        "same_code_different_input": [
+          310.2333679199219
+        ]
+      },
+      "transition_id": "mbpp/577::mbpp/577/reference::mbpp/577/1",
+      "true_rank": 1,
+      "true_score": 0.008977048099040985
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          417.58367919921875
+        ],
+        "same_code_different_input": [
+          310.2264404296875
+        ]
+      },
+      "transition_id": "mbpp/577::mbpp/577/reference::mbpp/577/2",
+      "true_rank": 1,
+      "true_score": 0.03539010509848595
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          16.758014678955078
+        ],
+        "same_code_different_input": [
+          83.44015502929688
+        ]
+      },
+      "transition_id": "mbpp/579::mbpp/579/reference::mbpp/579/0",
+      "true_rank": 1,
+      "true_score": 0.040203653275966644
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          23.760873794555664
+        ],
+        "same_code_different_input": [
+          73.54383850097656
+        ]
+      },
+      "transition_id": "mbpp/579::mbpp/579/reference::mbpp/579/1",
+      "true_rank": 1,
+      "true_score": 0.02661629393696785
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          25.45380401611328
+        ],
+        "same_code_different_input": [
+          82.40447998046875
+        ]
+      },
+      "transition_id": "mbpp/579::mbpp/579/reference::mbpp/579/2",
+      "true_rank": 1,
+      "true_score": 0.021946603432297707
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.128334999084473
+        ],
+        "same_code_different_input": [
+          380.63031005859375
+        ]
+      },
+      "transition_id": "mbpp/587::mbpp/587/reference::mbpp/587/0",
+      "true_rank": 1,
+      "true_score": 0.03728724643588066
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          2.7464020252227783
+        ],
+        "same_code_different_input": [
+          35.11473846435547
+        ]
+      },
+      "transition_id": "mbpp/587::mbpp/587/reference::mbpp/587/1",
+      "true_rank": 1,
+      "true_score": 0.03511283919215202
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          45.206146240234375
+        ],
+        "same_code_different_input": [
+          402.6477355957031
+        ]
+      },
+      "transition_id": "mbpp/587::mbpp/587/reference::mbpp/587/2",
+      "true_rank": 1,
+      "true_score": 0.010143574327230453
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.92254638671875
+        ],
+        "same_code_different_input": [
+          154.7135467529297
+        ]
+      },
+      "transition_id": "mbpp/600::mbpp/600/reference::mbpp/600/0",
+      "true_rank": 1,
+      "true_score": 0.038396477699279785
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          338.84442138671875
+        ],
+        "same_code_different_input": [
+          161.3018798828125
+        ]
+      },
+      "transition_id": "mbpp/600::mbpp/600/reference::mbpp/600/1",
+      "true_rank": 1,
+      "true_score": 0.04292438551783562
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.63580322265625
+        ],
+        "same_code_different_input": [
+          154.3565216064453
+        ]
+      },
+      "transition_id": "mbpp/600::mbpp/600/reference::mbpp/600/2",
+      "true_rank": 1,
+      "true_score": 0.03883982449769974
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          114.87755584716797
+        ],
+        "same_code_different_input": [
+          101.31774139404297
+        ]
+      },
+      "transition_id": "mbpp/14::mbpp/14/reference::mbpp/14/0",
+      "true_rank": 1,
+      "true_score": 0.015798838809132576
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          71.46726989746094
+        ],
+        "same_code_different_input": [
+          100.79800415039062
+        ]
+      },
+      "transition_id": "mbpp/14::mbpp/14/reference::mbpp/14/1",
+      "true_rank": 1,
+      "true_score": 0.01790802925825119
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          197.57125854492188
+        ],
+        "same_code_different_input": [
+          115.59012603759766
+        ]
+      },
+      "transition_id": "mbpp/14::mbpp/14/reference::mbpp/14/2",
+      "true_rank": 1,
+      "true_score": 0.030348703265190125
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          21.80302619934082
+        ],
+        "same_code_different_input": [
+          96.7305908203125
+        ]
+      },
+      "transition_id": "mbpp/15::mbpp/15/reference::mbpp/15/0",
+      "true_rank": 1,
+      "true_score": 0.01332249864935875
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          8.154699325561523
+        ],
+        "same_code_different_input": [
+          85.10702514648438
+        ]
+      },
+      "transition_id": "mbpp/15::mbpp/15/reference::mbpp/15/1",
+      "true_rank": 1,
+      "true_score": 0.021336738020181656
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.4068315029144287
+        ],
+        "same_code_different_input": [
+          85.6944580078125
+        ]
+      },
+      "transition_id": "mbpp/15::mbpp/15/reference::mbpp/15/2",
+      "true_rank": 1,
+      "true_score": 0.030158834531903267
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          236.68190002441406
+        ],
+        "same_code_different_input": [
+          382.3403015136719
+        ]
+      },
+      "transition_id": "mbpp/24::mbpp/24/reference::mbpp/24/0",
+      "true_rank": 1,
+      "true_score": 0.03720031678676605
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          263.9772644042969
+        ],
+        "same_code_different_input": [
+          384.07672119140625
+        ]
+      },
+      "transition_id": "mbpp/24::mbpp/24/reference::mbpp/24/1",
+      "true_rank": 1,
+      "true_score": 0.013558412902057171
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          379.8671875
+        ],
+        "same_code_different_input": [
+          511.9892578125
+        ]
+      },
+      "transition_id": "mbpp/24::mbpp/24/reference::mbpp/24/2",
+      "true_rank": 1,
+      "true_score": 0.01075771078467369
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          340.25152587890625
+        ],
+        "same_code_different_input": [
+          162.00869750976562
+        ]
+      },
+      "transition_id": "mbpp/26::mbpp/26/reference::mbpp/26/0",
+      "true_rank": 1,
+      "true_score": 0.053678303956985474
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          336.12615966796875
+        ],
+        "same_code_different_input": [
+          157.08438110351562
+        ]
+      },
+      "transition_id": "mbpp/26::mbpp/26/reference::mbpp/26/1",
+      "true_rank": 1,
+      "true_score": 0.004799744114279747
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          395.6848449707031
+        ],
+        "same_code_different_input": [
+          156.02224731445312
+        ]
+      },
+      "transition_id": "mbpp/26::mbpp/26/reference::mbpp/26/2",
+      "true_rank": 1,
+      "true_score": 0.009568766690790653
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.7492980957031
+        ],
+        "same_code_different_input": [
+          218.55918884277344
+        ]
+      },
+      "transition_id": "mbpp/29::mbpp/29/reference::mbpp/29/0",
+      "true_rank": 1,
+      "true_score": 0.025690222159028053
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          267.37939453125
+        ],
+        "same_code_different_input": [
+          34.6175651550293
+        ]
+      },
+      "transition_id": "mbpp/29::mbpp/29/reference::mbpp/29/1",
+      "true_rank": 1,
+      "true_score": 0.005896023474633694
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          313.13751220703125
+        ],
+        "same_code_different_input": [
+          34.317543029785156
+        ]
+      },
+      "transition_id": "mbpp/29::mbpp/29/reference::mbpp/29/2",
+      "true_rank": 1,
+      "true_score": 0.00657271221280098
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          193.5232391357422
+        ],
+        "same_code_different_input": [
+          96.83182525634766
+        ]
+      },
+      "transition_id": "mbpp/38::mbpp/38/reference::mbpp/38/0",
+      "true_rank": 1,
+      "true_score": 0.028966495767235756
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          66.85227966308594
+        ],
+        "same_code_different_input": [
+          96.57606506347656
+        ]
+      },
+      "transition_id": "mbpp/38::mbpp/38/reference::mbpp/38/1",
+      "true_rank": 1,
+      "true_score": 0.03126062452793121
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          72.25452423095703
+        ],
+        "same_code_different_input": [
+          82.5655517578125
+        ]
+      },
+      "transition_id": "mbpp/38::mbpp/38/reference::mbpp/38/2",
+      "true_rank": 1,
+      "true_score": 0.0253443643450737
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          3.9386801719665527
+        ],
+        "same_code_different_input": [
+          55.13960266113281
+        ]
+      },
+      "transition_id": "mbpp/40::mbpp/40/reference::mbpp/40/0",
+      "true_rank": 1,
+      "true_score": 0.03504612296819687
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.3559391498565674
+        ],
+        "same_code_different_input": [
+          33.21803665161133
+        ]
+      },
+      "transition_id": "mbpp/40::mbpp/40/reference::mbpp/40/1",
+      "true_rank": 1,
+      "true_score": 0.03815484419465065
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.4589412212371826
+        ],
+        "same_code_different_input": [
+          55.45566940307617
+        ]
+      },
+      "transition_id": "mbpp/40::mbpp/40/reference::mbpp/40/2",
+      "true_rank": 1,
+      "true_score": 0.0241952333599329
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          64.23002624511719
+        ]
+      },
+      "transition_id": "2367::2367/sol-0::2367/case-0",
+      "true_rank": 1,
+      "true_score": 0.012354124337434769
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          64.04532623291016
+        ]
+      },
+      "transition_id": "2367::2367/sol-1::2367/case-0",
+      "true_rank": 1,
+      "true_score": 0.010128448717296124
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          41.174278259277344
+        ]
+      },
+      "transition_id": "2377::2377/sol-0::2377/case-0",
+      "true_rank": 1,
+      "true_score": 0.017834294587373734
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          41.41823196411133
+        ]
+      },
+      "transition_id": "2377::2377/sol-1::2377/case-0",
+      "true_rank": 1,
+      "true_score": 0.015058980323374271
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.716261386871338
+        ],
+        "same_problem_different_submission": [
+          0.029413633048534393
+        ]
+      },
+      "transition_id": "2386::2386/sol-0::2386/case-0",
+      "true_rank": 1,
+      "true_score": 0.02284991182386875
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          4.6636552810668945
+        ],
+        "same_problem_different_submission": [
+          0.0402580089867115
+        ]
+      },
+      "transition_id": "2386::2386/sol-1::2386/case-0",
+      "true_rank": 1,
+      "true_score": 0.021540861576795578
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          19.977691650390625
+        ],
+        "same_problem_different_submission": [
+          55.34225845336914
+        ]
+      },
+      "transition_id": "2388::2388/sol-0::2388/case-0",
+      "true_rank": 1,
+      "true_score": 0.031451765447854996
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          26.215259552001953
+        ],
+        "same_problem_different_submission": [
+          56.28142547607422
+        ]
+      },
+      "transition_id": "2388::2388/sol-1::2388/case-0",
+      "true_rank": 1,
+      "true_score": 0.024444034323096275
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          119.53794860839844
+        ]
+      },
+      "transition_id": "2389::2389/sol-0::2389/case-0",
+      "true_rank": 1,
+      "true_score": 0.01131823193281889
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          119.3819351196289
+        ]
+      },
+      "transition_id": "2389::2389/sol-1::2389/case-0",
+      "true_rank": 1,
+      "true_score": 0.010765546932816505
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          1.652795672416687
+        ],
+        "same_problem_different_submission": [
+          111.79373168945312
+        ]
+      },
+      "transition_id": "2391::2391/sol-0::2391/case-0",
+      "true_rank": 1,
+      "true_score": 0.024492362514138222
+    },
+    {
+      "candidate_count": 3,
+      "decoy_scores_by_category": {
+        "mutation": [
+          16.274459838867188
+        ],
+        "same_problem_different_submission": [
+          112.77147674560547
+        ]
+      },
+      "transition_id": "2391::2391/sol-1::2391/case-0",
+      "true_rank": 1,
+      "true_score": 0.02691258117556572
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          39.55965805053711
+        ]
+      },
+      "transition_id": "2393::2393/sol-0::2393/case-0",
+      "true_rank": 1,
+      "true_score": 0.02086302638053894
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          39.5462646484375
+        ]
+      },
+      "transition_id": "2393::2393/sol-1::2393/case-0",
+      "true_rank": 1,
+      "true_score": 0.021198449656367302
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          42.55585479736328
+        ]
+      },
+      "transition_id": "2559::2559/sol-0::2559/case-0",
+      "true_rank": 1,
+      "true_score": 0.013845128007233143
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          42.71855545043945
+        ]
+      },
+      "transition_id": "2559::2559/sol-1::2559/case-0",
+      "true_rank": 1,
+      "true_score": 0.013606363907456398
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          373.84417724609375
+        ]
+      },
+      "transition_id": "2561::2561/sol-0::2561/case-0",
+      "true_rank": 1,
+      "true_score": 0.009004393592476845
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          374.87890625
+        ]
+      },
+      "transition_id": "2561::2561/sol-1::2561/case-0",
+      "true_rank": 1,
+      "true_score": 0.009015222080051899
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          24.39777374267578
+        ]
+      },
+      "transition_id": "2588::2588/sol-0::2588/case-0",
+      "true_rank": 1,
+      "true_score": 0.008284993469715118
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          267.1751403808594
+        ]
+      },
+      "transition_id": "2590::2590/sol-0::2590/case-0",
+      "true_rank": 1,
+      "true_score": 0.013969874009490013
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          267.20513916015625
+        ]
+      },
+      "transition_id": "2590::2590/sol-1::2590/case-0",
+      "true_rank": 1,
+      "true_score": 0.009104324504733086
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          398.797119140625
+        ]
+      },
+      "transition_id": "2598::2598/sol-0::2598/case-0",
+      "true_rank": 1,
+      "true_score": 0.011122861877083778
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          396.6818542480469
+        ]
+      },
+      "transition_id": "2598::2598/sol-1::2598/case-0",
+      "true_rank": 1,
+      "true_score": 0.009006286039948463
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          100.46835327148438
+        ]
+      },
+      "transition_id": "2599::2599/sol-0::2599/case-0",
+      "true_rank": 1,
+      "true_score": 0.001125146052800119
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          62.86396026611328
+        ]
+      },
+      "transition_id": "2601::2601/sol-0::2601/case-0",
+      "true_rank": 1,
+      "true_score": 0.009830544702708721
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          62.73908233642578
+        ]
+      },
+      "transition_id": "2601::2601/sol-1::2601/case-0",
+      "true_rank": 1,
+      "true_score": 0.008871548809111118
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          315.0828552246094
+        ]
+      },
+      "transition_id": "2605::2605/sol-0::2605/case-0",
+      "true_rank": 1,
+      "true_score": 0.006748513784259558
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          314.6392822265625
+        ]
+      },
+      "transition_id": "2605::2605/sol-1::2605/case-0",
+      "true_rank": 1,
+      "true_score": 0.005696733482182026
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          29.088821411132812
+        ]
+      },
+      "transition_id": "2607::2607/sol-0::2607/case-0",
+      "true_rank": 1,
+      "true_score": 0.01919754222035408
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          103.42562866210938
+        ]
+      },
+      "transition_id": "2612::2612/sol-0::2612/case-0",
+      "true_rank": 1,
+      "true_score": 0.013162657618522644
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          103.40286254882812
+        ]
+      },
+      "transition_id": "2612::2612/sol-1::2612/case-0",
+      "true_rank": 1,
+      "true_score": 0.010923466645181179
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          333.21624755859375
+        ]
+      },
+      "transition_id": "2613::2613/sol-0::2613/case-0",
+      "true_rank": 1,
+      "true_score": 0.013984749093651772
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          333.21575927734375
+        ]
+      },
+      "transition_id": "2613::2613/sol-1::2613/case-0",
+      "true_rank": 1,
+      "true_score": 0.013748602010309696
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          5.688601493835449
+        ]
+      },
+      "transition_id": "2617::2617/sol-0::2617/case-0",
+      "true_rank": 1,
+      "true_score": 0.015349218621850014
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          5.659638404846191
+        ]
+      },
+      "transition_id": "2617::2617/sol-1::2617/case-0",
+      "true_rank": 1,
+      "true_score": 0.015764210373163223
+    }
+  ],
+  "metadata": {
+    "action_view": "text",
+    "checkpoint": {
+      "backend": "torch",
+      "model_class": "TorchCodeTransitionModel",
+      "path": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt",
+      "sha256": "c4aaae5ad5ebae7a32c7a79520496a2ca039b3a1b9a4a6d3c6199f1274fc2b20",
+      "step": 50000
+    },
+    "dataset": {
+      "artifact_id": "codelewm-execution-pack-20260528T102625Z",
+      "path": ".artifacts/v0_6/execution-pack",
+      "record_count": 1605,
+      "schema_version": "codelewm.execution_pack_manifest.v1"
+    },
+    "decoy_policy": {
+      "requested": [
+        "mutation",
+        "same_problem_different_submission",
+        "same_code_different_input"
+      ]
+    },
+    "execution_decoy_generation": {
+      "mutation_pair_count": 236,
+      "reports": [
+        {
+          "category": "same_problem_different_submission",
+          "eligible_query_count": 32,
+          "pair_count": 6,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "no_other_submission": 204,
+            "outputs_identical": 26
+          }
+        },
+        {
+          "category": "same_code_different_input",
+          "eligible_query_count": 201,
+          "pair_count": 195,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "no_other_input": 35,
+            "outputs_identical": 6
+          }
+        }
+      ],
+      "schema_version": "codelewm.eval.execution_surprise_decoy_summary.v1"
+    },
+    "substrate": "execution_trace_v1",
+    "training_artifact_id": "training_run-cb62408f881eff8c"
+  },
+  "metrics": {
+    "decoy_counts": {
+      "action_cluster": 0,
+      "mutation": 236,
+      "random": 0,
+      "same_code_different_input": 195,
+      "same_file": 0,
+      "same_problem_different_submission": 6
+    },
+    "example_count": 236,
+    "mean_true_rank": 1.0,
+    "median_true_rank": 1.0,
+    "pairwise_auc_by_category": {
+      "mutation": 1.0,
+      "same_code_different_input": 1.0,
+      "same_problem_different_submission": 1.0
+    },
+    "pairwise_auc_overall": 1.0,
+    "recall_at_1": 1.0
+  },
+  "schema_version": "codelewm.eval.surprise_report.v1",
+  "score_direction": "lower_is_better"
+}

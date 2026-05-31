@@ -130,6 +130,48 @@ class ManifestVerifyCliTest(unittest.TestCase):
         self.assertEqual(payload["parents_checked"], ["dataset-parent"])
         self.assertEqual(payload["parent_artifacts"], ["dataset-parent"])
 
+    def test_manifest_verify_cli_accepts_legacy_execution_pack_parent_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as parent_tmp, tempfile.TemporaryDirectory() as child_tmp:
+            parent_root = Path(parent_tmp)
+            parent_artifact = parent_root / "pack.jsonl"
+            parent_artifact.write_text("{}\n", encoding="utf-8")
+            parent_manifest = build_artifact_manifest(
+                artifact_kind="dataset",
+                root=parent_root,
+                files=(parent_artifact,),
+                command=("codelewm", "dataset", "execution-pack"),
+                config={"name": "parent"},
+                source_git_sha="0" * 40,
+                artifact_id="dataset-parent",
+            )
+            parent_manifest_path = parent_root / "manifest.json"
+            write_artifact_manifest(parent_manifest, parent_manifest_path)
+
+            child_root = Path(child_tmp)
+            child_artifact = child_root / "training_manifest.json"
+            child_artifact.write_text("{}\n", encoding="utf-8")
+            child_manifest = build_artifact_manifest(
+                artifact_kind="training_run",
+                root=child_root,
+                files=(child_artifact,),
+                command=("codelewm", "train"),
+                config={"name": "child"},
+                parent_artifacts=("execution_pack:dataset-parent",),
+                source_git_sha="0" * 40,
+            )
+            child_manifest_path = child_root / "manifest.json"
+            write_artifact_manifest(child_manifest, child_manifest_path)
+
+            completed = _run_verify(
+                child_manifest_path, "--parent-manifest", str(parent_manifest_path)
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["parents_checked"], ["dataset-parent"])
+        self.assertEqual(payload["parent_artifacts"], ["execution_pack:dataset-parent"])
+
     def test_manifest_verify_cli_reports_missing_artifact_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

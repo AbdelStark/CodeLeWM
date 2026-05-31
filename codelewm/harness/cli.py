@@ -3981,7 +3981,11 @@ def _manifest_verify_command(args: argparse.Namespace) -> int:
                 parent_manifest, root=parent_manifest_path.parent
             )
             parent_ids.append(parent_manifest.artifact_id)
-        missing_parents = sorted(set(manifest.parent_artifacts) - set(parent_ids))
+        accepted_parent_ids = set(parent_ids)
+        accepted_parent_ids.update(
+            f"execution_pack:{parent_id}" for parent_id in parent_ids
+        )
+        missing_parents = sorted(set(manifest.parent_artifacts) - accepted_parent_ids)
         if missing_parents:
             raise ScoreError(
                 "manifest parent artifact(s) were not provided: "

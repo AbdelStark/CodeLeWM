@@ -1,0 +1,16 @@
+{
+  "bootstrap_samples": 500,
+  "checkpoint": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt",
+  "device": "cpu",
+  "max_examples_per_split": 1000,
+  "out": ".artifacts/v0_6/eval-305/seed-42/execution_probe",
+  "pack": ".artifacts/v0_6/execution-pack",
+  "schema_version": "codelewm.eval.execution_probe_run.v1",
+  "seed": 42,
+  "targets": [
+    "output_type",
+    "will_raise",
+    "output_magnitude_bucket",
+    "output_length_bucket"
+  ]
+}

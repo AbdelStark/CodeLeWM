@@ -1,0 +1,15 @@
+{
+  "baselines": [
+    "random",
+    "lexical",
+    "no_action",
+    "shuffled_action"
+  ],
+  "checkpoint": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt",
+  "device": "cpu",
+  "max_candidates": 1000,
+  "out": ".artifacts/v0_6/eval-305/seed-1729/execution_retrieval",
+  "pack": ".artifacts/v0_6/execution-pack",
+  "schema_version": "codelewm.eval.execution_retrieval_run.v1",
+  "seed": 1729
+}

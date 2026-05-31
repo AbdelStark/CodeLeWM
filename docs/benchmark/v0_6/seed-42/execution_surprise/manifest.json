@@ -1,0 +1,81 @@
+{
+  "artifact_id": "eval_report-06ac38fbc347961d",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "execution-surprise",
+    "--checkpoint",
+    ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt",
+    "--pack",
+    ".artifacts/v0_6/execution-pack",
+    "--decoys",
+    "mutation,same_problem_different_submission,same_code_different_input",
+    "--out",
+    ".artifacts/v0_6/eval-305/seed-42/execution_surprise",
+    "--device",
+    "cpu",
+    "--max-examples",
+    "1000",
+    "--seed",
+    "42",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "c9fb2c01ce3a958e88ebb30bf6d5c3f230f9b73db8f4756523105cb30463ff71",
+  "created_at": "2026-05-31T11:00:50Z",
+  "files": [
+    {
+      "bytes": 488,
+      "path": "config.json",
+      "sha256": "6f408960e85ef979d378fd07324aa5eaa0a85bddd03adbfd6ed7ce2a1af6e228"
+    },
+    {
+      "bytes": 82779,
+      "path": "reports/surprise_report.json",
+      "sha256": "7ddf0a0ddd3d4e0d019c0a0ffd91406aeb35a0c0be129cfb342dcb0dc9503eb2"
+    },
+    {
+      "bytes": 707,
+      "path": "reports/execution_decoy_report.json",
+      "sha256": "cbc4a6df9d5e4b79cbfc54576a2ef0d4021b0fbaebd533142cabb2ec44497861"
+    }
+  ],
+  "metadata": {
+    "checkpoint_sha256": "c4aaae5ad5ebae7a32c7a79520496a2ca039b3a1b9a4a6d3c6199f1274fc2b20",
+    "checkpoint_step": 50000,
+    "dataset_artifact_id": "codelewm-execution-pack-20260528T102625Z",
+    "example_count": 236,
+    "execution_decoy_report_path": "reports/execution_decoy_report.json",
+    "metrics": {
+      "decoy_counts": {
+        "action_cluster": 0,
+        "mutation": 236,
+        "random": 0,
+        "same_code_different_input": 195,
+        "same_file": 0,
+        "same_problem_different_submission": 6
+      },
+      "example_count": 236,
+      "mean_true_rank": 1.0,
+      "median_true_rank": 1.0,
+      "pairwise_auc_by_category": {
+        "mutation": 1.0,
+        "same_code_different_input": 1.0,
+        "same_problem_different_submission": 1.0
+      },
+      "pairwise_auc_overall": 1.0,
+      "recall_at_1": 1.0
+    },
+    "report_path": "reports/surprise_report.json",
+    "report_schema_version": "codelewm.eval.surprise_report.v1",
+    "schema_version": "codelewm.eval.execution_surprise_run.v1",
+    "training_artifact_id": "training_run-cb62408f881eff8c"
+  },
+  "parent_artifacts": [
+    "training_run-cb62408f881eff8c",
+    "codelewm-execution-pack-20260528T102625Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "61128da170c8453147f35ac5f3b8528d82365d01"
+}
