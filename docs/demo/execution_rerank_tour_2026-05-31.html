@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeLeWM execution-rerank tour</title>
+<style>
+body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #17201b; background: #f6f8f5; }
+.hero { padding: 32px 20px; background: #10251b; color: #f6fff9; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9ce0bd; }
+h1 { margin: 8px 0 10px; font-size: 34px; line-height: 1.1; }
+h2 { margin: 0 0 12px; font-size: 22px; }
+.deck { max-width: 760px; color: #d7eee0; }
+.pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.pill { border: 1px solid #6ea883; border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+main { padding: 24px 20px 48px; }
+section { margin: 0 auto 22px; max-width: 1120px; }
+.panel { background: #fff; border: 1px solid #d7ded8; border-radius: 8px; padding: 18px; box-shadow: 0 1px 2px rgba(16,37,27,.05); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; border-bottom: 1px solid #e4ebe5; padding: 8px; vertical-align: top; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #111814; color: #e7fff0; border-radius: 6px; padding: 10px; font-size: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.ok { color: #126b37; font-weight: 700; }
+.bad { color: #8a2d20; font-weight: 700; }
+.muted { color: #5d6a62; }
+.rank { color: #315f8f; font-weight: 700; }
+.code { margin-top: 8px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">CodeLeWM v0.6 execution substrate</div>
+    <h1>LLM candidate generation plus world-model reranking</h1>
+    <p class="deck">This self-contained tour samples candidate Python solutions, labels them with the dedicated sandbox path, scores them with the configured checkpoint, and keeps the public claim gate closed.</p>
+    <div class="pillrow">
+      <span class="pill">model: codelewm.execution_torch_transition_scorer.v1</span>
+      <span class="pill">problems: 5</span>
+      <span class="pill">claim allowed: false</span>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Aggregate pass@1</h2>
+    <table><thead><tr><th>baseline</th><th>pass@1</th><th>passed</th></tr></thead><tbody><tr><td>random</td><td>1.000</td><td>5/5</td></tr>
+<tr><td>lexical</td><td>1.000</td><td>5/5</td></tr>
+<tr><td>llm_order</td><td>1.000</td><td>5/5</td></tr>
+<tr><td>no_action</td><td>1.000</td><td>5/5</td></tr>
+<tr><td>shuffled_action</td><td>1.000</td><td>5/5</td></tr>
+<tr><td>codelewm</td><td>1.000</td><td>5/5</td></tr></tbody></table>
+    <p class="muted">Claim gate: demo_tour_is_not_scaled_downstream_benchmark_evidence; coding-usefulness claims require the 100-example gate</p>
+  </section>
+  <section>
+    <div class="grid"><article class="panel"><h2>Square an integer</h2><p class="muted">Implement compute_square so it returns n * n for any integer n.</p><p class="rank">CodeLeWM order: mbpp-demo-square::candidate_002, mbpp-demo-square::candidate_001</p><table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead><tbody><tr><td>mbpp-demo-square::candidate_001</td><td class="ok">pass</td><td>-15.2928</td><td>1</td><td>square-pos:pass, square-neg:pass</td></tr><tr><td colspan="5"><pre class="code">def compute_square(n):
+    return n * n
+</pre></td></tr><tr><td>mbpp-demo-square::candidate_002</td><td class="ok">pass</td><td>-14.5267</td><td>2</td><td>square-pos:pass, square-neg:pass</td></tr><tr><td colspan="5"><pre class="code">def compute_square(n):
+    return n ** 2
+</pre></td></tr></tbody></table><pre>00d70c349be53a67c0732dadd6d8d16435731c8d616ff49a17121dae2c2185fc</pre></article>
+<article class="panel"><h2>Sum a list</h2><p class="muted">Implement total so it returns the sum of a list and returns 0 for an empty list.</p><p class="rank">CodeLeWM order: mbpp-demo-total::candidate_001, mbpp-demo-total::candidate_002</p><table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead><tbody><tr><td>mbpp-demo-total::candidate_001</td><td class="ok">pass</td><td>-14.7951</td><td>1</td><td>total-values:pass, total-empty:pass</td></tr><tr><td colspan="5"><pre class="code">def total(xs):
+    return sum(xs) if xs else 0
+</pre></td></tr><tr><td>mbpp-demo-total::candidate_002</td><td class="ok">pass</td><td>-14.8289</td><td>2</td><td>total-values:pass, total-empty:pass</td></tr><tr><td colspan="5"><pre class="code">def total(xs):
+    if not xs:
+        return 0
+    return sum(xs)
+</pre></td></tr></tbody></table><pre>bf460de2e3c578b5d19749004117c784ae7adc612955567111e478def7761a0d</pre></article>
+<article class="panel"><h2>Detect even integers</h2><p class="muted">Implement is_even so it returns True for even integers and False for odd integers.</p><p class="rank">CodeLeWM order: mbpp-demo-even::candidate_001, mbpp-demo-even::candidate_002</p><table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead><tbody><tr><td>mbpp-demo-even::candidate_001</td><td class="ok">pass</td><td>-13.0270</td><td>1</td><td>even-true:pass, even-false:pass</td></tr><tr><td colspan="5"><pre class="code">def is_even(n):
+    return n % 2 == 0
+</pre></td></tr><tr><td>mbpp-demo-even::candidate_002</td><td class="ok">pass</td><td>-16.0875</td><td>2</td><td>even-true:pass, even-false:pass</td></tr><tr><td colspan="5"><pre class="code">def is_even(n):
+    return not n % 2
+</pre></td></tr></tbody></table><pre>86ff63d34324c1ac0e5c3d82c9902333752ab8a383becf17ac3660b8a41dfb1f</pre></article>
+<article class="panel"><h2>Reverse a string</h2><p class="muted">Implement reverse_text so it returns the input string in reverse order.</p><p class="rank">CodeLeWM order: mbpp-demo-reverse::candidate_001, mbpp-demo-reverse::candidate_002</p><table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead><tbody><tr><td>mbpp-demo-reverse::candidate_001</td><td class="ok">pass</td><td>-15.0754</td><td>1</td><td>reverse-word:pass, reverse-empty:pass</td></tr><tr><td colspan="5"><pre class="code">def reverse_text(text):
+    return text[::-1]
+</pre></td></tr><tr><td>mbpp-demo-reverse::candidate_002</td><td class="ok">pass</td><td>-16.7460</td><td>2</td><td>reverse-word:pass, reverse-empty:pass</td></tr><tr><td colspan="5"><pre class="code">def reverse_text(text):
+    return &#x27;&#x27;.join(reversed(text))
+</pre></td></tr></tbody></table><pre>66bfe4934775de142d00fdf0a5400d53c62e37f3c5e0a7abd37c277bc6f18486</pre></article>
+<article class="panel"><h2>Clamp a value</h2><p class="muted">Implement clamp so values below low return low, values above high return high, and in-range values are unchanged.</p><p class="rank">CodeLeWM order: mbpp-demo-clamp::candidate_001, mbpp-demo-clamp::candidate_002</p><table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead><tbody><tr><td>mbpp-demo-clamp::candidate_001</td><td class="ok">pass</td><td>-10.5192</td><td>1</td><td>clamp-high:pass, clamp-low:pass</td></tr><tr><td colspan="5"><pre class="code">def clamp(value, low, high):
+    return max(low, min(value, high))
+</pre></td></tr><tr><td>mbpp-demo-clamp::candidate_002</td><td class="ok">pass</td><td>-14.4615</td><td>2</td><td>clamp-high:pass, clamp-low:pass</td></tr><tr><td colspan="5"><pre class="code">def clamp(value, low, high):
+    if value &lt; low:
+        return low
+    elif value &gt; high:
+        return high
+    return value
+</pre></td></tr></tbody></table><pre>9f9d47fccdfae2750825b69e89ab941e4f40c97e04f656e060c7ba07a74a9667</pre></article></div>
+  </section>
+</main>
+</body>
+</html>

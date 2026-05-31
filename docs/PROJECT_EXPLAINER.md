@@ -25,7 +25,11 @@
 > upload. The v0.6 execution-rerank tour artifact lives at
 > `docs/demo/execution_rerank_tour_2026-05-31.cast` and can be reproduced
 > with `scripts/llm-world-model-demo --scenario execution-rerank-mbpp --tour 5 --html <path>`
-> after downloading the seed-42 checkpoint. The
+> after downloading the seed-42 checkpoint. The v0.6 public artifact landing is
+> `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`, with cards under
+> `docs/cards/`, the announcement draft at
+> `docs/blog/2026-05-31-codelewm-v0-6-substrate-pivot.md`, and final release
+> coordination tracked in `docs/release/V0_6_PUBLICATION_COORDINATION.md`. The
 > current framing is
 > partial positive: v0.6 passes the substrate-shape, execution-pack
 > retrieval, and generated-decoy surprise gates; latent-probe,

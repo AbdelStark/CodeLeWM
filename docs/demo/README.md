@@ -7,6 +7,7 @@ claims.
 ## v0.6 Execution-Rerank Tour
 
 - Asciicast: `execution_rerank_tour_2026-05-31.cast`
+- Static HTML: `execution_rerank_tour_2026-05-31.html`
 - Scenario: `execution-rerank-mbpp`
 - Checkpoint source: `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42`
 - Result: five synthetic MBPP-style tasks, two live OpenRouter candidates per
