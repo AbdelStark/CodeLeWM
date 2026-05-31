@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from codelewm.eval import (
+    COMPLETION_LABEL_SCHEMA_VERSION,
     EXECUTION_RERANK_REPORT_SCHEMA_VERSION,
     CompletionLabel,
     ExecutionRerankError,
@@ -173,6 +174,35 @@ class CompletionLabelsLoaderTest(unittest.TestCase):
             load_completion_labels(
                 Path("/nonexistent.jsonl"), benchmark_id="humaneval"
             )
+
+    def test_loads_completion_label_v1_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "labels.jsonl"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+                        "benchmark_id": "mbpp-plus",
+                        "problem_id": "Mbpp/1",
+                        "completion_id": "Mbpp/1::seed-42::rank-1",
+                        "completion_text": "def square(n):\n    return n * n\n",
+                        "llm_order_rank": 1,
+                        "label": "pass",
+                        "test_results": [
+                            {
+                                "input_id": "Mbpp/1/case-0",
+                                "passed": True,
+                            }
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            labels = load_completion_labels(path, benchmark_id="mbpp_plus")
+            self.assertEqual(len(labels), 1)
+            self.assertEqual(labels[0].code, "def square(n):\n    return n * n\n")
+            self.assertTrue(labels[0].passed)
 
 
 if __name__ == "__main__":  # pragma: no cover

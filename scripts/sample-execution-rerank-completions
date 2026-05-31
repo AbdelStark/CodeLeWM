@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+"""Sample and sandbox-label HumanEval / MBPP-Plus completions."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from codelewm.data.execution_rerank_sampler import (
+    DEFAULT_EXECUTION_RERANK_LLM,
+    CompletionSamplingError,
+    parse_llm_seed_csv,
+    policy_from_args,
+    sample_execution_rerank_completions,
+    script_command,
+)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Sample LLM completions and label them through the CodeLeWM sandbox."
+    )
+    parser.add_argument(
+        "--benchmark",
+        required=True,
+        choices=("humaneval", "mbpp-plus", "mbpp_plus"),
+        help="held-out benchmark to label",
+    )
+    parser.add_argument(
+        "--source",
+        required=True,
+        type=Path,
+        help="already-downloaded HumanEval or MBPP-Plus JSONL source",
+    )
+    parser.add_argument("--out", required=True, type=Path, help="output artifact directory")
+    parser.add_argument("--llm", default=DEFAULT_EXECUTION_RERANK_LLM, help="LLM slug")
+    parser.add_argument(
+        "--samples-per-problem",
+        type=int,
+        default=10,
+        help="number of completions to sample per problem for each seed",
+    )
+    parser.add_argument(
+        "--llm-seeds",
+        default="17,42,1729",
+        help="comma-separated sampling seeds",
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="call the configured LLM; default is deterministic offline dry-run",
+    )
+    parser.add_argument(
+        "--max-problems",
+        type=int,
+        default=None,
+        help="optional cap for smoke runs",
+    )
+    parser.add_argument("--timeout-ms", type=int, default=5000)
+    parser.add_argument("--memory-mb", type=int, default=256)
+    parser.add_argument("--cpu-seconds", type=int, default=10)
+    parser.add_argument(
+        "--no-determinism-check",
+        action="store_true",
+        help="disable the sandbox determinism re-run",
+    )
+    parser.add_argument("--temperature", type=float, default=0.2)
+    parser.add_argument("--timeout-seconds", type=int, default=90)
+    parser.add_argument("--retry-limit", type=int, default=2)
+    parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--allow-secret-findings", action="store_true")
+    parser.add_argument("--json", action="store_true", help="emit JSON summary")
+    args = parser.parse_args(argv)
+
+    try:
+        policy = policy_from_args(
+            timeout_ms=args.timeout_ms,
+            memory_mb=args.memory_mb,
+            cpu_seconds=args.cpu_seconds,
+            determinism_check=not args.no_determinism_check,
+        )
+        result = sample_execution_rerank_completions(
+            benchmark=args.benchmark,
+            source_path=args.source,
+            out=args.out,
+            llm=args.llm,
+            samples_per_problem=args.samples_per_problem,
+            llm_seeds=parse_llm_seed_csv(args.llm_seeds),
+            dry_run=not args.live,
+            max_problems=args.max_problems,
+            sandbox_policy=policy,
+            overwrite=args.overwrite,
+            allow_secret_findings=args.allow_secret_findings,
+            temperature=args.temperature,
+            timeout_seconds=args.timeout_seconds,
+            retry_limit=args.retry_limit,
+            command=script_command(argv),
+        )
+    except (CompletionSamplingError, OSError, json.JSONDecodeError) as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+        else:
+            print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        root = result.output_dir
+        print(f"artifact_manifest: {root / result.artifact_manifest_path}")
+        print(f"labels: {root / result.labels_path}")
+        print(f"report: {root / result.report_path}")
+        print(f"secret_scan: {root / result.secret_scan_report_path}")
+        print(f"completion_count: {result.completion_count}")
+        print(f"passed_completion_count: {result.passed_completion_count}")
+        print(f"dry_run: {str(result.dry_run).lower()}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

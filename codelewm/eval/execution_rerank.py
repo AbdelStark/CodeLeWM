@@ -30,6 +30,7 @@ from typing import Any, Literal
 
 
 EXECUTION_RERANK_REPORT_SCHEMA_VERSION = "codelewm.eval.execution_rerank_report.v1"
+COMPLETION_LABEL_SCHEMA_VERSION = "codelewm.eval.completion_label.v1"
 EXECUTION_RERANK_BASELINES: tuple[str, ...] = (
     "random",
     "lexical",
@@ -296,12 +297,19 @@ def load_completion_labels(
           "passed": true
         }
 
+    Newer operator-generated artifacts may instead use
+    :data:`COMPLETION_LABEL_SCHEMA_VERSION` and store the candidate text
+    under ``completion_text`` with a string ``label`` of ``"pass"`` or
+    ``"fail"``. The compatibility fields above remain accepted so older
+    checked-in fixtures and reports continue to load.
+
     The function filters to ``benchmark_id`` and returns a tuple of
     :class:`CompletionLabel`. Records that fail validation are dropped
     and counted toward an :class:`ExecutionRerankError` if zero remain.
     """
 
     out: list[CompletionLabel] = []
+    normalized_benchmark = _normalize_benchmark_id(benchmark_id)
     if not path.is_file():
         raise ExecutionRerankError(f"completion labels file not found: {path}")
     with path.open(encoding="utf-8") as fh:
@@ -315,16 +323,26 @@ def load_completion_labels(
                 raise ExecutionRerankError(
                     f"{path}:{line_no}: invalid JSON"
                 ) from exc
-            if row.get("benchmark_id") != benchmark_id:
+            row_benchmark = row.get("benchmark_id")
+            if (
+                not isinstance(row_benchmark, str)
+                or _normalize_benchmark_id(row_benchmark) != normalized_benchmark
+            ):
                 continue
             try:
+                code = row.get("code")
+                if not isinstance(code, str):
+                    code = row["completion_text"]
+                passed = row.get("passed")
+                if not isinstance(passed, bool):
+                    passed = _passed_from_label(row["label"])
                 out.append(
                     CompletionLabel(
                         problem_id=str(row["problem_id"]),
                         completion_id=str(row["completion_id"]),
-                        code=str(row["code"]),
+                        code=str(code),
                         llm_order_rank=int(row["llm_order_rank"]),
-                        passed=bool(row["passed"]),
+                        passed=bool(passed),
                     )
                 )
             except (KeyError, TypeError, ValueError):
@@ -334,3 +352,15 @@ def load_completion_labels(
             f"no valid completion labels for benchmark_id={benchmark_id!r} in {path}"
         )
     return tuple(out)
+
+
+def _passed_from_label(label: object) -> bool:
+    if label == "pass":
+        return True
+    if label == "fail":
+        return False
+    raise ValueError(f"unsupported completion label: {label!r}")
+
+
+def _normalize_benchmark_id(value: str) -> str:
+    return value.replace("-", "_").lower()
