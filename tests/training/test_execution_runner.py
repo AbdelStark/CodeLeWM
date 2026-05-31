@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -196,6 +198,18 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             )
             self.assertEqual(manifest_dict["seed"], 42)
             self.assertEqual(manifest_dict["step_count"], 6)
+            from codelewm.observability import read_artifact_manifest
+
+            pack_artifact_manifest = read_artifact_manifest(
+                pack_dir / "artifact_manifest.json"
+            )
+            pack_artifact_id = pack_artifact_manifest.artifact_id
+            self.assertEqual(
+                manifest_dict["parent_artifacts"], [pack_artifact_id]
+            )
+
+            artifact_manifest = read_artifact_manifest(result.artifact_manifest_path)
+            self.assertEqual(artifact_manifest.parent_artifacts, (pack_artifact_id,))
 
             # Report carries the v0.6 schema marker and the claim
             # boundary / gates fingerprint.
@@ -241,6 +255,30 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             # cadence=2, max_steps=6 -> rows at steps 2, 4, 6.
             self.assertEqual(len(collapse_rows), 3)
             self.assertIn("z_pred_effective_rank", collapse_rows[0]["diagnostics"])
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codelewm.harness.cli",
+                    "manifest",
+                    "verify",
+                    "--manifest",
+                    str(result.artifact_manifest_path),
+                    "--parent-manifest",
+                    str(pack_dir / "artifact_manifest.json"),
+                    "--json",
+                ],
+                cwd=REPO_ROOT,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            verify_payload = json.loads(completed.stdout)
+            self.assertTrue(verify_payload["ok"])
+            self.assertEqual(verify_payload["parents_checked"], [pack_artifact_id])
 
     def test_runner_with_inverse_action_reconstruction(self) -> None:
         """The v0.6 config sets inverse_action_reconstruction_weight=0.05.
