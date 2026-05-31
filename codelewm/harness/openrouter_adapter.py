@@ -921,6 +921,9 @@ def _dry_run_patch(request: OpenRouterCandidateRequest, *, index: int) -> str:
         and "return value.strip().lower().replace" in first_content
     ):
         return _bugfix_edge_case_dry_run_patch(first_path, index=index)
+    execution_patch = _execution_rerank_dry_run_patch(first_path, first_content, index=index)
+    if execution_patch is not None:
+        return execution_patch
     marker = _sha256_text(f"{request.task_id}:{request.instruction}:{index}")[:12]
     return (
         f"### Candidate candidate_{index:03d}\n"
@@ -966,6 +969,90 @@ def _bugfix_edge_case_dry_run_patch(path: str, *, index: int) -> str:
         "-    return value.strip().lower().replace(\" \", \"-\")\n"
         f"{added_lines}"
     )
+
+
+def _execution_rerank_dry_run_patch(path: str, content: str, *, index: int) -> str | None:
+    replacements_by_signature: dict[str, tuple[str, ...]] = {
+        "def compute_square(n):": (
+            "    return n * n\n",
+            "    return n + n\n",
+            "    return n ** 2\n",
+            "    return abs(n) * abs(n)\n",
+        ),
+        "def total(xs):": (
+            "    return sum(xs)\n",
+            "    return len(xs)\n",
+            "    return sum(xs) if xs else 0\n",
+            "    total_value = 0\n    for value in xs:\n        total_value += value\n    return total_value\n",
+        ),
+        "def is_even(n):": (
+            "    return n % 2 == 0\n",
+            "    return n % 2 == 1\n",
+            "    return (n & 1) == 0\n",
+            "    return str(n).endswith(('0', '2', '4', '6', '8'))\n",
+        ),
+        "def reverse_text(text):": (
+            "    return text[::-1]\n",
+            "    return text\n",
+            "    return ''.join(reversed(text))\n",
+            "    return text.lower()[::-1]\n",
+        ),
+        "def clamp(value, low, high):": (
+            "    return max(low, min(value, high))\n",
+            "    return min(value, high)\n",
+            "    if value < low:\n        return low\n    if value > high:\n        return high\n    return value\n",
+            "    return low if value < high else high\n",
+        ),
+    }
+    for signature, replacements in replacements_by_signature.items():
+        if signature in content and "\n    pass\n" in content:
+            replacement = replacements[(index - 1) % len(replacements)]
+            return _single_function_pass_replacement_patch(
+                path,
+                content,
+                signature,
+                replacement,
+                index=index,
+            )
+    return None
+
+
+def _single_function_pass_replacement_patch(
+    path: str,
+    content: str,
+    signature: str,
+    replacement: str,
+    *,
+    index: int,
+) -> str:
+    removed_lines = _function_stub_body_lines(content, signature)
+    added_lines = "".join(f"+{line}\n" for line in replacement.splitlines())
+    return (
+        f"### Candidate candidate_{index:03d}\n"
+        f"--- a/{path}\n"
+        f"+++ b/{path}\n"
+        f"@@ -1,{1 + len(removed_lines)} +1,"
+        f"{1 + len(replacement.splitlines())} @@\n"
+        f" {signature}\n"
+        + "".join(f"-{line}\n" for line in removed_lines)
+        + added_lines
+    )
+
+
+def _function_stub_body_lines(content: str, signature: str) -> tuple[str, ...]:
+    lines = content.splitlines()
+    try:
+        signature_index = lines.index(signature)
+    except ValueError:
+        return ("    pass",)
+    removed: list[str] = []
+    for line in lines[signature_index + 1 :]:
+        if not line.startswith((" ", "\t")):
+            break
+        removed.append(line)
+        if line.strip() == "pass":
+            break
+    return tuple(removed or ("    pass",))
 
 
 def _capture_candidate(

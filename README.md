@@ -87,6 +87,25 @@ Select another built-in scenario with `--scenario <id>` or
 `CODELEWM_LLM_DEMO_SCENARIO=<id>`. List available scenarios with
 `uv run scripts/llm-world-model-demo --list-scenarios`.
 
+Run the v0.6 execution-rerank tour with a downloaded seed-42 checkpoint:
+
+```bash
+CODELEWM_LLM_DRY_RUN=0 CODELEWM_LLM_MAX_CANDIDATES=2 \
+  uv run scripts/llm-world-model-demo \
+  --scenario execution-rerank-mbpp \
+  --checkpoint .artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt \
+  --tour 5 \
+  --html .artifacts/v0-6-execution-rerank-tour-live.html
+```
+
+The tour samples live OpenRouter candidates for five public-safe synthetic
+MBPP-style tasks, labels them only through `codelewm.data.sandbox`, scores them
+with the v0.6 execution-substrate checkpoint, writes
+`codelewm.harness.execution_rerank_tour.v1` plus the unchanged
+`codelewm.harness.execution_rerank_view_model.v1`, and keeps the claim gate
+closed below the scaled 100-example downstream benchmark. A committed
+asciicast lives in `docs/demo/execution_rerank_tour_2026-05-31.cast`.
+
 Live OpenRouter mode is explicit:
 
 ```bash
@@ -261,10 +280,11 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - model/latent/tensor diagnostic links in demo reports complete through #243.
 - diagnostics-driven candidate-contrast experiment plan complete through #244.
 - public visual observability artifact set complete through #245.
+- v0.6 execution-rerank LLM showcase complete through #307, with a committed
+  asciicast and static HTML report path.
 
 Open next streams:
 
-- meaningful harness demo: #224, with #227-#231 open;
 - scaled downstream reranking benchmark: #209/#210/#211;
 - next positive-model research hypothesis: #212, with CWM comparison in #178.
 

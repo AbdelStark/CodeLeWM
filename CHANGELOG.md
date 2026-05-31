@@ -16,6 +16,18 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 execution-rerank LLM showcase for #307:
+  `scripts/llm-world-model-demo --scenario execution-rerank-mbpp --tour 5`
+  now runs a five-problem public-safe synthetic MBPP-style tour. The tour
+  samples OpenRouter candidates, labels them through `codelewm.data.sandbox`,
+  scores candidate code and hidden inputs with
+  `codelewm.execution_torch_transition_scorer.v1`, writes
+  `codelewm.harness.execution_rerank_tour.v1`, preserves the existing
+  `codelewm.harness.execution_rerank_view_model.v1` renderer contract, exports
+  a self-contained HTML report, and includes a committed asciicast at
+  `docs/demo/execution_rerank_tour_2026-05-31.cast`. The live 2026-05-31 tour
+  remains workflow evidence only: claim gates stay closed below the scaled
+  100-example downstream benchmark.
 - Two-substrate paper draft and arXiv package for #306:
   `docs/papers/two_substrate_paper.tex`, fetched arXiv BibTeX references,
   `docs/papers/two_substrate_claim_audit.md`,

@@ -287,6 +287,9 @@ _SCENARIOS: dict[str, DemoScenario] = {
             "example_input_repr": "[3]",
             "expected_output_repr": "9",
             "benchmark_id": "mbpp_demo",
+            "tour_supported": True,
+            "tour_problem_count": 5,
+            "tour_benchmark_id": "execution-rerank-mbpp-tour",
         },
         publication_notes=(
             "Single-problem demo of the execution-substrate rerank protocol.",
@@ -301,7 +304,9 @@ _SCENARIOS: dict[str, DemoScenario] = {
             (
                 "The HumanEval / MBPP-Plus full-benchmark rerank is the "
                 "operator-driven flow documented in the v0.6 runbook; the "
-                "demo is a single-problem walkthrough of the same protocol."
+                "demo is a single-problem walkthrough of the same protocol. "
+                "The optional tour mode expands this into five public-safe "
+                "synthetic MBPP-style tasks."
             ),
         ),
     ),

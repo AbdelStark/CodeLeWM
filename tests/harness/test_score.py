@@ -19,7 +19,7 @@ from codelewm.harness import (
     load_scorer,
     write_transition_index,
 )
-from codelewm.harness.scorer import _hashed_vector
+from codelewm.harness.scorer import EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION, _hashed_vector
 from codelewm.model.checkpoint import build_checkpoint_metadata, write_checkpoint_manifest
 
 
@@ -228,6 +228,74 @@ class ScoreApiTest(unittest.TestCase):
         self.assertGreaterEqual(result.transition_energy, 0.0)
         self.assertTrue(any("checkpoint_step=7" == warning for warning in result.warnings))
         self.assertFalse(any("lightweight scorer backend" in warning for warning in result.warnings))
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("torch") is not None and importlib.util.find_spec("einops") is not None,
+        "torch scoring runtime is unavailable",
+    )
+    def test_load_scorer_uses_execution_backend_for_v0_6_checkpoint_manifest(self) -> None:
+        import torch
+
+        from codelewm.model import (
+            TorchCodeTransitionModelConfig,
+            build_torch_transition_model,
+            compute_config_hash,
+        )
+        from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
+
+        compatibility = {
+            "wm": {
+                "action_view": "text",
+                "embed_dim": 256,
+                "state_sequence_length": 1024,
+                "action_sequence_length": 256,
+                "action_fusion": "conditional_transformer",
+            },
+            "objective": {"inverse_action_reconstruction_weight": 0.0},
+            "loader": {"output_sequence_length": 256},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = root / "last.pt"
+            model = build_torch_transition_model(
+                TorchCodeTransitionModelConfig(
+                    vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+                    dropout=0.0,
+                )
+            )
+            torch.save(
+                {
+                    "schema_version": EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION,
+                    "step": 11,
+                    "model_state_dict": model.state_dict(),
+                    "compatibility_config": compatibility,
+                    "compatibility_config_hash": compute_config_hash(compatibility),
+                    "metrics": {"fixture": 1.0},
+                },
+                checkpoint,
+            )
+            write_checkpoint_manifest(
+                metadata=build_checkpoint_metadata(
+                    compatibility,
+                    record_schema_version="codelewm.execution_pack_record.v1",
+                    action_view="text",
+                    model_class="TorchCodeTransitionModel",
+                ),
+                checkpoint_path=checkpoint,
+                manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+            )
+
+            scorer = load_scorer(checkpoint, device="cpu", require_learned_backend=True)
+            result = scorer.score_texts(
+                before="def compute_square(n):\n    pass\n",
+                instruction="[3]",
+                candidate="def compute_square(n):\n    return n * n\n",
+            )
+
+        self.assertEqual(result.model_id, "codelewm.execution_torch_transition_scorer.v1")
+        self.assertGreaterEqual(result.transition_energy, 0.0)
+        self.assertTrue(any("checkpoint_step=11" == warning for warning in result.warnings))
+        self.assertTrue(any("execution-substrate" in warning for warning in result.warnings))
 
 
 if __name__ == "__main__":
