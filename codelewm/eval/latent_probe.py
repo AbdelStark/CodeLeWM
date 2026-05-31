@@ -23,6 +23,15 @@ LATENT_PROBE_TARGETS = (
     "action_cluster",
     "source_family",
 )
+SUPPORTED_LATENT_PROBE_TARGETS = (
+    *LATENT_PROBE_TARGETS,
+    "output_type",
+    "will_raise",
+    "output_magnitude_bucket",
+    "output_length_bucket",
+    "arithmetic_vs_string_vs_collection",
+    "judge_verdict",
+)
 LATENT_PROBE_VIEWS = ("z_before", "z_after", "z_pred_after")
 LATENT_PROBE_BASELINES = (
     "majority",
@@ -61,7 +70,7 @@ class LatentProbeConfig:
             raise LatentProbeError("latent probe targets must not be empty")
         if not self.views:
             raise LatentProbeError("latent probe views must not be empty")
-        unsupported_targets = tuple(target for target in self.targets if target not in LATENT_PROBE_TARGETS)
+        unsupported_targets = tuple(target for target in self.targets if target not in SUPPORTED_LATENT_PROBE_TARGETS)
         if unsupported_targets:
             raise LatentProbeError("unsupported latent probe targets: " + ", ".join(unsupported_targets))
         unsupported_views = tuple(view for view in self.views if view not in LATENT_PROBE_VIEWS)
@@ -110,7 +119,7 @@ class LatentProbeRow:
         if self.split not in {"train", "val", "test"}:
             raise LatentProbeError(f"latent probe row split is unsupported: {self.split!r}")
         for target in self.labels:
-            if target not in LATENT_PROBE_TARGETS:
+            if target not in SUPPORTED_LATENT_PROBE_TARGETS:
                 raise LatentProbeError(f"unsupported latent probe target: {target}")
         _require_json_native(dict(self.metadata_features), "latent probe metadata_features")
 

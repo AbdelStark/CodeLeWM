@@ -34,6 +34,14 @@ SURPRISE_DECOY_CATEGORIES: tuple[str, ...] = (
     "mutation",
     "action_cluster",
 )
+EXECUTION_SURPRISE_DECOY_CATEGORIES: tuple[str, ...] = (
+    "same_problem_different_submission",
+    "same_code_different_input",
+)
+ALLOWED_SURPRISE_DECOY_CATEGORIES: tuple[str, ...] = (
+    *SURPRISE_DECOY_CATEGORIES,
+    *EXECUTION_SURPRISE_DECOY_CATEGORIES,
+)
 SurpriseCategory = Literal["random", "same_file", "mutation", "action_cluster"]
 
 
@@ -78,8 +86,8 @@ class SurpriseDecoy:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if self.category not in SURPRISE_DECOY_CATEGORIES:
-            allowed = ", ".join(SURPRISE_DECOY_CATEGORIES)
+        if self.category not in ALLOWED_SURPRISE_DECOY_CATEGORIES:
+            allowed = ", ".join(ALLOWED_SURPRISE_DECOY_CATEGORIES)
             raise SurpriseEvalError(
                 f"decoy category must be one of: {allowed}; got {self.category!r}"
             )
@@ -109,8 +117,8 @@ class SurpriseExampleResult:
         if not math.isfinite(self.true_score):
             raise SurpriseEvalError("true_score must be finite")
         for category, scores in self.decoy_scores_by_category.items():
-            if category not in SURPRISE_DECOY_CATEGORIES:
-                allowed = ", ".join(SURPRISE_DECOY_CATEGORIES)
+            if category not in ALLOWED_SURPRISE_DECOY_CATEGORIES:
+                allowed = ", ".join(ALLOWED_SURPRISE_DECOY_CATEGORIES)
                 raise SurpriseEvalError(
                     f"decoy category must be one of: {allowed}; got {category!r}"
                 )
@@ -153,8 +161,8 @@ class SurpriseMetrics:
             if not math.isfinite(value):
                 raise SurpriseEvalError(f"{name} must be finite")
         for category, auc in self.pairwise_auc_by_category.items():
-            if category not in SURPRISE_DECOY_CATEGORIES:
-                allowed = ", ".join(SURPRISE_DECOY_CATEGORIES)
+            if category not in ALLOWED_SURPRISE_DECOY_CATEGORIES:
+                allowed = ", ".join(ALLOWED_SURPRISE_DECOY_CATEGORIES)
                 raise SurpriseEvalError(
                     f"pairwise_auc_by_category key must be one of: {allowed}; "
                     f"got {category!r}"
@@ -162,8 +170,8 @@ class SurpriseMetrics:
             if not math.isfinite(auc):
                 raise SurpriseEvalError(f"pairwise_auc[{category}] must be finite")
         for category, count in self.decoy_counts.items():
-            if category not in SURPRISE_DECOY_CATEGORIES:
-                allowed = ", ".join(SURPRISE_DECOY_CATEGORIES)
+            if category not in ALLOWED_SURPRISE_DECOY_CATEGORIES:
+                allowed = ", ".join(ALLOWED_SURPRISE_DECOY_CATEGORIES)
                 raise SurpriseEvalError(
                     f"decoy_counts key must be one of: {allowed}; got {category!r}"
                 )
@@ -331,9 +339,21 @@ def compute_surprise_metrics(
     if not results_tuple:
         raise SurpriseEvalError("results must not be empty")
 
-    pairwise_wins: dict[str, list[int]] = {category: [] for category in SURPRISE_DECOY_CATEGORIES}
-    pairwise_total: dict[str, list[int]] = {category: [] for category in SURPRISE_DECOY_CATEGORIES}
-    decoy_counts: dict[str, int] = {category: 0 for category in SURPRISE_DECOY_CATEGORIES}
+    categories = tuple(
+        dict.fromkeys(
+            (
+                *SURPRISE_DECOY_CATEGORIES,
+                *(
+                    category
+                    for result in results_tuple
+                    for category in result.decoy_scores_by_category
+                ),
+            )
+        )
+    )
+    pairwise_wins: dict[str, list[int]] = {category: [] for category in categories}
+    pairwise_total: dict[str, list[int]] = {category: [] for category in categories}
+    decoy_counts: dict[str, int] = {category: 0 for category in categories}
     true_ranks: list[int] = []
     recall_at_1_hits = 0
 
@@ -353,14 +373,14 @@ def compute_surprise_metrics(
             pairwise_total[category].append(len(scores))
 
     pairwise_auc_by_category: dict[str, float] = {}
-    for category in SURPRISE_DECOY_CATEGORIES:
+    for category in categories:
         total = sum(pairwise_total[category])
         if total == 0:
             continue
         pairwise_auc_by_category[category] = float(sum(pairwise_wins[category])) / float(total)
 
-    overall_wins = sum(sum(pairwise_wins[category]) for category in SURPRISE_DECOY_CATEGORIES)
-    overall_total = sum(sum(pairwise_total[category]) for category in SURPRISE_DECOY_CATEGORIES)
+    overall_wins = sum(sum(pairwise_wins[category]) for category in categories)
+    overall_total = sum(sum(pairwise_total[category]) for category in categories)
     if overall_total == 0:
         raise SurpriseEvalError(
             "surprise metrics require at least one decoy across the corpus"
@@ -700,6 +720,8 @@ def _example_from_dict(payload: Any) -> SurpriseExampleResult:
 
 
 __all__ = [
+    "ALLOWED_SURPRISE_DECOY_CATEGORIES",
+    "EXECUTION_SURPRISE_DECOY_CATEGORIES",
     "SURPRISE_DECOY_CATEGORIES",
     "SURPRISE_REPORT_SCHEMA_VERSION",
     "SurpriseCategory",

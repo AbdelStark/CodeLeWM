@@ -20,6 +20,10 @@ codelewm eval latent-probe --checkpoint .artifacts/first-results/train/checkpoin
 codelewm eval latent-matrix --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/latent_matrix --device cpu --json
 codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/manifest.json --training-artifact .artifacts/first-results/train/manifest.json --out .artifacts/first-results/ablation --json
 codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --json
+codelewm eval execution-retrieval --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_retrieval --device cpu --json
+codelewm eval execution-surprise --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_surprise --device cpu --json
+codelewm eval execution-probe --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_probe --device cpu --json
+codelewm eval crash-prediction --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/crash_prediction --device cpu --json
 codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --json
 codelewm eval scorer-quality --config config/first_results/scorer_quality.json --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/first-results/scorer_quality --index .artifacts/first-results/index --retrieval-prior-weight 1.0 --json
 codelewm score --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidate config/first_results/scorer_quality_candidates/true_after.py --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
@@ -270,6 +274,86 @@ decoys where the held-out data supports them. The report includes pairwise AUC,
 true ranks, per-category AUC/count slices, and explicit caveats for unavailable
 decoy categories. Scores are squared transition energies, so lower is better.
 Evaluation gate failures exit 6 with `error_type=evaluation_gate_error`.
+
+`codelewm eval execution-retrieval` is the v0.6 JSONL execution-pack retrieval
+path:
+
+```bash
+codelewm eval execution-retrieval \
+  --checkpoint .artifacts/v0-6/train/checkpoints/last.pt \
+  --pack .artifacts/v0-6/pack \
+  --baselines random,no_action,shuffled_action \
+  --out .artifacts/v0-6/execution-retrieval \
+  --json
+```
+
+It verifies the execution pack artifact manifest, infers and verifies the
+parent training-run artifact manifest from the checkpoint directory, validates
+the paired checkpoint manifest, loads `codelewm.execution_train_checkpoint.v1`,
+and writes `reports/retrieval_report.json` with schema
+`codelewm.eval.retrieval_report.v1`. The command emits
+`codelewm.eval.execution_retrieval_run.v1` on JSON stdout. The report includes
+the requested random, lexical, no-action, and shuffled-action baselines when
+enabled, plus source slices and execution-pack provenance.
+
+`codelewm eval execution-surprise` is the v0.6 JSONL execution-pack surprise
+path:
+
+```bash
+codelewm eval execution-surprise \
+  --checkpoint .artifacts/v0-6/train/checkpoints/last.pt \
+  --pack .artifacts/v0-6/pack \
+  --decoys mutation,same_problem_different_submission,same_code_different_input \
+  --out .artifacts/v0-6/execution-surprise \
+  --json
+```
+
+It writes `reports/surprise_report.json` with schema
+`codelewm.eval.surprise_report.v1` and
+`reports/execution_decoy_report.json` with deterministic decoy-generation
+counts. The command emits `codelewm.eval.execution_surprise_run.v1` on JSON
+stdout. Mutation decoys perturb the output-token state; execution-specific
+decoys use same-problem/different-submission and same-code/different-input
+records when the pack contains output-distinguishing candidates.
+
+`codelewm eval execution-probe` is the v0.6 frozen-latent probe path:
+
+```bash
+codelewm eval execution-probe \
+  --checkpoint .artifacts/v0-6/train/checkpoints/last.pt \
+  --pack .artifacts/v0-6/pack \
+  --targets output_type,will_raise,output_magnitude_bucket,output_length_bucket \
+  --out .artifacts/v0-6/execution-probe \
+  --json
+```
+
+It writes `reports/latent_probe_report.json` with schema
+`codelewm.eval.latent_probe_report.v1` and emits
+`codelewm.eval.execution_probe_run.v1` on JSON stdout. The execution target
+set includes `output_type`, `will_raise`, `output_magnitude_bucket`,
+`output_length_bucket`, `arithmetic_vs_string_vs_collection`, and
+`judge_verdict`. Positive semantic-axis claims remain gated by the existing
+latent-probe report claim boundary.
+
+`codelewm eval crash-prediction` is the scoped v0.6 crash-prediction fallback
+gate:
+
+```bash
+codelewm eval crash-prediction \
+  --checkpoint .artifacts/v0-6/train/checkpoints/last.pt \
+  --pack .artifacts/v0-6/pack \
+  --out .artifacts/v0-6/crash-prediction \
+  --json
+```
+
+It writes `reports/crash_prediction_report.json` with schema
+`codelewm.eval.crash_prediction_report.v1` and emits
+`codelewm.eval.crash_prediction_run.v1` on JSON stdout. If the selected
+val/test rows lack either positive or negative crash labels, the command still
+writes a manifest-backed not-evaluable report with `claim_allowed=false`.
+Execution eval validation failures exit 6 with
+`error_type=evaluation_gate_error`; checkpoint trust failures exit 5 with
+`error_type=checkpoint_error`.
 
 `codelewm eval ablation` consolidates a retrieval artifact and training artifact
 into an action-view ablation report:

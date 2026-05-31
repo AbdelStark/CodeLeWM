@@ -16,6 +16,13 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 JSONL execution-pack eval CLIs: `codelewm eval
+  execution-retrieval`, `codelewm eval execution-surprise`,
+  `codelewm eval execution-probe`, and `codelewm eval
+  crash-prediction` now consume `codelewm.execution_train_checkpoint.v1`
+  checkpoints plus execution pack directories and write
+  schema-versioned, manifest-backed reports for retrieval, surprise,
+  latent probes, and crash prediction (#302).
 - v0.6 execution-substrate end-to-end results report:
   `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` documents the
   first complete v0.6 HF Jobs run for tracker #289. Two seeds (42,
