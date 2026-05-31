@@ -28,6 +28,12 @@ earliest one minor release after the deprecation notice.
   `docs/demo/execution_rerank_tour_2026-05-31.cast`. The live 2026-05-31 tour
   remains workflow evidence only: claim gates stay closed below the scaled
   100-example downstream benchmark.
+- v0.6 publication coordination package for #308:
+  `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`, concrete v0.6
+  dataset/model cards under `docs/cards/`, a blog-style announcement draft
+  under `docs/blog/`, committed demo HTML under `docs/demo/`, and
+  `docs/release/V0_6_PUBLICATION_COORDINATION.md`. The package keeps the final
+  publication step blocked on the operator arXiv URL from #306.
 - Two-substrate paper draft and arXiv package for #306:
   `docs/papers/two_substrate_paper.tex`, fetched arXiv BibTeX references,
   `docs/papers/two_substrate_claim_audit.md`,

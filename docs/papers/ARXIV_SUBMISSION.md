@@ -32,6 +32,10 @@ Artifact pointers to include in the arXiv metadata or comments field:
   `abdelstark/codelewm-runs/runs/codelewm-v0-6-eval-pass-20260531`
   at commit `396a8fab5b86c16764bec0090e8af7518de41fbc`
 - v0.6 execution pack: `abdelstark/codelewm-execution-pack@v0.6.0`
+- v0.6 public artifact index:
+  `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`
+- Release coordination checklist:
+  `docs/release/V0_6_PUBLICATION_COORDINATION.md`
 
 Operator upload checklist:
 

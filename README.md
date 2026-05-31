@@ -104,7 +104,25 @@ with the v0.6 execution-substrate checkpoint, writes
 `codelewm.harness.execution_rerank_tour.v1` plus the unchanged
 `codelewm.harness.execution_rerank_view_model.v1`, and keeps the claim gate
 closed below the scaled 100-example downstream benchmark. A committed
-asciicast lives in `docs/demo/execution_rerank_tour_2026-05-31.cast`.
+HTML report and asciicast live in `docs/demo/`.
+
+## v0.6 Publication Landing
+
+The v0.6 public artifact map is:
+
+- artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`;
+- dataset card: `docs/cards/codelewm-v0-6-execution-dataset-2026-05-31.md`;
+- model cards:
+  `docs/cards/codelewm-v0-6-execution-model-seed-42-2026-05-31.md` and
+  `docs/cards/codelewm-v0-6-execution-model-seed-1729-2026-05-31.md`;
+- blog-style announcement draft:
+  `docs/blog/2026-05-31-codelewm-v0-6-substrate-pivot.md`;
+- demo: `docs/demo/execution_rerank_tour_2026-05-31.html`;
+- arXiv package: `docs/papers/ARXIV_SUBMISSION.md`.
+
+The arXiv URL is still pending operator upload. Until that URL lands, the
+safe public framing is partial-positive substrate evidence, not a coding-agent
+utility claim.
 
 Live OpenRouter mode is explicit:
 
