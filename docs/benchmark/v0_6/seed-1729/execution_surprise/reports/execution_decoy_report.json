@@ -1,0 +1,26 @@
+{
+  "mutation_pair_count": 236,
+  "reports": [
+    {
+      "category": "same_problem_different_submission",
+      "eligible_query_count": 32,
+      "pair_count": 6,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "no_other_submission": 204,
+        "outputs_identical": 26
+      }
+    },
+    {
+      "category": "same_code_different_input",
+      "eligible_query_count": 201,
+      "pair_count": 195,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "no_other_input": 35,
+        "outputs_identical": 6
+      }
+    }
+  ],
+  "schema_version": "codelewm.eval.execution_surprise_decoy_summary.v1"
+}

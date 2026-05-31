@@ -1,0 +1,15 @@
+{
+  "best_latent_auc": 0.0,
+  "best_latent_method": null,
+  "best_non_latent_auc": 0.0,
+  "best_non_latent_method": null,
+  "claim_allowed": false,
+  "claim_reason": "not_evaluable: need both positive and negative val/test samples; got positives=0, negatives=236",
+  "latent_lift_auc": 0.0,
+  "methods": [],
+  "min_latent_lift_for_claim": 0.05,
+  "per_exception_class_auc": {},
+  "per_source_dataset_auc": {},
+  "sample_count": 236,
+  "schema_version": "codelewm.eval.crash_prediction_report.v1"
+}

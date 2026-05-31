@@ -1,0 +1,817 @@
+{
+  "axis_diagnostics": {
+    "output_length_bucket": {
+      "available": false,
+      "claim_block_reason": "fewer than two train labels available for this target",
+      "dimension_claims_allowed": false,
+      "views": {}
+    },
+    "output_magnitude_bucket": {
+      "available": false,
+      "claim_block_reason": "fewer than two train labels available for this target",
+      "dimension_claims_allowed": false,
+      "views": {}
+    },
+    "output_type": {
+      "available": true,
+      "claim_block_reason": "axis names require stability across seeds; this report only checks split stability",
+      "dimension_claims_allowed": false,
+      "views": {
+        "z_after": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 3,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6794299614869025
+              },
+              {
+                "dimension": 69,
+                "dominant_label": "bool",
+                "eta_squared": 0.6450505350913874
+              },
+              {
+                "dimension": 161,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6143261060114553
+              },
+              {
+                "dimension": 210,
+                "dominant_label": "bool",
+                "eta_squared": 0.6073827866318091
+              },
+              {
+                "dimension": 237,
+                "dominant_label": "int",
+                "eta_squared": 0.6060238874553959
+              },
+              {
+                "dimension": 240,
+                "dominant_label": "dict",
+                "eta_squared": 0.60468711063578
+              },
+              {
+                "dimension": 200,
+                "dominant_label": "exception",
+                "eta_squared": 0.5844926728760607
+              },
+              {
+                "dimension": 35,
+                "dominant_label": "tuple",
+                "eta_squared": 0.582335331783628
+              }
+            ],
+            "train": [
+              {
+                "dimension": 85,
+                "dominant_label": "bool",
+                "eta_squared": 0.6622115677315407
+              },
+              {
+                "dimension": 210,
+                "dominant_label": "bool",
+                "eta_squared": 0.6307076784960942
+              },
+              {
+                "dimension": 69,
+                "dominant_label": "bool",
+                "eta_squared": 0.6275752640598191
+              },
+              {
+                "dimension": 160,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6078400085263581
+              },
+              {
+                "dimension": 39,
+                "dominant_label": "int",
+                "eta_squared": 0.5891425120216371
+              },
+              {
+                "dimension": 231,
+                "dominant_label": "float",
+                "eta_squared": 0.5708486312889057
+              },
+              {
+                "dimension": 255,
+                "dominant_label": "bool",
+                "eta_squared": 0.5654183943871519
+              },
+              {
+                "dimension": 72,
+                "dominant_label": "tuple",
+                "eta_squared": 0.5621035088335518
+              }
+            ],
+            "val": [
+              {
+                "dimension": 244,
+                "dominant_label": "dict",
+                "eta_squared": 0.8267625137965018
+              },
+              {
+                "dimension": 144,
+                "dominant_label": "list",
+                "eta_squared": 0.8086967421535269
+              },
+              {
+                "dimension": 49,
+                "dominant_label": "bool",
+                "eta_squared": 0.8063764188790223
+              },
+              {
+                "dimension": 177,
+                "dominant_label": "float",
+                "eta_squared": 0.7975595590647472
+              },
+              {
+                "dimension": 85,
+                "dominant_label": "bool",
+                "eta_squared": 0.7874377192839617
+              },
+              {
+                "dimension": 20,
+                "dominant_label": "float",
+                "eta_squared": 0.785015492899212
+              },
+              {
+                "dimension": 56,
+                "dominant_label": "bool",
+                "eta_squared": 0.7818454250549206
+              },
+              {
+                "dimension": 0,
+                "dominant_label": "dict",
+                "eta_squared": 0.7788331095298264
+              }
+            ]
+          }
+        },
+        "z_before": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 223,
+                "dominant_label": "tuple",
+                "eta_squared": 0.5154467209549075
+              },
+              {
+                "dimension": 204,
+                "dominant_label": "int",
+                "eta_squared": 0.5071419528899594
+              },
+              {
+                "dimension": 192,
+                "dominant_label": "exception",
+                "eta_squared": 0.5013448855053189
+              },
+              {
+                "dimension": 106,
+                "dominant_label": "dict",
+                "eta_squared": 0.4975151940824021
+              },
+              {
+                "dimension": 131,
+                "dominant_label": "int",
+                "eta_squared": 0.49447927748287734
+              },
+              {
+                "dimension": 200,
+                "dominant_label": "int",
+                "eta_squared": 0.49351920256405873
+              },
+              {
+                "dimension": 121,
+                "dominant_label": "str",
+                "eta_squared": 0.4929556717545691
+              },
+              {
+                "dimension": 222,
+                "dominant_label": "int",
+                "eta_squared": 0.4892915570804731
+              }
+            ],
+            "train": [
+              {
+                "dimension": 40,
+                "dominant_label": "bool",
+                "eta_squared": 0.3444338187512682
+              },
+              {
+                "dimension": 153,
+                "dominant_label": "exception",
+                "eta_squared": 0.33875401352099854
+              },
+              {
+                "dimension": 100,
+                "dominant_label": "str",
+                "eta_squared": 0.329504904725076
+              },
+              {
+                "dimension": 96,
+                "dominant_label": "int",
+                "eta_squared": 0.322440782126785
+              },
+              {
+                "dimension": 106,
+                "dominant_label": "exception",
+                "eta_squared": 0.3216583280887454
+              },
+              {
+                "dimension": 229,
+                "dominant_label": "none",
+                "eta_squared": 0.3115703070491542
+              },
+              {
+                "dimension": 158,
+                "dominant_label": "exception",
+                "eta_squared": 0.30367098579670904
+              },
+              {
+                "dimension": 251,
+                "dominant_label": "none",
+                "eta_squared": 0.3010571346493439
+              }
+            ],
+            "val": [
+              {
+                "dimension": 64,
+                "dominant_label": "bool",
+                "eta_squared": 0.7180284759045962
+              },
+              {
+                "dimension": 57,
+                "dominant_label": "str",
+                "eta_squared": 0.6374150473774003
+              },
+              {
+                "dimension": 245,
+                "dominant_label": "str",
+                "eta_squared": 0.5989658683349552
+              },
+              {
+                "dimension": 144,
+                "dominant_label": "list",
+                "eta_squared": 0.5924359433104244
+              },
+              {
+                "dimension": 182,
+                "dominant_label": "float",
+                "eta_squared": 0.5923962046093967
+              },
+              {
+                "dimension": 186,
+                "dominant_label": "bool",
+                "eta_squared": 0.5706935821041389
+              },
+              {
+                "dimension": 2,
+                "dominant_label": "dict",
+                "eta_squared": 0.5703117770720807
+              },
+              {
+                "dimension": 22,
+                "dominant_label": "list",
+                "eta_squared": 0.5691798466379782
+              }
+            ]
+          }
+        },
+        "z_pred_after": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 3,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6796067472968254
+              },
+              {
+                "dimension": 69,
+                "dominant_label": "bool",
+                "eta_squared": 0.6454609974276189
+              },
+              {
+                "dimension": 161,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6153947237718481
+              },
+              {
+                "dimension": 237,
+                "dominant_label": "int",
+                "eta_squared": 0.6071457197113512
+              },
+              {
+                "dimension": 210,
+                "dominant_label": "bool",
+                "eta_squared": 0.6063992613297514
+              },
+              {
+                "dimension": 240,
+                "dominant_label": "dict",
+                "eta_squared": 0.6048484831333588
+              },
+              {
+                "dimension": 200,
+                "dominant_label": "exception",
+                "eta_squared": 0.5846118387121022
+              },
+              {
+                "dimension": 35,
+                "dominant_label": "tuple",
+                "eta_squared": 0.5817360870939303
+              }
+            ],
+            "train": [
+              {
+                "dimension": 85,
+                "dominant_label": "bool",
+                "eta_squared": 0.6623259887900428
+              },
+              {
+                "dimension": 210,
+                "dominant_label": "bool",
+                "eta_squared": 0.6312544824230099
+              },
+              {
+                "dimension": 69,
+                "dominant_label": "bool",
+                "eta_squared": 0.6282683740198292
+              },
+              {
+                "dimension": 160,
+                "dominant_label": "tuple",
+                "eta_squared": 0.6082081368639984
+              },
+              {
+                "dimension": 39,
+                "dominant_label": "int",
+                "eta_squared": 0.5892855182920497
+              },
+              {
+                "dimension": 231,
+                "dominant_label": "float",
+                "eta_squared": 0.5713732090123869
+              },
+              {
+                "dimension": 255,
+                "dominant_label": "bool",
+                "eta_squared": 0.5655494580883503
+              },
+              {
+                "dimension": 72,
+                "dominant_label": "tuple",
+                "eta_squared": 0.5621273570449556
+              }
+            ],
+            "val": [
+              {
+                "dimension": 244,
+                "dominant_label": "dict",
+                "eta_squared": 0.828068164554564
+              },
+              {
+                "dimension": 144,
+                "dominant_label": "list",
+                "eta_squared": 0.8098578775957226
+              },
+              {
+                "dimension": 49,
+                "dominant_label": "bool",
+                "eta_squared": 0.8069095823323011
+              },
+              {
+                "dimension": 177,
+                "dominant_label": "float",
+                "eta_squared": 0.7961860741424615
+              },
+              {
+                "dimension": 85,
+                "dominant_label": "bool",
+                "eta_squared": 0.7875291131742828
+              },
+              {
+                "dimension": 20,
+                "dominant_label": "float",
+                "eta_squared": 0.7843400812118404
+              },
+              {
+                "dimension": 56,
+                "dominant_label": "bool",
+                "eta_squared": 0.782795034130026
+              },
+              {
+                "dimension": 0,
+                "dominant_label": "dict",
+                "eta_squared": 0.7793205723018419
+              }
+            ]
+          }
+        }
+      }
+    },
+    "will_raise": {
+      "available": false,
+      "claim_block_reason": "fewer than two train labels available for this target",
+      "dimension_claims_allowed": false,
+      "views": {}
+    }
+  },
+  "claim_boundary": {
+    "available_target_count": 1,
+    "available_targets": [
+      "output_type"
+    ],
+    "dimension_claims_allowed": false,
+    "multiple_comparison_caveat": "Per-dimension associations are exploratory and cannot name semantic axes without stable dimensions across seeds and splits.",
+    "positive_representation_claim_allowed": false,
+    "reason": "fewer than five predeclared probe targets have train/val/test labels",
+    "required_targets": [
+      "output_type",
+      "will_raise",
+      "output_magnitude_bucket",
+      "output_length_bucket"
+    ],
+    "semantic_structure_status": "not_evaluable"
+  },
+  "config": {
+    "bootstrap_samples": 500,
+    "min_eval_rows": 1,
+    "min_train_classes": 2,
+    "seed": 1729,
+    "targets": [
+      "output_type",
+      "will_raise",
+      "output_magnitude_bucket",
+      "output_length_bucket"
+    ],
+    "top_dimensions": 8,
+    "views": [
+      "z_before",
+      "z_after",
+      "z_pred_after"
+    ]
+  },
+  "metadata": {
+    "action_view": "text",
+    "checkpoint": {
+      "backend": "torch",
+      "model_class": "TorchCodeTransitionModel",
+      "path": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt",
+      "sha256": "b453cb1f70868301dc75d94ad08c40fccc8a94147c460db4e0563f406f752de8",
+      "step": 50000
+    },
+    "dataset": {
+      "artifact_id": "codelewm-execution-pack-20260528T102625Z",
+      "path": ".artifacts/v0_6/execution-pack",
+      "record_count": 1605,
+      "schema_version": "codelewm.execution_pack_manifest.v1"
+    },
+    "probe_target_schema_version": "codelewm.eval.execution_probe_target.v1",
+    "substrate": "execution_trace_v1",
+    "training_artifact_id": "training_run-d0b59108447c9c4a"
+  },
+  "row_count": 1236,
+  "schema_version": "codelewm.eval.latent_probe_report.v1",
+  "split_counts": {
+    "test": 157,
+    "train": 1000,
+    "val": 79
+  },
+  "target_reports": {
+    "output_length_bucket": {
+      "available": false,
+      "baselines": {},
+      "label_counts": {
+        "test": {},
+        "train": {},
+        "val": {}
+      },
+      "split_counts": {
+        "test": 0,
+        "train": 0,
+        "val": 0
+      },
+      "unavailable_reason": "fewer than two train labels available for this target",
+      "views": {}
+    },
+    "output_magnitude_bucket": {
+      "available": false,
+      "baselines": {},
+      "label_counts": {
+        "test": {},
+        "train": {},
+        "val": {}
+      },
+      "split_counts": {
+        "test": 0,
+        "train": 0,
+        "val": 0
+      },
+      "unavailable_reason": "fewer than two train labels available for this target",
+      "views": {}
+    },
+    "output_type": {
+      "available": true,
+      "baselines": {
+        "lexical": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.6178343949044586,
+              "accuracy_ci95": [
+                0.5414012738853503,
+                0.6878980891719745
+              ],
+              "class_count": 9,
+              "macro_f1": 0.3744297667520635,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.6835443037974683,
+              "accuracy_ci95": [
+                0.569620253164557,
+                0.7848101265822784
+              ],
+              "class_count": 6,
+              "macro_f1": 0.5916292195006222,
+              "sample_count": 79
+            }
+          }
+        },
+        "majority": {
+          "majority_label": "int",
+          "model": "train_majority",
+          "splits": {
+            "test": {
+              "accuracy": 0.2229299363057325,
+              "accuracy_ci95": [
+                0.1592356687898089,
+                0.28662420382165604
+              ],
+              "class_count": 9,
+              "macro_f1": 0.040509259259259266,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.3037974683544304,
+              "accuracy_ci95": [
+                0.20253164556962025,
+                0.4050632911392405
+              ],
+              "class_count": 6,
+              "macro_f1": 0.07766990291262137,
+              "sample_count": 79
+            }
+          }
+        },
+        "metadata_only": {
+          "default_label": "int",
+          "model": "metadata_lookup_majority",
+          "splits": {
+            "test": {
+              "accuracy": 0.42038216560509556,
+              "accuracy_ci95": [
+                0.3503184713375796,
+                0.5031847133757962
+              ],
+              "class_count": 9,
+              "macro_f1": 0.2522163826511653,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.46835443037974683,
+              "accuracy_ci95": [
+                0.3670886075949367,
+                0.569620253164557
+              ],
+              "class_count": 6,
+              "macro_f1": 0.22430555555555556,
+              "sample_count": 79
+            }
+          }
+        },
+        "no_action": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5414012738853503,
+              "accuracy_ci95": [
+                0.4713375796178344,
+                0.6178343949044586
+              ],
+              "class_count": 9,
+              "macro_f1": 0.3332219676721395,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.620253164556962,
+              "accuracy_ci95": [
+                0.5189873417721519,
+                0.7215189873417721
+              ],
+              "class_count": 6,
+              "macro_f1": 0.4753401360544217,
+              "sample_count": 79
+            }
+          }
+        },
+        "random_latent": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.19745222929936307,
+              "accuracy_ci95": [
+                0.1337579617834395,
+                0.2611464968152866
+              ],
+              "class_count": 9,
+              "macro_f1": 0.10977411997872356,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.22784810126582278,
+              "accuracy_ci95": [
+                0.13924050632911392,
+                0.3291139240506329
+              ],
+              "class_count": 6,
+              "macro_f1": 0.1547566986870892,
+              "sample_count": 79
+            }
+          }
+        },
+        "shuffled_action": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.050955414012738856,
+              "accuracy_ci95": [
+                0.01910828025477707,
+                0.08280254777070063
+              ],
+              "class_count": 9,
+              "macro_f1": 0.05834767435176971,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.13924050632911392,
+              "accuracy_ci95": [
+                0.06329113924050633,
+                0.21518987341772153
+              ],
+              "class_count": 6,
+              "macro_f1": 0.12657952069716777,
+              "sample_count": 79
+            }
+          }
+        }
+      },
+      "label_counts": {
+        "test": {
+          "bool": 12,
+          "dict": 3,
+          "exception": 1,
+          "float": 6,
+          "int": 35,
+          "list": 39,
+          "none": 1,
+          "str": 51,
+          "tuple": 9
+        },
+        "train": {
+          "bool": 119,
+          "dict": 15,
+          "exception": 5,
+          "float": 56,
+          "int": 315,
+          "list": 194,
+          "none": 4,
+          "str": 232,
+          "tuple": 60
+        },
+        "val": {
+          "bool": 12,
+          "dict": 3,
+          "float": 9,
+          "int": 24,
+          "list": 12,
+          "str": 19
+        }
+      },
+      "split_counts": {
+        "test": 157,
+        "train": 1000,
+        "val": 79
+      },
+      "unavailable_reason": null,
+      "views": {
+        "z_after": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5987261146496815,
+              "accuracy_ci95": [
+                0.5222929936305732,
+                0.6687898089171974
+              ],
+              "class_count": 9,
+              "macro_f1": 0.5704142083888919,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.7341772151898734,
+              "accuracy_ci95": [
+                0.6455696202531646,
+                0.8227848101265823
+              ],
+              "class_count": 6,
+              "macro_f1": 0.5889123376623376,
+              "sample_count": 79
+            }
+          }
+        },
+        "z_before": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5414012738853503,
+              "accuracy_ci95": [
+                0.46496815286624205,
+                0.6114649681528662
+              ],
+              "class_count": 9,
+              "macro_f1": 0.3332219676721395,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.620253164556962,
+              "accuracy_ci95": [
+                0.5063291139240507,
+                0.7215189873417721
+              ],
+              "class_count": 6,
+              "macro_f1": 0.4753401360544217,
+              "sample_count": 79
+            }
+          }
+        },
+        "z_pred_after": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5987261146496815,
+              "accuracy_ci95": [
+                0.5159235668789809,
+                0.6751592356687898
+              ],
+              "class_count": 9,
+              "macro_f1": 0.5704142083888919,
+              "sample_count": 157
+            },
+            "val": {
+              "accuracy": 0.7341772151898734,
+              "accuracy_ci95": [
+                0.6329113924050633,
+                0.8227848101265823
+              ],
+              "class_count": 6,
+              "macro_f1": 0.5889123376623376,
+              "sample_count": 79
+            }
+          }
+        }
+      }
+    },
+    "will_raise": {
+      "available": false,
+      "baselines": {},
+      "label_counts": {
+        "test": {
+          "False": 157
+        },
+        "train": {
+          "False": 1000
+        },
+        "val": {
+          "False": 79
+        }
+      },
+      "split_counts": {
+        "test": 157,
+        "train": 1000,
+        "val": 79
+      },
+      "unavailable_reason": "fewer than two train labels available for this target",
+      "views": {}
+    }
+  }
+}

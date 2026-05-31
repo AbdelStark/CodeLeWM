@@ -2,20 +2,27 @@
 
 *An end-to-end technical explainer for ML researchers and engineers.*
 
-> **Substrate-pivot status (2026-05-28).** Sections 1-8 below describe
+> **Substrate-pivot status (2026-05-31).** Sections 1-8 below describe
 > the v0.2 commit-edit substrate. Issues #259-#273 add a parallel
 > v0.6 execution-trace substrate that keeps the JEPA architecture
 > and objective registry verbatim, swapping only the data pipeline.
-> The substrate-pivot rationale, motivation, and headline claim
-> gates live at RFC-0014
+> The substrate-pivot rationale, motivation, and claim gates live at
+> RFC-0014
 > (`docs/rfcs/RFC-0014-execution-trace-world-model-substrate.md`),
 > the substrate roadmap
 > (`docs/roadmap/EXECUTION_TRACE_WORLD_MODEL.md`), the operator
 > runbook (`docs/operations/V0_6_EXECUTION_RUN_RUNBOOK.md`), the
 > benchmark template
-> (`docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md`), and the
-> two-substrate paper outline
-> (`docs/papers/two_substrate_outline.md`).
+> (`docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md`), the
+> artifact-backed v0.6 results report
+> (`docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`), the
+> committed per-seed eval reports under `docs/benchmark/v0_6/`, and
+> the two-substrate paper outline
+> (`docs/papers/two_substrate_outline.md`). The current framing is
+> partial positive: v0.6 passes the substrate-shape, execution-pack
+> retrieval, and generated-decoy surprise gates; latent-probe,
+> crash-prediction, and HumanEval / MBPP-Plus rerank utility claims
+> remain unsupported.
 
 ---
 

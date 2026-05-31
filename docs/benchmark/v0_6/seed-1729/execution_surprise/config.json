@@ -1,0 +1,15 @@
+{
+  "checkpoint": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt",
+  "decoys": [
+    "mutation",
+    "same_problem_different_submission",
+    "same_code_different_input"
+  ],
+  "device": "cpu",
+  "max_examples": 1000,
+  "out": ".artifacts/v0_6/eval-305/seed-1729/execution_surprise",
+  "pack": ".artifacts/v0_6/execution-pack",
+  "schema_version": "codelewm.eval.execution_surprise_run.v1",
+  "score_direction": "lower_is_better",
+  "seed": 1729
+}

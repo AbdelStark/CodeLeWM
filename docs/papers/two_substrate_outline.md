@@ -9,12 +9,15 @@
 - Tracker: #259, RFC-0014
 - Substrate A (commit-edit, v0.2) benchmark:
   `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
-- Substrate B (execution-trace, v0.6) benchmark template:
+- Substrate B (execution-trace, v0.6) benchmark:
+  `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`
+  plus per-seed eval artifacts in `docs/benchmark/v0_6/`
+- Substrate B report template:
   `docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md`
 - Working title: *"The substrate is the bottleneck: a JEPA
   world-model recipe applied to two flavors of code data"*
-- Target venue: code/ML workshop or COLM. Tighten to a venue once the
-  v0.6 results land.
+- Target venue: code/ML workshop or COLM. Tighten during the #306
+  draft pass.
 
 ## Abstract
 
@@ -35,9 +38,16 @@ latents' effective-rank ratio settles at 0.47 — 2.3× the collapse
 gate. The comparison isolates the substrate as the controlling
 variable; we argue the result implies a general lesson for
 JEPA-style modeling of code: substrate signal-to-noise dominates
-objective tuning. Downstream-utility evaluations (retrieval,
-surprise, rerank) are deferred to a follow-up evaluation harness
-wiring.
+objective tuning. The #305 downloaded-artifact eval pass strengthens
+but narrows the positive result: execution-pack retrieval beats
+no-action by +61.4 Recall@1 points and +65.9 MRR points on average
+across two seeds, and generated-decoy surprise AUC is 1.0 on mutation,
+same-code-different-input, and same-problem-different-submission
+decoys. Broader downstream utility is not established: the latent
+probe claim is blocked by lexical controls, crash prediction is not
+evaluable because the val/test slice has no positives, and
+HumanEval/MBPP-Plus reranking still lacks live labeled-completion
+artifacts.
 
 ## 1. Introduction
 
@@ -52,9 +62,10 @@ wiring.
   2. A negative result on commit-edit transitions, with
      diagnostics that isolate the failure to substrate signal, not
      architecture.
-  3. A positive (or diagnostic) result on input-conditioned
-     execution, with downstream-reranking evidence on HumanEval
-     and MBPP-Plus.
+  3. A partial-positive result on input-conditioned execution:
+     training-shape, internal retrieval, and generated-decoy surprise
+     gates pass, while semantic-probe, crash, and downstream-rerank
+     utility claims remain blocked.
   4. Publicly published datasets, model checkpoints, and run
      manifests for both substrates.
 
@@ -127,16 +138,15 @@ wiring.
 | A | #154 | 0.363 | -0.106 | 0.468 | -0.082 |
 | A | #159 | 0.597 | -0.053 | 0.675 | -0.034 |
 | A | #172 | 0.263 | -0.178 | 0.370 | -0.163 |
-| B | v0.6 seed 42 | *deferred* | *deferred* | *deferred* | *deferred* |
-| B | v0.6 seed 1729 | *deferred* | *deferred* | *deferred* | *deferred* |
+| B | v0.6 seed 42 | **0.657** | **+0.619** | **0.767** | **+0.663** |
+| B | v0.6 seed 1729 | **0.648** | **+0.610** | **0.759** | **+0.655** |
 
-The Substrate B retrieval numbers are deferred to a follow-up wiring
-of the v0.6 JSONL execution-pack to the `codelewm eval retrieval`
-CLI (currently HDF5-only). The training-time **no-action margin
-proxy** for Substrate B is +1.23 on seed 42 and +1.24 on seed 1729
-(positive across both, with spread 0.013 ≪ mean 1.24) — the model
-clearly uses the action signal rather than relying on a do-nothing
-prior. The headline-claim posture is documented in
+Substrate B reverses Substrate A's headline retrieval failure on the
+execution-pack val/test slice. Mean Recall@1 is 0.653 with mean lift
++0.614 over no-action; mean MRR is 0.763 with mean lift +0.659. The
+seed-to-seed spread is below one point for Recall@1 and MRR. This is
+internal execution-pack retrieval evidence, not HumanEval/MBPP-Plus
+downstream reranking evidence. The claim posture is documented in
 `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`.
 
 ### 6.2 Collapse And Surprise
@@ -149,15 +159,35 @@ prior. The headline-claim posture is documented in
 
 Substrate A: effective rank ratio 0.016. **Substrate B clears the
 0.20 collapse gate by 2.3× on both seeds (`EXECUTION_V0_6_RESULTS_2026-05-30.md`),
-inverting Substrate A's collapse failure.** Surprise AUCs deferred
-to the eval-suite follow-up.
+inverting Substrate A's collapse failure.**
+
+Surprise on generated execution-pack decoys:
+
+| Run | Mutation AUC / pairs | Same-code-different-input AUC / pairs | Same-problem-different-submission AUC / pairs |
+|-----|---------------------:|--------------------------------------:|-----------------------------------------------:|
+| v0.6 seed 42 | **1.000 / 236** | **1.000 / 195** | **1.000 / 6** |
+| v0.6 seed 1729 | **1.000 / 236** | **1.000 / 195** | **1.000 / 6** |
+
+The same-problem row clears the configured numeric gate but has only
+six generated pairs after filtering, so the paper should frame it as
+a generated-decoy diagnostic rather than broad semantic surprise.
 
 ### 6.3 Latent Probes
 
 Substrate A: every target beaten by lexical or metadata-only
 controls (Table from `V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`).
-Substrate B: per-target table per
-`docs/benchmark/EXECUTION_V0_6_RESULTS_TEMPLATE.md`.
+Substrate B:
+
+| Run | Target | z_pred_after test acc | No-action test acc | Lexical test acc | Claim |
+|-----|--------|----------------------:|-------------------:|-----------------:|-------|
+| v0.6 seed 42 | `output_type` | 0.497 | 0.439 | **0.662** | blocked |
+| v0.6 seed 1729 | `output_type` | 0.599 | 0.541 | **0.618** | blocked |
+
+Only `output_type` has train/val/test labels. The latent view beats
+no-action by 5.7 points on both seeds, but lexical controls remain
+stronger. The positive representation claim is therefore closed:
+`positive_representation_claim_allowed=false`,
+`semantic_structure_status=not_evaluable`.
 
 ### 6.4 Downstream Reranking
 
@@ -166,12 +196,22 @@ Substrate A has no positive downstream rerank evidence at scale
 
 | Benchmark | LLM-order pass@1 | CodeLeWM pass@1 | Lift | 95% CI |
 | --------- | ---------------: | --------------: | ---: | -----: |
-| HumanEval |  |  |  |  |
-| MBPP-Plus |  |  |  |  |
+| HumanEval | n/a | n/a | n/a | n/a |
+| MBPP-Plus | n/a | n/a | n/a | n/a |
+
+The completion-label sampler and `codelewm.eval.completion_label.v1`
+contract exist, but the full live HumanEval / MBPP-Plus labeled
+artifacts are not present. No downstream-rerank claim is allowed.
 
 ### 6.5 Crash Prediction (Scoped Fallback)
 
-Filled in from the v0.6 crash-prediction report.
+| Run | Samples | Positives | Negatives | Claim |
+|-----|--------:|----------:|----------:|-------|
+| v0.6 seed 42 | 236 | 0 | 236 | not evaluable |
+| v0.6 seed 1729 | 236 | 0 | 236 | not evaluable |
+
+The execution-pack val/test slice has no crash-positive examples, so
+the crash-prediction fallback is not evaluable.
 
 ## 7. Discussion
 
@@ -179,10 +219,10 @@ Filled in from the v0.6 crash-prediction report.
 - The four-run sweep on Substrate A is a controlled negative result:
   every run uses the same architecture, varying only the objective
   weights. None of the variations make the latent useful.
-- Substrate B inverts the failure modes of Substrate A by
-  construction. Whether it produces a positive headline result, a
-  partial-positive (e.g., crash-prediction-only), or a negative
-  result, the comparison itself is the contribution.
+- Substrate B inverts the training-shape and internal retrieval
+  failure modes of Substrate A. It is not a full downstream-utility
+  win: lexical controls still beat the latent probe and HumanEval /
+  MBPP-Plus rerank evidence is absent.
 - Implications for related code-modeling work: pick the substrate
   before picking the architecture.
 
@@ -195,6 +235,12 @@ Filled in from the v0.6 crash-prediction report.
 - Two training seeds: lower bound on the variance estimate.
 - License-clean source-dataset envelope: results do not generalize
   outside MIT/Apache/CC-BY/permissive sources.
+- Generated surprise decoys are not a substitute for adversarial or
+  independently sampled semantic decoys; the same-problem decoy row has
+  only six pairs.
+- HumanEval / MBPP-Plus reranking remains an operator-run dependency:
+  the sampler contract exists, but live labeled-completion artifacts
+  are not part of the current evidence set.
 
 ## 9. Conclusion
 
@@ -208,7 +254,8 @@ start from where ours leaves off.
 - Substrate A: `abdelstark/codelewm-public-shard`,
   `abdelstark/codelewm-transition-model`, `abdelstark/codelewm-runs`.
 - Substrate B: `abdelstark/codelewm-execution-pack@v0.6.0` plus the
-  v0.6 model checkpoints and run artifacts.
+  v0.6 model checkpoints, run artifacts, and committed per-seed eval
+  reports in `docs/benchmark/v0_6/`.
 - All artifacts publish with `codelewm manifest verify` round-trip
   evidence and `codelewm secret-scan` reports.
 - Code path:
@@ -224,11 +271,12 @@ start from where ours leaves off.
   - harness: `codelewm.harness.execution_rerank_view_model`,
     `codelewm.harness.demo_scenarios.EXECUTION_RERANK_SCENARIO_ID`.
 
-## 11. Two Framings, Two Endings
+## 11. Final Framing
 
-**Framing as of 2026-05-30 (post-v0.6 first end-to-end run):**
-*partial positive — substrate-pivot's headline-shape claim confirmed,
-downstream-utility evaluations deferred.*
+**Framing as of 2026-05-31 (post-#305 eval pass):**
+*partial positive — substrate-pivot, internal retrieval, and
+generated-decoy surprise gates pass; broader downstream utility is not
+established.*
 
 The substrate-pivot's headline prediction — that the
 execution-trace substrate produces a non-collapsed
@@ -242,26 +290,36 @@ v0.6 HF Jobs runs (`EXECUTION_V0_6_RESULTS_2026-05-30.md`):
   clearing the 0.20 collapse gate by 2.3×. Substrate A failed the
   same gate at 0.016.
 - Cross-seed variance is small (margin spread = 0.013, ~1% of mean).
+- Execution-pack retrieval passes the no-action gates across both
+  seeds: Recall@1 lift is +0.619 / +0.610 and MRR lift is
+  +0.663 / +0.655.
+- Generated-decoy surprise passes the configured mutation,
+  same-code-different-input, and same-problem-different-submission
+  gates at AUC 1.0 on both seeds, with the caveat that
+  same-problem has only six generated pairs.
 
-The downstream-utility gates (retrieval lift, surprise AUC, latent
-probe, downstream rerank) are deferred to a follow-up CLI wiring of
-the v0.6 JSONL execution pack to the existing evaluator libraries
-(`codelewm.eval.execution_probe_targets`,
-`codelewm.eval.execution_surprise_decoys`,
-`codelewm.eval.execution_rerank`, `codelewm.eval.crash_prediction`).
-Until that follow-up lands, the paper's framing is:
+The broader downstream-utility story is negative or incomplete:
 
-> *"A controlled substrate comparison: Substrate A fails the
-> collapse gate at 0.016 effective rank ratio; Substrate B passes it
-> at 0.47, with the no-action margin flipping from −0.77 to +1.24.
-> The same architecture and objective registry yields qualitatively
-> different latents on the two substrates. Downstream-utility
-> claims (retrieval, surprise, rerank) are deferred to a follow-up
-> evaluation harness wiring."*
+- Latent probes do not support a semantic-representation claim. Only
+  `output_type` is evaluable, and lexical controls beat the latent
+  view on both seeds.
+- Crash prediction is not evaluable because the val/test slice has
+  zero crash-positive examples.
+- HumanEval / MBPP-Plus reranking is not run because live
+  completion-label artifacts are absent.
 
-The published artifact set is sufficient to fill the deferred tables
-once the eval harness ships; both framings remain available from the
-same artifacts.
+The paper's framing should therefore be:
+
+> *"A controlled substrate comparison: Substrate A fails the collapse
+> gate at 0.016 effective-rank ratio and loses to no-action retrieval;
+> Substrate B passes the collapse gate at 0.47, flips the no-action
+> margin from −0.77 to +1.24, beats no-action retrieval by +61.4
+> Recall@1 points and +65.9 MRR points on average, and passes
+> generated-decoy surprise diagnostics. The same architecture and
+> objective registry yields qualitatively different latents on the two
+> substrates. The result is partial, not a broad code-generation or
+> downstream-reranking claim: semantic probes remain blocked by lexical
+> controls and HumanEval / MBPP-Plus reranking remains unscored."*
 
 ## References
 
