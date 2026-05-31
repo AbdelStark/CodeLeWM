@@ -74,7 +74,7 @@ class HumanEvalSourceAdapter:
             or not isinstance(entry_point, str)
         ):
             return None
-        code = prompt + canonical
+        code = _join_prompt_and_canonical(prompt, canonical)
         inputs, expected_outputs = _parse_check_body(test_src, entry_point)
         if not inputs:
             return None
@@ -90,6 +90,12 @@ class HumanEvalSourceAdapter:
             license_attribution_url=_ATTR,
             held_out_for_eval=True,
         )
+
+
+def _join_prompt_and_canonical(prompt: str, canonical: str) -> str:
+    """Join HumanEval prompt and solution without duplicating indent placeholders."""
+
+    return prompt.rstrip(" \t") + canonical
 
 
 def _parse_check_body(

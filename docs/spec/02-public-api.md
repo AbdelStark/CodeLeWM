@@ -34,6 +34,28 @@ codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --
 codelewm manifest verify --manifest .artifacts/first-results/train/manifest.json --parent-manifest .artifacts/first-results/pack/manifest.json --json
 ```
 
+Operator scripts that intentionally sit outside the `codelewm` console script:
+
+```bash
+uv run scripts/sample-execution-rerank-completions \
+  --benchmark humaneval \
+  --source data/raw/humaneval.jsonl \
+  --out results/v0_6/completion_labels/humaneval \
+  --llm openrouter:anthropic/claude-haiku-4-5 \
+  --samples-per-problem 10 \
+  --llm-seeds 17,42,1729 \
+  --live \
+  --json
+```
+
+The sampler emits `codelewm.eval.completion_label.v1` JSONL rows for the
+HumanEval / MBPP-Plus downstream rerank protocol. It labels candidate code only
+through `codelewm.data.sandbox`, writes
+`codelewm.eval.completion_sampling_report.v1` and
+`codelewm.secret_scan.v1` reports, and manifests the output with
+`codelewm.artifact_manifest.v1`. The default mode is deterministic dry-run for
+offline CI; `--live` requires `OPENROUTER_API_KEY`.
+
 The reproducible local orchestration command is
 `uv run scripts/first-results --overwrite`; it is the shortest way to exercise
 the full package-native smoke path. Scaled evidence is documented in

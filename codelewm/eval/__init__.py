@@ -219,6 +219,7 @@ from .execution_surprise_decoys import (
     generate_same_problem_different_submission_pairs,
 )
 from .execution_rerank import (
+    COMPLETION_LABEL_SCHEMA_VERSION,
     EXECUTION_RERANK_BASELINES,
     EXECUTION_RERANK_REPORT_SCHEMA_VERSION,
     BaselineSummary,
@@ -254,6 +255,7 @@ __all__ = [
     "ACTION_ABLATION_REPORT_SCHEMA_VERSION",
     "BaselineSummary",
     "CompletionLabel",
+    "COMPLETION_LABEL_SCHEMA_VERSION",
     "EXECUTION_RERANK_BASELINES",
     "EXECUTION_RETRIEVAL_EVAL_RUN_SCHEMA_VERSION",
     "EXECUTION_SURPRISE_EVAL_RUN_SCHEMA_VERSION",

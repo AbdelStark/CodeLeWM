@@ -164,11 +164,12 @@ codelewm eval crash-prediction     --checkpoint <last.pt> --pack <pack-dir> --ou
 ```
 
 This report remains a historical artifact for the 2026-05-30 run. The
-new CLIs do not retroactively add numbers to the immutable downloaded
-artifact set, and the HumanEval/MBPP-Plus completion-rerank path still
-needs the labeled completion sampler and aggregation follow-ups before
-downstream-utility claims can be filled in. The report's claim-gate
-posture is therefore unchanged:
+new CLIs and the `scripts/sample-execution-rerank-completions` operator
+sampler do not retroactively add numbers to the immutable downloaded
+artifact set. The HumanEval/MBPP-Plus completion-rerank path still
+needs live `codelewm.eval.completion_label.v1` artifacts and the
+aggregation follow-up before downstream-utility claims can be filled in.
+The report's claim-gate posture is therefore unchanged:
 
 - **Headline substrate-pivot claim**: confirmed across two seeds —
   prediction MSE drops 1500×, SIGReg drops 1200×, no-action margin

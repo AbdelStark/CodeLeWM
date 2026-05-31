@@ -115,30 +115,75 @@ done
 ```bash
 # Retrieval / collapse / probes / surprise:
 for SEED in 42 1729; do
-  uv run codelewm eval retrieval \
+  uv run codelewm eval execution-retrieval \
     --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
-    --pack .artifacts/v0_6/seed-${SEED}/test-pack \
+    --pack .artifacts/v0_6/execution-pack \
     --baselines random,lexical,no_action,shuffled_action \
-    --output results/v0_6/seed-${SEED}/retrieval.json
-  uv run codelewm eval surprise --decoys random,mutation,same_problem_different_submission,same_code_different_input \
-    --output results/v0_6/seed-${SEED}/surprise.json
-  uv run codelewm eval latent-probe \
+    --out results/v0_6/seed-${SEED}/execution_retrieval \
+    --json
+  uv run codelewm eval execution-surprise \
+    --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
+    --pack .artifacts/v0_6/execution-pack \
+    --decoys mutation,same_problem_different_submission,same_code_different_input \
+    --out results/v0_6/seed-${SEED}/execution_surprise \
+    --json
+  uv run codelewm eval execution-probe \
+    --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
+    --pack .artifacts/v0_6/execution-pack \
     --targets output_type,will_raise,output_magnitude_bucket,output_length_bucket \
-    --output results/v0_6/seed-${SEED}/probes.json
+    --out results/v0_6/seed-${SEED}/execution_probe \
+    --json
+  uv run codelewm eval crash-prediction \
+    --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
+    --pack .artifacts/v0_6/execution-pack \
+    --out results/v0_6/seed-${SEED}/crash_prediction \
+    --json
 done
 
-# Downstream rerank (#268):
-uv run codelewm eval rerank-humaneval \
-  --checkpoint .artifacts/v0_6/seed-42/checkpoints/last.pt \
+# Downstream rerank completion labeling (#304 operator step):
+uv run scripts/sample-execution-rerank-completions \
+  --benchmark humaneval \
+  --source data/raw/humaneval.jsonl \
+  --out results/v0_6/completion_labels/humaneval \
   --llm openrouter:anthropic/claude-haiku-4-5 \
-  --samples-per-problem 10 --llm-seeds 17,42,1729 \
-  --output results/v0_6/rerank_humaneval.json
-uv run codelewm eval rerank-mbpp-plus \
-  --checkpoint .artifacts/v0_6/seed-42/checkpoints/last.pt \
+  --samples-per-problem 10 \
+  --llm-seeds 17,42,1729 \
+  --live \
+  --json
+uv run scripts/sample-execution-rerank-completions \
+  --benchmark mbpp-plus \
+  --source data/raw/mbpp_plus.jsonl \
+  --out results/v0_6/completion_labels/mbpp_plus \
   --llm openrouter:anthropic/claude-haiku-4-5 \
-  --samples-per-problem 10 --llm-seeds 17,42,1729 \
-  --output results/v0_6/rerank_mbpp_plus.json
+  --samples-per-problem 10 \
+  --llm-seeds 17,42,1729 \
+  --live \
+  --json
+
+uv run codelewm manifest verify \
+  --manifest results/v0_6/completion_labels/humaneval/manifest.json \
+  --json
+uv run codelewm manifest verify \
+  --manifest results/v0_6/completion_labels/mbpp_plus/manifest.json \
+  --json
+
+# Offline smoke for the same artifact contract, not claim evidence:
+uv run scripts/sample-execution-rerank-completions \
+  --benchmark humaneval \
+  --source tests/data/execution_sources/fixtures/humaneval_tiny.jsonl \
+  --out .artifacts/v0_6/rerank-label-smoke/humaneval \
+  --samples-per-problem 2 \
+  --llm-seeds 17 \
+  --json
 ```
+
+The sampler writes `codelewm.eval.completion_label.v1` JSONL rows plus
+`codelewm.eval.completion_sampling_report.v1`, `codelewm.secret_scan.v1`,
+and `codelewm.artifact_manifest.v1` reports. Candidate code is never run
+directly in the evaluator; labeling goes through `codelewm.data.sandbox`
+with the stdlib-only policy documented in `docs/operations/sandbox_policy.md`.
+Live mode requires `OPENROUTER_API_KEY`; do not enable `OPENROUTER_DEBUG`
+for publishable runs.
 
 ## Step 8 — Write the benchmark report
 

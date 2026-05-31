@@ -16,6 +16,15 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- v0.6 downstream-rerank completion sampler:
+  `scripts/sample-execution-rerank-completions` now emits
+  manifest-backed HumanEval / MBPP-Plus completion-label JSONL artifacts
+  with schema `codelewm.eval.completion_label.v1`. The sampler supports
+  deterministic offline dry-runs for CI and explicit live OpenRouter
+  sampling with `--live`, labels candidate code only through
+  `codelewm.data.sandbox` under the v0.6 stdlib-only policy, writes a
+  `codelewm.eval.completion_sampling_report.v1` report, and records
+  secret-scan evidence before manifesting the artifact (#304).
 - v0.6 JSONL execution-pack eval CLIs: `codelewm eval
   execution-retrieval`, `codelewm eval execution-surprise`,
   `codelewm eval execution-probe`, and `codelewm eval
@@ -67,6 +76,10 @@ earliest one minor release after the deprecation notice.
 
 ### Fixed
 
+- HumanEval source ingestion now strips trailing indentation placeholders
+  from `prompt` before appending `canonical_solution`, preventing
+  fixture and dry-run canonical completions from producing duplicated
+  indentation and sandbox `IndentationError` failures (#304).
 - v0.6 runner: `_train_one_step` now passes `action_emb` and
   `action_reconstruction` to `compute_transition_objective` when
   the v0.6 config sets a non-zero
