@@ -50,10 +50,13 @@
 mismatch — the runner prefixes its parent reference with
 `execution_pack:` while the pack's artifact manifest uses the raw
 `codelewm-execution-pack-20260528T102625Z` form. The artifacts
-themselves are present and intact; this is a label-format gap to fix
-in a small follow-up PR. The integrity gate is not blocked because
-the checksum chain (training_manifest →
-files-with-sha256) is unchanged and verifiable inside the run dir.
+themselves are present and intact; this was a label-format gap, not
+a data-integrity gap. The integrity gate is not blocked because the
+checksum chain (training_manifest → files-with-sha256) is unchanged
+and verifiable inside the run dir.
+Follow-up #303 resolves the runner format for future v0.6 runs by
+recording the unprefixed pack artifact id; the historical seed-42 and
+seed-1729 run manifests remain immutable.
 
 ## Headline Training-Time Metrics
 
@@ -212,8 +215,10 @@ Until that follow-up lands, this report's claim-gate posture is:
   `_read_pack_parent_artifact` prefixes the parent reference with
   `execution_pack:`; the pack's artifact-manifest carries the
   unprefixed form. `codelewm manifest verify --parent-manifest …`
-  reports a mismatch as a result. The fix is a one-line follow-up
-  PR; the data itself is intact.
+  reports a mismatch as a result for the historical seed-42 and
+  seed-1729 artifacts. Follow-up #303 updates future runner output to
+  record the same unprefixed artifact id as the pack manifest; the
+  data itself is intact.
 - **No LLM-sampled labels yet** for the downstream rerank gate; that
   operator step depends on an LLM sampling budget separate from this
   report.

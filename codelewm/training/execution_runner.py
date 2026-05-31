@@ -732,7 +732,7 @@ def _read_pack_parent_artifact(
         return None
     pack_id = payload.get("pack_id") if isinstance(payload, dict) else None
     if isinstance(pack_id, str) and pack_id:
-        return f"execution_pack:{pack_id}"
+        return pack_id
     return None
 
 
