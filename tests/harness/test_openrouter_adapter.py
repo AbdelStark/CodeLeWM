@@ -82,6 +82,27 @@ class OpenRouterAdapterTest(unittest.TestCase):
         self.assertEqual(payload["candidates"][0]["parser_status"], "parseable_python_after_state")
         self.assertEqual(payload["candidates"][0]["dry_run_patch_status"], "applied")
 
+    def test_dry_run_execution_rerank_scenario_generates_function_patch(self) -> None:
+        scenario = get_demo_scenario("execution-rerank-mbpp")
+        request = OpenRouterCandidateRequest(
+            task_id=scenario.task_id,
+            instruction=scenario.instruction,
+            context_bundle={scenario.primary_file.path: scenario.primary_file.content},
+            prompt_template_id=scenario.prompt_template_id,
+            max_candidates=2,
+            dry_run=True,
+        )
+
+        pack = generate_candidate_pack(request, env={})
+        captured = capture_candidate_pack(pack)
+        payload = captured.to_dict()
+
+        self.assertEqual(payload["prompt"]["template_id"], scenario.prompt_template_id)
+        self.assertIn("return n * n", payload["candidates"][0]["patch_text"])
+        self.assertIn("return n + n", payload["candidates"][1]["patch_text"])
+        self.assertEqual(payload["candidates"][0]["parser_status"], "parseable_python_after_state")
+        self.assertEqual(payload["candidates"][0]["dry_run_patch_status"], "applied")
+
     def test_request_from_env_reads_only_documented_openrouter_settings(self) -> None:
         request = OpenRouterCandidateRequest.from_env(
             task_id="task-2",

@@ -20,6 +20,7 @@ from codelewm.data.codestate import (
     changed_line_numbers,
     extract_codestate,
 )
+from codelewm.data.execution_pack.record import tokenize_text as tokenize_execution_text
 from codelewm.data.masks import build_masked_codestate, stable_token_id
 from codelewm.model.checkpoint import sha256_file
 from codelewm.model.transition import (
@@ -48,6 +49,8 @@ from .transition_index import (
 SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
 RERANK_RESULT_SCHEMA_VERSION = "codelewm.rerank.v1"
 ERROR_REPORT_SCHEMA_VERSION = "codelewm.error.v1"
+EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION = "codelewm.execution_train_checkpoint.v1"
+EXECUTION_PACK_RECORD_SCHEMA_VERSION = "codelewm.execution_pack_record.v1"
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 _DATA_TOKEN_RE = re.compile(r"\w+|[^\w\s]")
 HarnessErrorType = Literal[
@@ -501,6 +504,201 @@ class TorchCheckpointTransitionScoringBackend:
 
 
 @dataclass(frozen=True)
+class ExecutionTorchTransitionScoringBackend:
+    """Learned v0.6 execution-substrate scorer for candidate code and one input.
+
+    The public score/rerank API is still shaped as
+    ``before/instruction/candidate`` for compatibility. For execution
+    checkpoints the ``candidate`` text is the candidate program and
+    ``instruction`` is the serialized input repr. The score is a diagnostic
+    latent score, not a correctness label.
+    """
+
+    model: Any
+    runtime: Any
+    device: Any
+    action_view: ActionView
+    state_sequence_length: int
+    action_sequence_length: int
+    vocab_size: int = DEFAULT_TRAINING_VOCAB_SIZE
+    checkpoint_step: int | None = None
+    model_id: str = "codelewm.execution_torch_transition_scorer.v1"
+
+    @property
+    def warnings(self) -> tuple[str, ...]:
+        step = "unknown" if self.checkpoint_step is None else str(self.checkpoint_step)
+        return (
+            "learned execution-substrate torch runtime loaded from checkpoint",
+            f"checkpoint_step={step}",
+            f"action_view={self.action_view}",
+            "transition_energy=predicted_output_latent_norm_plus_abs_code_similarity",
+            "execution score is diagnostic; correctness requires sandbox labels or a downstream benchmark",
+        )
+
+    @classmethod
+    def load(
+        cls,
+        checkpoint: Path | str,
+        *,
+        device: str = "auto",
+    ) -> "ExecutionTorchTransitionScoringBackend":
+        checkpoint_path = Path(checkpoint)
+        runtime = _require_torch_runtime_for_scoring()
+        selected_device = _resolve_torch_device(device, runtime)
+        try:
+            payload = runtime.load(checkpoint_path, map_location=selected_device, weights_only=True)
+        except TypeError:  # pragma: no cover - older torch compatibility.
+            payload = runtime.load(checkpoint_path, map_location=selected_device)
+        except Exception as exc:  # pragma: no cover - torch error classes vary by version.
+            raise ScoreError(
+                f"execution torch checkpoint could not be loaded: {exc}",
+                error_type="checkpoint_error",
+                remediation="provide a valid package-native CodeLeWM execution torch checkpoint",
+                artifact=str(checkpoint_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise ScoreError(
+                "execution checkpoint payload must be a mapping",
+                error_type="checkpoint_error",
+                remediation="provide a package-native CodeLeWM execution torch checkpoint",
+                artifact=str(checkpoint_path),
+            )
+        if payload.get("schema_version") != EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION:
+            raise ScoreError(
+                f"execution checkpoint schema_version is unsupported: {payload.get('schema_version')!r}",
+                error_type="checkpoint_error",
+                remediation="provide a codelewm.execution_train_checkpoint.v1 checkpoint",
+                artifact=str(checkpoint_path),
+            )
+        compatibility = payload.get("compatibility_config")
+        if not isinstance(compatibility, Mapping):
+            raise ScoreError(
+                "execution checkpoint compatibility_config must be a mapping",
+                error_type="checkpoint_error",
+                remediation="provide a checkpoint written by codelewm train with an execution config",
+                artifact=str(checkpoint_path),
+            )
+        model = _build_torch_model_from_compatibility(compatibility, artifact=str(checkpoint_path))
+        try:
+            model.load_state_dict(payload["model_state_dict"])
+        except (KeyError, RuntimeError, ValueError) as exc:
+            raise ScoreError(
+                f"execution checkpoint model state could not be loaded: {exc}",
+                error_type="checkpoint_error",
+                remediation="inspect the execution checkpoint compatibility config and model state",
+                artifact=str(checkpoint_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        model.to(selected_device)
+        model.eval()
+        return cls(
+            model=model,
+            runtime=runtime,
+            device=selected_device,
+            action_view=model.config.action_view,
+            state_sequence_length=int(model.config.state_sequence_length),
+            action_sequence_length=int(model.config.action_sequence_length),
+            vocab_size=int(model.config.vocab_size or DEFAULT_TRAINING_VOCAB_SIZE),
+            checkpoint_step=_optional_int(payload.get("step")),
+        )
+
+    def transition_energy(self, before: str, instruction: str, candidate: str) -> float:
+        del before
+        if not instruction.strip():
+            raise ScoreError(
+                "execution-substrate scoring requires instruction to contain the input repr",
+                error_type="config_error",
+                remediation="pass the execution input repr as --instruction",
+            )
+        code_state = self._state_batch_from_text(candidate, field_name="candidate")
+        action_batch = self._action_batch_from_text(instruction)
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The PyTorch API of nested tensors is in prototype stage.*",
+                    category=UserWarning,
+                )
+                with self.runtime.no_grad():
+                    z_code = self.model.encode_state(code_state)
+                    action_emb = self.model.encode_action(action_batch)
+                    z_pred_after = self.model.predict_after(z_code, action_emb)
+                    pred_norm = z_pred_after.norm(p=2, dim=-1)
+                    similarity = self.runtime.nn.functional.cosine_similarity(
+                        z_pred_after,
+                        z_code,
+                        dim=-1,
+                        eps=1e-12,
+                    ).abs()
+                    energy = pred_norm + similarity
+        except (RuntimeError, ValueError, NotImplementedError) as exc:
+            raise ScoreError(
+                f"execution torch transition scoring failed: {exc}",
+                error_type="scoring_error",
+                remediation="retry with --device cpu or inspect the checkpoint/runtime compatibility",
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            ) from exc
+        value = float(energy.detach().cpu().item())
+        if not math.isfinite(value):
+            raise ScoreError("execution transition score must be finite")
+        return value
+
+    def _state_batch_from_text(self, text: str, *, field_name: str) -> CodeStateBatch:
+        token_ids = _bucket_token_ids(tokenize_execution_text(text), vocab_size=self.vocab_size)
+        input_ids = _pad_int_array(
+            token_ids,
+            self.state_sequence_length,
+            name=f"{field_name}.input_ids",
+        )
+        attention_mask = _pad_bool_array(
+            tuple(True for _ in token_ids),
+            self.state_sequence_length,
+            name=f"{field_name}.attention_mask",
+        )
+        segment_ids = _pad_int_array(
+            (),
+            self.state_sequence_length,
+            name=f"{field_name}.segment_ids",
+        )
+        changed_hunk_mask = _pad_bool_array(
+            (),
+            self.state_sequence_length,
+            name=f"{field_name}.changed_hunk_mask",
+        )
+        return CodeStateBatch(
+            input_ids=self.runtime.as_tensor(input_ids, device=self.device).long(),
+            attention_mask=self.runtime.as_tensor(attention_mask, device=self.device).bool(),
+            segment_ids=self.runtime.as_tensor(segment_ids, device=self.device).long(),
+            changed_hunk_mask=self.runtime.as_tensor(changed_hunk_mask, device=self.device).bool(),
+        )
+
+    def _action_batch_from_text(self, input_repr: str) -> ActionBatch:
+        token_ids = _bucket_token_ids(tokenize_execution_text(input_repr), vocab_size=self.vocab_size)
+        if not token_ids:
+            raise ScoreError(
+                "execution input repr must tokenize to at least one token",
+                error_type="config_error",
+                remediation="pass a non-empty input repr as --instruction",
+            )
+        input_ids = _pad_int_array(
+            token_ids,
+            self.action_sequence_length,
+            name="execution_input.input_ids",
+        )
+        attention_mask = _pad_bool_array(
+            tuple(True for _ in token_ids),
+            self.action_sequence_length,
+            name="execution_input.attention_mask",
+        )
+        return ActionBatch(
+            input_ids=self.runtime.as_tensor(input_ids, device=self.device).long(),
+            attention_mask=self.runtime.as_tensor(attention_mask, device=self.device).bool(),
+            action_view=self.action_view,
+        )
+
+
+@dataclass(frozen=True)
 class CodeLeWMScorer:
     """Python API wrapper for scoring candidate after-state files."""
 
@@ -754,7 +952,26 @@ def _default_scoring_backend(
     require_learned_backend: bool,
 ) -> TransitionScoringBackend:
     model_class = None if trusted_manifest is None else trusted_manifest.metadata.model_class
-    is_torch_manifest = model_class == "TorchCodeTransitionModel"
+    record_schema = None if trusted_manifest is None else trusted_manifest.metadata.record_schema_version
+    is_execution_manifest = (
+        model_class == "TorchCodeTransitionModel"
+        and record_schema == EXECUTION_PACK_RECORD_SCHEMA_VERSION
+    )
+    is_torch_manifest = (
+        model_class == "TorchCodeTransitionModel"
+        and record_schema != EXECUTION_PACK_RECORD_SCHEMA_VERSION
+    )
+    unsafe_schema = (
+        _peek_torch_checkpoint_schema(checkpoint, device=device)
+        if trusted_manifest is None and allow_unsafe and require_learned_backend
+        else None
+    )
+    if is_execution_manifest or unsafe_schema == EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION:
+        try:
+            return ExecutionTorchTransitionScoringBackend.load(checkpoint, device=device)
+        except ScoreError:
+            if is_execution_manifest or require_learned_backend:
+                raise
     should_load_torch = is_torch_manifest or (allow_unsafe and require_learned_backend)
     if should_load_torch:
         try:
@@ -771,6 +988,24 @@ def _default_scoring_backend(
             artifact=str(checkpoint),
         )
     return HashingTransitionScoringBackend()
+
+
+def _peek_torch_checkpoint_schema(checkpoint: Path, *, device: str) -> str | None:
+    try:
+        runtime = _require_torch_runtime_for_scoring()
+        selected_device = _resolve_torch_device(device, runtime)
+        try:
+            payload = runtime.load(checkpoint, map_location=selected_device, weights_only=True)
+        except TypeError:  # pragma: no cover - older torch compatibility.
+            payload = runtime.load(checkpoint, map_location=selected_device)
+    except ScoreError:
+        return None
+    except Exception:
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    schema = payload.get("schema_version")
+    return schema if isinstance(schema, str) else None
 
 
 def _require_torch_runtime_for_scoring() -> Any:
@@ -859,6 +1094,16 @@ def _build_torch_model_from_compatibility(compatibility: Mapping[str, Any], *, a
                 or (
                     isinstance(compatibility.get("loss"), Mapping)
                     and compatibility["loss"].get("enable_inverse_action_reconstruction")
+                )
+                or (
+                    isinstance(compatibility.get("objective"), Mapping)
+                    and float(
+                        compatibility["objective"].get(
+                            "inverse_action_reconstruction_weight",
+                            0.0,
+                        )
+                    )
+                    > 0.0
                 )
             ),
         )

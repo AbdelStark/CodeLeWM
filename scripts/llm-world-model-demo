@@ -8,6 +8,10 @@ uv_light_run=(uv run)
 uv_tui_run=(uv run --group data --group train --group llm --group tui)
 cli_output_mode=""
 cli_scenario=""
+cli_checkpoint=""
+cli_out=""
+cli_tour=""
+cli_html=""
 list_scenarios=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +35,38 @@ while [[ $# -gt 0 ]]; do
       cli_scenario="$2"
       shift 2
       ;;
+    --checkpoint)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--checkpoint requires a checkpoint path' >&2
+        exit 2
+      fi
+      cli_checkpoint="$2"
+      shift 2
+      ;;
+    --out)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--out requires an output directory' >&2
+        exit 2
+      fi
+      cli_out="$2"
+      shift 2
+      ;;
+    --tour)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--tour requires a positive problem count' >&2
+        exit 2
+      fi
+      cli_tour="$2"
+      shift 2
+      ;;
+    --html)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--html requires an HTML output path' >&2
+        exit 2
+      fi
+      cli_html="$2"
+      shift 2
+      ;;
     --list-scenarios)
       list_scenarios=1
       shift
@@ -38,6 +74,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<'EOF'
 Usage: scripts/llm-world-model-demo [--visual|--json|--tui] [--scenario ID]
+                                    [--checkpoint PATH] [--tour N] [--html PATH]
 
 Runs the local LLM + CodeLeWM demo.
 
@@ -46,6 +83,11 @@ Default scenario: bugfix-edge-case
 Default output is a visual terminal walkthrough. Use --json or set
 CODELEWM_LLM_DEMO_OUTPUT=json for raw machine-readable command output.
 Use --tui or CODELEWM_LLM_DEMO_OUTPUT=tui to open the optional Textual viewer.
+
+For the v0.6 execution showcase:
+  scripts/llm-world-model-demo --scenario execution-rerank-mbpp \
+    --checkpoint .artifacts/v0_6/runs/.../checkpoints/last.pt \
+    --tour 5 --html demo.html
 EOF
       exit 0
       ;;
@@ -135,14 +177,47 @@ fi
 
 demo_root="${CODELEWM_LLM_DEMO_ROOT:-.artifacts/llm-world-model-demo}"
 scenario_id="${cli_scenario:-${CODELEWM_LLM_DEMO_SCENARIO:-bugfix-edge-case}}"
-checkpoint="${CODELEWM_LLM_DEMO_CHECKPOINT:-.artifacts/first-results/train/checkpoints/checkpoint.pt}"
-out_dir="${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}"
+checkpoint="${cli_checkpoint:-${CODELEWM_LLM_DEMO_CHECKPOINT:-.artifacts/first-results/train/checkpoints/checkpoint.pt}}"
+out_dir="${cli_out:-${CODELEWM_LLM_DEMO_OUT:-$demo_root/run}}"
 device="${CODELEWM_LLM_DEMO_DEVICE:-cpu}"
 output_mode="${cli_output_mode:-${CODELEWM_LLM_DEMO_OUTPUT:-visual}}"
+tour_count="${cli_tour:-${CODELEWM_LLM_DEMO_TOUR:-0}}"
+html_export="${cli_html:-${CODELEWM_LLM_DEMO_HTML:-}}"
 
 if [[ "$output_mode" != "visual" && "$output_mode" != "json" && "$output_mode" != "tui" ]]; then
   printf 'CODELEWM_LLM_DEMO_OUTPUT must be visual, json, or tui; got %s\n' "$output_mode" >&2
   exit 2
+fi
+
+if [[ "$tour_count" != "0" ]]; then
+  if [[ "$scenario_id" != "execution-rerank-mbpp" ]]; then
+    printf '%s\n' '--tour is currently supported only for --scenario execution-rerank-mbpp' >&2
+    exit 2
+  fi
+  if [[ "$output_mode" == "tui" ]]; then
+    printf '%s\n' 'execution-rerank tour does not open the Textual TUI; use --visual or --json' >&2
+    exit 2
+  fi
+  tour_cmd=(
+    "${uv_run[@]}" python -m codelewm.harness.execution_rerank_demo
+    --scenario "$scenario_id"
+    --checkpoint "$checkpoint"
+    --out "$out_dir"
+    --tour "$tour_count"
+    --device "$device"
+    --overwrite
+  )
+  if [[ -n "$html_export" ]]; then
+    tour_cmd+=(--html "$html_export")
+  fi
+  if [[ "${CODELEWM_EXECUTION_RERANK_FIXTURE_SCORER:-0}" == "1" ]]; then
+    tour_cmd+=(--fixture-scorer --allow-unsafe-checkpoint)
+  fi
+  if [[ "$output_mode" == "json" ]]; then
+    tour_cmd+=(--json)
+  fi
+  "${tour_cmd[@]}"
+  exit $?
 fi
 
 tmp_dir="$(mktemp -d)"

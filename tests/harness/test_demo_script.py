@@ -24,6 +24,9 @@ class LLMWorldModelDemoScriptTest(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("[--scenario ID]", completed.stdout)
+        self.assertIn("[--checkpoint PATH]", completed.stdout)
+        self.assertIn("[--tour N]", completed.stdout)
+        self.assertIn("[--html PATH]", completed.stdout)
         self.assertIn(DEFAULT_DEMO_SCENARIO_ID, completed.stdout)
 
     def test_list_scenarios_is_network_free_json(self) -> None:
