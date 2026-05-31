@@ -19,8 +19,8 @@
 ## Abstract
 
 We apply the same JEPA latent-transition recipe — encoder, predictor,
-EMA target, SIGReg, action-swap contrastive, inverse-action
-reconstruction — to two substrates of code data. Substrate A is
+SIGReg, action-swap contrastive, inverse-action reconstruction — to
+two substrates of code data. Substrate A is
 commit-message-conditioned code edits over CommitPackFT-Python.
 Substrate B is input-conditioned program execution over CodeNet,
 MBPP, and APPS, with outputs captured by a sandboxed deterministic
@@ -28,10 +28,16 @@ executor at data-build time. On Substrate A, four scaled training
 runs all fail the headline retrieval gate against the no-action
 baseline and produce severely rank-collapsed latents (effective rank
 ratio 0.016 of 256 dimensions). On Substrate B, the same architecture
-and objective registry [report result here]. The comparison
-isolates the substrate as the controlling variable; we argue the
-result implies a general lesson for JEPA-style modeling of code:
-substrate signal-to-noise dominates objective tuning.
+and objective registry produce non-collapsed action-discriminative
+latents: across two training seeds, the no-action margin flips from
+−0.77 to +1.24, SIGReg drops 1200× (44 → 0.036), and the predicted
+latents' effective-rank ratio settles at 0.47 — 2.3× the collapse
+gate. The comparison isolates the substrate as the controlling
+variable; we argue the result implies a general lesson for
+JEPA-style modeling of code: substrate signal-to-noise dominates
+objective tuning. Downstream-utility evaluations (retrieval,
+surprise, rerank) are deferred to a follow-up evaluation harness
+wiring.
 
 ## 1. Introduction
 
@@ -121,13 +127,30 @@ substrate signal-to-noise dominates objective tuning.
 | A | #154 | 0.363 | -0.106 | 0.468 | -0.082 |
 | A | #159 | 0.597 | -0.053 | 0.675 | -0.034 |
 | A | #172 | 0.263 | -0.178 | 0.370 | -0.163 |
-| B | v0.6 seed 42 |  |  |  |  |
-| B | v0.6 seed 1729 |  |  |  |  |
+| B | v0.6 seed 42 | *deferred* | *deferred* | *deferred* | *deferred* |
+| B | v0.6 seed 1729 | *deferred* | *deferred* | *deferred* | *deferred* |
+
+The Substrate B retrieval numbers are deferred to a follow-up wiring
+of the v0.6 JSONL execution-pack to the `codelewm eval retrieval`
+CLI (currently HDF5-only). The training-time **no-action margin
+proxy** for Substrate B is +1.23 on seed 42 and +1.24 on seed 1729
+(positive across both, with spread 0.013 ≪ mean 1.24) — the model
+clearly uses the action signal rather than relying on a do-nothing
+prior. The headline-claim posture is documented in
+`docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`.
 
 ### 6.2 Collapse And Surprise
 
-Substrate A: effective rank ratio 0.016. Substrate B: filled in
-from the v0.6 results report.
+| Substrate | Run | Effective rank ratio | Mean ‖z‖₂ | Mean pairwise cosine |
+|-----------|-----|---------------------:|----------:|---------------------:|
+| A | scaled v0.2 | 0.016 | n/a | n/a |
+| B | v0.6 seed 42 | **0.467** | 14.97 | 3e-4 |
+| B | v0.6 seed 1729 | **0.477** | 14.94 | 1e-4 |
+
+Substrate A: effective rank ratio 0.016. **Substrate B clears the
+0.20 collapse gate by 2.3× on both seeds (`EXECUTION_V0_6_RESULTS_2026-05-30.md`),
+inverting Substrate A's collapse failure.** Surprise AUCs deferred
+to the eval-suite follow-up.
 
 ### 6.3 Latent Probes
 
@@ -203,18 +226,42 @@ start from where ours leaves off.
 
 ## 11. Two Framings, Two Endings
 
-If the v0.6 headline rerank gate passes, the paper's framing
-becomes: *"a JEPA recipe that does transfer to code, when given the
-right substrate."* The Substrate A negative results become the
-controlled comparison that isolates substrate as the variable.
+**Framing as of 2026-05-30 (post-v0.6 first end-to-end run):**
+*partial positive — substrate-pivot's headline-shape claim confirmed,
+downstream-utility evaluations deferred.*
 
-If the v0.6 headline rerank gate fails, the paper's framing becomes:
-*"a controlled comparison of two substrates; both fail the same
-gate, but in instructive ways."* The diagnostic findings — collapse
-ratio, surprise AUC, probe matrix — become the substantive
-contribution.
+The substrate-pivot's headline prediction — that the
+execution-trace substrate produces a non-collapsed
+action-discriminative latent transition model — is confirmed by the
+v0.6 HF Jobs runs (`EXECUTION_V0_6_RESULTS_2026-05-30.md`):
 
-Both framings ship from the same artifact set.
+- Across two training seeds, prediction MSE drops three orders of
+  magnitude (0.95 → 6e-4), SIGReg drops 1200× (44 → 0.036), and the
+  no-action margin flips from −0.77 to +1.24.
+- The effective-rank ratio of predicted latents climbs to 0.47,
+  clearing the 0.20 collapse gate by 2.3×. Substrate A failed the
+  same gate at 0.016.
+- Cross-seed variance is small (margin spread = 0.013, ~1% of mean).
+
+The downstream-utility gates (retrieval lift, surprise AUC, latent
+probe, downstream rerank) are deferred to a follow-up CLI wiring of
+the v0.6 JSONL execution pack to the existing evaluator libraries
+(`codelewm.eval.execution_probe_targets`,
+`codelewm.eval.execution_surprise_decoys`,
+`codelewm.eval.execution_rerank`, `codelewm.eval.crash_prediction`).
+Until that follow-up lands, the paper's framing is:
+
+> *"A controlled substrate comparison: Substrate A fails the
+> collapse gate at 0.016 effective rank ratio; Substrate B passes it
+> at 0.47, with the no-action margin flipping from −0.77 to +1.24.
+> The same architecture and objective registry yields qualitatively
+> different latents on the two substrates. Downstream-utility
+> claims (retrieval, surprise, rerank) are deferred to a follow-up
+> evaluation harness wiring."*
+
+The published artifact set is sufficient to fill the deferred tables
+once the eval harness ships; both framings remain available from the
+same artifacts.
 
 ## References
 
