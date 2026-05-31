@@ -8,6 +8,16 @@ source of truth for implementation state; this document explains what is
 complete, what claims are blocked, and what a future positive-claim research
 iteration would need.
 
+Update 2026-05-31: the v0.6 execution-substrate follow-through under #309 has
+advanced beyond this historical v0.2 boundary. The #305 eval pass committed
+per-seed v0.6 retrieval, surprise, latent-probe, and crash-prediction reports
+under `docs/benchmark/v0_6/` and set the framing to partial positive: v0.6
+passes substrate-shape, execution-pack retrieval, and generated-decoy surprise
+gates, while semantic-probe, crash-prediction, and HumanEval / MBPP-Plus rerank
+utility claims remain unsupported. The #306 paper draft and arXiv source
+package live at `docs/papers/two_substrate_paper.tex` and
+`docs/papers/ARXIV_SUBMISSION.md`; the arXiv URL is pending operator upload.
+
 The next research-planning `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md`. The v0.2 HF/ml-intern prompt in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the

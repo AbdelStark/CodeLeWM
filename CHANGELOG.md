@@ -16,6 +16,14 @@ earliest one minor release after the deprecation notice.
 
 ### Added
 
+- Two-substrate paper draft and arXiv package for #306:
+  `docs/papers/two_substrate_paper.tex`, fetched arXiv BibTeX references,
+  `docs/papers/two_substrate_claim_audit.md`,
+  `docs/papers/ARXIV_SUBMISSION.md`, and
+  `scripts/build-two-substrate-paper`. The draft turns the v0.2 negative
+  evidence and v0.6 partial-positive evidence into a full manuscript,
+  embeds collapse and margin figures, and keeps every quantitative claim
+  tied to checked-in benchmark reports or schema-versioned eval artifacts.
 - v0.6 downloaded-artifact eval pass for #305: committed per-seed
   eval artifacts under `docs/benchmark/v0_6/` for seed 42 and seed
   1729 across `execution-retrieval`, `execution-surprise`,
