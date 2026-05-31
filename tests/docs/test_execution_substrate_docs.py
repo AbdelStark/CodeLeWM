@@ -70,10 +70,27 @@ class PaperOutlineLinksTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md", text)
         self.assertIn("EXECUTION_V0_6_RESULTS_TEMPLATE.md", text)
-        # Both gate-fail and gate-pass framings must be present so the
-        # paper ships from the same artifact set regardless of outcome.
-        self.assertIn("If the v0.6 headline rerank gate passes", text)
-        self.assertIn("If the v0.6 headline rerank gate fails", text)
+        # §11 must commit to a framing. Pre-first-fire it carries both
+        # conditional framings; post-first-fire it commits to one of
+        # them and cites the actual results report. Accept either
+        # shape so the test doesn't fail the moment the outline is
+        # updated for a concrete run.
+        has_conditional_framings = (
+            "If the v0.6 headline rerank gate passes" in text
+            and "If the v0.6 headline rerank gate fails" in text
+        )
+        has_concrete_results_reference = (
+            "EXECUTION_V0_6_RESULTS_2026-05-30.md" in text
+            or "EXECUTION_V0_6_RESULTS_2026-05-31.md" in text
+        )
+        self.assertTrue(
+            has_conditional_framings or has_concrete_results_reference,
+            msg=(
+                "outline §11 must commit to a framing: either the "
+                "pre-first-fire conditional pair or a concrete results "
+                "reference"
+            ),
+        )
 
 
 class ExplainerLinksTest(unittest.TestCase):
