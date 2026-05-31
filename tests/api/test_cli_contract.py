@@ -183,6 +183,78 @@ class PublicCliContractTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 self.assertIn(flag, help_text)
 
+    def test_eval_execution_retrieval_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "execution-retrieval", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--pack",
+            "--baselines",
+            "--out",
+            "--device",
+            "--max-candidates",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_eval_execution_surprise_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "execution-surprise", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--pack",
+            "--decoys",
+            "--out",
+            "--device",
+            "--max-examples",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_eval_execution_probe_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "execution-probe", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--pack",
+            "--targets",
+            "--out",
+            "--device",
+            "--max-examples-per-split",
+            "--bootstrap-samples",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
+    def test_eval_crash_prediction_help_snapshot_exposes_required_flags(self) -> None:
+        help_text = _run_help("eval", "crash-prediction", "--help")
+
+        for flag in (
+            "--checkpoint",
+            "--pack",
+            "--out",
+            "--device",
+            "--max-examples",
+            "--seed",
+            "--overwrite",
+            "--json",
+            "--log-jsonl",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, help_text)
+
     def test_eval_latent_matrix_help_snapshot_exposes_required_flags(self) -> None:
         help_text = _run_help("eval", "latent-matrix", "--help")
 

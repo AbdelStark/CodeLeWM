@@ -189,6 +189,18 @@ from .surprise_runner import (
     SurpriseEvalResult,
     run_surprise_evaluation,
 )
+from .execution_runner import (
+    CRASH_PREDICTION_EVAL_RUN_SCHEMA_VERSION,
+    EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION,
+    EXECUTION_RETRIEVAL_EVAL_RUN_SCHEMA_VERSION,
+    EXECUTION_SURPRISE_EVAL_RUN_SCHEMA_VERSION,
+    ExecutionEvalError,
+    ExecutionEvalResult,
+    run_crash_prediction_evaluation,
+    run_execution_probe_evaluation,
+    run_execution_retrieval_evaluation,
+    run_execution_surprise_evaluation,
+)
 from .execution_probe_targets import (
     EXECUTION_PROBE_TARGETS,
     EXECUTION_PROBE_TARGET_SCHEMA_VERSION,
@@ -230,6 +242,7 @@ from .crash_prediction import (
 
 __all__ = [
     "CRASH_PREDICTION_REPORT_SCHEMA_VERSION",
+    "CRASH_PREDICTION_EVAL_RUN_SCHEMA_VERSION",
     "CrashPredictionError",
     "CrashPredictionReport",
     "CrashSample",
@@ -242,7 +255,12 @@ __all__ = [
     "BaselineSummary",
     "CompletionLabel",
     "EXECUTION_RERANK_BASELINES",
+    "EXECUTION_RETRIEVAL_EVAL_RUN_SCHEMA_VERSION",
+    "EXECUTION_SURPRISE_EVAL_RUN_SCHEMA_VERSION",
+    "EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION",
     "EXECUTION_RERANK_REPORT_SCHEMA_VERSION",
+    "ExecutionEvalError",
+    "ExecutionEvalResult",
     "ExecutionRerankError",
     "ExecutionRerankReport",
     "ScoredCompletion",
@@ -389,6 +407,10 @@ __all__ = [
     "run_latent_matrix_evaluation",
     "load_downstream_benchmark_pack_config",
     "run_downstream_rerank_evaluation",
+    "run_crash_prediction_evaluation",
+    "run_execution_probe_evaluation",
+    "run_execution_retrieval_evaluation",
+    "run_execution_surprise_evaluation",
     "run_retrieval_evaluation",
     "run_surprise_evaluation",
     "read_surprise_report",

@@ -7,8 +7,9 @@ import hashlib
 import json
 import sys
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from codelewm import __version__
 from codelewm.data import (
@@ -24,6 +25,8 @@ from codelewm.data import (
 from codelewm.eval import (
     ActionAblationError,
     ActionViewPolicyError,
+    CrashPredictionError,
+    ExecutionEvalError,
     LatentMatrixError,
     LatentProbeError,
     RetrievalEvalError,
@@ -33,6 +36,10 @@ from codelewm.eval import (
     build_downstream_benchmark_pack,
     run_downstream_rerank_evaluation,
     run_action_ablation_suite,
+    run_crash_prediction_evaluation,
+    run_execution_probe_evaluation,
+    run_execution_retrieval_evaluation,
+    run_execution_surprise_evaluation,
     run_latent_matrix_evaluation,
     run_latent_probe_evaluation,
     run_retrieval_evaluation,
@@ -516,6 +523,203 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     retrieval.set_defaults(func=_eval_retrieval_command)
+    execution_retrieval = eval_subcommands.add_parser(
+        "execution-retrieval",
+        help="run retrieval evaluation over a v0.6 JSONL execution pack",
+    )
+    execution_retrieval.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted v0.6 execution training checkpoint path",
+    )
+    execution_retrieval.add_argument(
+        "--pack",
+        type=Path,
+        required=True,
+        help="execution pack directory, pack.jsonl, manifest.json, or artifact_manifest.json",
+    )
+    execution_retrieval.add_argument(
+        "--baselines",
+        default="random,no_action,shuffled_action",
+        help="comma-separated baselines: random, lexical, no_action, shuffled_action",
+    )
+    execution_retrieval.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="retrieval report artifact directory",
+    )
+    execution_retrieval.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    execution_retrieval.add_argument(
+        "--max-candidates",
+        type=int,
+        default=1000,
+        help="maximum val/test execution records to evaluate",
+    )
+    execution_retrieval.add_argument(
+        "--seed", type=int, default=0, help="deterministic evaluation seed"
+    )
+    execution_retrieval.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing execution retrieval output files",
+    )
+    execution_retrieval.add_argument("--json", action="store_true", help="emit JSON output")
+    execution_retrieval.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    execution_retrieval.set_defaults(func=_eval_execution_retrieval_command)
+    execution_surprise = eval_subcommands.add_parser(
+        "execution-surprise",
+        help="run surprise evaluation over a v0.6 JSONL execution pack",
+    )
+    execution_surprise.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted v0.6 execution training checkpoint path",
+    )
+    execution_surprise.add_argument(
+        "--pack",
+        type=Path,
+        required=True,
+        help="execution pack directory, pack.jsonl, manifest.json, or artifact_manifest.json",
+    )
+    execution_surprise.add_argument(
+        "--decoys",
+        default="mutation,same_problem_different_submission,same_code_different_input",
+        help="comma-separated decoys: mutation, same_problem_different_submission, same_code_different_input",
+    )
+    execution_surprise.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="surprise report artifact directory",
+    )
+    execution_surprise.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    execution_surprise.add_argument(
+        "--max-examples",
+        type=int,
+        default=1000,
+        help="maximum val/test execution records to evaluate",
+    )
+    execution_surprise.add_argument(
+        "--seed", type=int, default=0, help="deterministic decoy seed"
+    )
+    execution_surprise.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing execution surprise output files",
+    )
+    execution_surprise.add_argument("--json", action="store_true", help="emit JSON output")
+    execution_surprise.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    execution_surprise.set_defaults(func=_eval_execution_surprise_command)
+    execution_probe = eval_subcommands.add_parser(
+        "execution-probe",
+        help="run execution-specific frozen latent probes over a v0.6 JSONL pack",
+    )
+    execution_probe.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted v0.6 execution training checkpoint path",
+    )
+    execution_probe.add_argument(
+        "--pack",
+        type=Path,
+        required=True,
+        help="execution pack directory, pack.jsonl, manifest.json, or artifact_manifest.json",
+    )
+    execution_probe.add_argument(
+        "--targets",
+        default="output_type,will_raise,output_magnitude_bucket,output_length_bucket",
+        help="comma-separated execution probe targets",
+    )
+    execution_probe.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="latent probe report artifact directory",
+    )
+    execution_probe.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    execution_probe.add_argument(
+        "--max-examples-per-split",
+        type=int,
+        default=1000,
+        help="maximum execution rows per split",
+    )
+    execution_probe.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=200,
+        help="bootstrap samples used for probe confidence intervals",
+    )
+    execution_probe.add_argument(
+        "--seed", type=int, default=0, help="deterministic probe seed"
+    )
+    execution_probe.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing execution probe output files",
+    )
+    execution_probe.add_argument("--json", action="store_true", help="emit JSON output")
+    execution_probe.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    execution_probe.set_defaults(func=_eval_execution_probe_command)
+    crash_prediction = eval_subcommands.add_parser(
+        "crash-prediction",
+        help="run the v0.6 execution-substrate crash-prediction fallback eval",
+    )
+    crash_prediction.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="trusted v0.6 execution training checkpoint path",
+    )
+    crash_prediction.add_argument(
+        "--pack",
+        type=Path,
+        required=True,
+        help="execution pack directory, pack.jsonl, manifest.json, or artifact_manifest.json",
+    )
+    crash_prediction.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="crash prediction report artifact directory",
+    )
+    crash_prediction.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    crash_prediction.add_argument(
+        "--max-examples",
+        type=int,
+        default=1000,
+        help="maximum val/test execution records to evaluate",
+    )
+    crash_prediction.add_argument(
+        "--seed", type=int, default=0, help="deterministic evaluation seed"
+    )
+    crash_prediction.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing crash prediction output files",
+    )
+    crash_prediction.add_argument("--json", action="store_true", help="emit JSON output")
+    crash_prediction.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    crash_prediction.set_defaults(func=_eval_crash_prediction_command)
     latent_probe = eval_subcommands.add_parser(
         "latent-probe", help="run frozen latent representation probes"
     )
@@ -2213,6 +2417,250 @@ def _eval_retrieval_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_execution_retrieval_command(args: argparse.Namespace) -> int:
+    return _run_execution_eval_cli(
+        args,
+        step="eval.execution_retrieval",
+        start_event="evaluation.execution_retrieval.start",
+        complete_event="evaluation.execution_retrieval.complete",
+        error_event="evaluation.execution_retrieval.error",
+        command_builder=_eval_execution_retrieval_command_tuple,
+        runner=lambda command: run_execution_retrieval_evaluation(
+            checkpoint=args.checkpoint,
+            pack=args.pack,
+            out=args.out,
+            baselines=(args.baselines,),
+            device=args.device,
+            max_candidates=args.max_candidates,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        ),
+        start_fields={
+            "checkpoint": str(args.checkpoint),
+            "pack": str(args.pack),
+            "out": str(args.out),
+            "baselines": args.baselines,
+            "device": args.device,
+            "max_candidates": args.max_candidates,
+            "seed": args.seed,
+            "overwrite": bool(args.overwrite),
+        },
+    )
+
+
+def _eval_execution_surprise_command(args: argparse.Namespace) -> int:
+    return _run_execution_eval_cli(
+        args,
+        step="eval.execution_surprise",
+        start_event="evaluation.execution_surprise.start",
+        complete_event="evaluation.execution_surprise.complete",
+        error_event="evaluation.execution_surprise.error",
+        command_builder=_eval_execution_surprise_command_tuple,
+        runner=lambda command: run_execution_surprise_evaluation(
+            checkpoint=args.checkpoint,
+            pack=args.pack,
+            out=args.out,
+            decoys=(args.decoys,),
+            device=args.device,
+            max_examples=args.max_examples,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        ),
+        start_fields={
+            "checkpoint": str(args.checkpoint),
+            "pack": str(args.pack),
+            "out": str(args.out),
+            "decoys": args.decoys,
+            "device": args.device,
+            "max_examples": args.max_examples,
+            "seed": args.seed,
+            "overwrite": bool(args.overwrite),
+        },
+    )
+
+
+def _eval_execution_probe_command(args: argparse.Namespace) -> int:
+    return _run_execution_eval_cli(
+        args,
+        step="eval.execution_probe",
+        start_event="evaluation.execution_probe.start",
+        complete_event="evaluation.execution_probe.complete",
+        error_event="evaluation.execution_probe.error",
+        command_builder=_eval_execution_probe_command_tuple,
+        runner=lambda command: run_execution_probe_evaluation(
+            checkpoint=args.checkpoint,
+            pack=args.pack,
+            out=args.out,
+            targets=(args.targets,),
+            device=args.device,
+            max_examples_per_split=args.max_examples_per_split,
+            bootstrap_samples=args.bootstrap_samples,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        ),
+        start_fields={
+            "checkpoint": str(args.checkpoint),
+            "pack": str(args.pack),
+            "out": str(args.out),
+            "targets": args.targets,
+            "device": args.device,
+            "max_examples_per_split": args.max_examples_per_split,
+            "bootstrap_samples": args.bootstrap_samples,
+            "seed": args.seed,
+            "overwrite": bool(args.overwrite),
+        },
+    )
+
+
+def _eval_crash_prediction_command(args: argparse.Namespace) -> int:
+    return _run_execution_eval_cli(
+        args,
+        step="eval.crash_prediction",
+        start_event="evaluation.crash_prediction.start",
+        complete_event="evaluation.crash_prediction.complete",
+        error_event="evaluation.crash_prediction.error",
+        command_builder=_eval_crash_prediction_command_tuple,
+        runner=lambda command: run_crash_prediction_evaluation(
+            checkpoint=args.checkpoint,
+            pack=args.pack,
+            out=args.out,
+            device=args.device,
+            max_examples=args.max_examples,
+            seed=args.seed,
+            overwrite=args.overwrite,
+            command=command,
+        ),
+        start_fields={
+            "checkpoint": str(args.checkpoint),
+            "pack": str(args.pack),
+            "out": str(args.out),
+            "device": args.device,
+            "max_examples": args.max_examples,
+            "seed": args.seed,
+            "overwrite": bool(args.overwrite),
+        },
+    )
+
+
+def _run_execution_eval_cli(
+    args: argparse.Namespace,
+    *,
+    step: str,
+    start_event: str,
+    complete_event: str,
+    error_event: str,
+    command_builder: Any,
+    runner: Any,
+    start_fields: Mapping[str, Any],
+) -> int:
+    run_id = _run_id()
+    command = command_builder(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event=start_event,
+                level="info",
+                run_id=run_id,
+                step=step,
+                message=f"{step} started",
+                fields=start_fields,
+            ),
+        )
+        result = runner(command)
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event=complete_event,
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step=step,
+                message=f"{step} completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "metadata": dict(result.metadata),
+                },
+            ),
+        )
+    except OptionalDependencyError as exc:
+        error = ScoreError(
+            f"execution evaluation optional dependency is missing: {exc}",
+            error_type="optional_dependency_missing",
+            remediation="install the required groups with `uv sync --group train --group data --group dev`",
+            artifact=str(args.pack),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step=step, event=error_event, exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except CheckpointTrustError as exc:
+        error = ScoreError(
+            f"execution evaluation checkpoint rejected: {exc}",
+            error_type="checkpoint_error",
+            remediation="provide a trusted checkpoint with a matching checkpoint manifest",
+            artifact=str(args.checkpoint),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step=step, event=error_event, exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 5
+    except (ArtifactManifestError, json.JSONDecodeError, OSError) as exc:
+        error = ScoreError(
+            f"execution evaluation artifact validation failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the checkpoint, training-run, and execution-pack manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step=step, event=error_event, exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except (
+        CrashPredictionError,
+        ExecutionEvalError,
+        LatentProbeError,
+        RetrievalEvalError,
+        SurpriseEvalError,
+    ) as exc:
+        error = ScoreError(
+            f"execution evaluation failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="inspect the execution pack, checkpoint, requested targets/decoys, and output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step=step, event=error_event, exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 6
+    except Exception as exc:
+        error = ScoreError(
+            f"execution evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the execution eval inputs and retry with a corrected request",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(args, run_id=run_id, step=step, event=error_event, exc=error)
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"report: {args.out / result.report_path}")
+        for key in ("query_count", "example_count", "row_count", "sample_count"):
+            if key in result.metadata:
+                print(f"{key}: {result.metadata[key]}")
+    return 0
+
+
 def _eval_latent_probe_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _eval_latent_probe_command_tuple(args)
@@ -3701,6 +4149,122 @@ def _eval_retrieval_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
         str(args.seed),
         "--report-scope",
         str(args.report_scope),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_execution_retrieval_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "execution-retrieval",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--pack",
+        str(args.pack),
+        "--baselines",
+        str(args.baselines),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-candidates",
+        str(args.max_candidates),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_execution_surprise_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "execution-surprise",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--pack",
+        str(args.pack),
+        "--decoys",
+        str(args.decoys),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples",
+        str(args.max_examples),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_execution_probe_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "execution-probe",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--pack",
+        str(args.pack),
+        "--targets",
+        str(args.targets),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples-per-split",
+        str(args.max_examples_per_split),
+        "--bootstrap-samples",
+        str(args.bootstrap_samples),
+        "--seed",
+        str(args.seed),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_crash_prediction_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "crash-prediction",
+        "--checkpoint",
+        str(args.checkpoint),
+        "--pack",
+        str(args.pack),
+        "--out",
+        str(args.out),
+        "--device",
+        str(args.device),
+        "--max-examples",
+        str(args.max_examples),
+        "--seed",
+        str(args.seed),
     ]
     if args.overwrite:
         command.append("--overwrite")

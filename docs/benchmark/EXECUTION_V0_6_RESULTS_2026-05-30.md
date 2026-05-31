@@ -144,7 +144,7 @@ that is not yet CLI-wired in this codebase — see "Eval Suite Gap" below.
 | `downstream_rerank_pass_at_1_lift_min ≥ 3.0 abs pts` | **deferred** | n/a | needs LLM-sampled labels + rerank harness |
 | `required_seeds ≥ 2` | ✓ | **PASS** | both training runs uploaded and verified |
 
-## Eval Suite Gap (Follow-Up)
+## Eval Suite CLI Surface
 
 Issue #289's closing criteria reference "the headline evaluations
 (#266-#269)" run against the downloaded artifacts. The evaluator
@@ -152,39 +152,42 @@ libraries exist
 (`codelewm.eval.execution_probe_targets`,
 `codelewm.eval.execution_surprise_decoys`,
 `codelewm.eval.execution_rerank`,
-`codelewm.eval.crash_prediction`) but they're library-only — the
-`codelewm eval …` CLI surfaces the v0.2 HDF5 path, not the v0.6
-JSONL execution pack. A follow-up issue (filed after this report
-lands) will wire these CLIs so a downstream run is exactly:
+`codelewm.eval.crash_prediction`). Issue #302 wires the JSONL
+execution-pack CLI surfaces for retrieval, surprise, latent probes,
+and crash prediction, so a downstream run can now invoke:
 
 ```text
-codelewm eval execution-retrieval --checkpoint <last.pt> --pack <pack-dir> --baselines random,no_action,shuffled_action
-codelewm eval execution-surprise   --checkpoint <last.pt> --pack <pack-dir> --decoys mutation,same_problem_different_submission,same_code_different_input
-codelewm eval execution-probe      --checkpoint <last.pt> --pack <pack-dir> --targets output_type,will_raise,output_magnitude_bucket,output_length_bucket
-codelewm eval execution-rerank-humaneval --checkpoint <last.pt> --completions <labeled.jsonl>
-codelewm eval execution-rerank-mbpp-plus --checkpoint <last.pt> --completions <labeled.jsonl>
-codelewm eval crash-prediction     --checkpoint <last.pt> --pack <pack-dir>
+codelewm eval execution-retrieval --checkpoint <last.pt> --pack <pack-dir> --baselines random,no_action,shuffled_action --out <out-dir>
+codelewm eval execution-surprise   --checkpoint <last.pt> --pack <pack-dir> --decoys mutation,same_problem_different_submission,same_code_different_input --out <out-dir>
+codelewm eval execution-probe      --checkpoint <last.pt> --pack <pack-dir> --targets output_type,will_raise,output_magnitude_bucket,output_length_bucket --out <out-dir>
+codelewm eval crash-prediction     --checkpoint <last.pt> --pack <pack-dir> --out <out-dir>
 ```
 
-Until that follow-up lands, this report's claim-gate posture is:
+This report remains a historical artifact for the 2026-05-30 run. The
+new CLIs do not retroactively add numbers to the immutable downloaded
+artifact set, and the HumanEval/MBPP-Plus completion-rerank path still
+needs the labeled completion sampler and aggregation follow-ups before
+downstream-utility claims can be filled in. The report's claim-gate
+posture is therefore unchanged:
 
 - **Headline substrate-pivot claim**: confirmed across two seeds —
   prediction MSE drops 1500×, SIGReg drops 1200×, no-action margin
   flips from −0.77 to +1.24, collapse gates pass.
 - **Downstream-utility gates** (retrieval, surprise, rerank): unevaluated.
-  The artifacts are published and the eval CLIs land in the follow-up.
+  The artifacts are published; the JSONL pack eval CLIs are now wired by
+  #302, while the completion-rerank publication path remains deferred.
 
 ## Claim-Gate Summary
 
 | Gate | Status | Backing report |
 | ---- |:------:| --------------- |
-| Retrieval ≥0.05 over no-action across 2 seeds | **deferred** | needs follow-up CLI |
+| Retrieval ≥0.05 over no-action across 2 seeds | **deferred** | needs #302 CLI rerun on downloaded artifacts |
 | Collapse gates satisfied across 2 seeds | **PASS** | training reports, both seeds |
 | Substrate-pivot headline (margin flip, sigreg drop) | **PASS** | training reports, both seeds |
-| ≥1 latent probe target beats every control across 2 seeds | **deferred** | needs follow-up CLI |
-| Surprise mutation AUC ≥0.65 | **deferred** | needs follow-up CLI + labeled decoy pack |
-| Surprise `same_problem_different_submission` AUC ≥0.60 | **deferred** | needs follow-up CLI |
-| Surprise `same_code_different_input` AUC ≥0.70 | **deferred** | needs follow-up CLI |
+| ≥1 latent probe target beats every control across 2 seeds | **deferred** | needs #302 CLI rerun on downloaded artifacts |
+| Surprise mutation AUC ≥0.65 | **deferred** | needs #302 CLI rerun on downloaded artifacts |
+| Surprise `same_problem_different_submission` AUC ≥0.60 | **deferred** | needs #302 CLI rerun on downloaded artifacts |
+| Surprise `same_code_different_input` AUC ≥0.70 | **deferred** | needs #302 CLI rerun on downloaded artifacts |
 | Rerank pass@1 lift ≥3pts with CI excluding zero on ≥1 benchmark | **deferred** | needs LLM-sampled labels |
 | Checkpoint trust + secret scan pass | **PASS** | `codelewm secret-scan`: 0 findings, both runs |
 
@@ -203,10 +206,13 @@ Until that follow-up lands, this report's claim-gate posture is:
 > the no-action margin across seeds is 0.013, ~1% of its mean
 > magnitude.
 >
-> Downstream-utility evaluations (retrieval, surprise, latent probe,
-> downstream rerank) are deferred to a follow-up that wires those
-> evaluators to the v0.6 JSONL execution pack. The artifact set
-> required for those evaluations is fully published at
+> Downstream-utility evaluations remain deferred in this historical
+> report. Retrieval, surprise, latent probe, and crash-prediction CLIs
+> are wired for v0.6 JSONL execution packs by #302, but their concrete
+> downloaded-artifact numbers are not part of this immutable
+> 2026-05-30 result set; downstream rerank still needs labeled
+> completion artifacts. The artifact set required for those evaluations
+> is fully published at
 > `abdelstark/codelewm-runs` and verifies cleanly.
 
 ## Notes And Caveats

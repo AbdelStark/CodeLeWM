@@ -138,7 +138,7 @@ def generate_same_problem_different_submission_pairs(
         diff_candidates = [
             r
             for r in candidates
-            if r.get("output_repr") != query.get("output_repr")
+            if _output_fingerprint(r) != _output_fingerprint(query)
         ]
         if not diff_candidates:
             _bump(skipped, "outputs_identical")
@@ -153,9 +153,9 @@ def generate_same_problem_different_submission_pairs(
                 DecoyPair(
                     category="same_problem_different_submission",
                     query_record_id=str(query.get("record_id", "")),
-                    query_output_repr=str(query.get("output_repr", "")),
+                    query_output_repr=_output_fingerprint(query),
                     decoy_record_id=str(decoy.get("record_id", "")),
-                    decoy_output_repr=str(decoy.get("output_repr", "")),
+                    decoy_output_repr=_output_fingerprint(decoy),
                     rationale="same_problem_id,same_input_id,different_submission_id,differing_output",
                 )
             )
@@ -213,7 +213,7 @@ def generate_same_code_different_input_pairs(
         diff_candidates = [
             r
             for r in candidates
-            if r.get("output_repr") != query.get("output_repr")
+            if _output_fingerprint(r) != _output_fingerprint(query)
         ]
         if not diff_candidates:
             _bump(skipped, "outputs_identical")
@@ -227,9 +227,9 @@ def generate_same_code_different_input_pairs(
                 DecoyPair(
                     category="same_code_different_input",
                     query_record_id=str(query.get("record_id", "")),
-                    query_output_repr=str(query.get("output_repr", "")),
+                    query_output_repr=_output_fingerprint(query),
                     decoy_record_id=str(decoy.get("record_id", "")),
-                    decoy_output_repr=str(decoy.get("output_repr", "")),
+                    decoy_output_repr=_output_fingerprint(decoy),
                     rationale="same_submission_id,different_input_id,differing_output",
                 )
             )
@@ -252,3 +252,23 @@ def _hash_key(seed: int, value: str) -> int:
 
 def _bump(counter: dict[str, int], key: str) -> None:
     counter[key] = counter.get(key, 0) + 1
+
+
+def _output_fingerprint(record: Mapping[str, Any]) -> str:
+    raw = record.get("output_repr")
+    if isinstance(raw, str) and raw:
+        return raw
+    checksum = record.get("output_repr_checksum")
+    if isinstance(checksum, str) and checksum:
+        return f"sha256:{checksum}"
+    tokens = record.get("output_tokens")
+    if isinstance(tokens, list):
+        digest = hashlib.sha256(
+            _json_like_tokens(tokens).encode("utf-8")
+        ).hexdigest()
+        return f"tokens_sha256:{digest}"
+    return ""
+
+
+def _json_like_tokens(tokens: list[Any]) -> str:
+    return ",".join(str(int(token)) for token in tokens)
