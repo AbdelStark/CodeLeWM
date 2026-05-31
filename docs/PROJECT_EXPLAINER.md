@@ -18,7 +18,11 @@
 > (`docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`), the
 > committed per-seed eval reports under `docs/benchmark/v0_6/`, and
 > the two-substrate paper outline
-> (`docs/papers/two_substrate_outline.md`). The current framing is
+> (`docs/papers/two_substrate_outline.md`). The full #306 paper draft
+> and arXiv source package live at
+> `docs/papers/two_substrate_paper.tex` and
+> `docs/papers/ARXIV_SUBMISSION.md`; the arXiv URL is pending operator
+> upload. The current framing is
 > partial positive: v0.6 passes the substrate-shape, execution-pack
 > retrieval, and generated-decoy surprise gates; latent-probe,
 > crash-prediction, and HumanEval / MBPP-Plus rerank utility claims

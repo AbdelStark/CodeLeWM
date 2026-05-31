@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+PAPER_DIR="$ROOT/docs/papers"
+BUILD_DIR="$PAPER_DIR/arxiv/two_substrate_paper"
+
+cd "$PAPER_DIR"
+tectonic two_substrate_paper.tex
+
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+cp two_substrate_paper.tex two_substrate_references.bib two_substrate_paper.pdf "$BUILD_DIR/"
+tar -czf "$PAPER_DIR/two_substrate_arxiv_source.tar.gz" \
+  -C "$BUILD_DIR" \
+  two_substrate_paper.tex \
+  two_substrate_references.bib
+
+printf 'pdf: %s\n' "$PAPER_DIR/two_substrate_paper.pdf"
+printf 'arxiv_source: %s\n' "$PAPER_DIR/two_substrate_arxiv_source.tar.gz"

@@ -5,7 +5,8 @@
 > publishable comparison. It commits to a narrative that ships
 > regardless of whether v0.6 passes its claim gates.
 
-- Status: outline draft (post #272)
+- Status: outline draft (post #272); full #306 paper draft in
+  `docs/papers/two_substrate_paper.tex`
 - Tracker: #259, RFC-0014
 - Substrate A (commit-edit, v0.2) benchmark:
   `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
