@@ -24,6 +24,8 @@ codelewm eval execution-retrieval --checkpoint .artifacts/v0-6/train/checkpoints
 codelewm eval execution-surprise --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_surprise --device cpu --json
 codelewm eval execution-probe --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_probe --device cpu --json
 codelewm eval crash-prediction --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/crash_prediction --device cpu --json
+codelewm eval rerank-humaneval --completion-manifest results/v0_6/completion_labels/humaneval/manifest.json --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --out results/v0_6/downstream_rerank/humaneval --json
+codelewm eval rerank-mbpp-plus --completion-manifest results/v0_6/completion_labels/mbpp_plus/manifest.json --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --out results/v0_6/downstream_rerank/mbpp_plus --json
 codelewm index --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/index --device cpu --json
 codelewm eval scorer-quality --config config/first_results/scorer_quality.json --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --out .artifacts/first-results/scorer_quality --index .artifacts/first-results/index --retrieval-prior-weight 1.0 --json
 codelewm score --before tests/fixtures/codestate/class_method_before.py --instruction "rewrite the accumulator update explicitly" --candidate config/first_results/scorer_quality_candidates/true_after.py --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --json
@@ -53,8 +55,10 @@ HumanEval / MBPP-Plus downstream rerank protocol. It labels candidate code only
 through `codelewm.data.sandbox`, writes
 `codelewm.eval.completion_sampling_report.v1` and
 `codelewm.secret_scan.v1` reports, and manifests the output with
-`codelewm.artifact_manifest.v1`. The default mode is deterministic dry-run for
-offline CI; `--live` requires `OPENROUTER_API_KEY`.
+`codelewm.artifact_manifest.v1`. Each label row also includes
+`scoring_inputs`, the bounded execution-input reprs used later by the scorer;
+the evaluator refuses older label artifacts that omit them. The default mode is
+deterministic dry-run for offline CI; `--live` requires `OPENROUTER_API_KEY`.
 
 The reproducible local orchestration command is
 `uv run scripts/first-results --overwrite`; it is the shortest way to exercise
@@ -376,6 +380,32 @@ writes a manifest-backed not-evaluable report with `claim_allowed=false`.
 Execution eval validation failures exit 6 with
 `error_type=evaluation_gate_error`; checkpoint trust failures exit 5 with
 `error_type=checkpoint_error`.
+
+`codelewm eval rerank-humaneval` and `codelewm eval rerank-mbpp-plus` consume
+manifested `codelewm.eval.completion_label.v1` artifacts and score them with a
+trusted checkpoint:
+
+```bash
+codelewm eval rerank-humaneval \
+  --completion-manifest results/v0_6/completion_labels/humaneval/manifest.json \
+  --checkpoint .artifacts/v0-6/train/checkpoints/last.pt \
+  --out results/v0_6/downstream_rerank/humaneval \
+  --json
+```
+
+The evaluator verifies the completion-label artifact manifest and checkpoint
+trust gate unless `--allow-unsafe-checkpoint` is explicitly passed for local
+fixture use. It writes `reports/execution_rerank_report.json` with schema
+`codelewm.eval.execution_rerank_report.v1`,
+`reports/completion_scores.jsonl` with schema
+`codelewm.eval.completion_score.v1`, `config.json`,
+`reports/secret_scan_report.json`, and a parent-linked
+`codelewm.artifact_manifest.v1`. The required baselines are CodeLeWM,
+no-action, shuffled-action, LLM order, deterministic random, and lexical.
+Reports include pass@1, pass@k, MRR, CodeLeWM lift over LLM order,
+CodeLeWM lift over no-action, bootstrap confidence intervals, and an explicit
+claim gate. Positive downstream claims require both the LLM-order and no-action
+lift gates to pass; otherwise the report remains diagnostic.
 
 `codelewm eval ablation` consolidates a retrieval artifact and training artifact
 into an action-view ablation report:

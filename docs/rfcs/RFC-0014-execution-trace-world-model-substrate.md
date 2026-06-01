@@ -147,7 +147,8 @@ are held out entirely for downstream evaluation.
   targets.
 - New downstream: `codelewm eval rerank-humaneval` and
   `codelewm eval rerank-mbpp-plus`. LLM sampling reuses the OpenRouter
-  adapter and BYOK plumbing.
+  adapter and BYOK plumbing; the evaluator compares CodeLeWM with LLM order,
+  no-action, shuffled-action, deterministic random, and lexical controls.
 - New scoped task: `codelewm eval crash-prediction`.
 
 ### Claim gates
@@ -159,9 +160,9 @@ A positive headline claim requires:
 - collapse gate satisfied (effective rank ratio ≥0.20; per-dim variance
   median ≥1e-8; nearest neighbor entropy ≥0.10);
 - at least one latent probe target beats every control across ≥2 seeds;
-- HumanEval or MBPP-Plus pass@1 lift over LLM-original-order ≥3 absolute
-  points with bootstrap 95% CI excluding zero across ≥3 LLM sampling
-  seeds;
+- HumanEval or MBPP-Plus pass@1 lift over both LLM-original-order and
+  no-action ≥3 absolute points with bootstrap 95% CI excluding zero across
+  ≥3 LLM sampling seeds;
 - mutation-decoy surprise AUC ≥0.65;
   same-problem-different-submission AUC ≥0.60.
 

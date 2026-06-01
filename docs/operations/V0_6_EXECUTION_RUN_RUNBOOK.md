@@ -167,6 +167,19 @@ uv run codelewm manifest verify \
   --manifest results/v0_6/completion_labels/mbpp_plus/manifest.json \
   --json
 
+for SEED in 42 1729; do
+  uv run codelewm eval rerank-humaneval \
+    --completion-manifest results/v0_6/completion_labels/humaneval/manifest.json \
+    --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
+    --out results/v0_6/seed-${SEED}/downstream_rerank/humaneval \
+    --json
+  uv run codelewm eval rerank-mbpp-plus \
+    --completion-manifest results/v0_6/completion_labels/mbpp_plus/manifest.json \
+    --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
+    --out results/v0_6/seed-${SEED}/downstream_rerank/mbpp_plus \
+    --json
+done
+
 # Offline smoke for the same artifact contract, not claim evidence:
 uv run scripts/sample-execution-rerank-completions \
   --benchmark humaneval \
@@ -182,8 +195,12 @@ The sampler writes `codelewm.eval.completion_label.v1` JSONL rows plus
 and `codelewm.artifact_manifest.v1` reports. Candidate code is never run
 directly in the evaluator; labeling goes through `codelewm.data.sandbox`
 with the stdlib-only policy documented in `docs/operations/sandbox_policy.md`.
-Live mode requires `OPENROUTER_API_KEY`; do not enable `OPENROUTER_DEBUG`
-for publishable runs.
+The evaluator writes `codelewm.eval.execution_rerank_report.v1`,
+`codelewm.eval.completion_score.v1`, and a parent-linked
+`codelewm.artifact_manifest.v1` over the report. Its claim gate requires
+CodeLeWM pass@1 lift over both LLM order and no-action with bootstrap 95% CI
+excluding zero. Live mode requires `OPENROUTER_API_KEY`; do not enable
+`OPENROUTER_DEBUG` for publishable runs.
 
 ## Step 8 — Write the benchmark report
 
