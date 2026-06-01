@@ -145,6 +145,10 @@ are held out entirely for downstream evaluation.
 - Existing retrieval, ablation, surprise, latent-probe, latent-matrix, and
   scorer-quality reports are reused with new substrate-appropriate
   targets.
+- Strengthened semantic decoys are materialized with
+  `codelewm eval semantic-decoy-pack`, which records same-problem adversarial
+  pair counts, source/license summaries, split/leakage checks, and a
+  count-only claim gate before any model score claim is considered.
 - New downstream: `codelewm eval rerank-humaneval` and
   `codelewm eval rerank-mbpp-plus`. LLM sampling reuses the OpenRouter
   adapter and BYOK plumbing; the evaluator compares CodeLeWM with LLM order,

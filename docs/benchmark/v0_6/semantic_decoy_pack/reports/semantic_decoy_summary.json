@@ -1,0 +1,84 @@
+{
+  "categories": [
+    "same_problem_different_submission",
+    "same_code_different_input"
+  ],
+  "category": "semantic_same_problem",
+  "claim_gate": {
+    "claim_allowed": true,
+    "claim_reason": "pair_and_problem_count_gates_pass",
+    "distinct_problem_count": 68,
+    "min_distinct_problems": 30,
+    "min_pairs": 100,
+    "name": "semantic_decoy_pair_count_gate.v1",
+    "pair_count": 358
+  },
+  "distinct_problem_count": 68,
+  "eligible_query_count": 233,
+  "filtering_summary": {
+    "leak_checks": {
+      "checked_pair_count": 358,
+      "kept_pair_count": 358,
+      "skipped_reasons": {},
+      "train_split_leak_count": 0
+    },
+    "split_policy": {
+      "excluded_split_counts": {
+        "train": 1369
+      },
+      "input_split_counts": {
+        "test": 157,
+        "train": 1369,
+        "val": 79
+      },
+      "selected_record_count": 236,
+      "selected_splits": [
+        "val",
+        "test"
+      ],
+      "split_by": "source_problem_id",
+      "train_rows_excluded": 1369
+    }
+  },
+  "generator_reports": [
+    {
+      "category": "same_problem_different_submission",
+      "eligible_query_count": 32,
+      "pair_count": 6,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "no_other_submission": 204,
+        "outputs_identical": 26
+      }
+    },
+    {
+      "category": "same_code_different_input",
+      "eligible_query_count": 201,
+      "pair_count": 352,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "no_other_input": 35,
+        "outputs_identical": 6
+      }
+    }
+  ],
+  "pack_schema_version": "codelewm.eval.semantic_decoy_pack.v1",
+  "pair_count": 358,
+  "pair_count_by_category": {
+    "same_code_different_input": 352,
+    "same_problem_different_submission": 6
+  },
+  "pair_schema_version": "codelewm.eval.semantic_decoy_pair.v1",
+  "schema_version": "codelewm.eval.semantic_decoy_summary.v1",
+  "source_license_policy": {
+    "derived_artifact_policy": "metadata_only: record IDs, category labels, rationales, and output fingerprints; no raw source code or provider secrets",
+    "license_breakdown": {
+      "CC-BY-4.0": 1419,
+      "MIT": 186
+    },
+    "source_breakdown": {
+      "apps": 186,
+      "mbpp": 1419
+    }
+  }
+}

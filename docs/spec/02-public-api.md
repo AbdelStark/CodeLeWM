@@ -22,6 +22,7 @@ codelewm eval ablation --retrieval-artifact .artifacts/first-results/retrieval/m
 codelewm eval surprise --checkpoint .artifacts/first-results/train/checkpoints/checkpoint.pt --data .artifacts/first-results/pack --out .artifacts/first-results/surprise --device cpu --json
 codelewm eval execution-retrieval --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_retrieval --device cpu --json
 codelewm eval execution-surprise --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_surprise --device cpu --json
+codelewm eval semantic-decoy-pack --pack .artifacts/v0-6/pack --out .artifacts/v0-6/semantic_decoy_pack --json
 codelewm eval execution-probe --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/execution_probe --device cpu --json
 codelewm eval crash-prediction --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --pack .artifacts/v0-6/pack --out .artifacts/v0-6/crash_prediction --device cpu --json
 codelewm eval rerank-humaneval --completion-manifest results/v0_6/completion_labels/humaneval/manifest.json --checkpoint .artifacts/v0-6/train/checkpoints/last.pt --out results/v0_6/downstream_rerank/humaneval --json
@@ -340,7 +341,35 @@ It writes `reports/surprise_report.json` with schema
 counts. The command emits `codelewm.eval.execution_surprise_run.v1` on JSON
 stdout. Mutation decoys perturb the output-token state; execution-specific
 decoys use same-problem/different-submission and same-code/different-input
-records when the pack contains output-distinguishing candidates.
+records when the pack contains output-distinguishing candidates. Pass
+`--semantic-decoy-manifest <manifest.json>` to consume a prebuilt strengthened
+semantic decoy pack for same-problem categories instead of relying only on
+on-the-fly pair generation.
+
+`codelewm eval semantic-decoy-pack` builds a manifest-backed same-problem
+semantic decoy pack from an execution pack:
+
+```bash
+codelewm eval semantic-decoy-pack \
+  --pack .artifacts/v0-6/pack \
+  --out .artifacts/v0-6/semantic_decoy_pack \
+  --min-pairs-for-claim 100 \
+  --min-distinct-problems-for-claim 30 \
+  --json
+```
+
+It verifies the execution-pack artifact, selects non-train splits by default,
+and writes `semantic_decoy_pairs.jsonl` with schema
+`codelewm.eval.semantic_decoy_pair.v1`,
+`reports/semantic_decoy_summary.json` with schema
+`codelewm.eval.semantic_decoy_summary.v1`, `config.json`,
+`reports/secret_scan_report.json`, and a parent-linked
+`codelewm.artifact_manifest.v1` with artifact kind `downstream_benchmark`.
+Rows store record IDs, category labels, rationales, output fingerprints,
+split/leakage checks, and source/license summaries; they do not store raw code
+or execute candidate code. The pack has its own count gate, but it does not
+support a semantic model claim until `execution-surprise` reruns over it and
+passes the score gates.
 
 `codelewm eval execution-probe` is the v0.6 frozen-latent probe path:
 
