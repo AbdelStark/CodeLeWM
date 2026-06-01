@@ -245,6 +245,15 @@ def sample_execution_rerank_completions(
                         "sample_seed": seed,
                         "sample_rank": sample_rank,
                         "dry_run": dry_run,
+                        "scoring_inputs": [
+                            {
+                                "input_id": input_case.input_id,
+                                "input_repr": input_case.input_repr,
+                                "input_kind": input_case.input_kind,
+                                "function_name": input_case.function_name,
+                            }
+                            for input_case in submission.inputs
+                        ],
                         "label": "pass" if passed else "fail",
                         "passed": passed,
                         "test_results": test_results,

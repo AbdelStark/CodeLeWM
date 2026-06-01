@@ -66,11 +66,16 @@ class ExecutionRerankSamplerTest(unittest.TestCase):
             self.assertTrue(
                 all("expected_output_sha256" in row["test_results"][0] for row in rows)
             )
+            self.assertTrue(all(row["scoring_inputs"] for row in rows))
+            self.assertTrue(
+                all("input_repr" in row["scoring_inputs"][0] for row in rows)
+            )
 
             loaded = load_completion_labels(labels_path, benchmark_id="humaneval")
             self.assertEqual(len(loaded), 2)
             self.assertTrue(any(label.passed for label in loaded))
             self.assertTrue(any(not label.passed for label in loaded))
+            self.assertTrue(all(label.scoring_inputs for label in loaded))
 
             report = json.loads((out / result.report_path).read_text(encoding="utf-8"))
             self.assertEqual(
@@ -116,6 +121,7 @@ class ExecutionRerankSamplerTest(unittest.TestCase):
             labels = load_completion_labels(labels_path, benchmark_id="mbpp-plus")
             self.assertEqual(len(labels), 2)
             self.assertEqual({label.passed for label in labels}, {False, True})
+            self.assertTrue(all(label.scoring_inputs for label in labels))
 
 
 if __name__ == "__main__":  # pragma: no cover

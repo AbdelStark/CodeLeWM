@@ -33,10 +33,12 @@ from codelewm.eval import (
     SurpriseEvalError,
     DownstreamBenchmarkPackError,
     DownstreamRerankEvalError,
+    ExecutionRerankEvalError,
     build_downstream_benchmark_pack,
     run_downstream_rerank_evaluation,
     run_action_ablation_suite,
     run_crash_prediction_evaluation,
+    run_execution_rerank_evaluation,
     run_execution_probe_evaluation,
     run_execution_retrieval_evaluation,
     run_execution_surprise_evaluation,
@@ -1051,6 +1053,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     downstream_rerank.set_defaults(func=_eval_downstream_rerank_command)
+    _add_execution_completion_rerank_parser(
+        eval_subcommands,
+        name="rerank-humaneval",
+        benchmark="humaneval",
+        help_text="score and rerank HumanEval completion-label artifacts",
+    )
+    _add_execution_completion_rerank_parser(
+        eval_subcommands,
+        name="rerank-mbpp-plus",
+        benchmark="mbpp_plus",
+        help_text="score and rerank MBPP-Plus completion-label artifacts",
+    )
     eval_parser.set_defaults(func=_eval_help_command, eval_parser=eval_parser)
     index = subparsers.add_parser("index", help="build a transition index artifact")
     index.add_argument(
@@ -1363,6 +1377,89 @@ def build_parser() -> argparse.ArgumentParser:
     secret_scan.set_defaults(func=_secret_scan_command)
     parser.set_defaults(func=_print_help)
     return parser
+
+
+def _add_execution_completion_rerank_parser(
+    eval_subcommands: Any,
+    *,
+    name: str,
+    benchmark: str,
+    help_text: str,
+) -> None:
+    rerank = eval_subcommands.add_parser(name, help=help_text)
+    rerank.add_argument(
+        "--completion-manifest",
+        type=Path,
+        required=True,
+        help="completion-label artifact manifest.json",
+    )
+    rerank.add_argument(
+        "--labels",
+        type=Path,
+        help="override completion labels JSONL path; defaults to the manifest-listed file",
+    )
+    rerank.add_argument("--checkpoint", type=Path, required=True, help="checkpoint file")
+    rerank.add_argument(
+        "--checkpoint-manifest",
+        type=Path,
+        help="trusted checkpoint manifest; defaults to <checkpoint>.manifest.json",
+    )
+    rerank.add_argument(
+        "--out", type=Path, required=True, help="execution rerank report artifact directory"
+    )
+    rerank.add_argument(
+        "--device", default="auto", choices=("cpu", "cuda", "mps", "auto")
+    )
+    rerank.add_argument(
+        "--index",
+        type=Path,
+        help="transition index directory for retrieval-prior scoring",
+    )
+    rerank.add_argument(
+        "--retrieval-prior-weight",
+        type=float,
+        default=0.0,
+        help="non-negative weight applied to the retrieval prior",
+    )
+    rerank.add_argument(
+        "--retrieval-prior-k",
+        type=int,
+        default=10,
+        help="nearest index hits used for the prior",
+    )
+    rerank.add_argument("--pass-at-k", type=int, default=5, help="k for pass@k")
+    rerank.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=2000,
+        help="bootstrap samples for confidence intervals",
+    )
+    rerank.add_argument("--seed", type=int, default=17, help="deterministic bootstrap seed")
+    rerank.add_argument(
+        "--min-lift-for-claim",
+        type=float,
+        default=3.0,
+        help="minimum pass@1 lift in percentage points required for a usefulness claim",
+    )
+    rerank.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="load the checkpoint without verifying its manifest (trusted local use only)",
+    )
+    rerank.add_argument(
+        "--require-learned-scorer",
+        action="store_true",
+        help="fail instead of using the deterministic fixture scorer",
+    )
+    rerank.add_argument("--overwrite", action="store_true", help="overwrite existing output files")
+    rerank.add_argument("--json", action="store_true", help="emit JSON output")
+    rerank.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    rerank.set_defaults(
+        func=_eval_execution_completion_rerank_command,
+        benchmark=benchmark,
+    )
 
 
 def _print_help(args: argparse.Namespace) -> int:
@@ -3520,6 +3617,132 @@ def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_execution_completion_rerank_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_execution_completion_rerank_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.execution_rerank.start",
+                level="info",
+                run_id=run_id,
+                step="eval.execution_rerank",
+                message="execution completion rerank evaluation started",
+                fields={
+                    "benchmark": args.benchmark,
+                    "completion_manifest": str(args.completion_manifest),
+                    "labels": None if args.labels is None else str(args.labels),
+                    "checkpoint": str(args.checkpoint),
+                    "checkpoint_manifest": None
+                    if args.checkpoint_manifest is None
+                    else str(args.checkpoint_manifest),
+                    "out": str(args.out),
+                    "device": args.device,
+                    "index": None if args.index is None else str(args.index),
+                    "retrieval_prior_weight": args.retrieval_prior_weight,
+                    "retrieval_prior_k": args.retrieval_prior_k,
+                    "pass_at_k": args.pass_at_k,
+                    "bootstrap_samples": args.bootstrap_samples,
+                    "seed": args.seed,
+                    "min_lift_for_claim": args.min_lift_for_claim,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_execution_rerank_evaluation(
+            completion_manifest=args.completion_manifest,
+            labels_path=args.labels,
+            benchmark=args.benchmark,
+            checkpoint=args.checkpoint,
+            checkpoint_manifest=args.checkpoint_manifest,
+            out=args.out,
+            device=args.device,
+            index=args.index,
+            retrieval_prior_weight=args.retrieval_prior_weight,
+            retrieval_prior_k=args.retrieval_prior_k,
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            require_learned_scorer=args.require_learned_scorer,
+            pass_at_k=args.pass_at_k,
+            bootstrap_samples=args.bootstrap_samples,
+            seed=args.seed,
+            min_lift_for_claim=args.min_lift_for_claim,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.execution_rerank.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.execution_rerank",
+                message="execution completion rerank evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "score_rows_path": result.score_rows_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "problem_count": result.problem_count,
+                    "completion_count": result.completion_count,
+                    "claim_allowed": result.claim_allowed,
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        ExecutionRerankEvalError,
+        ScoreError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"execution rerank evaluation failed: {exc}",
+            error_type="scoring_error",
+            remediation="verify the completion-label artifact and checkpoint, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.execution_rerank",
+            event="evaluation.execution_rerank.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"execution rerank evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the execution rerank inputs and retry with corrected artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.execution_rerank",
+            event="evaluation.execution_rerank.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"execution_rerank_report: {args.out / result.report_path}")
+        print(f"completion_scores: {args.out / result.score_rows_path}")
+        print(f"problem_count: {result.problem_count}")
+        print(f"completion_count: {result.completion_count}")
+        print(f"claim_allowed: {result.claim_allowed}")
+    return 0
+
+
 def _index_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _index_command_tuple(args)
@@ -4474,6 +4697,51 @@ def _eval_downstream_rerank_command_tuple(args: argparse.Namespace) -> tuple[str
     command.extend(("--seed", str(args.seed)))
     if args.allow_unsafe_checkpoint:
         command.append("--allow-unsafe-checkpoint")
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_execution_completion_rerank_command_tuple(
+    args: argparse.Namespace,
+) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "rerank-humaneval" if args.benchmark == "humaneval" else "rerank-mbpp-plus",
+        "--completion-manifest",
+        str(args.completion_manifest),
+        "--checkpoint",
+        str(args.checkpoint),
+        "--out",
+        str(args.out),
+        "--device",
+        args.device,
+        "--pass-at-k",
+        str(args.pass_at_k),
+        "--bootstrap-samples",
+        str(args.bootstrap_samples),
+        "--seed",
+        str(args.seed),
+        "--min-lift-for-claim",
+        str(args.min_lift_for_claim),
+    ]
+    if args.labels is not None:
+        command.extend(("--labels", str(args.labels)))
+    if args.checkpoint_manifest is not None:
+        command.extend(("--checkpoint-manifest", str(args.checkpoint_manifest)))
+    if args.index is not None:
+        command.extend(("--index", str(args.index)))
+    command.extend(("--retrieval-prior-weight", str(args.retrieval_prior_weight)))
+    command.extend(("--retrieval-prior-k", str(args.retrieval_prior_k)))
+    if args.allow_unsafe_checkpoint:
+        command.append("--allow-unsafe-checkpoint")
+    if args.require_learned_scorer:
+        command.append("--require-learned-scorer")
     if args.overwrite:
         command.append("--overwrite")
     if args.json:
