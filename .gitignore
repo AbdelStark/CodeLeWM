@@ -10,6 +10,7 @@ dist/
 .runs/
 target/
 docs/papers/arxiv/
+data/raw/
 
 # Local automation and scratch workspaces
 .agents/harness/

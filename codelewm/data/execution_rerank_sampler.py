@@ -14,7 +14,7 @@ import os
 import re
 import sys
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -35,9 +35,7 @@ from codelewm.security.secret_scan import scan_paths
 
 
 COMPLETION_LABEL_SCHEMA_VERSION = "codelewm.eval.completion_label.v1"
-COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION = (
-    "codelewm.eval.completion_label_artifact.v1"
-)
+COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION = "codelewm.eval.completion_label_artifact.v1"
 COMPLETION_SAMPLING_REPORT_SCHEMA_VERSION = (
     "codelewm.eval.completion_sampling_report.v1"
 )
@@ -97,6 +95,8 @@ def sample_execution_rerank_completions(
     llm_seeds: Sequence[int] = (17, 42, 1729),
     dry_run: bool = True,
     max_problems: int | None = None,
+    max_cases_per_problem: int | None = None,
+    short_circuit_failures: bool = False,
     sandbox_policy: SandboxPolicy = DEFAULT_SANDBOX_POLICY,
     overwrite: bool = False,
     allow_secret_findings: bool = False,
@@ -123,6 +123,8 @@ def sample_execution_rerank_completions(
     seeds = tuple(_coerce_int(seed, "llm_seeds") for seed in llm_seeds)
     if max_problems is not None:
         _positive_int(max_problems, "max_problems")
+    if max_cases_per_problem is not None:
+        _positive_int(max_cases_per_problem, "max_cases_per_problem")
     if temperature < 0.0 or temperature > 2.0:
         raise CompletionSamplingError("temperature must be in [0.0, 2.0]")
     _positive_int(timeout_seconds, "timeout_seconds")
@@ -155,6 +157,11 @@ def sample_execution_rerank_completions(
         source_path=source,
         max_problems=max_problems,
     )
+    if max_cases_per_problem is not None:
+        submissions = tuple(
+            _limit_submission_cases(submission, limit=max_cases_per_problem)
+            for submission in submissions
+        )
     prompts = _load_problem_prompts(source)
     env_map = os.environ if env is None else env
 
@@ -168,6 +175,8 @@ def sample_execution_rerank_completions(
         "llm_seeds": list(seeds),
         "dry_run": dry_run,
         "max_problems": max_problems,
+        "max_cases_per_problem": max_cases_per_problem,
+        "short_circuit_failures": short_circuit_failures,
         "sandbox_policy": sandbox_policy.as_dict(),
         "temperature": temperature,
         "timeout_seconds": timeout_seconds,
@@ -178,8 +187,7 @@ def sample_execution_rerank_completions(
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(
-        json.dumps(config_payload, indent=2, sort_keys=True, allow_nan=False)
-        + "\n",
+        json.dumps(config_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
 
@@ -226,6 +234,7 @@ def sample_execution_rerank_completions(
                     completion_text,
                     submission=submission,
                     sandbox_policy=sandbox_policy,
+                    short_circuit_failures=short_circuit_failures,
                 )
                 if passed:
                     problem_passes += 1
@@ -263,6 +272,7 @@ def sample_execution_rerank_completions(
             {
                 "problem_id": submission.source_problem_id,
                 "completion_count": samples_per_problem * len(seeds),
+                "input_case_count": len(submission.inputs),
                 "passed_completion_count": problem_passes,
             }
         )
@@ -283,6 +293,8 @@ def sample_execution_rerank_completions(
         "samples_per_problem": samples_per_problem,
         "llm_seeds": list(seeds),
         "dry_run": dry_run,
+        "max_cases_per_problem": max_cases_per_problem,
+        "short_circuit_failures": short_circuit_failures,
         "sandbox_policy": sandbox_policy.as_dict(),
         "source_path": str(source),
         "labels_path": _relative_to_root(labels_path, output_dir),
@@ -292,8 +304,7 @@ def sample_execution_rerank_completions(
         "claim_reason": "completion_labels_only_downstream_rerank_not_run",
     }
     report_path.write_text(
-        json.dumps(report_payload, indent=2, sort_keys=True, allow_nan=False)
-        + "\n",
+        json.dumps(report_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
 
@@ -409,6 +420,24 @@ def _load_submissions(
                 f"{submission.source_problem_id}: expected_outputs are required"
             )
     return submissions
+
+
+def _limit_submission_cases(
+    submission: SourceSubmission, *, limit: int
+) -> SourceSubmission:
+    if len(submission.inputs) <= limit:
+        return submission
+    expected_outputs = (
+        None
+        if submission.expected_outputs is None
+        else tuple(submission.expected_outputs[:limit])
+    )
+    return replace(
+        submission,
+        inputs=tuple(submission.inputs[:limit]),
+        expected_outputs=expected_outputs,
+        raw_hash="",
+    )
 
 
 def _load_problem_prompts(source_path: Path) -> dict[str, str]:
@@ -552,6 +581,7 @@ def _label_completion(
     *,
     submission: SourceSubmission,
     sandbox_policy: SandboxPolicy,
+    short_circuit_failures: bool = False,
 ) -> tuple[list[dict[str, Any]], bool]:
     if submission.expected_outputs is None:
         raise CompletionSamplingError(
@@ -580,7 +610,9 @@ def _label_completion(
             raise CompletionSamplingError(
                 f"sandbox labeling failed for {submission.source_problem_id}: {exc}"
             ) from exc
-        passed = bool(sandbox_result.ok and sandbox_result.output_repr == expected_output)
+        passed = bool(
+            sandbox_result.ok and sandbox_result.output_repr == expected_output
+        )
         all_passed = all_passed and passed
         results.append(
             {
@@ -599,6 +631,8 @@ def _label_completion(
                 "determinism_check": sandbox_result.determinism_check,
             }
         )
+        if short_circuit_failures and not passed:
+            break
     return results, all_passed
 
 

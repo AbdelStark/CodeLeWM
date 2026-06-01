@@ -34,7 +34,9 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="already-downloaded HumanEval or MBPP-Plus JSONL source",
     )
-    parser.add_argument("--out", required=True, type=Path, help="output artifact directory")
+    parser.add_argument(
+        "--out", required=True, type=Path, help="output artifact directory"
+    )
     parser.add_argument("--llm", default=DEFAULT_EXECUTION_RERANK_LLM, help="LLM slug")
     parser.add_argument(
         "--samples-per-problem",
@@ -57,6 +59,17 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=None,
         help="optional cap for smoke runs",
+    )
+    parser.add_argument(
+        "--max-cases-per-problem",
+        type=int,
+        default=None,
+        help="optional cap on sandbox/scoring cases retained per problem",
+    )
+    parser.add_argument(
+        "--short-circuit-failures",
+        action="store_true",
+        help="stop sandbox labeling a candidate after its first failing case",
     )
     parser.add_argument("--timeout-ms", type=int, default=5000)
     parser.add_argument("--memory-mb", type=int, default=256)
@@ -90,6 +103,8 @@ def main(argv: list[str] | None = None) -> int:
             llm_seeds=parse_llm_seed_csv(args.llm_seeds),
             dry_run=not args.live,
             max_problems=args.max_problems,
+            max_cases_per_problem=args.max_cases_per_problem,
+            short_circuit_failures=args.short_circuit_failures,
             sandbox_policy=policy,
             overwrite=args.overwrite,
             allow_secret_findings=args.allow_secret_findings,
