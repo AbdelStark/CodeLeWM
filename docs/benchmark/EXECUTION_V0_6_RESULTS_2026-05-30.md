@@ -9,6 +9,9 @@
 - Report ID: `codelewm-execution-v0-6-2026-05-30`
 - Eval pass update: 2026-05-31 (#305), using the downloaded seed-42
   and seed-1729 artifacts plus the v0.6 execution pack.
+- Semantic decoy update: 2026-06-01 (#321/#322), using the strengthened
+  same-problem semantic decoy pack and rerun surprise artifacts under
+  `seed-*/execution_surprise_semantic/`.
 - Schema versions referenced by this report:
   - `codelewm.execution_pack_manifest.v1`
   - `codelewm.execution_train_config.v1`
@@ -24,6 +27,9 @@
   - `codelewm.eval.action_use_claim_gate.v1`
   - `codelewm.eval.surprise_report.v1`
   - `codelewm.eval.execution_surprise_decoy_summary.v1`
+  - `codelewm.eval.execution_surprise_claim_gates.v1`
+  - `codelewm.eval.semantic_decoy_pack.v1`
+  - `codelewm.eval.semantic_decoy_summary.v1`
   - `codelewm.eval.latent_probe_report.v1`
   - `codelewm.eval.crash_prediction_report.v1`
   - `codelewm.eval.completion_label.v1`
@@ -141,9 +147,10 @@ result: #304 added the sampler and schema, but the full live
 completion-label artifacts require an explicit operator run with
 provider spend. The concrete gate posture is therefore **partial
 positive**: the substrate-pivot training shape, execution-pack
-retrieval, and generated-decoy surprise gates pass; latent probes,
-crash prediction, and downstream rerank do not justify a broader
-downstream-utility claim.
+retrieval, semantic-decoy surprise score gates, and same-code/input
+semantic decoys pass; the narrow same-problem/different-submission
+semantic count gate, latent probes, crash prediction, and downstream
+rerank do not justify a broader downstream-utility claim.
 
 | Gate | Status | Backing artifact |
 | ---- |:------:| ---------------- |
@@ -153,9 +160,10 @@ downstream-utility claim.
 | Substrate-pivot headline: positive no-action margin, both seeds | **PASS** (+1.2308, +1.2434) | training reports |
 | `retrieval_min_recall_at_1_lift_over_no_action ≥ 0.05` | **PASS** (+0.6186, +0.6102) | `docs/benchmark/v0_6/seed-*/execution_retrieval/reports/retrieval_report.json` |
 | `retrieval_min_mrr_lift_over_no_action ≥ 0.05` | **PASS** (+0.6628, +0.6547) | same |
-| `surprise_mutation_auc_min ≥ 0.65` | **PASS** (1.0000 both seeds, 236 pairs) | `docs/benchmark/v0_6/seed-*/execution_surprise/reports/surprise_report.json` |
-| `surprise_same_problem_different_submission_auc_min ≥ 0.60` | **PASS, small-n** (1.0000 both seeds, 6 pairs) | same; generated decoy diagnostic only |
-| `surprise_same_code_different_input_auc_min ≥ 0.70` | **PASS** (1.0000 both seeds, 195 pairs) | same |
+| `surprise_mutation_auc_min ≥ 0.65` | **PASS** (1.0000 both seeds, 236 pairs) | `docs/benchmark/v0_6/seed-*/execution_surprise_semantic/reports/surprise_report.json` |
+| `surprise_same_code_different_input_auc_min ≥ 0.70` | **PASS** (1.0000 both seeds, 352 pairs) | same |
+| `surprise_same_problem_different_submission_auc_min ≥ 0.60` | **PASS SCORE / FAIL COUNT** (1.0000 both seeds, 6/30 pairs) | same; semantic claim gate closed |
+| Semantic decoy pack count gate | **PASS** (358 pairs, 68 problems) | `docs/benchmark/v0_6/semantic_decoy_pack/reports/semantic_decoy_summary.json` |
 | ≥1 latent probe target beats every control across 2 seeds | **NOT EVALUABLE / FAILS CLAIM** | only `output_type` has labels; lexical control beats latent on both seeds |
 | Crash-prediction fallback | **NOT EVALUABLE** | no crash-positive val/test rows (`positives=0`, `negatives=236`) |
 | `downstream_rerank_pass_at_1_lift_min ≥ 3.0 abs pts` | **NOT RUN** | full live `codelewm.eval.completion_label.v1` artifacts do not exist yet |
@@ -176,16 +184,20 @@ The same tree is mirrored in the HF dataset repo at
 | ---: | ---- | ------------- | ------------- | -------------------- | ----------- |
 | 42 | retrieval | `codelewm.eval.execution_retrieval_run.v1` | `codelewm.eval.retrieval_report.v1` | `eval_report-50a62748784329b2` | `seed-42/execution_retrieval/reports/retrieval_report.json` |
 | 42 | surprise | `codelewm.eval.execution_surprise_run.v1` | `codelewm.eval.surprise_report.v1` | `eval_report-06ac38fbc347961d` | `seed-42/execution_surprise/reports/surprise_report.json` |
+| 42 | semantic surprise | `codelewm.eval.execution_surprise_run.v1` | `codelewm.eval.surprise_report.v1` | `eval_report-aeb0ae374582a8ec` | `seed-42/execution_surprise_semantic/reports/surprise_report.json` |
 | 42 | latent probe | `codelewm.eval.execution_probe_run.v1` | `codelewm.eval.latent_probe_report.v1` | `eval_report-952d5632120e0632` | `seed-42/execution_probe/reports/latent_probe_report.json` |
 | 42 | crash prediction | `codelewm.eval.crash_prediction_run.v1` | `codelewm.eval.crash_prediction_report.v1` | `eval_report-48380fb96f1de96d` | `seed-42/crash_prediction/reports/crash_prediction_report.json` |
 | 1729 | retrieval | `codelewm.eval.execution_retrieval_run.v1` | `codelewm.eval.retrieval_report.v1` | `eval_report-0cc1c6ac187e4ed3` | `seed-1729/execution_retrieval/reports/retrieval_report.json` |
 | 1729 | surprise | `codelewm.eval.execution_surprise_run.v1` | `codelewm.eval.surprise_report.v1` | `eval_report-29c0d125cc25d631` | `seed-1729/execution_surprise/reports/surprise_report.json` |
+| 1729 | semantic surprise | `codelewm.eval.execution_surprise_run.v1` | `codelewm.eval.surprise_report.v1` | `eval_report-5b20bd0e1da5928a` | `seed-1729/execution_surprise_semantic/reports/surprise_report.json` |
 | 1729 | latent probe | `codelewm.eval.execution_probe_run.v1` | `codelewm.eval.latent_probe_report.v1` | `eval_report-c592b4805d0d3085` | `seed-1729/execution_probe/reports/latent_probe_report.json` |
 | 1729 | crash prediction | `codelewm.eval.crash_prediction_run.v1` | `codelewm.eval.crash_prediction_report.v1` | `eval_report-1f41882839c44da7` | `seed-1729/crash_prediction/reports/crash_prediction_report.json` |
 
 The companion decoy-generation reports live at
-`seed-*/execution_surprise/reports/execution_decoy_report.json` with
-schema `codelewm.eval.execution_surprise_decoy_summary.v1`.
+`seed-*/execution_surprise*/reports/execution_decoy_report.json` with
+schema `codelewm.eval.execution_surprise_decoy_summary.v1`. The semantic
+surprise reruns also write `codelewm.eval.execution_surprise_claim_gates.v1`
+metadata that separates score gates from pair-count gates.
 
 ## Retrieval Evaluation
 
@@ -237,20 +249,25 @@ Command shape:
 codelewm eval execution-surprise \
   --checkpoint <run>/checkpoints/last.pt \
   --pack .artifacts/v0_6/execution-pack \
+  --semantic-decoy-manifest docs/benchmark/v0_6/semantic_decoy_pack/manifest.json \
   --decoys mutation,same_problem_different_submission,same_code_different_input \
-  --out docs/benchmark/v0_6/seed-<seed>/execution_surprise \
+  --out docs/benchmark/v0_6/seed-<seed>/execution_surprise_semantic \
   --device cpu --max-examples 1000 --seed <seed>
 ```
 
 | Seed | Examples | Recall@1 | Overall AUC | Mutation AUC / pairs | Same-code-different-input AUC / pairs | Same-problem-different-submission AUC / pairs |
 | ---: | -------: | --------: | ----------: | -------------------: | ------------------------------------: | ---------------------------------------------: |
-| 42 | 236 | 1.0000 | 1.0000 | 1.0000 / 236 | 1.0000 / 195 | 1.0000 / 6 |
-| 1729 | 236 | 1.0000 | 1.0000 | 1.0000 / 236 | 1.0000 / 195 | 1.0000 / 6 |
+| 42 | 236 | 1.0000 | 1.0000 | 1.0000 / 236 | 1.0000 / 352 | 1.0000 / 6 |
+| 1729 | 236 | 1.0000 | 1.0000 | 1.0000 / 236 | 1.0000 / 352 | 1.0000 / 6 |
 
-The same-problem-different-submission row clears the numeric gate but
-has only six generated pairs after filtering (`no_other_submission=204`,
-`outputs_identical=26`). Treat it as a positive generated-decoy
-diagnostic, not as broad semantic surprise evidence.
+The semantic-pack count gate passes with 358 same-problem pairs across
+68 distinct problems, driven mainly by 352 same-code/different-input
+pairs. The same-problem/different-submission row clears the numeric
+score gate but has only six scored pairs versus the predeclared 30-pair
+count threshold. The report therefore sets
+`execution_surprise_claim_gates.claim_allowed=false` on both seeds.
+Treat this as positive diagnostic evidence, not a broad semantic
+surprise claim.
 
 ## Latent Probe Evaluation
 
@@ -322,7 +339,7 @@ No public downstream-reranking claim is allowed from this report.
 | ------------- |:------:| --------------- |
 | Substrate-pivot headline (margin flip, SIGReg drop, non-collapse) | **PASS** | training reports, both seeds |
 | Execution-pack retrieval beats no-action by ≥0.05 R@1 and MRR | **PASS** | retrieval reports, both seeds |
-| Generated-decoy surprise gates | **PASS** | surprise reports, both seeds |
+| Semantic surprise score gates | **PASS SCORE / NOT ALLOWED** | semantic surprise reports: AUC 1.0, but same-problem/different-submission count is 6/30 |
 | Latent semantic representation claim | **NOT ALLOWED** | latent-probe reports: only one target available and lexical control wins |
 | Crash-prediction utility claim | **NOT EVALUABLE** | crash reports: no positives |
 | HumanEval/MBPP-Plus rerank utility claim | **NOT RUN / NOT ALLOWED** | no live labeled-completion artifacts |
@@ -347,9 +364,12 @@ No public downstream-reranking claim is allowed from this report.
 > result. On the v0.6 execution pack, CodeLeWM beats no-action
 > retrieval by +61.4 R@1 points and +65.9 MRR points on average
 > across two seeds, with seed-to-seed spread below one point. The
-> generated-decoy surprise gates also pass with AUC 1.0 on mutation,
+> semantic surprise score gates also pass with AUC 1.0 on mutation,
 > same-code-different-input, and same-problem-different-submission
-> decoys, though the same-problem row has only six generated pairs.
+> decoys. The semantic pack contributes 358 same-problem pairs across
+> 68 problems, but the narrow same-problem/different-submission row
+> remains only six pairs, so the semantic-surprise claim gate remains
+> closed.
 > Latent probes do not support a positive semantic-representation
 > claim because only `output_type` is evaluable and lexical controls
 > remain stronger. Crash prediction is not evaluable because the

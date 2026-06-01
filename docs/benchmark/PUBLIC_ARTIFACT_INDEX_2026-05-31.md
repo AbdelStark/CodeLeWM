@@ -107,5 +107,6 @@ public sentence is:
 
 > CodeLeWM v0.6 shows that a JEPA-style latent world model can learn a
 > non-collapsed, action-conditioned execution-trace substrate that passes
-> execution-pack retrieval and generated-decoy surprise gates across two seeds;
-> downstream generated-code utility remains an open claim.
+> execution-pack retrieval and semantic-decoy surprise score diagnostics across
+> two seeds; broad semantic surprise and downstream generated-code utility
+> remain open claims.

@@ -41,16 +41,16 @@ gate. The comparison makes the substrate the primary explanatory
 variable, while disclosing run-level configuration differences; we
 argue the result implies a general lesson for JEPA-style modeling of
 code: substrate signal-to-noise dominates objective tuning. The #305
-downloaded-artifact eval pass strengthens but narrows the positive
-result: execution-pack retrieval beats
+downloaded-artifact eval pass and the #322 semantic-decoy rerun strengthen
+but narrow the positive result: execution-pack retrieval beats
 no-action by +61.4 Recall@1 points and +65.9 MRR points on average
-across two seeds, and generated-decoy surprise AUC is 1.0 on mutation,
-same-code-different-input, and same-problem-different-submission
-decoys. Broader downstream utility is not established: the latent
-probe claim is blocked by lexical controls, crash prediction is not
-evaluable because the val/test slice has no positives, and
-HumanEval/MBPP-Plus reranking still lacks live labeled-completion
-artifacts.
+across two seeds, and semantic-decoy surprise score gates reach AUC
+1.0 on mutation, same-code-different-input, and same-problem-different
+submission decoys. Broader downstream utility is not established: the
+narrow same-problem/different-submission count gate remains 6/30, the
+latent probe claim is blocked by lexical controls, crash prediction is
+not evaluable because the val/test slice has no positives, and
+HumanEval/MBPP-Plus reranking still lacks live labeled-completion artifacts.
 
 ## 1. Introduction
 
@@ -68,8 +68,8 @@ artifacts.
      diagnostics that make the substrate-signal explanation more
      plausible than another objective-only fix.
   3. A partial-positive result on input-conditioned execution:
-     training-shape, internal retrieval, and generated-decoy surprise
-     gates pass, while semantic-probe, crash, and downstream-rerank
+     training-shape, internal retrieval, and semantic-decoy score gates
+     pass, while semantic-count, semantic-probe, crash, and downstream-rerank
      utility claims remain blocked.
   4. Publicly published datasets, model checkpoints, and run
      manifests for both substrates.
@@ -171,16 +171,18 @@ Substrate A: effective rank ratio 0.016. **Substrate B clears the
 0.20 collapse gate by 2.3× on both seeds (`EXECUTION_V0_6_RESULTS_2026-05-30.md`),
 inverting Substrate A's collapse failure.**
 
-Surprise on generated execution-pack decoys:
+Surprise on strengthened semantic execution-pack decoys:
 
 | Run | Mutation AUC / pairs | Same-code-different-input AUC / pairs | Same-problem-different-submission AUC / pairs |
 |-----|---------------------:|--------------------------------------:|-----------------------------------------------:|
-| v0.6 seed 42 | **1.000 / 236** | **1.000 / 195** | **1.000 / 6** |
-| v0.6 seed 1729 | **1.000 / 236** | **1.000 / 195** | **1.000 / 6** |
+| v0.6 seed 42 | **1.000 / 236** | **1.000 / 352** | **1.000 / 6** |
+| v0.6 seed 1729 | **1.000 / 236** | **1.000 / 352** | **1.000 / 6** |
 
-The same-problem row clears the configured numeric gate but has only
-six generated pairs after filtering, so the paper should frame it as
-a generated-decoy diagnostic rather than broad semantic surprise.
+The semantic pack contributes 358 same-problem pairs across 68 problems, but
+the narrow same-problem/different-submission row clears the configured numeric
+score gate while still having only six scored pairs versus the 30-pair count
+gate. The paper should frame this as a semantic-decoy score diagnostic rather
+than broad semantic surprise.
 
 ### 6.3 Latent Probes
 
@@ -250,8 +252,9 @@ the crash-prediction fallback is not evaluable.
 - License-clean source-dataset envelope: results do not generalize
   outside MIT/Apache/CC-BY/permissive sources.
 - Generated surprise decoys are not a substitute for adversarial or
-  independently sampled semantic decoys; the same-problem decoy row has
-  only six pairs.
+  independently sampled semantic decoys. The strengthened pack adds 352
+  same-code/different-input pairs, but the same-problem/different-submission
+  row still has only six pairs.
 - HumanEval / MBPP-Plus reranking remains an operator-run dependency:
   the sampler contract exists, but live labeled-completion artifacts
   are not part of the current evidence set.
@@ -287,10 +290,10 @@ start from where ours leaves off.
 
 ## 11. Final Framing
 
-**Framing as of 2026-05-31 (post-#305 eval pass):**
+**Framing as of 2026-06-01 (post-#305 eval pass and #322 semantic rerun):**
 *partial positive — substrate-pivot, internal retrieval, and
-generated-decoy surprise gates pass; broader downstream utility is not
-established.*
+semantic-decoy score gates pass; broad semantic surprise and broader
+downstream utility are not established.*
 
 The substrate-pivot's headline prediction — that the
 execution-trace substrate produces a non-collapsed
@@ -307,10 +310,10 @@ v0.6 HF Jobs runs (`EXECUTION_V0_6_RESULTS_2026-05-30.md`):
 - Execution-pack retrieval passes the no-action gates across both
   seeds: Recall@1 lift is +0.619 / +0.610 and MRR lift is
   +0.663 / +0.655.
-- Generated-decoy surprise passes the configured mutation,
-  same-code-different-input, and same-problem-different-submission
-  gates at AUC 1.0 on both seeds, with the caveat that
-  same-problem has only six generated pairs.
+- Semantic-decoy surprise score gates pass the configured mutation,
+  same-code-different-input, and same-problem-different-submission AUC
+  thresholds at 1.0 on both seeds. The semantic claim gate remains closed
+  because same-problem/different-submission has only six pairs.
 
 The broader downstream-utility story is negative or incomplete:
 
@@ -329,7 +332,9 @@ The paper's framing should therefore be:
 > Substrate B passes the collapse gate at 0.47, flips the no-action
 > margin from −0.77 to +1.24, beats no-action retrieval by +61.4
 > Recall@1 points and +65.9 MRR points on average, and passes
-> generated-decoy surprise diagnostics. The same model family and
+> semantic-decoy surprise score diagnostics while keeping the broad
+> semantic-surprise claim gate closed at 6/30 same-problem/different
+> submission pairs. The same model family and
 > objective registry yields qualitatively different latents on the two
 > substrates, with run-level configuration differences disclosed. The
 > result is partial, not a broad code-generation or
