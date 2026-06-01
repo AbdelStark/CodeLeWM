@@ -11,6 +11,10 @@ execution-surprise` against this pack for both seeds.
 
 ## Artifact
 
+Manifest: `docs/benchmark/v0_6/semantic_decoy_pack/manifest.json`
+
+Artifact ID: `downstream_benchmark-f3e0dc65fbf18825`
+
 Command:
 
 ```bash

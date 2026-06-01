@@ -1,0 +1,13 @@
+{
+  "max_pairs_per_query": 3,
+  "min_distinct_problems_for_claim": 30,
+  "min_pairs_for_claim": 100,
+  "out": "/Users/abdel/dev/me/world-models/CodeLeWM/docs/benchmark/v0_6/semantic_decoy_pack",
+  "pack": "/Users/abdel/dev/me/world-models/CodeLeWM/.artifacts/v0_6/execution-pack",
+  "schema_version": "codelewm.eval.semantic_decoy_pack_run.v1",
+  "seed": 0,
+  "splits": [
+    "val",
+    "test"
+  ]
+}

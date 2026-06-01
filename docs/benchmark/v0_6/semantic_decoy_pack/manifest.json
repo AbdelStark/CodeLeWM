@@ -1,0 +1,72 @@
+{
+  "artifact_id": "downstream_benchmark-f3e0dc65fbf18825",
+  "artifact_kind": "downstream_benchmark",
+  "command": [
+    "codelewm",
+    "eval",
+    "semantic-decoy-pack",
+    "--pack",
+    ".artifacts/v0_6/execution-pack",
+    "--out",
+    "docs/benchmark/v0_6/semantic_decoy_pack",
+    "--splits",
+    "val,test",
+    "--seed",
+    "0",
+    "--max-pairs-per-query",
+    "3",
+    "--min-pairs-for-claim",
+    "100",
+    "--min-distinct-problems-for-claim",
+    "30",
+    "--json"
+  ],
+  "config_sha256": "33e49093c39beb0f558e30ef223179e8dc045cd82e7b7c9c81afd48900789840",
+  "created_at": "2026-06-01T08:53:18Z",
+  "files": [
+    {
+      "bytes": 368436,
+      "path": "semantic_decoy_pairs.jsonl",
+      "sha256": "55b74738d5c4fc94d11e52444466ce27972edd3aecd740977ee1fb52bec13c78"
+    },
+    {
+      "bytes": 2295,
+      "path": "reports/semantic_decoy_summary.json",
+      "sha256": "59c7631e1f991762ea080d9aedfebbaf7ee6717cf52af508b1714c26be7cac89"
+    },
+    {
+      "bytes": 400,
+      "path": "config.json",
+      "sha256": "c42829959a6938c2fac3697fe6229828fc89e96ab225516106b7112388aaa7b5"
+    },
+    {
+      "bytes": 449,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "9d434897bec3003b296bdbe1100128e4b9281993ddf1333b1b439538c69fd8c7"
+    }
+  ],
+  "metadata": {
+    "categories": [
+      "same_problem_different_submission",
+      "same_code_different_input"
+    ],
+    "category": "semantic_same_problem",
+    "claim_allowed": true,
+    "distinct_problem_count": 68,
+    "pair_count": 358,
+    "pair_count_by_category": {
+      "same_code_different_input": 352,
+      "same_problem_different_submission": 6
+    },
+    "pair_rows_path": "semantic_decoy_pairs.jsonl",
+    "pair_schema_version": "codelewm.eval.semantic_decoy_pair.v1",
+    "schema_version": "codelewm.eval.semantic_decoy_pack.v1",
+    "summary_path": "reports/semantic_decoy_summary.json",
+    "summary_schema_version": "codelewm.eval.semantic_decoy_summary.v1"
+  },
+  "parent_artifacts": [
+    "codelewm-execution-pack-20260528T102625Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "bf63ff37c415223bddea3a9669c783c3bd55ac0d"
+}
