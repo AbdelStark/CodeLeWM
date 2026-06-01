@@ -96,16 +96,20 @@ def generate_same_problem_different_submission_pairs(
     *,
     seed: int = 0,
     max_pairs_per_query: int = 1,
+    same_input_only: bool = True,
 ) -> tuple[list[DecoyPair], DecoyGenerationReport]:
-    """Build pairs where the decoy is a different submission's output on the
-    same problem and the same input.
+    """Build pairs where the decoy is a different submission's output for the
+    same problem.
 
-    Pairs are filtered to drop cases where both submissions produced
-    identical outputs (so the latent can't distinguish them either).
+    By default, the decoy must also share the same input. Pass
+    ``same_input_only=False`` for the strengthened semantic pack, where
+    same-problem/different-submission pairs may use different inputs as long as
+    outputs differ and the pair records its exact input relation.
     """
 
     records_list = list(records)
     by_problem_input: dict[tuple[str, str], list[Mapping[str, Any]]] = {}
+    by_problem: dict[str, list[Mapping[str, Any]]] = {}
     for rec in records_list:
         key = (
             str(rec.get("source_problem_id", "")),
@@ -114,6 +118,7 @@ def generate_same_problem_different_submission_pairs(
         if not key[0] or not key[1]:
             continue
         by_problem_input.setdefault(key, []).append(rec)
+        by_problem.setdefault(key[0], []).append(rec)
 
     rng = random.Random(seed)
     pairs: list[DecoyPair] = []
@@ -125,10 +130,13 @@ def generate_same_problem_different_submission_pairs(
         if not problem_id or not input_id:
             _bump(skipped, "missing_ids")
             continue
+        pool = (
+            by_problem_input.get((problem_id, input_id), ())
+            if same_input_only
+            else by_problem.get(problem_id, ())
+        )
         candidates = [
-            r
-            for r in by_problem_input.get((problem_id, input_id), ())
-            if r.get("source_submission_id") != query.get("source_submission_id")
+            r for r in pool if r.get("source_submission_id") != query.get("source_submission_id")
         ]
         if not candidates:
             _bump(skipped, "no_other_submission")
@@ -149,6 +157,11 @@ def generate_same_problem_different_submission_pairs(
         )
         rng.shuffle(diff_candidates)  # re-shuffle for second-order diversity
         for decoy in diff_candidates[: max_pairs_per_query]:
+            input_relation = (
+                "same_input_id"
+                if decoy.get("input_id") == query.get("input_id")
+                else "different_input_id"
+            )
             pairs.append(
                 DecoyPair(
                     category="same_problem_different_submission",
@@ -156,7 +169,11 @@ def generate_same_problem_different_submission_pairs(
                     query_output_repr=_output_fingerprint(query),
                     decoy_record_id=str(decoy.get("record_id", "")),
                     decoy_output_repr=_output_fingerprint(decoy),
-                    rationale="same_problem_id,same_input_id,different_submission_id,differing_output",
+                    rationale=(
+                        "same_problem_id,"
+                        f"{input_relation},"
+                        "different_submission_id,differing_output"
+                    ),
                 )
             )
     report = DecoyGenerationReport(

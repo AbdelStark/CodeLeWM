@@ -50,6 +50,7 @@ from .execution_surprise_decoys import (
     generate_same_code_different_input_pairs,
     generate_same_problem_different_submission_pairs,
 )
+from .semantic_decoy_pack import LoadedSemanticDecoyPack, load_semantic_decoy_pack
 from .latent_probe import (
     LATENT_PROBE_VIEWS,
     LatentProbeConfig,
@@ -314,6 +315,7 @@ def run_execution_surprise_evaluation(
     device: str = "cpu",
     max_examples: int = 1000,
     seed: int = 0,
+    semantic_decoy_manifest: Path | str | None = None,
     overwrite: bool = False,
     command: Sequence[str] = ("codelewm", "eval", "execution-surprise"),
     source_git_sha: str | None = None,
@@ -337,10 +339,16 @@ def run_execution_surprise_evaluation(
         device=context.device,
     )
     row_index = {row.record_id: index for index, row in enumerate(rows)}
+    semantic_decoy_pack = (
+        load_semantic_decoy_pack(semantic_decoy_manifest)
+        if semantic_decoy_manifest is not None
+        else None
+    )
     decoy_pairs, decoy_reports = _build_execution_decoy_pairs(
         [row.record for row in rows],
         selected_decoys=selected_decoys,
         seed=seed,
+        semantic_decoy_pack=semantic_decoy_pack,
     )
     pairs_by_query: dict[str, list[DecoyPair]] = {}
     for pair in decoy_pairs:
@@ -407,6 +415,8 @@ def run_execution_surprise_evaluation(
         "mutation_pair_count": mutation_count,
         "reports": [report.as_dict() for report in decoy_reports],
     }
+    if semantic_decoy_pack is not None:
+        decoy_report_payload["semantic_decoy_pack"] = semantic_decoy_pack.metadata()
     report = build_surprise_report(
         results,
         decoy_seed=seed,
@@ -428,6 +438,9 @@ def run_execution_surprise_evaluation(
         "decoys": list(selected_decoys),
         "seed": seed,
         "score_direction": "lower_is_better",
+        "semantic_decoy_manifest": None
+        if semantic_decoy_manifest is None
+        else str(semantic_decoy_manifest),
     }
     config_path = out_dir / "config.json"
     report_path = out_dir / "reports" / "surprise_report.json"
@@ -448,7 +461,13 @@ def run_execution_surprise_evaluation(
             "example_count": report.metrics.example_count,
             "metrics": report.metrics.to_dict(),
             "execution_decoy_report_path": "reports/execution_decoy_report.json",
+            "semantic_decoy_pack_artifact_id": None
+            if semantic_decoy_pack is None
+            else semantic_decoy_pack.artifact_manifest.artifact_id,
         },
+        extra_parent_artifacts=()
+        if semantic_decoy_pack is None
+        else (semantic_decoy_pack.artifact_manifest.artifact_id,),
         source_git_sha=source_git_sha,
         created_at=created_at,
     )
@@ -1034,17 +1053,28 @@ def _build_execution_decoy_pairs(
     *,
     selected_decoys: Sequence[str],
     seed: int,
+    semantic_decoy_pack: LoadedSemanticDecoyPack | None = None,
 ) -> tuple[list[DecoyPair], list[DecoyGenerationReport]]:
     pairs: list[DecoyPair] = []
     reports: list[DecoyGenerationReport] = []
+    loaded_categories: set[str] = set()
+    if semantic_decoy_pack is not None:
+        loaded_pairs = [
+            pair for pair in semantic_decoy_pack.pairs if pair.category in selected_decoys
+        ]
+        pairs.extend(loaded_pairs)
+        loaded_categories = {pair.category for pair in loaded_pairs}
+        reports.extend(semantic_decoy_pack.generation_reports(loaded_categories))
     if "same_problem_different_submission" in selected_decoys:
-        generated, report = generate_same_problem_different_submission_pairs(records, seed=seed)
-        pairs.extend(generated)
-        reports.append(report)
+        if "same_problem_different_submission" not in loaded_categories:
+            generated, report = generate_same_problem_different_submission_pairs(records, seed=seed)
+            pairs.extend(generated)
+            reports.append(report)
     if "same_code_different_input" in selected_decoys:
-        generated, report = generate_same_code_different_input_pairs(records, seed=seed)
-        pairs.extend(generated)
-        reports.append(report)
+        if "same_code_different_input" not in loaded_categories:
+            generated, report = generate_same_code_different_input_pairs(records, seed=seed)
+            pairs.extend(generated)
+            reports.append(report)
     return pairs, reports
 
 
@@ -1190,10 +1220,12 @@ def _write_eval_artifact(
     metadata: Mapping[str, Any],
     source_git_sha: str | None,
     created_at: str | None,
+    extra_parent_artifacts: Sequence[str] = (),
 ) -> ExecutionEvalResult:
     parent_artifacts = (
         context.training_artifact.artifact_id,
         context.pack_artifact.artifact_id,
+        *tuple(extra_parent_artifacts),
     )
     artifact_metadata = {
         "schema_version": result_schema_version,

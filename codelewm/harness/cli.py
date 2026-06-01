@@ -34,7 +34,9 @@ from codelewm.eval import (
     DownstreamBenchmarkPackError,
     DownstreamRerankEvalError,
     ExecutionRerankEvalError,
+    SemanticDecoyPackError,
     build_downstream_benchmark_pack,
+    build_semantic_decoy_pack,
     run_downstream_rerank_evaluation,
     run_action_ablation_suite,
     run_crash_prediction_evaluation,
@@ -614,6 +616,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--seed", type=int, default=0, help="deterministic decoy seed"
     )
     execution_surprise.add_argument(
+        "--semantic-decoy-manifest",
+        type=Path,
+        help="optional semantic decoy pack manifest to use for same-problem decoys",
+    )
+    execution_surprise.add_argument(
         "--overwrite",
         action="store_true",
         help="overwrite existing execution surprise output files",
@@ -623,6 +630,53 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     execution_surprise.set_defaults(func=_eval_execution_surprise_command)
+    semantic_decoy_pack = eval_subcommands.add_parser(
+        "semantic-decoy-pack",
+        help="build a manifest-backed same-problem semantic decoy pack",
+    )
+    semantic_decoy_pack.add_argument(
+        "--pack",
+        type=Path,
+        required=True,
+        help="execution pack directory, pack.jsonl, manifest.json, or artifact_manifest.json",
+    )
+    semantic_decoy_pack.add_argument(
+        "--out", type=Path, required=True, help="semantic decoy pack artifact directory"
+    )
+    semantic_decoy_pack.add_argument(
+        "--splits",
+        default="val,test",
+        help="comma-separated execution-pack splits used for decoy construction",
+    )
+    semantic_decoy_pack.add_argument("--seed", type=int, default=0)
+    semantic_decoy_pack.add_argument(
+        "--max-pairs-per-query",
+        type=int,
+        default=3,
+        help="maximum semantic decoys retained per query record",
+    )
+    semantic_decoy_pack.add_argument(
+        "--min-pairs-for-claim",
+        type=int,
+        default=100,
+        help="minimum same-problem semantic pairs required for claim eligibility",
+    )
+    semantic_decoy_pack.add_argument(
+        "--min-distinct-problems-for-claim",
+        type=int,
+        default=30,
+        help="minimum distinct problems required for claim eligibility",
+    )
+    semantic_decoy_pack.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing semantic decoy pack output files",
+    )
+    semantic_decoy_pack.add_argument("--json", action="store_true", help="emit JSON output")
+    semantic_decoy_pack.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    semantic_decoy_pack.set_defaults(func=_eval_semantic_decoy_pack_command)
     execution_probe = eval_subcommands.add_parser(
         "execution-probe",
         help="run execution-specific frozen latent probes over a v0.6 JSONL pack",
@@ -2562,6 +2616,7 @@ def _eval_execution_surprise_command(args: argparse.Namespace) -> int:
             device=args.device,
             max_examples=args.max_examples,
             seed=args.seed,
+            semantic_decoy_manifest=args.semantic_decoy_manifest,
             overwrite=args.overwrite,
             command=command,
         ),
@@ -2573,9 +2628,119 @@ def _eval_execution_surprise_command(args: argparse.Namespace) -> int:
             "device": args.device,
             "max_examples": args.max_examples,
             "seed": args.seed,
+            "semantic_decoy_manifest": None
+            if args.semantic_decoy_manifest is None
+            else str(args.semantic_decoy_manifest),
             "overwrite": bool(args.overwrite),
         },
     )
+
+
+def _eval_semantic_decoy_pack_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_semantic_decoy_pack_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.semantic_decoy_pack.start",
+                level="info",
+                run_id=run_id,
+                step="eval.semantic_decoy_pack",
+                message="semantic decoy pack build started",
+                fields={
+                    "pack": str(args.pack),
+                    "out": str(args.out),
+                    "splits": args.splits,
+                    "seed": args.seed,
+                    "max_pairs_per_query": args.max_pairs_per_query,
+                    "min_pairs_for_claim": args.min_pairs_for_claim,
+                    "min_distinct_problems_for_claim": args.min_distinct_problems_for_claim,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = build_semantic_decoy_pack(
+            pack=args.pack,
+            out=args.out,
+            splits=tuple(part.strip() for part in args.splits.split(",") if part.strip()),
+            seed=args.seed,
+            max_pairs_per_query=args.max_pairs_per_query,
+            min_pairs_for_claim=args.min_pairs_for_claim,
+            min_distinct_problems_for_claim=args.min_distinct_problems_for_claim,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.semantic_decoy_pack.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.semantic_decoy_pack",
+                message="semantic decoy pack build completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "pair_rows_path": result.pair_rows_path,
+                    "summary_path": result.summary_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "pair_count": result.pair_count,
+                    "distinct_problem_count": result.distinct_problem_count,
+                    "claim_allowed": result.claim_allowed,
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        SemanticDecoyPackError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"semantic decoy pack build failed: {exc}",
+            error_type="evaluation_gate_error",
+            remediation="verify the execution pack manifest, split policy, and output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.semantic_decoy_pack",
+            event="evaluation.semantic_decoy_pack.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 6
+    except Exception as exc:
+        error = ScoreError(
+            f"semantic decoy pack build failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the semantic decoy pack inputs and retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.semantic_decoy_pack",
+            event="evaluation.semantic_decoy_pack.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"semantic_decoy_pairs: {args.out / result.pair_rows_path}")
+        print(f"summary: {args.out / result.summary_path}")
+        print(f"pair_count: {result.pair_count}")
+        print(f"distinct_problem_count: {result.distinct_problem_count}")
+        print(f"claim_allowed: {result.claim_allowed}")
+    return 0
 
 
 def _eval_execution_probe_command(args: argparse.Namespace) -> int:
@@ -2723,6 +2888,7 @@ def _run_execution_eval_cli(
         ExecutionEvalError,
         LatentProbeError,
         RetrievalEvalError,
+        SemanticDecoyPackError,
         SurpriseEvalError,
     ) as exc:
         error = ScoreError(
@@ -4434,6 +4600,37 @@ def _eval_execution_surprise_command_tuple(args: argparse.Namespace) -> tuple[st
         str(args.max_examples),
         "--seed",
         str(args.seed),
+    ]
+    if args.semantic_decoy_manifest is not None:
+        command.extend(("--semantic-decoy-manifest", str(args.semantic_decoy_manifest)))
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_semantic_decoy_pack_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "semantic-decoy-pack",
+        "--pack",
+        str(args.pack),
+        "--out",
+        str(args.out),
+        "--splits",
+        str(args.splits),
+        "--seed",
+        str(args.seed),
+        "--max-pairs-per-query",
+        str(args.max_pairs_per_query),
+        "--min-pairs-for-claim",
+        str(args.min_pairs_for_claim),
+        "--min-distinct-problems-for-claim",
+        str(args.min_distinct_problems_for_claim),
     ]
     if args.overwrite:
         command.append("--overwrite")

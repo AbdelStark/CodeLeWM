@@ -113,6 +113,13 @@ done
 ## Step 7 — Run the headline evaluations
 
 ```bash
+uv run codelewm eval semantic-decoy-pack \
+  --pack .artifacts/v0_6/execution-pack \
+  --out results/v0_6/semantic_decoy_pack \
+  --min-pairs-for-claim 100 \
+  --min-distinct-problems-for-claim 30 \
+  --json
+
 # Retrieval / collapse / probes / surprise:
 for SEED in 42 1729; do
   uv run codelewm eval execution-retrieval \
@@ -124,6 +131,7 @@ for SEED in 42 1729; do
   uv run codelewm eval execution-surprise \
     --checkpoint .artifacts/v0_6/seed-${SEED}/checkpoints/last.pt \
     --pack .artifacts/v0_6/execution-pack \
+    --semantic-decoy-manifest results/v0_6/semantic_decoy_pack/manifest.json \
     --decoys mutation,same_problem_different_submission,same_code_different_input \
     --out results/v0_6/seed-${SEED}/execution_surprise \
     --json
