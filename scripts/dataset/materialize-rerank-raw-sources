@@ -1,0 +1,146 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["datasets>=3"]
+# ///
+"""Materialize held-out raw sources for the downstream rerank protocol.
+
+The completion-label sampler consumes local JSONL files rather than reaching
+out to Hugging Face during a live provider run. This script mirrors the current
+public HumanEval and MBPP-Plus rows into ``data/raw`` so the sampling command
+can remain explicit about source files, manifests, and secret scans.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("data/raw"),
+        help="directory for humaneval.jsonl and mbpp_plus.jsonl",
+    )
+    parser.add_argument(
+        "--humaneval-dataset",
+        default="openai/openai_humaneval",
+        help="HF dataset id for HumanEval",
+    )
+    parser.add_argument(
+        "--humaneval-split",
+        default="test",
+        help="HumanEval split to mirror",
+    )
+    parser.add_argument(
+        "--mbpp-plus-dataset",
+        default="evalplus/mbppplus",
+        help="HF dataset id for MBPP-Plus",
+    )
+    parser.add_argument(
+        "--mbpp-plus-split",
+        default="test",
+        help="MBPP-Plus split to mirror",
+    )
+    parser.add_argument(
+        "--max-humaneval",
+        type=int,
+        default=None,
+        help="optional cap for HumanEval rows",
+    )
+    parser.add_argument(
+        "--max-mbpp-plus",
+        type=int,
+        default=None,
+        help="optional cap for MBPP-Plus rows",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace existing JSONL files",
+    )
+    parser.add_argument("--json", action="store_true", help="print JSON summary")
+    args = parser.parse_args()
+
+    try:
+        from datasets import load_dataset  # noqa: PLC0415
+    except ImportError as exc:
+        print(f"datasets package is required: {exc}", file=sys.stderr)
+        return 2
+
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    humaneval_path = args.out_dir / "humaneval.jsonl"
+    mbpp_plus_path = args.out_dir / "mbpp_plus.jsonl"
+    for path in (humaneval_path, mbpp_plus_path):
+        if path.exists() and not args.overwrite:
+            print(
+                f"{path} already exists; pass --overwrite to replace it",
+                file=sys.stderr,
+            )
+            return 2
+
+    humaneval_count = _write_dataset_jsonl(
+        load_dataset=load_dataset,
+        dataset=args.humaneval_dataset,
+        split=args.humaneval_split,
+        output=humaneval_path,
+        limit=args.max_humaneval,
+    )
+    mbpp_plus_count = _write_dataset_jsonl(
+        load_dataset=load_dataset,
+        dataset=args.mbpp_plus_dataset,
+        split=args.mbpp_plus_split,
+        output=mbpp_plus_path,
+        limit=args.max_mbpp_plus,
+    )
+    summary = {
+        "humaneval": {
+            "dataset": args.humaneval_dataset,
+            "split": args.humaneval_split,
+            "output_path": str(humaneval_path),
+            "row_count": humaneval_count,
+        },
+        "mbpp_plus": {
+            "dataset": args.mbpp_plus_dataset,
+            "split": args.mbpp_plus_split,
+            "output_path": str(mbpp_plus_path),
+            "row_count": mbpp_plus_count,
+        },
+    }
+    if args.json:
+        print(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        print(
+            f"wrote {humaneval_count} HumanEval rows to {humaneval_path} and "
+            f"{mbpp_plus_count} MBPP-Plus rows to {mbpp_plus_path}"
+        )
+    return 0
+
+
+def _write_dataset_jsonl(
+    *,
+    load_dataset: object,
+    dataset: str,
+    split: str,
+    output: Path,
+    limit: int | None,
+) -> int:
+    ds = load_dataset(dataset, split=split)  # type: ignore[operator]
+    count = 0
+    with output.open("w", encoding="utf-8") as handle:
+        for row in ds:
+            if limit is not None and count >= limit:
+                break
+            handle.write(json.dumps(dict(row), ensure_ascii=False, sort_keys=True))
+            handle.write("\n")
+            count += 1
+    return count
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

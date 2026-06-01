@@ -1,0 +1,67 @@
+{
+  "artifact_id": "downstream_benchmark-7d549a6ec13ab791",
+  "artifact_kind": "downstream_benchmark",
+  "command": [
+    "scripts/sample-execution-rerank-completions",
+    "--benchmark",
+    "humaneval",
+    "--source",
+    "data/raw/humaneval.jsonl",
+    "--out",
+    "docs/benchmark/v0_6/completion_labels_pilot/humaneval",
+    "--live",
+    "--max-problems",
+    "25",
+    "--max-cases-per-problem",
+    "8",
+    "--samples-per-problem",
+    "1",
+    "--llm-seeds",
+    "17,42",
+    "--short-circuit-failures",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "aab712a7fcd0d8af709ba7ea3cde05b53d408c5230ab5829b59f0f54ef6a8e75",
+  "created_at": "2026-06-01T10:09:55Z",
+  "files": [
+    {
+      "bytes": 201624,
+      "path": "humaneval_completion_labels.jsonl",
+      "sha256": "a553926d569ca8db14851d4f12b7b3dd9a6c3442776ba09f17b2b8593ae0016b"
+    },
+    {
+      "bytes": 20871,
+      "path": "prompts/sampling_prompts.jsonl",
+      "sha256": "32611d97ad3432c469722e563771762d91b73c849eb2fcfd4afcbd0f3923c7ef"
+    },
+    {
+      "bytes": 921,
+      "path": "config.json",
+      "sha256": "5e15c6135addb49ae672bf67f150149f36bedb6f3a6ba5047d75b76a38768317"
+    },
+    {
+      "bytes": 4719,
+      "path": "reports/completion_sampling_report.json",
+      "sha256": "30e6ddd46ccf9ec10f452456564de86a576767859e87912a56625581d0e8f547"
+    },
+    {
+      "bytes": 252,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "fe11fbb07b6ca627ad27e77922f97f5a7f093afec144edc8bbc3c14e5ba70bc4"
+    }
+  ],
+  "metadata": {
+    "benchmark_id": "humaneval",
+    "completion_count": 50,
+    "dry_run": false,
+    "label_schema_version": "codelewm.eval.completion_label.v1",
+    "passed_completion_count": 50,
+    "problem_count": 25,
+    "schema_version": "codelewm.eval.completion_label_artifact.v1",
+    "secret_scan_ok": true
+  },
+  "parent_artifacts": [],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "7ff46786bfa76b67edd92b00a411348ae96f2c4d"
+}

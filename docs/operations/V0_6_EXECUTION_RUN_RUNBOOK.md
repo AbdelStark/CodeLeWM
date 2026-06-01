@@ -149,6 +149,10 @@ for SEED in 42 1729; do
 done
 
 # Downstream rerank completion labeling (#304 operator step):
+uv run scripts/dataset/materialize-rerank-raw-sources \
+  --out-dir data/raw \
+  --overwrite \
+  --json
 uv run scripts/sample-execution-rerank-completions \
   --benchmark humaneval \
   --source data/raw/humaneval.jsonl \
@@ -156,6 +160,7 @@ uv run scripts/sample-execution-rerank-completions \
   --llm openrouter:anthropic/claude-haiku-4-5 \
   --samples-per-problem 10 \
   --llm-seeds 17,42,1729 \
+  --short-circuit-failures \
   --live \
   --json
 uv run scripts/sample-execution-rerank-completions \
@@ -165,6 +170,7 @@ uv run scripts/sample-execution-rerank-completions \
   --llm openrouter:anthropic/claude-haiku-4-5 \
   --samples-per-problem 10 \
   --llm-seeds 17,42,1729 \
+  --short-circuit-failures \
   --live \
   --json
 
@@ -202,6 +208,10 @@ When a semantic decoy manifest is supplied, the surprise report includes
 `codelewm.eval.execution_surprise_claim_gates.v1` metadata. Operators must
 review both `score_gates` and `pair_count_gates`: a category may clear the AUC
 threshold while still being claim-blocked by too few scored pairs.
+
+For spend-bounded pilot runs, operators may add
+`--max-cases-per-problem <N>` and record the resulting limitation in the
+benchmark report. Do not call capped MBPP-Plus rows full EvalPlus pass@1.
 
 The sampler writes `codelewm.eval.completion_label.v1` JSONL rows plus
 `codelewm.eval.completion_sampling_report.v1`, `codelewm.secret_scan.v1`,

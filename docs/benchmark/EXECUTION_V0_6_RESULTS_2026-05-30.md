@@ -322,14 +322,18 @@ model-quality claim.
 
 `scripts/sample-execution-rerank-completions` now defines the
 HumanEval/MBPP-Plus completion-label artifact contract from #304, and
-the loader accepts `codelewm.eval.completion_label.v1` rows. The full
-live artifacts required for the public gate do not exist yet, and the
-report therefore carries no pass@1 lift numbers.
+the loader accepts `codelewm.eval.completion_label.v1` rows. A
+spend-bounded live pilot now exists in
+`docs/benchmark/V0_6_RERANK_PILOT_2026-06-01.md`, but it is saturated:
+HumanEval has 50/50 passing completions and MBPP-Plus has 46/50 passing
+completions under an 8-case pilot cap. All baselines tie and CodeLeWM
+has 0.00 pass@1 lift over LLM order and no-action across both seeds.
+The full live benchmark gate is still not complete.
 
 | Benchmark | Label artifact | Rerank report | Status |
 | --------- | -------------- | ------------- | ------ |
-| HumanEval | not present | not present | not run; requires live `OPENROUTER_API_KEY` sampling and provider spend |
-| MBPP-Plus | not present | not present | not run; requires live `OPENROUTER_API_KEY` sampling and provider spend |
+| HumanEval | `docs/benchmark/v0_6/completion_labels_pilot/humaneval/manifest.json` | `docs/benchmark/v0_6/seed-{42,1729}/downstream_rerank_pilot/humaneval/manifest.json` | pilot only; saturated; no lift |
+| MBPP-Plus | `docs/benchmark/v0_6/completion_labels_pilot/mbpp_plus/manifest.json` | `docs/benchmark/v0_6/seed-{42,1729}/downstream_rerank_pilot/mbpp_plus/manifest.json` | pilot only; saturated; no lift |
 
 No public downstream-reranking claim is allowed from this report.
 
@@ -342,7 +346,7 @@ No public downstream-reranking claim is allowed from this report.
 | Semantic surprise score gates | **PASS SCORE / NOT ALLOWED** | semantic surprise reports: AUC 1.0, but same-problem/different-submission count is 6/30 |
 | Latent semantic representation claim | **NOT ALLOWED** | latent-probe reports: only one target available and lexical control wins |
 | Crash-prediction utility claim | **NOT EVALUABLE** | crash reports: no positives |
-| HumanEval/MBPP-Plus rerank utility claim | **NOT RUN / NOT ALLOWED** | no live labeled-completion artifacts |
+| HumanEval/MBPP-Plus rerank utility claim | **PILOT RUN / NOT ALLOWED** | live pilot is saturated and has 0.00 pass@1 lift |
 | Overall public framing | **PARTIAL POSITIVE** | substrate and internal execution-pack gates pass; broader downstream utility remains unsupported |
 
 ## Allowed Public Language (Partial Positive)

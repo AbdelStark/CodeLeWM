@@ -1,0 +1,70 @@
+{
+  "artifact_id": "eval_report-36662148dc03d44c",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "rerank-mbpp-plus",
+    "--completion-manifest",
+    "docs/benchmark/v0_6/completion_labels_pilot/mbpp_plus/manifest.json",
+    "--checkpoint",
+    ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt",
+    "--out",
+    "docs/benchmark/v0_6/seed-1729/downstream_rerank_pilot/mbpp_plus",
+    "--device",
+    "auto",
+    "--pass-at-k",
+    "5",
+    "--bootstrap-samples",
+    "2000",
+    "--seed",
+    "17",
+    "--min-lift-for-claim",
+    "3.0",
+    "--retrieval-prior-weight",
+    "0.0",
+    "--retrieval-prior-k",
+    "10",
+    "--require-learned-scorer",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "c5bf3eddbc18cc4714ce9295ca4cb264db226f97f8c3b77f4f724975ce18ca7d",
+  "created_at": "2026-06-01T10:21:48Z",
+  "files": [
+    {
+      "bytes": 2403,
+      "path": "reports/execution_rerank_report.json",
+      "sha256": "4ced3388ea4b837949dfa37e2849dbe391932f1b52d52d262a5d4503c41b53e9"
+    },
+    {
+      "bytes": 18709,
+      "path": "reports/completion_scores.jsonl",
+      "sha256": "430e3ff7365b7fc4b8ebfe1ab42d1cd59479361aaf69414dc2b803a5862625ae"
+    },
+    {
+      "bytes": 634,
+      "path": "config.json",
+      "sha256": "d061361bfa7ecb111df9358b44bae995a05c82ae4bfa01317e4265e795d26c0a"
+    },
+    {
+      "bytes": 527,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "e01db965cedddb7b8eca1a46a4c97e70d3bf5d1bf7238ba2714982cae3fa2a45"
+    }
+  ],
+  "metadata": {
+    "benchmark": "mbpp_plus",
+    "claim_allowed": false,
+    "completion_count": 50,
+    "problem_count": 25,
+    "report_schema_version": "codelewm.eval.execution_rerank_report.v1",
+    "schema_version": "codelewm.eval.execution_rerank_eval_run.v1",
+    "score_schema_version": "codelewm.eval.completion_score.v1"
+  },
+  "parent_artifacts": [
+    "downstream_benchmark-db47a1daa39e2d3e"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "7ff46786bfa76b67edd92b00a411348ae96f2c4d"
+}

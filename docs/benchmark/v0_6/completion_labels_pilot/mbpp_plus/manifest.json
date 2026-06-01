@@ -1,0 +1,68 @@
+{
+  "artifact_id": "downstream_benchmark-db47a1daa39e2d3e",
+  "artifact_kind": "downstream_benchmark",
+  "command": [
+    "scripts/sample-execution-rerank-completions",
+    "--benchmark",
+    "mbpp-plus",
+    "--source",
+    "data/raw/mbpp_plus.jsonl",
+    "--out",
+    "docs/benchmark/v0_6/completion_labels_pilot/mbpp_plus",
+    "--live",
+    "--max-problems",
+    "25",
+    "--max-cases-per-problem",
+    "8",
+    "--samples-per-problem",
+    "1",
+    "--llm-seeds",
+    "17,42",
+    "--short-circuit-failures",
+    "--no-determinism-check",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "e2c9f34ead373570266239897c85deac32c3c1121d654c09c07b0be93cdf97ce",
+  "created_at": "2026-06-01T10:14:23Z",
+  "files": [
+    {
+      "bytes": 271158,
+      "path": "mbpp_plus_completion_labels.jsonl",
+      "sha256": "670a5ccb1679f1941daff8d97c88d81ee9a761285a452e6673639ce681ced4d9"
+    },
+    {
+      "bytes": 14649,
+      "path": "prompts/sampling_prompts.jsonl",
+      "sha256": "519512f7ed8a89f81f6d92455f440d5c98b092a312a28067cc31d38542f5f004"
+    },
+    {
+      "bytes": 922,
+      "path": "config.json",
+      "sha256": "4a98b9fc28f58868b8c93a4d399632d28aaa8f0af04a94245082721a7749baee"
+    },
+    {
+      "bytes": 4597,
+      "path": "reports/completion_sampling_report.json",
+      "sha256": "20280a5278f70f1153d3975867a8da6d2bf3d2ca944583c72cfc0101092b3a1b"
+    },
+    {
+      "bytes": 252,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "5d770d8c61ee8fe75bc93de290e755b667eb27b146f4322e64176efe967a0c44"
+    }
+  ],
+  "metadata": {
+    "benchmark_id": "mbpp_plus",
+    "completion_count": 50,
+    "dry_run": false,
+    "label_schema_version": "codelewm.eval.completion_label.v1",
+    "passed_completion_count": 46,
+    "problem_count": 25,
+    "schema_version": "codelewm.eval.completion_label_artifact.v1",
+    "secret_scan_ok": true
+  },
+  "parent_artifacts": [],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "7ff46786bfa76b67edd92b00a411348ae96f2c4d"
+}

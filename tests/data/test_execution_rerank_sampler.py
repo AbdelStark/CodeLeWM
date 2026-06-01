@@ -123,6 +123,34 @@ class ExecutionRerankSamplerTest(unittest.TestCase):
             self.assertEqual({label.passed for label in labels}, {False, True})
             self.assertTrue(all(label.scoring_inputs for label in labels))
 
+    def test_case_cap_and_short_circuit_are_recorded(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "labels"
+            result = sample_execution_rerank_completions(
+                benchmark="humaneval",
+                source_path=FIXTURES / "humaneval_tiny.jsonl",
+                out=out,
+                samples_per_problem=2,
+                llm_seeds=(17,),
+                max_cases_per_problem=1,
+                short_circuit_failures=True,
+            )
+
+            labels_path = out / result.labels_path
+            rows = [
+                json.loads(line)
+                for line in labels_path.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertTrue(all(len(row["scoring_inputs"]) == 1 for row in rows))
+            failing = [row for row in rows if not row["passed"]]
+            self.assertEqual(len(failing), 1)
+            self.assertEqual(len(failing[0]["test_results"]), 1)
+
+            report = json.loads((out / result.report_path).read_text(encoding="utf-8"))
+            self.assertEqual(report["max_cases_per_problem"], 1)
+            self.assertTrue(report["short_circuit_failures"])
+            self.assertEqual(report["problem_summaries"][0]["input_case_count"], 1)
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

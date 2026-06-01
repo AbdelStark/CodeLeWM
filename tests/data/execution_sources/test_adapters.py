@@ -28,7 +28,9 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 class RecordValidationTest(unittest.TestCase):
     def test_minimal_record_round_trip(self) -> None:
         case = InputCase(
-            input_id="x", input_repr="[1, 2]", input_kind="function_call",
+            input_id="x",
+            input_repr="[1, 2]",
+            input_kind="function_call",
             function_name="f",
         )
         submission = SourceSubmission(
@@ -60,7 +62,9 @@ class RecordValidationTest(unittest.TestCase):
 class MBPPAdapterTest(unittest.TestCase):
     def test_parses_assert_eq_lines_into_function_call_cases(self) -> None:
         adapter = get_execution_source_adapter("mbpp")
-        records = list(adapter.iter_submissions(source_path=FIXTURES / "mbpp_tiny.jsonl"))
+        records = list(
+            adapter.iter_submissions(source_path=FIXTURES / "mbpp_tiny.jsonl")
+        )
         self.assertEqual(len(records), 2, msg=[r.source_problem_id for r in records])
         square = records[0]
         self.assertEqual(square.source_problem_id, "mbpp/1")
@@ -94,6 +98,31 @@ class MBPPPlusAdapterTest(unittest.TestCase):
         self.assertEqual(len(records[0].inputs), 4)
         self.assertTrue(records[0].held_out_for_eval)
         self.assertEqual(records[0].license, "Apache-2.0")
+
+    def test_parses_current_evalplus_schema(self) -> None:
+        adapter = get_execution_source_adapter("mbpp_plus")
+        row = {
+            "task_id": 2,
+            "prompt": "Return a pair.",
+            "code": "def make_pair(n):\n    return (n, n + 1)\n",
+            "test_list": ["assert make_pair(1) == (1, 2)"],
+            "test": (
+                "inputs = [(1,), (3,)]\n"
+                "results = [(1, 2), (3, 4)]\n"
+                "for arg, expected in zip(inputs, results):\n"
+                "    assert make_pair(*arg) == expected\n"
+            ),
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = Path(tmpdir) / "mbpp_plus_current.jsonl"
+            source.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            records = list(adapter.iter_submissions(source_path=source))
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record.source_problem_id, "Mbpp/2")
+        self.assertEqual(record.inputs[0].function_name, "make_pair")
+        self.assertEqual(json.loads(record.inputs[0].input_repr), [1])
+        self.assertEqual(record.expected_outputs, ("(1, 2)", "(3, 4)"))
 
 
 class HumanEvalAdapterTest(unittest.TestCase):
