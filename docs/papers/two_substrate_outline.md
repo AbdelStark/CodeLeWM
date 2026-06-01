@@ -22,25 +22,27 @@
 
 ## Abstract
 
-We apply the same JEPA latent-transition recipe — encoder, predictor,
-SIGReg, action-swap contrastive, inverse-action reconstruction — to
-two substrates of code data. Substrate A is
+We apply the same CodeLeWM latent-transition recipe family — encoder,
+predictor, SIGReg, action-swap contrastive, inverse-action
+reconstruction — to two substrates of code data. Substrate A is
 commit-message-conditioned code edits over CommitPackFT-Python.
 Substrate B is input-conditioned program execution over CodeNet,
 MBPP, and APPS, with outputs captured by a sandboxed deterministic
 executor at data-build time. On Substrate A, four scaled training
 runs all fail the headline retrieval gate against the no-action
 baseline and produce severely rank-collapsed latents (effective rank
-ratio 0.016 of 256 dimensions). On Substrate B, the same architecture
-and objective registry produce non-collapsed action-discriminative
-latents: across two training seeds, the no-action margin flips from
+ratio 0.016 of 256 dimensions). On Substrate B, the same
+latent-transition model family and objective registry produce
+non-collapsed action-discriminative latents: across two training seeds,
+the no-action margin flips from
 −0.77 to +1.24, SIGReg drops 1200× (44 → 0.036), and the predicted
 latents' effective-rank ratio settles at 0.47 — 2.3× the collapse
-gate. The comparison isolates the substrate as the controlling
-variable; we argue the result implies a general lesson for
-JEPA-style modeling of code: substrate signal-to-noise dominates
-objective tuning. The #305 downloaded-artifact eval pass strengthens
-but narrows the positive result: execution-pack retrieval beats
+gate. The comparison makes the substrate the primary explanatory
+variable, while disclosing run-level configuration differences; we
+argue the result implies a general lesson for JEPA-style modeling of
+code: substrate signal-to-noise dominates objective tuning. The #305
+downloaded-artifact eval pass strengthens but narrows the positive
+result: execution-pack retrieval beats
 no-action by +61.4 Recall@1 points and +65.9 MRR points on average
 across two seeds, and generated-decoy surprise AUC is 1.0 on mutation,
 same-code-different-input, and same-problem-different-submission
@@ -56,13 +58,15 @@ artifacts.
   video; the question of whether the same recipe transfers to code
   remains open.
 - "Code" is an umbrella term: the right substrate matters. We frame
-  the choice as a controlled variable.
+  the choice as the primary variable, while explicitly noting that the
+  v0.6 execution runner and schedule are not a perfect ablation of
+  the v0.2 commit-edit run.
 - Contribution sketch:
   1. A reproducible JEPA latent-transition recipe applied to two
      substrates.
   2. A negative result on commit-edit transitions, with
-     diagnostics that isolate the failure to substrate signal, not
-     architecture.
+     diagnostics that make the substrate-signal explanation more
+     plausible than another objective-only fix.
   3. A partial-positive result on input-conditioned execution:
      training-shape, internal retrieval, and generated-decoy surprise
      gates pass, while semantic-probe, crash, and downstream-rerank
@@ -89,8 +93,12 @@ artifacts.
   embeddings, mean-pool, 2-layer GELU MLP to latent_dim=256.
 - Action encoder: same pool architecture; carries the conditioning
   signal whose semantics differ across substrates.
-- Predictor: 6-layer Transformer (`ARPredictor`).
-- Target encoder: EMA of the state encoder.
+- Predictor: shared CodeLeWM latent predictor family. The v0.2
+  action-swap run uses the gated-residual fusion profile; the v0.6
+  execution runner uses the conditional-transformer fusion surface.
+- Target encoder: no separate EMA target encoder in the v0.6
+  execution runner; checkpoint compatibility is governed by the
+  shared state/action/predictor contract.
 - Objective registry:
   - prediction MSE (weight 1.0);
   - SIGReg (weight 0.09);
@@ -126,8 +134,9 @@ artifacts.
   - each record is single-purpose: one transformation per row.
 - Implementation: `codelewm.data.execution_pack.v1` builder,
   sandbox policy, HF dataset publish flow.
-- Training: v0.6 HF Jobs runs, two seeds, 50k steps, identical
-  objective registry to Substrate A.
+- Training: v0.6 HF Jobs runs, two seeds, 50k steps, same objective
+  family as the v0.2 action-swap run but different weights and
+  execution-specific loader/schedule.
 
 ## 6. Results
 
@@ -217,9 +226,8 @@ the crash-prediction fallback is not evaluable.
 ## 7. Discussion
 
 - Substrate signal-to-noise dominates objective tuning.
-- The four-run sweep on Substrate A is a controlled negative result:
-  every run uses the same architecture, varying only the objective
-  weights. None of the variations make the latent useful.
+- The four-run sweep on Substrate A is a negative result across
+  objective variants. None of the variations make the latent useful.
 - Substrate B inverts the training-shape and internal retrieval
   failure modes of Substrate A. It is not a full downstream-utility
   win: lexical controls still beat the latent probe and HumanEval /
@@ -229,8 +237,13 @@ the crash-prediction fallback is not evaluable.
 
 ## 8. Limitations And Threats To Validity
 
-- Reference LLM (Claude Haiku 4.5) version-dependence on downstream
-  rerank results.
+- The v0.2-v0.6 comparison is not a perfect single-variable ablation:
+  v0.6 changes the loader, optimizer schedule, effective batch size,
+  and action-fusion surface along with the substrate. The paper should
+  claim a substrate-pivot result, not proof that substrate is the only
+  changed variable.
+- Reference LLM (Claude Haiku 4.5) version-dependence on future
+  downstream rerank results.
 - Python-only and stdlib-only sandbox policy: scope is narrower than
   "code in general."
 - Two training seeds: lower bound on the variance estimate.
@@ -311,14 +324,15 @@ The broader downstream-utility story is negative or incomplete:
 
 The paper's framing should therefore be:
 
-> *"A controlled substrate comparison: Substrate A fails the collapse
+> *"A substrate-pivot comparison: Substrate A fails the collapse
 > gate at 0.016 effective-rank ratio and loses to no-action retrieval;
 > Substrate B passes the collapse gate at 0.47, flips the no-action
 > margin from −0.77 to +1.24, beats no-action retrieval by +61.4
 > Recall@1 points and +65.9 MRR points on average, and passes
-> generated-decoy surprise diagnostics. The same architecture and
+> generated-decoy surprise diagnostics. The same model family and
 > objective registry yields qualitatively different latents on the two
-> substrates. The result is partial, not a broad code-generation or
+> substrates, with run-level configuration differences disclosed. The
+> result is partial, not a broad code-generation or
 > downstream-reranking claim: semantic probes remain blocked by lexical
 > controls and HumanEval / MBPP-Plus reranking remains unscored."*
 

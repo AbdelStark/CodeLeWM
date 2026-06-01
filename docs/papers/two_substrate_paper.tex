@@ -30,39 +30,33 @@
 \title{The Substrate Is the Bottleneck:\\
   A JEPA-style Code World Model on Code Edits and Program Execution}
 \author{CodeLeWM Maintainers}
-\date{Draft of May 31, 2026}
+\date{Draft of June 1, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
 Joint-embedding predictive architectures (JEPAs) learn by predicting future
-latent states rather than reconstructing observations. They have been studied
-primarily in perception and control, where observations and actions are dense,
-continuous, and often smooth. We ask whether the same latent-transition recipe
-can learn useful dynamics over code. The answer depends less on the objective
-than on the substrate. We apply the same encoder, action encoder, predictor,
-SIGReg-style anti-collapse term, action-swap contrastive term, and inverse-action
-reconstruction term to two code substrates. The first substrate is
-commit-message-conditioned Python edits over CommitPackFT-style data. Across
-four scaled Hugging Face Jobs runs, it fails the action-conditioning gate:
-headline retrieval loses to the no-action baseline, mutation surprise is
-chance-level, and the v0.2 run collapses to an effective-rank ratio of 0.016.
-The second substrate is input-conditioned program execution:
-\((\mathrm{code}, \mathrm{input}) \mapsto \mathrm{output}\) triples produced by
-a deterministic sandboxed Python executor. On the same architecture and
-objective registry, the v0.6 execution substrate produces non-collapsed,
-action-discriminative latents across two seeds: the no-action margin flips from
--0.77 to +1.24, SIGReg drops by about \(1200\times\), and the predicted-latent
-effective-rank ratio reaches 0.47. A downloaded-artifact eval pass adds a narrow
-positive downstream result: execution-pack retrieval beats no-action by +61.4
-Recall@1 points and +65.9 MRR points on average across two seeds, and generated
-surprise decoys reach AUC 1.0 on all configured decoy categories. The result is
-partial, not a broad code-generation claim: latent probes remain blocked by
-lexical controls, crash prediction is not evaluable because the val/test slice
-has no positives, and HumanEval/MBPP-Plus reranking is not yet scored. The main
-lesson is that substrate signal-to-noise dominates objective tuning: pick the
-substrate before picking the architecture.
+latent states rather than reconstructing observations. We ask whether a
+JEPA-style latent-transition recipe can learn useful dynamics over code. In
+\modelname{}, the answer depends strongly on the substrate.
+Commit-message-conditioned Python edits over CommitPackFT-style data fail
+across four scaled
+Hugging Face Jobs runs: headline retrieval loses to the no-action baseline,
+mutation surprise is chance-level, and the v0.2 action-swap run collapses to an
+effective-rank ratio of 0.016. We then pivot the same model family and objective
+registry to input-conditioned execution triples,
+\((\mathrm{code}, \mathrm{input}) \mapsto \mathrm{output}\), produced by a
+deterministic sandboxed Python executor. Across two v0.6 execution-substrate
+seeds, the no-action margin flips from -0.77 to +1.24, SIGReg drops by about
+\(1200\times\), and the predicted-latent effective-rank ratio reaches 0.47.
+Evaluation on verified artifacts adds a narrow positive result: execution-pack
+retrieval beats no-action by +61.4 Recall@1 points and +65.9 MRR points on
+average, and generated surprise decoys reach AUC 1.0 on all configured decoy
+categories. The result is partial, not a broad code-generation claim: latent
+probes remain blocked by lexical controls, crash prediction is not evaluable,
+and HumanEval/MBPP-Plus reranking is not yet scored. The main lesson is that
+substrate signal quality dominates objective tuning.
 \end{abstract}
 
 \section{Introduction}
@@ -79,7 +73,7 @@ while large textual edits can be inert. The question is not just whether a JEPA
 objective can be ported to code, but which code substrate gives the objective
 enough signal to learn anything.
 
-We study this question through a controlled negative-to-positive comparison in
+We study this question through a negative-to-positive substrate comparison in
 \modelname, a latent world model for Python code transitions. In both settings,
 the model predicts the latent of an after-state from the latent of a before-state
 and an action:
@@ -87,13 +81,16 @@ and an action:
   \hat z_{\mathrm{after}} =
   P(E(s_{\mathrm{before}}), A(a)).
 \end{equation}
-The state encoder \(E\), action encoder \(A\), predictor \(P\), latent dimension,
-and objective terms are held fixed. Only the substrate changes.
+Both settings share the 256-dimensional transition contract, module family, and
+objective registry. This is not a perfect ablation: the v0.6 execution runner
+uses a substrate-specific loader, schedule, optimizer setting, and action-fusion
+surface. The comparison is therefore a substrate-pivot claim inside one
+implementation, not proof that every other variable is identical.
 
-\subA{} treats a transition as a commit-message-conditioned code edit:
-\((\mathrm{before\ code}, \mathrm{commit\ message}) \mapsto
-\mathrm{after\ code}\). It is attractive because it resembles the product
-surface of a patch scorer, but it has three structural problems. First,
+\subA{} treats a transition as a commit-message-conditioned code edit: before
+code plus a commit message maps to after code. It is attractive because it
+resembles the product surface of a patch scorer, but it has three structural
+problems. First,
 \(\mathrm{after} \approx \mathrm{before}\) is often a strong prior. Second,
 commit messages are noisy, underspecified actions. Third, commits are often
 multi-purpose, so no single canonical action-conditioned transformation exists.
@@ -102,8 +99,8 @@ headline retrieval comparison against no-action; the strongest v0.2 run reports
 an effective-rank ratio of 0.016, chance-level mutation surprise AUC 0.501, and
 latent probes beaten by lexical or metadata controls.
 
-\subB{} keeps the architecture and objective unchanged but changes the world.
-It treats a transition as a deterministic execution triple:
+\subB{} keeps the latent-transition contract but changes the world. It treats a
+transition as a deterministic execution triple:
 \((\mathrm{code}, \mathrm{input}) \mapsto \mathrm{output}\). Here the output is
 not a near-copy of the code, the input is a precise typed action, and each row is
 single-purpose. The v0.6 execution-substrate run inverts the failures above:
@@ -115,11 +112,11 @@ The contribution is deliberately scoped:
 \begin{enumerate}[leftmargin=1.5em]
   \item A reproducible JEPA-style latent-transition recipe for code transitions,
   with manifest-backed data, checkpoints, and eval reports.
-  \item A controlled negative result on commit-message-conditioned code edits,
+  \item A negative result on commit-message-conditioned code edits,
   showing that objective tweaks do not rescue a low-signal substrate.
-  \item A partial-positive execution-substrate result under the same architecture:
-  non-collapse, action use, execution-pack retrieval, and generated-decoy
-  surprise pass across two seeds.
+  \item A partial-positive execution-substrate result under the same model
+  family: non-collapse, action use, execution-pack retrieval, and
+  generated-decoy surprise pass across two seeds.
   \item An explicit claim boundary: the result is not a code generator, not a
   general semantic-axis result, and not yet HumanEval/MBPP-Plus reranking
   evidence.
@@ -135,7 +132,7 @@ V-JEPA extends this idea to video feature prediction
 latent prediction model for action-conditioned visual dynamics from pixels
 \citep{maes2026leworldmodelstableendtoendjointembedding}. Our work preserves
 the same core contract but changes the domain to code and compares two
-substrates under a fixed objective.
+substrates within one objective registry.
 
 \paragraph{Anti-collapse regularization.}
 The central technical risk in latent predictive models is collapse: a constant
@@ -159,10 +156,21 @@ CodeT uses generated tests to rerank code generations
 it is a local latent scorer/reranker that can be applied to candidate code or
 execution completions once labeled candidate artifacts exist.
 
+\paragraph{Execution-aware program modeling.}
+Execution has long been used as a supervised signal for neural program models,
+from synthetic program evaluation to source-code pretraining with execution
+traces \citep{zaremba2015learningexecute,ding2023tracedexecutionawarepretrainingsource}.
+Recent execution-tuning work also studies models trained on program traces for
+output prediction and execution reasoning
+\citep{armengolestape2025iexecuteiunderstand}. \modelname{} differs in two
+ways: it predicts latent next-state embeddings rather than emitting traces, and
+its claim gate compares a commit-edit substrate against an execution substrate
+under one artifact discipline.
+
 \section{Model and Objective}
 
-Both substrates use the same transition model. A state encoder \(E\) maps a
-bounded token capsule to \(z \in \mathbb{R}^{256}\). An action encoder \(A\)
+Both substrates use the same transition-model contract. A state encoder \(E\)
+maps a bounded token capsule to \(z \in \mathbb{R}^{256}\). An action encoder \(A\)
 maps either a commit message or an input representation to an action embedding.
 A predictor \(P\) maps \((z_{\mathrm{before}}, A(a))\) to
 \(\hat z_{\mathrm{after}}\). The training loss is
@@ -176,9 +184,10 @@ A predictor \(P\) maps \((z_{\mathrm{before}}, A(a))\) to
 The prediction term optimizes latent transition accuracy. SIGReg discourages
 collapse. The action-swap term penalizes predictions under mismatched actions,
 and the inverse-action term asks the model to preserve action information in the
-latent transition. The v0.2 and v0.6 runs use the same objective family; the
-comparison is therefore about the observation/action substrate, not a new
-architecture.
+latent transition. The closest \subA{} comparand, the v0.2 action-swap run, and
+the v0.6 execution runs both enable this objective family. Their weights and
+training configs differ, so we interpret the result as evidence for a substrate
+pivot rather than as a single-factor architecture ablation.
 
 \section{Substrates}
 
@@ -301,13 +310,14 @@ latent.}
 \begin{table}[t]
 \centering
 \caption{Headline training and collapse metrics from the v0.2 and v0.6
-benchmark reports.}
+benchmark reports. Raw MSE values are diagnostic within a substrate and should
+not be read as cross-substrate quality scores.}
 \label{tab:training}
 \begin{tabular}{lrrrr}
 \toprule
 Run & prediction MSE & SIGReg & no-action margin & effective-rank ratio \\
 \midrule
-v0.2 action-swap & 0.1494 & n/a & n/a & 0.0158 \\
+v0.2 action-swap & 0.1494 & -- & -- & 0.0158 \\
 v0.6 seed 42 & 0.00064 & 0.0364 & +1.2308 & 0.4669 \\
 v0.6 seed 1729 & 0.00060 & 0.0348 & +1.2434 & 0.4768 \\
 \bottomrule
@@ -372,8 +382,8 @@ v0.6 seed 1729 & 1.000 / 236 & 1.000 / 195 & 1.000 / 6 \\
 The broader downstream story is not positive. Only \code{output\_type} has
 train/val/test labels for v0.6 latent probes. The latent view beats no-action
 by 5.7 points on both seeds, but lexical controls remain stronger
-(Table~\ref{tab:probe}). The report therefore sets
-\code{positive\_representation\_claim\_allowed=false}.
+(Table~\ref{tab:probe}). The report therefore closes the positive
+representation claim gate.
 
 \begin{table}[t]
 \centering
@@ -391,23 +401,24 @@ v0.6 seed 1729 & 0.599 & 0.541 & 0.618 & blocked \\
 
 Crash prediction is not evaluable because both v0.6 val/test slices have
 0 positives and 236 negatives. HumanEval/MBPP-Plus reranking is also not
-scored: the sampler and \code{codelewm.eval.completion\_label.v1} contract
-exist, but full live labeled-completion artifacts are not present. No
-HumanEval/MBPP-Plus pass@1 lift claim is allowed from the current evidence.
+scored: the sampler and
+\artifact{codelewm.eval.completion_label.v1} contract exist, but full live
+labeled-completion artifacts are not present. No HumanEval/MBPP-Plus pass@1
+lift claim is allowed from the current evidence.
 
 \section{Discussion}
 
-The controlled comparison supports one main explanation: the substrate is the
-bottleneck. On commit-message-conditioned edits, the same architecture has a
-strong shortcut. A no-action or identity-like prior is often correct, and the
-action text is too vague to force a different latent prediction. Objective
-variants improve some diagnostics but do not invert the headline gate.
+The comparison supports one main explanation: the substrate is the bottleneck.
+On commit-message-conditioned edits, the model family has a strong shortcut. A
+no-action or identity-like prior is often correct, and the action text is too
+vague to force a different latent prediction. Objective variants improve some
+diagnostics but do not invert the headline gate.
 
 Execution triples remove that shortcut. The output token distribution is
 different from the code distribution; copying the code latent is structurally
 wrong. The action is a deterministic value rather than a free-form commit
 message. Each row is single-purpose and judge-verifiable. Under these
-conditions, the same objective produces non-collapsed latents and strong
+conditions, the execution objective produces non-collapsed latents and strong
 execution-pack retrieval.
 
 This does not mean the model understands programs in a broad sense. The probe
@@ -425,6 +436,11 @@ state/action/next-state signal.
   sandbox policy.
   \item The v0.6 result uses two training seeds. This is enough to check a
   large effect with small spread, but it is not a full variance study.
+  \item The comparison is not a perfectly controlled ablation. The v0.6
+  execution run changes the loader, optimizer schedule, effective batch size,
+  and action-fusion surface while preserving the latent-transition model family
+  and objective registry. The causal claim is therefore scoped to the observed
+  substrate pivot, not to substrate as the only changed variable.
   \item HumanEval and MBPP-Plus reranking are not evaluated in the current
   artifact set. A live OpenRouter sampling and hidden-test labeling run is
   still required.
@@ -436,15 +452,16 @@ state/action/next-state signal.
 
 \section{Reproducibility and Artifacts}
 
-The public artifact chain is intentionally part of the result. \subA{} uses
-\code{abdelstark/codelewm-public-shard},
-\code{abdelstark/codelewm-transition-model}, and
-\code{abdelstark/codelewm-runs}. \subB{} uses
-\code{abdelstark/codelewm-execution-pack@v0.6.0} and the two seed-specific
-v0.6 run artifacts in \code{abdelstark/codelewm-runs}.
-The \#305 eval reports are committed under \artifact{docs/benchmark/v0_6/} and
-mirrored to the HF dataset repo. Every published artifact is manifest-backed
-and secret-scanned.
+The public artifact chain is intentionally part of the result. The code lives
+at \url{https://github.com/AbdelStark/CodeLeWM}. \subA{} uses
+\artifact{abdelstark/codelewm-public-shard},
+\artifact{abdelstark/codelewm-transition-model}, and
+\artifact{abdelstark/codelewm-runs}. \subB{} uses
+\artifact{abdelstark/codelewm-execution-pack@v0.6.0} and the two seed-specific
+v0.6 run artifacts in \artifact{abdelstark/codelewm-runs}. The \#305 eval
+reports are committed under \artifact{docs/benchmark/v0_6/} and mirrored to
+the HF dataset repo. Every published artifact is manifest-backed and
+secret-scanned.
 
 The claim audit for this draft is
 \artifact{docs/papers/two_substrate_claim_audit.md}. The build command is:
