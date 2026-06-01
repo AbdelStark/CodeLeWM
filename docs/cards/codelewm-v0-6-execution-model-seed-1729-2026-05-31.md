@@ -79,18 +79,20 @@ exists to validate that the substrate-pivot result is not a single-seed artifact
 | --- | --- |
 | Execution-pack retrieval | Recall@1 `0.6483`, Recall@5 `0.8941`, Recall@10 `0.9703`, MRR `0.7587` |
 | No-action retrieval control | Recall@1 `0.0381`, MRR `0.1040` |
-| Generated-decoy surprise | Recall@1 `1.0000`, pairwise AUC `1.0000` |
+| Semantic-decoy surprise score gates | Recall@1 `1.0000`, pairwise AUC `1.0000`; mutation `236` pairs, same-code/different-input `352` pairs, same-problem/different-submission `6` pairs |
+| Semantic-decoy claim gate | Closed: same-problem/different-submission count is `6/30` |
 | Latent probe | Claim blocked: only `output_type` evaluable and lexical control is stronger |
 | Crash prediction | Not evaluable: zero crash-positive val/test rows |
 | Downstream HumanEval / MBPP-Plus rerank | Not run as a scaled 100-example benchmark |
 
 The seed-1729 results agree with seed 42: execution-pack retrieval and
-generated-decoy surprise pass, while broader downstream utility remains
-unsupported.
+semantic-decoy score diagnostics pass, while broad semantic surprise and
+broader downstream utility remain unsupported.
 
 ## Intended Use
 
-- Reproduce the cross-seed v0.6 execution-pack retrieval and surprise evidence.
+- Reproduce the cross-seed v0.6 execution-pack retrieval and semantic-decoy
+  score diagnostics.
 - Compare seed sensitivity against seed 42.
 - Run diagnostic local scoring only after checkpoint trust-gate verification.
 
@@ -122,7 +124,10 @@ zero findings.
 ## Limitations
 
 - The positive result is scoped to execution-pack retrieval and
-  generated-decoy surprise.
+  semantic-decoy score diagnostics.
+- The broad semantic-surprise gate remains closed because
+  same-problem/different-submission has only `6` scored pairs against a
+  `30`-pair threshold.
 - The downstream rerank utility gate remains unrun at the required scale.
 - The arXiv URL is not yet available in-repo; final HF README refresh waits for
   the operator upload from #306.

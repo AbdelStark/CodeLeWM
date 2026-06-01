@@ -120,9 +120,10 @@ The v0.6 public artifact map is:
 - demo: `docs/demo/execution_rerank_tour_2026-05-31.html`;
 - arXiv package: `docs/papers/ARXIV_SUBMISSION.md`.
 
-The arXiv URL is still pending operator upload. Until that URL lands, the
-safe public framing is partial-positive substrate evidence, not a coding-agent
-utility claim.
+The arXiv URL is still pending operator upload. Until that URL lands, the safe
+public framing is partial-positive substrate evidence: execution-pack
+retrieval and semantic-decoy score diagnostics pass, while broad semantic
+surprise and coding-agent utility claims remain closed.
 
 Live OpenRouter mode is explicit:
 

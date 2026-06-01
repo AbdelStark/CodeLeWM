@@ -80,18 +80,20 @@ diagnostic scoring and retrieval experiments, not for code generation.
 | --- | --- |
 | Execution-pack retrieval | Recall@1 `0.6568`, Recall@5 `0.9025`, Recall@10 `0.9703`, MRR `0.7670` |
 | No-action retrieval control | Recall@1 `0.0381`, MRR `0.1042` |
-| Generated-decoy surprise | Recall@1 `1.0000`, pairwise AUC `1.0000` |
+| Semantic-decoy surprise score gates | Recall@1 `1.0000`, pairwise AUC `1.0000`; mutation `236` pairs, same-code/different-input `352` pairs, same-problem/different-submission `6` pairs |
+| Semantic-decoy claim gate | Closed: same-problem/different-submission count is `6/30` |
 | Latent probe | Claim blocked: only `output_type` evaluable and lexical control is stronger |
 | Crash prediction | Not evaluable: zero crash-positive val/test rows |
 | Downstream HumanEval / MBPP-Plus rerank | Not run as a scaled 100-example benchmark |
 
-The narrow execution-pack retrieval gate passes for this seed. The broader
-coding-usefulness and semantic-axis gates remain closed.
+The narrow execution-pack retrieval gate passes for this seed. Semantic-decoy
+score diagnostics pass, but broad semantic surprise, coding-usefulness, and
+semantic-axis gates remain closed.
 
 ## Intended Use
 
-- Reproduce the v0.6 execution-pack retrieval and generated-decoy surprise
-  experiments.
+- Reproduce the v0.6 execution-pack retrieval and semantic-decoy surprise score
+  diagnostics.
 - Run `codelewm score` or `codelewm rerank` as a diagnostic scorer for
   candidate programs and input representations.
 - Inspect the substrate-pivot comparison against the v0.2 commit-edit result.
@@ -125,8 +127,9 @@ zero findings.
 
 - This is positive evidence for the execution-pack retrieval substrate, not for
   general generated-code utility.
-- Generated-decoy surprise has a very small
-  same-problem-different-submission slice (`n=6`).
+- Semantic-decoy surprise has a stronger same-code/different-input slice
+  (`n=352`), but the same-problem/different-submission slice remains too small
+  for a broad semantic claim (`n=6`, gate requires `30`).
 - The live tour in `docs/demo/` had no pass@1 lift because all sampled first
   completions passed.
 

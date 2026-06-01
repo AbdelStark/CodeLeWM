@@ -225,7 +225,7 @@ the downloaded checkpoints through JSONL execution-pack eval surfaces:
 execution retrieval, semantic-decoy surprise, latent probes, and crash
 prediction. The committed eval tree is \artifact{docs/benchmark/v0_6/}; the
 same tree is mirrored to the HF dataset repo at the commit recorded in the
-claim audit, with the #322 semantic-surprise rerun recorded locally.
+claim audit, with the \#322 semantic-surprise rerun recorded locally.
 
 \section{Results}
 
@@ -376,10 +376,10 @@ per-seed surprise reruns.}
 \label{tab:surprise}
 \begin{tabular}{lrrrl}
 \toprule
-Run & mutation & same-code/different-input & same-problem/different-submission & claim gate \\
+Run & mutation & same-code/input & same-problem/submission & gate \\
 \midrule
-v0.6 seed 42 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed: $6<30$ \\
-v0.6 seed 1729 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed: $6<30$ \\
+v0.6 seed 42 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed \\
+v0.6 seed 1729 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -430,11 +430,12 @@ execution-pack retrieval.
 
 This does not mean the model understands programs in a broad sense. The probe
 result is deliberately humbling: lexical features still beat the latent view on
-the only evaluable semantic target. The surprise result is also limited by
-generated decoys. The right conclusion is not that \modelname{} solves code
-generation; it is that a JEPA-style latent transition model can learn an
-action-conditioned execution substrate when the substrate supplies precise
-state/action/next-state signal.
+the only evaluable semantic target. The semantic-surprise score result is also
+limited by count gates: same-code/different-input decoys are plentiful, but
+same-problem/different-submission remains small-n. The right conclusion is not
+that \modelname{} solves code generation; it is that a JEPA-style latent
+transition model can learn an action-conditioned execution substrate when the
+substrate supplies precise state/action/next-state signal.
 
 \section{Limitations}
 
