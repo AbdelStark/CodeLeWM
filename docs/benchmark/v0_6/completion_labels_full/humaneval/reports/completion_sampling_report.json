@@ -1,0 +1,968 @@
+{
+  "benchmark_id": "humaneval",
+  "claim_allowed": false,
+  "claim_reason": "completion_labels_only_downstream_rerank_not_run",
+  "completion_count": 462,
+  "dry_run": false,
+  "failed_completion_count": 23,
+  "invalid_completion_count": 4,
+  "label_schema_version": "codelewm.eval.completion_label.v1",
+  "labels_path": "humaneval_completion_labels.jsonl",
+  "llm": "openrouter:anthropic/claude-haiku-4-5",
+  "llm_seeds": [
+    17,
+    42,
+    1729
+  ],
+  "max_cases_per_problem": null,
+  "passed_completion_count": 439,
+  "problem_count": 154,
+  "problem_summaries": [
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/0"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/1"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 1,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/2"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/3"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/5"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/6"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/7"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/8"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/9"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 2,
+      "problem_id": "HumanEval/10"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/11"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/12"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/13"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/14"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/15"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/16"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/17"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/18"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/19"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/20"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/21"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/22"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/23"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/24"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/25"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/26"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/27"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/28"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 2,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/29"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/30"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/31"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 1,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/34"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 2,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/35"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/36"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/39"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/40"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/41"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/42"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/43"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/44"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/45"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/46"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/47"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/48"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/49"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/51"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/53"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 0,
+      "problem_id": "HumanEval/54"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/55"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/57"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/58"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/59"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/60"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/62"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/63"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/64"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/65"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/66"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/67"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/68"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 25,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/69"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/70"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/71"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/73"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/74"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/75"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/76"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/77"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/78"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/79"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/80"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/81"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 16,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/82"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/83"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/84"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/85"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/86"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/87"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/88"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/89"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/90"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/91"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/92"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 0,
+      "problem_id": "HumanEval/93"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/94"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/95"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/96"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/97"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/98"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/99"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/100"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/101"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/102"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 12,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/103"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/104"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/105"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/106"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "HumanEval/107"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/108"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/109"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/110"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/111"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/112"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 2,
+      "problem_id": "HumanEval/113"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 12,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/114"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 1,
+      "problem_id": "HumanEval/115"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/116"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/117"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 13,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/118"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 12,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/119"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 11,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/120"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/121"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/122"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/123"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 16,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/124"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/125"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 13,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/126"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "HumanEval/127"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/128"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 11,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/129"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 0,
+      "problem_id": "HumanEval/130"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/131"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 14,
+      "passed_completion_count": 0,
+      "problem_id": "HumanEval/132"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 12,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/133"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/134"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/135"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 11,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/136"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/137"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/138"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/139"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 5,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/140"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 26,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/141"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 11,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/142"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/143"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 13,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/144"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 0,
+      "problem_id": "HumanEval/145"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/146"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/147"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/148"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 7,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/149"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/150"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/151"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/152"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 9,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/153"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/154"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/155"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 14,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/156"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 11,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/157"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 10,
+      "passed_completion_count": 1,
+      "problem_id": "HumanEval/158"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 6,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/159"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/160"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/161"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/162"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "HumanEval/163"
+    }
+  ],
+  "prompts_path": "prompts/sampling_prompts.jsonl",
+  "samples_per_problem": 1,
+  "sandbox_policy": {
+    "cpu_seconds": 10,
+    "deny_filesystem_writes_outside_scratch": true,
+    "deny_network": true,
+    "deny_subprocess": true,
+    "determinism_check": true,
+    "import_allowlist": "stdlib_only",
+    "memory_mb": 256,
+    "output_truncation_bytes": 4096,
+    "policy_version": "codelewm.sandbox_policy.v1",
+    "python_hash_seed": 0,
+    "stdout_truncation_bytes": 4096,
+    "timeout_ms": 5000
+  },
+  "schema_version": "codelewm.eval.completion_sampling_report.v1",
+  "short_circuit_failures": true,
+  "source_path": "data/raw/humaneval.jsonl",
+  "test_pass_rate": 0.9502164502164502,
+  "valid_completion_count": 458,
+  "valid_completion_rate": 0.9913419913419913
+}

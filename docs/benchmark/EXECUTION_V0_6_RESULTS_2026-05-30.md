@@ -12,6 +12,10 @@
 - Semantic decoy update: 2026-06-01 (#321/#322), using the strengthened
   same-problem semantic decoy pack and rerun surprise artifacts under
   `seed-*/execution_surprise_semantic/`.
+- Downstream rerank update: 2026-06-01 (#319/#320), using live
+  HumanEval and MBPP-Plus completion labels under
+  `completion_labels_full/` and rerank reports under
+  `seed-*/downstream_rerank_full/`.
 - Schema versions referenced by this report:
   - `codelewm.execution_pack_manifest.v1`
   - `codelewm.execution_train_config.v1`
@@ -141,16 +145,15 @@ trajectory is in
 ## Evaluation Surface
 
 The #305 pass runs the downloaded seed-42 and seed-1729 checkpoints
-through the JSONL execution-pack eval CLIs added by #302. The
-HumanEval/MBPP-Plus rerank gate is still not a scored downstream
-result: #304 added the sampler and schema, but the full live
-completion-label artifacts require an explicit operator run with
-provider spend. The concrete gate posture is therefore **partial
-positive**: the substrate-pivot training shape, execution-pack
-retrieval, semantic-decoy surprise score gates, and same-code/input
-semantic decoys pass; the narrow same-problem/different-submission
-semantic count gate, latent probes, crash prediction, and downstream
-rerank do not justify a broader downstream-utility claim.
+through the JSONL execution-pack eval CLIs added by #302. The #319
+pilot and #320 full-scale rerank pass now score live generated
+HumanEval/MBPP-Plus completion labels against both checkpoints. The
+concrete gate posture is therefore **partial positive**: the
+substrate-pivot training shape, execution-pack retrieval,
+semantic-decoy surprise score gates, and same-code/input semantic
+decoys pass; the narrow same-problem/different-submission semantic
+count gate, latent probes, crash prediction, and downstream rerank do
+not justify a broader downstream-utility claim.
 
 | Gate | Status | Backing artifact |
 | ---- |:------:| ---------------- |
@@ -166,7 +169,7 @@ rerank do not justify a broader downstream-utility claim.
 | Semantic decoy pack count gate | **PASS** (358 pairs, 68 problems) | `docs/benchmark/v0_6/semantic_decoy_pack/reports/semantic_decoy_summary.json` |
 | ≥1 latent probe target beats every control across 2 seeds | **NOT EVALUABLE / FAILS CLAIM** | only `output_type` has labels; lexical control beats latent on both seeds |
 | Crash-prediction fallback | **NOT EVALUABLE** | no crash-positive val/test rows (`positives=0`, `negatives=236`) |
-| `downstream_rerank_pass_at_1_lift_min ≥ 3.0 abs pts` | **NOT RUN** | full live `codelewm.eval.completion_label.v1` artifacts do not exist yet |
+| `downstream_rerank_pass_at_1_lift_min ≥ 3.0 abs pts` | **FAIL** | full-scale HumanEval/MBPP-Plus rerank gates closed across both seeds; see `docs/benchmark/V0_6_RERANK_FULL_2026-06-01.md` |
 | `required_seeds ≥ 2` | **PASS** | both training runs and all four eval suites per seed |
 | Checkpoint trust + manifest verify + secret scan | **PASS** | downloaded run manifests verify with parent pack manifest; run secret scans return zero findings |
 
@@ -192,12 +195,37 @@ The same tree is mirrored in the HF dataset repo at
 | 1729 | semantic surprise | `codelewm.eval.execution_surprise_run.v1` | `codelewm.eval.surprise_report.v1` | `eval_report-5b20bd0e1da5928a` | `seed-1729/execution_surprise_semantic/reports/surprise_report.json` |
 | 1729 | latent probe | `codelewm.eval.execution_probe_run.v1` | `codelewm.eval.latent_probe_report.v1` | `eval_report-c592b4805d0d3085` | `seed-1729/execution_probe/reports/latent_probe_report.json` |
 | 1729 | crash prediction | `codelewm.eval.crash_prediction_run.v1` | `codelewm.eval.crash_prediction_report.v1` | `eval_report-1f41882839c44da7` | `seed-1729/crash_prediction/reports/crash_prediction_report.json` |
+| 42 | HumanEval rerank full | `codelewm.eval.execution_rerank_eval_run.v1` | `codelewm.eval.execution_rerank_report.v1` | `eval_report-9c8d7152bff2460c` | `seed-42/downstream_rerank_full/humaneval/reports/execution_rerank_report.json` |
+| 42 | MBPP-Plus rerank full | `codelewm.eval.execution_rerank_eval_run.v1` | `codelewm.eval.execution_rerank_report.v1` | `eval_report-14887c62e5e76e19` | `seed-42/downstream_rerank_full/mbpp_plus/reports/execution_rerank_report.json` |
+| 1729 | HumanEval rerank full | `codelewm.eval.execution_rerank_eval_run.v1` | `codelewm.eval.execution_rerank_report.v1` | `eval_report-ca4212e0d1565af4` | `seed-1729/downstream_rerank_full/humaneval/reports/execution_rerank_report.json` |
+| 1729 | MBPP-Plus rerank full | `codelewm.eval.execution_rerank_eval_run.v1` | `codelewm.eval.execution_rerank_report.v1` | `eval_report-3abf5d64a09d9c56` | `seed-1729/downstream_rerank_full/mbpp_plus/reports/execution_rerank_report.json` |
 
 The companion decoy-generation reports live at
 `seed-*/execution_surprise*/reports/execution_decoy_report.json` with
 schema `codelewm.eval.execution_surprise_decoy_summary.v1`. The semantic
 surprise reruns also write `codelewm.eval.execution_surprise_claim_gates.v1`
 metadata that separates score gates from pair-count gates.
+
+## Downstream Rerank Evaluation
+
+The #320 pass removes the earlier "not run" limitation for
+HumanEval/MBPP-Plus reranking. It uses live OpenRouter completions with
+three LLM seeds (`17,42,1729`) and one sample per seed. HumanEval is
+uncapped over the parsed hidden-test inputs. MBPP-Plus is full-scale by
+problem/completion count but capped to the first 8 hidden-test inputs
+per problem; do not read it as full EvalPlus pass@1.
+
+| Seed | Benchmark | Problems | Completions | CodeLeWM pass@1 | LLM-order pass@1 | No-action pass@1 | Lift vs LLM order | Lift vs no-action | Claim |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 42 | HumanEval | 154 | 462 | 0.9610 | 0.9545 | 0.9481 | +0.65 pts | +1.30 pts | closed |
+| 42 | MBPP-Plus | 370 | 1110 | 0.9162 | 0.9243 | 0.9243 | -0.81 pts | -0.81 pts | closed |
+| 1729 | HumanEval | 154 | 462 | 0.9481 | 0.9545 | 0.9610 | -0.65 pts | -1.30 pts | closed |
+| 1729 | MBPP-Plus | 370 | 1110 | 0.9243 | 0.9243 | 0.9243 | +0.00 pts | +0.00 pts | closed |
+
+The gate requires CodeLeWM pass@1 lift of at least 3 absolute points
+over both LLM order and no-action, with bootstrap 95% CI lower bound
+above zero. No full-scale rerank run clears that bar. The detailed
+report is `docs/benchmark/V0_6_RERANK_FULL_2026-06-01.md`.
 
 ## Retrieval Evaluation
 

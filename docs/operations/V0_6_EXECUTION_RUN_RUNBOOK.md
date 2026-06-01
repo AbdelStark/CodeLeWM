@@ -158,7 +158,7 @@ uv run scripts/sample-execution-rerank-completions \
   --source data/raw/humaneval.jsonl \
   --out results/v0_6/completion_labels/humaneval \
   --llm openrouter:anthropic/claude-haiku-4-5 \
-  --samples-per-problem 10 \
+  --samples-per-problem 1 \
   --llm-seeds 17,42,1729 \
   --short-circuit-failures \
   --live \
@@ -168,9 +168,11 @@ uv run scripts/sample-execution-rerank-completions \
   --source data/raw/mbpp_plus.jsonl \
   --out results/v0_6/completion_labels/mbpp_plus \
   --llm openrouter:anthropic/claude-haiku-4-5 \
-  --samples-per-problem 10 \
+  --samples-per-problem 1 \
   --llm-seeds 17,42,1729 \
+  --max-cases-per-problem 8 \
   --short-circuit-failures \
+  --no-determinism-check \
   --live \
   --json
 
@@ -211,7 +213,10 @@ threshold while still being claim-blocked by too few scored pairs.
 
 For spend-bounded pilot runs, operators may add
 `--max-cases-per-problem <N>` and record the resulting limitation in the
-benchmark report. Do not call capped MBPP-Plus rows full EvalPlus pass@1.
+benchmark report. The #320 full-scale evidence used uncapped HumanEval and
+MBPP-Plus with `--max-cases-per-problem 8 --no-determinism-check` after a
+32-case MBPP-Plus attempt remained in sandbox execution for roughly four
+hours. Do not call capped MBPP-Plus rows full EvalPlus pass@1.
 
 The sampler writes `codelewm.eval.completion_label.v1` JSONL rows plus
 `codelewm.eval.completion_sampling_report.v1`, `codelewm.secret_scan.v1`,

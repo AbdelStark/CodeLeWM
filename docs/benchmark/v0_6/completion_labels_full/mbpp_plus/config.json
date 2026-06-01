@@ -1,0 +1,34 @@
+{
+  "benchmark_id": "mbpp_plus",
+  "dry_run": false,
+  "label_schema_version": "codelewm.eval.completion_label.v1",
+  "llm": "openrouter:anthropic/claude-haiku-4-5",
+  "llm_seeds": [
+    17,
+    42,
+    1729
+  ],
+  "max_cases_per_problem": 8,
+  "max_problems": null,
+  "retry_limit": 2,
+  "samples_per_problem": 1,
+  "sandbox_policy": {
+    "cpu_seconds": 10,
+    "deny_filesystem_writes_outside_scratch": true,
+    "deny_network": true,
+    "deny_subprocess": true,
+    "determinism_check": false,
+    "import_allowlist": "stdlib_only",
+    "memory_mb": 256,
+    "output_truncation_bytes": 4096,
+    "policy_version": "codelewm.sandbox_policy.v1",
+    "python_hash_seed": 0,
+    "stdout_truncation_bytes": 4096,
+    "timeout_ms": 5000
+  },
+  "schema_version": "codelewm.eval.completion_label_artifact.v1",
+  "short_circuit_failures": true,
+  "source_path": "data/raw/mbpp_plus.jsonl",
+  "temperature": 0.8,
+  "timeout_seconds": 90
+}

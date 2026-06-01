@@ -1,0 +1,2264 @@
+{
+  "benchmark_id": "mbpp_plus",
+  "claim_allowed": false,
+  "claim_reason": "completion_labels_only_downstream_rerank_not_run",
+  "completion_count": 1110,
+  "dry_run": false,
+  "failed_completion_count": 87,
+  "invalid_completion_count": 24,
+  "label_schema_version": "codelewm.eval.completion_label.v1",
+  "labels_path": "mbpp_plus_completion_labels.jsonl",
+  "llm": "openrouter:anthropic/claude-haiku-4-5",
+  "llm_seeds": [
+    17,
+    42,
+    1729
+  ],
+  "max_cases_per_problem": 8,
+  "passed_completion_count": 1023,
+  "problem_count": 370,
+  "problem_summaries": [
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/2"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/3"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/4"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/6"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/7"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/8"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/9"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/11"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/12"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/14"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/16"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/17"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/18"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/19"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/20"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/56"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/57"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/58"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/59"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/61"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/62"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/63"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/64"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/65"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/66"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/67"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/68"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/69"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/70"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/71"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/72"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/74"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/75"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/77"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/79"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/80"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/82"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/84"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/85"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/86"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/87"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/89"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/90"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/91"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/92"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/93"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/94"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/95"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/96"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/97"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/98"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/99"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/100"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/101"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 1,
+      "problem_id": "Mbpp/102"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/103"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/104"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/105"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/106"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/108"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/109"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/111"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/113"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/116"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/118"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/119"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/120"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/123"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/125"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/126"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/127"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/128"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/129"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/130"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/131"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/132"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/133"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/135"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/138"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/139"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/140"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/141"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/142"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/145"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/160"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/161"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/162"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/165"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/166"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/167"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/168"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/170"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/171"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/172"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/222"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/223"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/224"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/226"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/227"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/230"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/232"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/233"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/234"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/235"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/237"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/238"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/239"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/240"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/242"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/244"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/245"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/247"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/250"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/251"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/253"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/256"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/257"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/259"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/260"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/261"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/262"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/264"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/265"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/266"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 1,
+      "problem_id": "Mbpp/267"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/268"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/269"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/270"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/271"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/272"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/273"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/274"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/276"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/277"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/278"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/279"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/280"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/281"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/282"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/283"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/284"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/285"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/286"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/287"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/290"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/292"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/293"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/294"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/296"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/297"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/299"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/301"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/305"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/306"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/308"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/309"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/310"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/311"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/312"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/388"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/389"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/390"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/391"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/392"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/394"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/395"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/397"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/398"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/405"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/406"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/409"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/410"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/412"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/413"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/414"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/415"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/418"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/419"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/420"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/421"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/422"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/424"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/425"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/426"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/427"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/428"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/429"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/430"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/432"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/433"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/435"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/436"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/437"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/439"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/440"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/441"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/445"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/446"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/447"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/448"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/450"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/451"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/453"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/454"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/455"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/456"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/457"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/458"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/459"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/460"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/462"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/463"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/465"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/468"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/470"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/471"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/472"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/473"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/474"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/475"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/476"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/477"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/478"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/479"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/554"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/555"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/556"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/557"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/558"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/559"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/560"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/562"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/563"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/564"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/565"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/566"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/567"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/568"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/569"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/572"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/573"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/576"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/577"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/578"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/579"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/580"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/581"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/583"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/585"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/586"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/587"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/588"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/589"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/590"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/591"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/592"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/593"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/594"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/596"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/597"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/598"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/599"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/600"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/602"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/603"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/604"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/605"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/606"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/607"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/608"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/610"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/611"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/612"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/614"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/615"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/616"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/618"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/619"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/620"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/622"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/623"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/624"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/626"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/628"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/629"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/631"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/632"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/633"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/635"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/637"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/638"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/639"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/641"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/643"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/644"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/720"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/721"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/722"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/723"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/724"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/725"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/726"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/728"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/730"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/731"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/732"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/733"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 4,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/734"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/735"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/736"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/737"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/739"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/740"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/741"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/742"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/743"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/744"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/745"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/748"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/749"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/750"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/751"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/752"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/753"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/754"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/755"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/757"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/758"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/759"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/760"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/762"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/763"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/764"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/765"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/766"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/767"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/769"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/770"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/771"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/772"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/773"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/775"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/777"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/778"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/780"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/781"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/782"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/784"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/785"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/786"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/787"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/788"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/790"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/791"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/792"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 3,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/793"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/794"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/796"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/797"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/798"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/799"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/800"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/801"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/803"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/804"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/805"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/806"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/807"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/808"
+    },
+    {
+      "completion_count": 3,
+      "input_case_count": 8,
+      "passed_completion_count": 3,
+      "problem_id": "Mbpp/809"
+    }
+  ],
+  "prompts_path": "prompts/sampling_prompts.jsonl",
+  "samples_per_problem": 1,
+  "sandbox_policy": {
+    "cpu_seconds": 10,
+    "deny_filesystem_writes_outside_scratch": true,
+    "deny_network": true,
+    "deny_subprocess": true,
+    "determinism_check": false,
+    "import_allowlist": "stdlib_only",
+    "memory_mb": 256,
+    "output_truncation_bytes": 4096,
+    "policy_version": "codelewm.sandbox_policy.v1",
+    "python_hash_seed": 0,
+    "stdout_truncation_bytes": 4096,
+    "timeout_ms": 5000
+  },
+  "schema_version": "codelewm.eval.completion_sampling_report.v1",
+  "short_circuit_failures": true,
+  "source_path": "data/raw/mbpp_plus.jsonl",
+  "test_pass_rate": 0.9216216216216216,
+  "valid_completion_count": 1086,
+  "valid_completion_rate": 0.9783783783783784
+}
