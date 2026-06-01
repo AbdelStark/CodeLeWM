@@ -85,6 +85,7 @@ from .surprise import (
     ALLOWED_SURPRISE_DECOY_CATEGORIES,
     SurpriseEvalError,
     SurpriseExampleResult,
+    SurpriseMetrics,
     build_surprise_report,
     write_surprise_report,
 )
@@ -92,9 +93,20 @@ from .surprise import (
 
 EXECUTION_RETRIEVAL_EVAL_RUN_SCHEMA_VERSION = "codelewm.eval.execution_retrieval_run.v1"
 EXECUTION_SURPRISE_EVAL_RUN_SCHEMA_VERSION = "codelewm.eval.execution_surprise_run.v1"
+EXECUTION_SURPRISE_CLAIM_GATES_SCHEMA_VERSION = "codelewm.eval.execution_surprise_claim_gates.v1"
 EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION = "codelewm.eval.execution_probe_run.v1"
 CRASH_PREDICTION_EVAL_RUN_SCHEMA_VERSION = "codelewm.eval.crash_prediction_run.v1"
 EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION = "codelewm.execution_train_checkpoint.v1"
+EXECUTION_SURPRISE_SCORE_THRESHOLDS: Mapping[str, float] = {
+    "mutation": 0.65,
+    "same_problem_different_submission": 0.60,
+    "same_code_different_input": 0.70,
+}
+EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS: Mapping[str, int] = {
+    "mutation": 100,
+    "same_problem_different_submission": 30,
+    "same_code_different_input": 100,
+}
 
 
 class ExecutionEvalError(ValueError):
@@ -417,15 +429,26 @@ def run_execution_surprise_evaluation(
     }
     if semantic_decoy_pack is not None:
         decoy_report_payload["semantic_decoy_pack"] = semantic_decoy_pack.metadata()
+    base_metadata = _base_report_metadata(context, checkpoint_path=context.checkpoint_path) | {
+        "decoy_policy": {"requested": list(selected_decoys)},
+        "execution_decoy_generation": decoy_report_payload,
+    }
+    draft_report = build_surprise_report(
+        results,
+        decoy_seed=seed,
+        score_direction="lower_is_better",
+        metadata=base_metadata,
+    )
+    claim_gates = _build_execution_surprise_claim_gates(
+        metrics=draft_report.metrics,
+        selected_decoys=selected_decoys,
+        semantic_decoy_pack_metadata=decoy_report_payload.get("semantic_decoy_pack"),
+    )
     report = build_surprise_report(
         results,
         decoy_seed=seed,
         score_direction="lower_is_better",
-        metadata=_base_report_metadata(context, checkpoint_path=context.checkpoint_path)
-        | {
-            "decoy_policy": {"requested": list(selected_decoys)},
-            "execution_decoy_generation": decoy_report_payload,
-        },
+        metadata=base_metadata | {"execution_surprise_claim_gates": claim_gates},
     )
 
     config_payload = {
@@ -461,6 +484,7 @@ def run_execution_surprise_evaluation(
             "example_count": report.metrics.example_count,
             "metrics": report.metrics.to_dict(),
             "execution_decoy_report_path": "reports/execution_decoy_report.json",
+            "execution_surprise_claim_gates": claim_gates,
             "semantic_decoy_pack_artifact_id": None
             if semantic_decoy_pack is None
             else semantic_decoy_pack.artifact_manifest.artifact_id,
@@ -1278,6 +1302,119 @@ def _base_report_metadata(context: _ExecutionContext, *, checkpoint_path: Path) 
         "training_artifact_id": context.training_artifact.artifact_id,
         "action_view": str(context.model.config.action_view),
         "substrate": "execution_trace_v1",
+    }
+
+
+def _build_execution_surprise_claim_gates(
+    *,
+    metrics: SurpriseMetrics,
+    selected_decoys: Sequence[str],
+    semantic_decoy_pack_metadata: Any = None,
+) -> dict[str, Any]:
+    requested = tuple(dict.fromkeys(selected_decoys))
+    score_gates: list[dict[str, Any]] = []
+    pair_count_gates: list[dict[str, Any]] = []
+    failures: list[str] = []
+
+    for category in requested:
+        min_auc = EXECUTION_SURPRISE_SCORE_THRESHOLDS.get(category)
+        if min_auc is None:
+            continue
+        observed_auc = metrics.pairwise_auc_by_category.get(category)
+        score_passed = observed_auc is not None and observed_auc >= min_auc
+        score_gate = {
+            "category": category,
+            "metric": "pairwise_auc_true_beats_decoy",
+            "observed_win_rate": None if observed_auc is None else float(observed_auc),
+            "min_win_rate_for_claim": float(min_auc),
+            "passed": bool(score_passed),
+        }
+        if not score_passed:
+            failures.append(
+                f"score_gate_failed:{category}:"
+                f"{'missing' if observed_auc is None else f'{observed_auc:.6f}'}<"
+                f"{min_auc:.6f}"
+            )
+        score_gates.append(score_gate)
+
+        min_pairs = EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS.get(category)
+        if min_pairs is None:
+            continue
+        observed_pairs = int(metrics.decoy_counts.get(category, 0))
+        count_passed = observed_pairs >= min_pairs
+        pair_count_gates.append(
+            {
+                "category": category,
+                "metric": "scored_decoy_pair_count",
+                "observed_pair_count": observed_pairs,
+                "min_pair_count_for_claim": min_pairs,
+                "passed": bool(count_passed),
+            }
+        )
+        if not count_passed:
+            failures.append(
+                f"pair_count_gate_failed:{category}:{observed_pairs}<"
+                f"{min_pairs}"
+            )
+
+    semantic_pack_gate = None
+    pack_pair_counts: dict[str, int] = {}
+    if isinstance(semantic_decoy_pack_metadata, Mapping):
+        pack_summary = semantic_decoy_pack_metadata.get("summary")
+        if not isinstance(pack_summary, Mapping):
+            pack_summary = {}
+        pack_claim_gate = pack_summary.get("claim_gate")
+        if not isinstance(pack_claim_gate, Mapping):
+            pack_claim_gate = {}
+        pack_pair_counts = {
+            str(category): int(count)
+            for category, count in dict(
+                semantic_decoy_pack_metadata.get("pair_count_by_category")
+                or pack_summary.get("pair_count_by_category")
+                or {}
+            ).items()
+        }
+        semantic_pack_gate = {
+            "metric": "semantic_decoy_pack_pair_count",
+            "artifact_id": semantic_decoy_pack_metadata.get("artifact_id"),
+            "observed_pair_count": int(
+                semantic_decoy_pack_metadata.get(
+                    "pair_count",
+                    pack_summary.get("pair_count", sum(pack_pair_counts.values())),
+                )
+            ),
+            "observed_distinct_problem_count": int(
+                semantic_decoy_pack_metadata.get(
+                    "distinct_problem_count",
+                    pack_summary.get("distinct_problem_count", 0),
+                )
+            ),
+            "pack_pair_count_by_category": pack_pair_counts,
+            "passed": bool(
+                semantic_decoy_pack_metadata.get(
+                    "claim_allowed", pack_claim_gate.get("claim_allowed", False)
+                )
+            ),
+        }
+        if not semantic_pack_gate["passed"]:
+            failures.append("semantic_decoy_pack_count_gate_failed")
+
+    claim_allowed = not failures and bool(score_gates or pair_count_gates)
+    return {
+        "schema_version": EXECUTION_SURPRISE_CLAIM_GATES_SCHEMA_VERSION,
+        "claim_allowed": claim_allowed,
+        "claim_reason": "passed" if claim_allowed else ";".join(failures),
+        "failure_reasons": failures,
+        "score_gates": score_gates,
+        "pair_count_gates": pair_count_gates,
+        "semantic_decoy_pack_count_gate": semantic_pack_gate,
+        "semantic_decoy_category_counts": {
+            "scored_decoy_counts": {
+                category: int(metrics.decoy_counts.get(category, 0))
+                for category in sorted(EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS)
+            },
+            "pack_pair_count_by_category": pack_pair_counts,
+        },
     }
 
 

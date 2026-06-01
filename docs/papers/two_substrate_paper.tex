@@ -56,10 +56,11 @@ seeds, the no-action margin flips from -0.77 to +1.24, SIGReg drops by about
 \(1200\times\), and the predicted-latent effective-rank ratio reaches 0.47.
 Evaluation on verified artifacts adds a narrow positive result: execution-pack
 retrieval beats no-action by +61.4 Recall@1 points and +65.9 MRR points on
-average, and generated surprise decoys reach AUC 1.0 on all configured decoy
-categories. The result is partial, not a broad code-generation claim: latent
-probes remain blocked by lexical controls, crash prediction is not evaluable,
-and HumanEval/MBPP-Plus reranking is not yet scored. The main lesson is that
+average, and semantic surprise decoy score gates reach AUC 1.0 on all
+configured decoy categories. The result is partial, not a broad code-generation
+or broad semantic-surprise claim: latent probes remain blocked by lexical
+controls, crash prediction is not evaluable, and HumanEval/MBPP-Plus reranking
+is not yet scored. The main lesson is that
 substrate signal quality dominates objective tuning.
 \end{abstract}
 
@@ -120,7 +121,8 @@ The contribution is deliberately scoped:
   showing that objective tweaks do not rescue a low-signal substrate.
   \item A partial-positive execution-substrate result under the same model
   family: non-collapse, action use, execution-pack retrieval, and
-  generated-decoy surprise pass across two seeds.
+  semantic-decoy surprise score diagnostics pass across two seeds, while the
+  broad semantic-surprise claim gate remains closed.
   \item An explicit claim boundary: the result is not a code generator, not a
   general semantic-axis result, and not yet HumanEval/MBPP-Plus reranking
   evidence.
@@ -219,11 +221,11 @@ All quantitative claims in this draft trace to checked-in benchmark reports or
 schema-versioned artifacts. For \subA{}, we use the v0.2 downloaded-artifact
 verification report. For \subB{}, we use two HF Jobs training seeds, 42 and
 1729, each trained to 50k steps on \code{a10g-small}. The \#305 eval pass reruns
-the downloaded checkpoints through four JSONL execution-pack eval surfaces:
-execution retrieval, generated-decoy surprise, latent probes, and crash
+the downloaded checkpoints through JSONL execution-pack eval surfaces:
+execution retrieval, semantic-decoy surprise, latent probes, and crash
 prediction. The committed eval tree is \artifact{docs/benchmark/v0_6/}; the
 same tree is mirrored to the HF dataset repo at the commit recorded in the
-claim audit.
+claim audit, with the #322 semantic-surprise rerun recorded locally.
 
 \section{Results}
 
@@ -361,22 +363,23 @@ one point. This supports a narrow execution-pack retrieval claim.
 \subsection{Surprise and decoys}
 
 \subA{} v0.2 mutation surprise is chance-level: mutation AUC 0.501. \subB{}
-v0.6 generated-decoy surprise passes all configured numeric gates
+v0.6 semantic surprise reruns pass all configured numeric score gates
 (Table~\ref{tab:surprise}). The caveat is important: same-problem-different
-submission has only six generated pairs after filtering, so it is a positive
-diagnostic, not broad semantic surprise evidence.
+submission still has only six scored pairs after filtering, so the explicit
+claim gate remains closed even though the broader semantic decoy pack contains
+358 same-problem pairs across 68 problems.
 
 \begin{table}[t]
 \centering
-\caption{v0.6 generated-decoy surprise AUCs from the committed per-seed
-surprise reports.}
+\caption{v0.6 semantic surprise AUCs and count-gate status from the committed
+per-seed surprise reruns.}
 \label{tab:surprise}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrrrl}
 \toprule
-Run & mutation & same-code/different-input & same-problem/different-submission \\
+Run & mutation & same-code/different-input & same-problem/different-submission & claim gate \\
 \midrule
-v0.6 seed 42 & 1.000 / 236 & 1.000 / 195 & 1.000 / 6 \\
-v0.6 seed 1729 & 1.000 / 236 & 1.000 / 195 & 1.000 / 6 \\
+v0.6 seed 42 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed: $6<30$ \\
+v0.6 seed 1729 & 1.000 / 236 & 1.000 / 352 & 1.000 / 6 & closed: $6<30$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -448,8 +451,10 @@ state/action/next-state signal.
   \item HumanEval and MBPP-Plus reranking are not evaluated in the current
   artifact set. A live OpenRouter sampling and hidden-test labeling run is
   still required.
-  \item Generated surprise decoys are useful diagnostics but not adversarial
-  semantic tests. The same-problem decoy category has only six pairs.
+  \item Generated surprise decoys are useful diagnostics but not full
+  adversarial semantic tests. The strengthened semantic pack adds 352
+  same-code/different-input pairs, but the narrow same-problem/different
+  submission category still has only six pairs.
   \item The paper compares substrates inside one implementation and objective
   registry. It does not claim superiority over large pretrained code models.
 \end{itemize}

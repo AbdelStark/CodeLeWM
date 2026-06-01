@@ -149,6 +149,9 @@ are held out entirely for downstream evaluation.
   `codelewm eval semantic-decoy-pack`, which records same-problem adversarial
   pair counts, source/license summaries, split/leakage checks, and a
   count-only claim gate before any model score claim is considered.
+  `codelewm eval execution-surprise --semantic-decoy-manifest ...` records
+  `codelewm.eval.execution_surprise_claim_gates.v1` metadata with separate
+  score gates and pair-count gates.
 - New downstream: `codelewm eval rerank-humaneval` and
   `codelewm eval rerank-mbpp-plus`. LLM sampling reuses the OpenRouter
   adapter and BYOK plumbing; the evaluator compares CodeLeWM with LLM order,
@@ -168,7 +171,9 @@ A positive headline claim requires:
   no-action ≥3 absolute points with bootstrap 95% CI excluding zero across
   ≥3 LLM sampling seeds;
 - mutation-decoy surprise AUC ≥0.65;
-  same-problem-different-submission AUC ≥0.60.
+  same-problem-different-submission AUC ≥0.60;
+- same-problem-different-submission scored decoy count ≥30 for broad semantic
+  surprise claims, so a small category cannot pass by score alone.
 
 If any gate fails, public claims remain limited to negative or diagnostic
 evidence. Partial-positive shapes (e.g., "the latent encodes output type

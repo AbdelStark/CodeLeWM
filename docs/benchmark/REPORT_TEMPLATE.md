@@ -202,9 +202,23 @@ Every expected variant must appear as `completed`, `blocked`, or
 | same_file | | |
 | mutation | | |
 | action_cluster | | |
+| same_code_different_input | | |
+| same_problem_different_submission | | |
 
 A category row may be omitted only when the corpus produced zero
 decoys for that category. State the reason in the comments section.
+
+### Execution surprise claim gates
+
+When execution-specific semantic decoys are used, quote
+`metadata.execution_surprise_claim_gates` and keep score gates separate from
+pair-count gates.
+
+| Gate category | Score gate | Pair-count gate | Claim status |
+| ------------- | ---------- | --------------- | ------------ |
+| mutation | `<AUC> / <threshold>` | `<count> / <threshold>` | |
+| same_code_different_input | `<AUC> / <threshold>` | `<count> / <threshold>` | |
+| same_problem_different_submission | `<AUC> / <threshold>` | `<count> / <threshold>` | |
 
 ## Scorer And Reranker Quality
 
@@ -291,10 +305,15 @@ README, or external communication.
 - [ ] **Hard negatives exclude the true target.** Evidence:
       hard-negative sampler report's `excluded_targets` matches the
       pool's `entry_count` and excludes the `train` split.
-- [ ] **Patch-surprise reports pairwise AUC over four decoy
+- [ ] **Patch-surprise reports pairwise AUC over the configured decoy
       categories.** Evidence:
       `metrics.pairwise_auc_by_category` covers the configured
       categories with non-zero decoy counts.
+- [ ] **Execution semantic surprise separates score gates from count
+      gates.** Evidence:
+      `metadata.execution_surprise_claim_gates.score_gates` and
+      `metadata.execution_surprise_claim_gates.pair_count_gates` are
+      both present.
 - [ ] **Every manifest referenced verifies cleanly.** Evidence:
       `codelewm manifest verify --manifest <path>` returns exit 0 for
       every artifact above.

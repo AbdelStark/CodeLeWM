@@ -5,9 +5,10 @@ Date: 2026-06-01
 Issue: #321
 
 This is a count-gate artifact for the strengthened same-problem semantic
-decoy pack. It does not evaluate either v0.6 checkpoint. Model-level semantic
-surprise claims remain blocked until #322 reruns `codelewm eval
-execution-surprise` against this pack for both seeds.
+decoy pack. It does not evaluate either v0.6 checkpoint. The #322 rerun at
+`docs/benchmark/SEMANTIC_DECOY_SURPRISE_2026-06-01.md` consumes this pack and
+keeps the model-level semantic surprise claim blocked because the narrow
+same-problem/different-submission category remains small-n.
 
 ## Artifact
 
@@ -57,5 +58,6 @@ adversarial decoys, but keeps their control labels separate:
 
 This artifact only says that the decoy source is now large enough to support
 a meaningful rerun. It does not say that CodeLeWM separates these decoys. The
-public claim boundary remains unchanged until #322 records per-seed
-execution-surprise metrics, manifests, and secret scans.
+per-seed #322 reruns separate score gates from pair-count gates and keep the
+broad semantic surprise claim closed while recording the positive diagnostic
+AUCs.

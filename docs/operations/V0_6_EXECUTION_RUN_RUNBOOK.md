@@ -198,6 +198,11 @@ uv run scripts/sample-execution-rerank-completions \
   --json
 ```
 
+When a semantic decoy manifest is supplied, the surprise report includes
+`codelewm.eval.execution_surprise_claim_gates.v1` metadata. Operators must
+review both `score_gates` and `pair_count_gates`: a category may clear the AUC
+threshold while still being claim-blocked by too few scored pairs.
+
 The sampler writes `codelewm.eval.completion_label.v1` JSONL rows plus
 `codelewm.eval.completion_sampling_report.v1`, `codelewm.secret_scan.v1`,
 and `codelewm.artifact_manifest.v1` reports. Candidate code is never run
@@ -229,6 +234,10 @@ A positive headline claim is allowed only when **all** of:
 - ≥1 latent probe target beats every control across both seeds;
 - mutation-decoy surprise AUC ≥0.65;
 - same-problem-different-submission AUC ≥0.60;
+- same-problem-different-submission scored decoy count ≥30 when used for a
+  semantic surprise claim;
+- same-code-different-input scored decoy count ≥100 when used for an
+  input-sensitivity semantic diagnostic;
 - HumanEval/MBPP-Plus pass@1 lift ≥3 absolute points with bootstrap
   95% CI excluding zero across ≥3 LLM sampling seeds;
 - checkpoint trust, manifest verify, downloaded-artifact verify,

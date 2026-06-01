@@ -25,8 +25,9 @@ reports or schema-versioned artifacts. It is the claim-gate review surface for
 | Substrate B v0.6 retrieval Recall@1 | seed 42: 0.6568; seed 1729: 0.6483 | `docs/benchmark/v0_6/seed-*/execution_retrieval/reports/retrieval_report.json` |
 | Substrate B v0.6 retrieval MRR | seed 42: 0.7670; seed 1729: 0.7587 | `docs/benchmark/v0_6/seed-*/execution_retrieval/reports/retrieval_report.json` |
 | Substrate B v0.6 retrieval lift over no-action | Recall@1 mean +0.6144; MRR mean +0.6588 | `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` (`Retrieval Evaluation`) |
-| Substrate B v0.6 generated-decoy surprise AUC | 1.000 on mutation, same-code-different-input, same-problem-different-submission | `docs/benchmark/v0_6/seed-*/execution_surprise/reports/surprise_report.json` |
-| Substrate B v0.6 same-problem decoy pair count | 6 pairs per seed | `docs/benchmark/v0_6/seed-*/execution_surprise/reports/execution_decoy_report.json` |
+| Substrate B v0.6 semantic surprise score gates | 1.000 on mutation, same-code-different-input, same-problem-different-submission | `docs/benchmark/v0_6/seed-*/execution_surprise_semantic/reports/surprise_report.json` |
+| Substrate B v0.6 semantic decoy pack count | 358 pairs across 68 problems; 352 same-code/different-input and 6 same-problem/different-submission | `docs/benchmark/v0_6/semantic_decoy_pack/reports/semantic_decoy_summary.json` |
+| Substrate B v0.6 semantic surprise claim gate | closed on both seeds because same-problem/different-submission count is 6/30 | `docs/benchmark/v0_6/seed-*/execution_surprise_semantic/manifest.json` |
 | Substrate B v0.6 latent probe target availability | only `output_type` evaluable | `docs/benchmark/v0_6/seed-*/execution_probe/reports/latent_probe_report.json` |
 | Substrate B v0.6 output-type latent probe | seed 42: 0.4968; seed 1729: 0.5987 | `docs/benchmark/v0_6/seed-*/execution_probe/reports/latent_probe_report.json` |
 | Substrate B v0.6 output-type lexical control | seed 42: 0.6624; seed 1729: 0.6178 | `docs/benchmark/v0_6/seed-*/execution_probe/reports/latent_probe_report.json` |
@@ -67,7 +68,8 @@ comparison is a perfect single-variable ablation. Known run-level differences:
 ## Claim Boundary
 
 - Allowed: substrate-pivot comparison; negative v0.2 claim; partial-positive
-  v0.6 substrate-shape, retrieval, and generated-decoy surprise claim.
+  v0.6 substrate-shape, retrieval, and semantic-decoy score diagnostic claim.
 - Not allowed: broad code-generation quality, semantic-axis naming, crash
-  prediction utility, HumanEval / MBPP-Plus reranking utility, or superiority
-  over pretrained code models.
+  prediction utility, HumanEval / MBPP-Plus reranking utility, broad semantic
+  surprise from the six-pair same-problem/different-submission category, or
+  superiority over pretrained code models.

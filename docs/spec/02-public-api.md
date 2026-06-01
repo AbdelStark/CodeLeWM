@@ -338,7 +338,10 @@ codelewm eval execution-surprise \
 It writes `reports/surprise_report.json` with schema
 `codelewm.eval.surprise_report.v1` and
 `reports/execution_decoy_report.json` with deterministic decoy-generation
-counts. The command emits `codelewm.eval.execution_surprise_run.v1` on JSON
+counts. The surprise report metadata includes
+`codelewm.eval.execution_surprise_claim_gates.v1`, which records separate
+score gates and pair-count gates for the execution-specific decoy categories.
+The command emits `codelewm.eval.execution_surprise_run.v1` on JSON
 stdout. Mutation decoys perturb the output-token state; execution-specific
 decoys use same-problem/different-submission and same-code/different-input
 records when the pack contains output-distinguishing candidates. Pass
