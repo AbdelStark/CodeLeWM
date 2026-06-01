@@ -1,0 +1,189 @@
+{
+  "benchmark_id": "mbpp_plus",
+  "claim_allowed": false,
+  "claim_reason": "completion_labels_only_downstream_rerank_not_run",
+  "completion_count": 50,
+  "dry_run": false,
+  "failed_completion_count": 4,
+  "label_schema_version": "codelewm.eval.completion_label.v1",
+  "labels_path": "mbpp_plus_completion_labels.jsonl",
+  "llm": "openrouter:anthropic/claude-haiku-4-5",
+  "llm_seeds": [
+    17,
+    42
+  ],
+  "max_cases_per_problem": 8,
+  "passed_completion_count": 46,
+  "problem_count": 25,
+  "problem_summaries": [
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/2"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/3"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/4"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/6"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/7"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/8"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/9"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/11"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/12"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/14"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/16"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/17"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/18"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/19"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/20"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/56"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/57"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/58"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/59"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/61"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/62"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/63"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 0,
+      "problem_id": "Mbpp/64"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/65"
+    },
+    {
+      "completion_count": 2,
+      "input_case_count": 8,
+      "passed_completion_count": 2,
+      "problem_id": "Mbpp/66"
+    }
+  ],
+  "prompts_path": "prompts/sampling_prompts.jsonl",
+  "samples_per_problem": 1,
+  "sandbox_policy": {
+    "cpu_seconds": 10,
+    "deny_filesystem_writes_outside_scratch": true,
+    "deny_network": true,
+    "deny_subprocess": true,
+    "determinism_check": false,
+    "import_allowlist": "stdlib_only",
+    "memory_mb": 256,
+    "output_truncation_bytes": 4096,
+    "policy_version": "codelewm.sandbox_policy.v1",
+    "python_hash_seed": 0,
+    "stdout_truncation_bytes": 4096,
+    "timeout_ms": 5000
+  },
+  "schema_version": "codelewm.eval.completion_sampling_report.v1",
+  "short_circuit_failures": true,
+  "source_path": "data/raw/mbpp_plus.jsonl"
+}

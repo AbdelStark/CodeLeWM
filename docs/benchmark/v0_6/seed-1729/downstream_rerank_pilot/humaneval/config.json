@@ -1,0 +1,17 @@
+{
+  "allow_unsafe_checkpoint": false,
+  "benchmark": "humaneval",
+  "bootstrap_samples": 2000,
+  "checkpoint": ".artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt",
+  "checkpoint_manifest": null,
+  "completion_manifest": "docs/benchmark/v0_6/completion_labels_pilot/humaneval/manifest.json",
+  "device": "auto",
+  "index": null,
+  "labels_path": "docs/benchmark/v0_6/completion_labels_pilot/humaneval/humaneval_completion_labels.jsonl",
+  "min_lift_for_claim": 3.0,
+  "pass_at_k": 5,
+  "require_learned_scorer": true,
+  "retrieval_prior_k": 10,
+  "retrieval_prior_weight": 0.0,
+  "seed": 17
+}
