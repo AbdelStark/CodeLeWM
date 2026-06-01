@@ -1,7 +1,8 @@
 # CodeLeWM v0.6 Execution Model Card — Seed 42
 
 - Model name: `codelewm-v0-6-execution-seed-42`
-- HF model repo target: `abdelstark/codelewm-transition-model@v0.6.0-seed-42`
+- HF checkpoint surface:
+  `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt`
 - Run artifact repo path:
   `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42`
 - Training artifact ID: `training_run-cb62408f881eff8c`
@@ -11,11 +12,16 @@
 - Source git SHA: `af1a114`
 - Dataset: `abdelstark/codelewm-execution-pack@v0.6.0`
 - Dataset artifact ID: `codelewm-execution-pack-20260528T102625Z`
-- Release status: public v0.6 partial-positive research artifact; HF card
-  publication waits for the #306 arXiv URL.
+- Release status: public v0.6 partial-positive research artifact; the
+  `codelewm-runs` path is the canonical public checkpoint surface, while final
+  HF README refresh waits for the #306 arXiv URL.
 - Card date: `2026-05-31`
 
 ## Summary
+
+This card is the repo-side model card for the seed-42 checkpoint. The
+checkpoint is published as part of the public `abdelstark/codelewm-runs`
+artifact tree rather than as a `codelewm-transition-model` v0.6 tag.
 
 This checkpoint is a JEPA-style latent transition model trained on deterministic
 Python execution traces. It consumes candidate program text plus an execution
