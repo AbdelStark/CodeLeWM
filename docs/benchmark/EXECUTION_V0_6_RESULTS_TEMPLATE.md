@@ -38,8 +38,8 @@
 | Execution pack | `codelewm.execution_pack_manifest.v1` | `abdelstark/codelewm-execution-pack` | `v0.6.0` | |
 | Train config | `codelewm.execution_train_config.v1` | local | n/a | `config/train/scaled/codelewm_execution_v0_6_a10g.yaml` |
 | Launch plan | `codelewm.execution_launch_plan.v1` | local | n/a | |
-| Checkpoint, seed 42 | `codelewm.checkpoint.v1` | `abdelstark/codelewm-transition-model` | `v0.6.0-seed-42` | |
-| Checkpoint, seed 1729 | `codelewm.checkpoint.v1` | `abdelstark/codelewm-transition-model` | `v0.6.0-seed-1729` | |
+| Checkpoint, seed 42 | `codelewm.checkpoint.v1` | `abdelstark/codelewm-runs` | `runs/codelewm-v0-6-execution-<date>-<sha>-seed-42/checkpoints/last.pt` | |
+| Checkpoint, seed 1729 | `codelewm.checkpoint.v1` | `abdelstark/codelewm-runs` | `runs/codelewm-v0-6-execution-<date>-<sha>-seed-1729/checkpoints/last.pt` | |
 | Run artifacts, seed 42 | `codelewm.training_run.v1` | `abdelstark/codelewm-runs` | run-name | |
 | Run artifacts, seed 1729 | `codelewm.training_run.v1` | `abdelstark/codelewm-runs` | run-name | |
 | Retrieval report, seed 42 | `codelewm.eval.retrieval_report.v1` | local | | |

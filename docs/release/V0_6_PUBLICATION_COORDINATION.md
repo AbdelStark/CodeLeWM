@@ -23,9 +23,11 @@ operator arXiv upload.
 - [ ] Commit the assigned arXiv URL into `docs/papers/ARXIV_SUBMISSION.md`,
   `docs/PROJECT_EXPLAINER.md`, `README.md`, the model cards, dataset card,
   artifact index, and blog post.
-- [ ] Upload the model-card READMEs to
-  `abdelstark/codelewm-transition-model@v0.6.0-seed-42` and
-  `abdelstark/codelewm-transition-model@v0.6.0-seed-1729`.
+- [ ] Refresh the HF README or card text for the public
+  `abdelstark/codelewm-runs` v0.6 checkpoint paths:
+  `runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt`
+  and
+  `runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt`.
 - [ ] Refresh the HF dataset README for
   `abdelstark/codelewm-execution-pack@v0.6.0` with links to the arXiv URL,
   model cards, public artifact index, and demo.

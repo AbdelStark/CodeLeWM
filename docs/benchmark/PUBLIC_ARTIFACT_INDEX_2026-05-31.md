@@ -10,7 +10,7 @@ Current claim boundary:
   surprise pass across two seeds;
 - latent-probe semantic-axis, crash-prediction, and HumanEval / MBPP-Plus
   downstream rerank utility claims remain unsupported;
-- final announcement and HF card publication still wait for the #306 arXiv URL.
+- final announcement and HF README refresh still wait for the #306 arXiv URL.
 
 ## Public Repositories
 
@@ -18,17 +18,23 @@ Current claim boundary:
 | --- | --- | --- | --- |
 | Execution pack | `abdelstark/codelewm-execution-pack` | dataset | `v0.6.0` |
 | Training runs | `abdelstark/codelewm-runs` | dataset | `runs/codelewm-v0-6-execution-20260530-af1a114-seed-{42,1729}` |
+| Checkpoint files | `abdelstark/codelewm-runs` | dataset | `runs/codelewm-v0-6-execution-20260530-af1a114-seed-{42,1729}/checkpoints/last.pt` |
 | Eval pass mirror | `abdelstark/codelewm-runs` | dataset | `runs/codelewm-v0-6-eval-pass-20260531` |
-| Model checkpoint tags | `abdelstark/codelewm-transition-model` | model | `v0.6.0-seed-42`, `v0.6.0-seed-1729` |
 | Code and demo | `github.com/AbdelStark/CodeLeWM` | git | `main` |
+
+The canonical v0.6 checkpoint surface is the public `codelewm-runs` dataset
+repo. Earlier CodeLeWM checkpoints remain available from
+`abdelstark/codelewm-transition-model`, but this index does not document v0.6
+model-repo tags because the resolving public v0.6 files are the run-artifact
+checkpoint paths above.
 
 ## Indexed Artifacts
 
 | Artifact | Public location | Local evidence | Card / report | Claim posture |
 | --- | --- | --- | --- | --- |
 | Execution pack | `abdelstark/codelewm-execution-pack@v0.6.0` | `manifest verify ok=true`; `secret-scan ok=true`; pack SHA `d770c5df...cf41b` | `docs/cards/codelewm-v0-6-execution-dataset-2026-05-31.md` | dataset substrate only |
-| Seed 42 training run | `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42` | `training_run-cb62408f881eff8c`; `manifest verify ok=true`; `secret-scan ok=true` | `docs/cards/codelewm-v0-6-execution-model-seed-42-2026-05-31.md` | execution-pack retrieval passes; downstream utility unsupported |
-| Seed 1729 training run | `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729` | `training_run-d0b59108447c9c4a`; `manifest verify ok=true`; `secret-scan ok=true` | `docs/cards/codelewm-v0-6-execution-model-seed-1729-2026-05-31.md` | execution-pack retrieval passes; downstream utility unsupported |
+| Seed 42 checkpoint and training run | `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42` | `training_run-cb62408f881eff8c`; checkpoint `checkpoints/last.pt`; `manifest verify ok=true`; `secret-scan ok=true` | `docs/cards/codelewm-v0-6-execution-model-seed-42-2026-05-31.md` | execution-pack retrieval passes; downstream utility unsupported |
+| Seed 1729 checkpoint and training run | `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729` | `training_run-d0b59108447c9c4a`; checkpoint `checkpoints/last.pt`; `manifest verify ok=true`; `secret-scan ok=true` | `docs/cards/codelewm-v0-6-execution-model-seed-1729-2026-05-31.md` | execution-pack retrieval passes; downstream utility unsupported |
 | Seed 42 eval reports | `abdelstark/codelewm-runs/runs/codelewm-v0-6-eval-pass-20260531` | retrieval `eval_report-50a62748784329b2`; surprise `eval_report-06ac38fbc347961d`; probe `eval_report-952d5632120e0632`; crash `eval_report-48380fb96f1de96d`; all manifests verify with parents | `docs/benchmark/v0_6/seed-42/` | retrieval/surprise pass; probe/crash blocked |
 | Seed 1729 eval reports | `abdelstark/codelewm-runs/runs/codelewm-v0-6-eval-pass-20260531` | retrieval `eval_report-0cc1c6ac187e4ed3`; surprise `eval_report-29c0d125cc25d631`; probe `eval_report-c592b4805d0d3085`; crash `eval_report-1f41882839c44da7`; all manifests verify with parents | `docs/benchmark/v0_6/seed-1729/` | retrieval/surprise pass; probe/crash blocked |
 | Results report | Code repo | `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` | same | partial-positive summary |
@@ -50,6 +56,14 @@ uv run codelewm secret-scan .artifacts/v0_6/execution-pack --json
 Training runs:
 
 ```bash
+hf download abdelstark/codelewm-runs \
+  --repo-type dataset \
+  --include 'runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/**' \
+  --local-dir /tmp/codelewm-v0-6-seed-42
+hf download abdelstark/codelewm-runs \
+  --repo-type dataset \
+  --include 'runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/**' \
+  --local-dir /tmp/codelewm-v0-6-seed-1729
 uv run codelewm manifest verify \
   --manifest .artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/manifest.json \
   --parent-manifest .artifacts/v0_6/execution-pack/artifact_manifest.json \

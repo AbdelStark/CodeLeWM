@@ -1,7 +1,8 @@
 # CodeLeWM v0.6 Execution Model Card — Seed 1729
 
 - Model name: `codelewm-v0-6-execution-seed-1729`
-- HF model repo target: `abdelstark/codelewm-transition-model@v0.6.0-seed-1729`
+- HF checkpoint surface:
+  `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729/checkpoints/last.pt`
 - Run artifact repo path:
   `abdelstark/codelewm-runs/runs/codelewm-v0-6-execution-20260530-af1a114-seed-1729`
 - Training artifact ID: `training_run-d0b59108447c9c4a`
@@ -11,11 +12,16 @@
 - Source git SHA: `af1a114`
 - Dataset: `abdelstark/codelewm-execution-pack@v0.6.0`
 - Dataset artifact ID: `codelewm-execution-pack-20260528T102625Z`
-- Release status: public v0.6 partial-positive research artifact; HF card
-  publication waits for the #306 arXiv URL.
+- Release status: public v0.6 partial-positive research artifact; the
+  `codelewm-runs` path is the canonical public checkpoint surface, while final
+  HF README refresh waits for the #306 arXiv URL.
 - Card date: `2026-05-31`
 
 ## Summary
+
+This card is the repo-side model card for the seed-1729 checkpoint. The
+checkpoint is published as part of the public `abdelstark/codelewm-runs`
+artifact tree rather than as a `codelewm-transition-model` v0.6 tag.
 
 This checkpoint is the second-seed v0.6 execution-substrate model. It uses the
 same JEPA-style architecture and training recipe as the seed-42 checkpoint and
@@ -118,8 +124,8 @@ zero findings.
 - The positive result is scoped to execution-pack retrieval and
   generated-decoy surprise.
 - The downstream rerank utility gate remains unrun at the required scale.
-- The arXiv URL is not yet available in-repo; final HF card publication waits
-  for the operator upload from #306.
+- The arXiv URL is not yet available in-repo; final HF README refresh waits for
+  the operator upload from #306.
 
 ## Sign-off
 
