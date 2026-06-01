@@ -66,6 +66,7 @@ class ExecutionRerankSamplerTest(unittest.TestCase):
             self.assertTrue(
                 all("expected_output_sha256" in row["test_results"][0] for row in rows)
             )
+            self.assertTrue(all("valid_candidate" in row for row in rows))
             self.assertTrue(all(row["scoring_inputs"] for row in rows))
             self.assertTrue(
                 all("input_repr" in row["scoring_inputs"][0] for row in rows)
@@ -81,6 +82,9 @@ class ExecutionRerankSamplerTest(unittest.TestCase):
             self.assertEqual(
                 report["schema_version"], COMPLETION_SAMPLING_REPORT_SCHEMA_VERSION
             )
+            self.assertEqual(report["valid_completion_count"], 1)
+            self.assertEqual(report["valid_completion_rate"], 0.5)
+            self.assertEqual(report["test_pass_rate"], 0.5)
             secret_scan = json.loads(
                 (out / result.secret_scan_report_path).read_text(encoding="utf-8")
             )

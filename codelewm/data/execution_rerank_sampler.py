@@ -236,6 +236,7 @@ def sample_execution_rerank_completions(
                     sandbox_policy=sandbox_policy,
                     short_circuit_failures=short_circuit_failures,
                 )
+                valid_candidate = _valid_candidate_from_results(test_results)
                 if passed:
                     problem_passes += 1
                 rows.append(
@@ -265,6 +266,7 @@ def sample_execution_rerank_completions(
                         ],
                         "label": "pass" if passed else "fail",
                         "passed": passed,
+                        "valid_candidate": valid_candidate,
                         "test_results": test_results,
                     }
                 )
@@ -281,6 +283,7 @@ def sample_execution_rerank_completions(
     _write_jsonl(prompt_path, prompt_rows)
 
     passed_count = sum(1 for row in rows if row["passed"])
+    valid_count = sum(1 for row in rows if row["valid_candidate"])
     report_payload = {
         "schema_version": COMPLETION_SAMPLING_REPORT_SCHEMA_VERSION,
         "label_schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
@@ -289,6 +292,10 @@ def sample_execution_rerank_completions(
         "completion_count": len(rows),
         "passed_completion_count": passed_count,
         "failed_completion_count": len(rows) - passed_count,
+        "valid_completion_count": valid_count,
+        "invalid_completion_count": len(rows) - valid_count,
+        "valid_completion_rate": valid_count / len(rows) if rows else 0.0,
+        "test_pass_rate": passed_count / len(rows) if rows else 0.0,
         "llm": llm,
         "samples_per_problem": samples_per_problem,
         "llm_seeds": list(seeds),
@@ -342,6 +349,7 @@ def sample_execution_rerank_completions(
             "problem_count": len(submissions),
             "completion_count": len(rows),
             "passed_completion_count": passed_count,
+            "valid_completion_count": valid_count,
             "dry_run": dry_run,
             "secret_scan_ok": bool(scan_payload["ok"]),
         },
@@ -634,6 +642,10 @@ def _label_completion(
         if short_circuit_failures and not passed:
             break
     return results, all_passed
+
+
+def _valid_candidate_from_results(results: Sequence[Mapping[str, Any]]) -> bool:
+    return bool(results) and all(result.get("exit_code") == "ok" for result in results)
 
 
 def _completion_id(problem_id: str, *, seed: int, sample_rank: int) -> str:

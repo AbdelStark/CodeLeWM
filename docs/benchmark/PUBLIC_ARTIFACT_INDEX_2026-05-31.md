@@ -12,6 +12,8 @@ Current claim boundary:
   HumanEval / MBPP-Plus downstream rerank utility claims remain unsupported;
 - the 2026-06-01 HumanEval / MBPP-Plus rerank pilot validates live plumbing but
   is saturated and has zero pass@1 lift;
+- the 2026-06-01 full-scale rerank pass removes the "not evaluated" limitation
+  but leaves the downstream utility gate closed across both seeds;
 - final announcement and HF README refresh still wait for the #306 arXiv URL.
 
 ## Public Repositories
@@ -42,6 +44,7 @@ checkpoint paths above.
 | Semantic decoy pack | Code repo | `downstream_benchmark-f3e0dc65fbf18825`; 358 pairs across 68 problems; secret scan `ok=true` | `docs/benchmark/SEMANTIC_DECOY_PACK_2026-06-01.md` | count source for semantic rerun; not a model claim |
 | Semantic surprise reruns | Code repo | seed 42 `eval_report-aeb0ae374582a8ec`; seed 1729 `eval_report-5b20bd0e1da5928a`; manifests verify with training, pack, and semantic-pack parents | `docs/benchmark/SEMANTIC_DECOY_SURPRISE_2026-06-01.md` | score gates pass; broad semantic claim closed at 6/30 same-problem/different-submission pairs |
 | HumanEval / MBPP-Plus rerank pilot | Code repo | labels `downstream_benchmark-7d549a6ec13ab791`, `downstream_benchmark-db47a1daa39e2d3e`; rerank reports `eval_report-7222346bfae136af`, `eval_report-c9c7f3dce3c7b877`, `eval_report-9e80aaf3a656f995`, `eval_report-36662148dc03d44c`; secret scan `ok=true` | `docs/benchmark/V0_6_RERANK_PILOT_2026-06-01.md` | live pipeline validated; saturated; no downstream utility claim |
+| HumanEval / MBPP-Plus rerank full-scale | Code repo | labels `downstream_benchmark-62060bb55ca7c890`, `downstream_benchmark-5bff755577cc17ba`; rerank reports `eval_report-9c8d7152bff2460c`, `eval_report-14887c62e5e76e19`, `eval_report-ca4212e0d1565af4`, `eval_report-3abf5d64a09d9c56`; manifests verify with parents; secret scan `ok=true` | `docs/benchmark/V0_6_RERANK_FULL_2026-06-01.md` | full-scale by problem/completion count; MBPP-Plus case-capped; gate closed across both seeds |
 | Results report | Code repo | `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md` | same | partial-positive summary |
 | Paper package | Code repo | `docs/papers/two_substrate_paper.pdf`; `docs/papers/two_substrate_arxiv_source.tar.gz` | `docs/papers/ARXIV_SUBMISSION.md` | arXiv URL pending operator upload |
 | Demo tour | Code repo | `docs/demo/execution_rerank_tour_2026-05-31.cast`; `docs/demo/execution_rerank_tour_2026-05-31.html`; secret scan `ok=true` | `docs/demo/README.md` | workflow evidence only |
@@ -113,5 +116,5 @@ public sentence is:
 > CodeLeWM v0.6 shows that a JEPA-style latent world model can learn a
 > non-collapsed, action-conditioned execution-trace substrate that passes
 > execution-pack retrieval and semantic-decoy surprise score diagnostics across
-> two seeds; broad semantic surprise and downstream generated-code utility
-> remain open claims.
+> two seeds; broad semantic surprise and HumanEval / MBPP-Plus generated-code
+> reranking remain negative or inconclusive on the current artifact set.

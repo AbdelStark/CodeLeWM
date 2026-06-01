@@ -1,0 +1,66 @@
+{
+  "artifact_id": "downstream_benchmark-62060bb55ca7c890",
+  "artifact_kind": "downstream_benchmark",
+  "command": [
+    "scripts/sample-execution-rerank-completions",
+    "--benchmark",
+    "humaneval",
+    "--source",
+    "data/raw/humaneval.jsonl",
+    "--out",
+    "docs/benchmark/v0_6/completion_labels_full/humaneval",
+    "--live",
+    "--samples-per-problem",
+    "1",
+    "--llm-seeds",
+    "17,42,1729",
+    "--temperature",
+    "0.8",
+    "--short-circuit-failures",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "aabf347dadd503aad2fe84680f54f54db74a29b8acdd60d813dbc10449f48edb",
+  "created_at": "2026-06-01T11:37:38Z",
+  "files": [
+    {
+      "bytes": 2806553,
+      "path": "humaneval_completion_labels.jsonl",
+      "sha256": "a04452b1e3689f67de72c83277479985f38641c1c477651cba67e6ca23f3e8b8"
+    },
+    {
+      "bytes": 146355,
+      "path": "prompts/sampling_prompts.jsonl",
+      "sha256": "b20642dd2fdb99320a885c1a950c6db4299418c75f858412a72374b5f7ee1284"
+    },
+    {
+      "bytes": 936,
+      "path": "config.json",
+      "sha256": "ff48115951309693091ed6d492b90bdc46eee59ad4cc6d5147605e5c7ce7ac21"
+    },
+    {
+      "bytes": 23298,
+      "path": "reports/completion_sampling_report.json",
+      "sha256": "95fcb6b0ab7a146da0ed9ff61f85d37ed718824693ec9684ab113fe7cc0c0a2c"
+    },
+    {
+      "bytes": 252,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "fe11fbb07b6ca627ad27e77922f97f5a7f093afec144edc8bbc3c14e5ba70bc4"
+    }
+  ],
+  "metadata": {
+    "benchmark_id": "humaneval",
+    "completion_count": 462,
+    "dry_run": false,
+    "label_schema_version": "codelewm.eval.completion_label.v1",
+    "passed_completion_count": 439,
+    "problem_count": 154,
+    "schema_version": "codelewm.eval.completion_label_artifact.v1",
+    "secret_scan_ok": true,
+    "valid_completion_count": 458
+  },
+  "parent_artifacts": [],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "e19334cc911cd27f9d0a6a6c660601050e08eef5"
+}
