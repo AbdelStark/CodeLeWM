@@ -27,6 +27,8 @@ Artifact pointers to include in the arXiv metadata or comments field:
 - Code: `https://github.com/AbdelStark/CodeLeWM`
 - v0.2 report: `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md`
 - v0.6 report: `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`
+- v0.6 semantic-decoy surprise rerun:
+  `docs/benchmark/SEMANTIC_DECOY_SURPRISE_2026-06-01.md`
 - v0.6 eval artifacts: `docs/benchmark/v0_6/`
 - v0.6 eval HF mirror:
   `abdelstark/codelewm-runs/runs/codelewm-v0-6-eval-pass-20260531`

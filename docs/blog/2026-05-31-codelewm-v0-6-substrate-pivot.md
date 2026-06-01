@@ -54,9 +54,11 @@ The downloaded eval pass then tests the checkpoints on the execution pack:
 | 42 | 0.6568 | 0.0381 | 0.7670 | 0.1042 |
 | 1729 | 0.6483 | 0.0381 | 0.7587 | 0.1040 |
 
-Generated-decoy surprise also passes with Recall@1 `1.0000` and pairwise AUC
-`1.0000` on both seeds. The small same-problem-different-submission slice is
-explicitly marked as small-n diagnostic evidence.
+The #322 semantic-decoy surprise rerun also passes the score gates with
+Recall@1 `1.0000` and pairwise AUC `1.0000` on both seeds. Its count gates keep
+the broader semantic claim closed: the semantic pack has 358 same-problem pairs
+across 68 problems, but the narrow same-problem-different-submission slice is
+still only 6/30 scored pairs.
 
 ## What This Does And Does Not Imply
 
@@ -76,6 +78,8 @@ state/action substrate design is load-bearing for code world models.
   `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`
 - v0.6 results report:
   `docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`
+- Semantic-decoy surprise rerun:
+  `docs/benchmark/SEMANTIC_DECOY_SURPRISE_2026-06-01.md`
 - Dataset card:
   `docs/cards/codelewm-v0-6-execution-dataset-2026-05-31.md`
 - Model cards:
@@ -94,5 +98,6 @@ Until the arXiv URL lands, cite the repository artifacts directly:
 
 > CodeLeWM v0.6 is a two-substrate diagnostic result: v0.2 commit-edit
 > transition learning is negative, while v0.6 deterministic execution traces
-> pass execution-pack retrieval and generated-decoy surprise gates across two
-> seeds. Downstream generated-code utility remains unsupported.
+> pass execution-pack retrieval and semantic-decoy score diagnostics across
+> two seeds. Broad semantic surprise and downstream generated-code utility
+> remain unsupported.
