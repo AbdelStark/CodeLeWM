@@ -197,6 +197,32 @@ class ObjectiveNumpyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "nonzero inverse_action_reconstruction_weight"):
             ObjectiveConfig(enable_inverse_action_reconstruction=True)
 
+    def test_prediction_mse_weight_scales_the_mse_term(self) -> None:
+        # RFC-0015 WS-C5: prediction_mse_weight was declared but never applied.
+        z_before = np.array([[0.0, 1.0], [1.0, 0.0]])
+        z_after = np.array([[1.0, 1.0], [2.0, 0.0]])
+        z_pred = np.array([[1.0, 0.0], [1.0, 1.0]])
+        mse = compute_prediction_mse(z_pred, z_after)
+
+        def total_for(weight: float) -> float:
+            config = ObjectiveConfig(
+                sigreg_weight=0.0,
+                prediction_mse_weight=weight,
+                sigreg_num_proj=8,
+                sigreg_seed=1,
+            )
+            return compute_transition_objective(
+                z_before, z_after, z_pred, config=config
+            ).scalars()["loss/total"]
+
+        self.assertAlmostEqual(total_for(1.0), mse, places=6)
+        self.assertAlmostEqual(total_for(2.0), 2.0 * mse, places=6)
+        self.assertAlmostEqual(total_for(0.0), 0.0, places=6)
+
+    def test_negative_prediction_mse_weight_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            ObjectiveConfig(prediction_mse_weight=-1.0)
+
 
 class ObjectiveTorchTest(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
