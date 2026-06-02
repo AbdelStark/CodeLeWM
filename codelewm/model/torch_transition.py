@@ -46,6 +46,11 @@ class TorchCodeTransitionModelConfig:
     dropout: float = 0.1
     action_fusion: str = "conditional_transformer"
     enable_inverse_action_head: bool = False
+    # RFC-0015 WS-C1: state encoder backbone. "pool" is the v0.6 default;
+    # "transformer" adds a contextual encoder before pooling.
+    state_encoder_type: str = "pool"
+    state_encoder_layers: int = 4
+    state_encoder_heads: int = 8
 
     def __post_init__(self) -> None:
         if self.action_view not in ("text", "abstract"):
@@ -151,6 +156,9 @@ def build_torch_transition_model(
             latent_dim=config.latent_dim,
             embed_dim=config.latent_dim,
             dropout=config.dropout,
+            encoder_type=config.state_encoder_type,
+            num_layers=config.state_encoder_layers,
+            num_heads=config.state_encoder_heads,
         )
     )
     if config.action_view == "text":

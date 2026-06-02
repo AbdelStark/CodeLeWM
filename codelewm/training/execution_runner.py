@@ -247,6 +247,9 @@ def train_execution_run(
             enable_inverse_action_head=(
                 config.objective.inverse_action_reconstruction_weight > 0.0
             ),
+            state_encoder_type=config.wm.state_encoder_type,
+            state_encoder_layers=config.wm.state_encoder_layers,
+            state_encoder_heads=config.wm.state_encoder_heads,
         )
     ).to(selected_device)
     model.train()
