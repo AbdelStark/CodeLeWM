@@ -31,6 +31,17 @@ class CodeStateEncoderConfigTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "dimensions"):
             CodeStateEncoderConfig(latent_dim=0)
 
+    def test_default_encoder_type_is_pool(self) -> None:
+        self.assertEqual(CodeStateEncoderConfig().encoder_type, "pool")
+
+    def test_config_validates_transformer_params(self) -> None:
+        with self.assertRaisesRegex(ValueError, "encoder_type"):
+            CodeStateEncoderConfig(encoder_type="mlp")
+        with self.assertRaisesRegex(ValueError, "num_layers"):
+            CodeStateEncoderConfig(encoder_type="transformer", num_layers=0)
+        with self.assertRaisesRegex(ValueError, "num_heads"):
+            CodeStateEncoderConfig(encoder_type="transformer", embed_dim=8, num_heads=3)
+
 
 class CodeStateEncoderTorchTest(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
@@ -53,6 +64,32 @@ class CodeStateEncoderTorchTest(unittest.TestCase):
 
         output = encoder(input_ids, attention_mask, segment_ids, changed_hunk_mask)
 
+        self.assertEqual(tuple(output.shape), (2, LATENT_DIM))
+        self.assertTrue(torch.isfinite(output).all())
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
+    def test_transformer_encoder_projects_to_latent_dim(self) -> None:
+        # RFC-0015 WS-C1: the optional transformer encoder must produce the same
+        # (batch, latent_dim) contract as the pool encoder, finite, with padding
+        # masked out.
+        import torch
+
+        config = CodeStateEncoderConfig(
+            max_length=8, dropout=0.0, encoder_type="transformer", num_layers=2, num_heads=4
+        )
+        encoder = CodeStateEncoder(config)
+        encoder.eval()
+        input_ids = torch.tensor(
+            [
+                [1, 2, 3, 0, 0, 0, 0, 0],
+                [4, 5, 6, 7, 8, 0, 0, 0],
+            ],
+            dtype=torch.long,
+        )
+        attention_mask = input_ids.ne(0)
+        segment_ids = torch.zeros_like(input_ids)
+        with torch.no_grad():
+            output = encoder(input_ids, attention_mask, segment_ids)
         self.assertEqual(tuple(output.shape), (2, LATENT_DIM))
         self.assertTrue(torch.isfinite(output).all())
 
