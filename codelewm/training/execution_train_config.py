@@ -102,6 +102,11 @@ class ExecutionTrainWorldModelConfig:
     history_size: int
     num_preds: int
     embed_dim: int
+    # RFC-0015 WS-C1: state encoder backbone. Optional with v0.6 defaults so
+    # existing configs parse unchanged.
+    state_encoder_type: str = "pool"
+    state_encoder_layers: int = 4
+    state_encoder_heads: int = 8
 
 
 @dataclass(frozen=True)
@@ -288,6 +293,19 @@ class ExecutionTrainConfig:
             )
         if self.wm.embed_dim <= 0:
             raise ExecutionTrainConfigError("wm.embed_dim must be positive")
+        if self.wm.state_encoder_type not in {"pool", "transformer"}:
+            raise ExecutionTrainConfigError(
+                "wm.state_encoder_type must be 'pool' or 'transformer'"
+            )
+        if self.wm.state_encoder_layers <= 0:
+            raise ExecutionTrainConfigError("wm.state_encoder_layers must be positive")
+        if (
+            self.wm.state_encoder_heads <= 0
+            or self.wm.embed_dim % self.wm.state_encoder_heads != 0
+        ):
+            raise ExecutionTrainConfigError(
+                "wm.state_encoder_heads must be positive and divide wm.embed_dim"
+            )
         # Objective contract.
         if self.objective.prediction_mse_weight < 0.0:
             raise ExecutionTrainConfigError(
@@ -394,6 +412,9 @@ class ExecutionTrainConfig:
                 "history_size": self.wm.history_size,
                 "num_preds": self.wm.num_preds,
                 "embed_dim": self.wm.embed_dim,
+                "state_encoder_type": self.wm.state_encoder_type,
+                "state_encoder_layers": self.wm.state_encoder_layers,
+                "state_encoder_heads": self.wm.state_encoder_heads,
             },
             "objective": {
                 "prediction_mse_weight": self.objective.prediction_mse_weight,
@@ -614,7 +635,14 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
     wm_payload = _require_mapping(payload, "wm", "config")
     _reject_unknown(
         wm_payload,
-        {"history_size", "num_preds", "embed_dim"},
+        {
+            "history_size",
+            "num_preds",
+            "embed_dim",
+            "state_encoder_type",
+            "state_encoder_layers",
+            "state_encoder_heads",
+        },
         "config.wm",
     )
 
@@ -757,6 +785,18 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         history_size=_require_int(wm_payload, "history_size", "config.wm"),
         num_preds=_require_int(wm_payload, "num_preds", "config.wm"),
         embed_dim=_require_int(wm_payload, "embed_dim", "config.wm"),
+        state_encoder_type=_optional_string(
+            wm_payload, "state_encoder_type", "config.wm"
+        )
+        or "pool",
+        state_encoder_layers=_optional_int(
+            wm_payload, "state_encoder_layers", "config.wm"
+        )
+        or 4,
+        state_encoder_heads=_optional_int(
+            wm_payload, "state_encoder_heads", "config.wm"
+        )
+        or 8,
     )
 
     objective = ExecutionTrainObjectiveConfig(

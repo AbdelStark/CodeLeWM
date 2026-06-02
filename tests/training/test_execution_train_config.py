@@ -239,6 +239,33 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         with self.assertRaisesRegex(self.Error, "history_size"):
             self._load_payload(payload)
 
+    def test_state_encoder_defaults_to_pool(self) -> None:
+        # RFC-0015 WS-C1: legacy configs without the field stay on v0.6 pool.
+        cfg = self._load_payload(_config_payload())
+        self.assertEqual(cfg.wm.state_encoder_type, "pool")
+
+    def test_transformer_state_encoder_parses_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["state_encoder_type"] = "transformer"
+        payload["wm"]["state_encoder_layers"] = 6
+        cfg = self._load_payload(payload)
+        self.assertEqual(cfg.wm.state_encoder_type, "transformer")
+        self.assertEqual(cfg.wm.state_encoder_layers, 6)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertEqual(cfg2.wm.state_encoder_type, "transformer")
+
+    def test_invalid_state_encoder_type_rejected(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["state_encoder_type"] = "mlp"
+        with self.assertRaisesRegex(self.Error, "state_encoder_type"):
+            self._load_payload(payload)
+
+    def test_state_encoder_heads_must_divide_embed_dim(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["state_encoder_heads"] = 7  # 256 % 7 != 0
+        with self.assertRaisesRegex(self.Error, "state_encoder_heads"):
+            self._load_payload(payload)
+
     def test_negative_objective_weight_rejected(self) -> None:
         payload = _config_payload()
         payload["objective"]["sigreg_weight"] = -0.1
