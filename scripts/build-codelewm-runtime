@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
-# Build the abdelstark/codelewm-runtime:v0.6 container image.
+# Build a codelewm-runtime container image.
 #
 # Usage:
-#   scripts/build-codelewm-runtime [--tag <name>] [--push] [--platform <plat>]
+#   scripts/build-codelewm-runtime [--tag <name>] [--dockerfile <path>] \
+#       [--push] [--platform <plat>]
 #
 # Default tag: ``abdelstark/codelewm-runtime:v0.6``.
+# Default dockerfile: ``containers/v0_6/Dockerfile``.
 # Default platform: ``linux/amd64`` (HF Jobs runs amd64 only).
+#
+# For the v0.7 image, pass both the tag and the dockerfile:
+#   scripts/build-codelewm-runtime \
+#       --tag ghcr.io/abdelstark/codelewm-runtime:v0.7 \
+#       --dockerfile containers/v0_7/Dockerfile --push
 #
 # This script wraps ``docker build`` so the git SHA + label set is
 # uniform across local builds and CI. It prints the resulting image
@@ -15,11 +22,13 @@ set -euo pipefail
 
 TAG="${CODELEWM_RUNTIME_TAG:-abdelstark/codelewm-runtime:v0.6}"
 PLATFORM="${CODELEWM_RUNTIME_PLATFORM:-linux/amd64}"
+DOCKERFILE="${CODELEWM_RUNTIME_DOCKERFILE:-containers/v0_6/Dockerfile}"
 PUSH=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --tag) TAG="$2"; shift 2 ;;
         --platform) PLATFORM="$2"; shift 2 ;;
+        --dockerfile) DOCKERFILE="$2"; shift 2 ;;
         --push) PUSH=1; shift ;;
         -h|--help)
             sed -n '2,/^set/p' "$0" | sed 's/^# \{0,1\}//'
@@ -33,7 +42,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 GIT_SHA="$(git rev-parse HEAD 2>/dev/null || echo unset)"
-DOCKERFILE="containers/v0_6/Dockerfile"
 
 if [[ ! -f "$DOCKERFILE" ]]; then
     echo "error: $DOCKERFILE not found" >&2

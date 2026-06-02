@@ -123,6 +123,57 @@ class RuntimeImageDockerfileTest(unittest.TestCase):
         self.assertIn("CODELEWM_EXECUTION_PACK_LOCAL_DIR=", content)
 
 
+class RuntimeImageV07DockerfileTest(unittest.TestCase):
+    """Static checks for the v0.7 runtime image (no Docker needed).
+
+    v0.7 training requires its own image because the package source is
+    COPYed in at build time and v0.7 carries the RFC-0015 WS-C levers
+    (transformer state encoder + InfoNCE retrieval) absent from v0.6.
+    """
+
+    DOCKERFILE = REPO_ROOT / "containers" / "v0_7" / "Dockerfile"
+    ENTRYPOINT = REPO_ROOT / "containers" / "v0_7" / "entrypoint.sh"
+
+    def test_dockerfile_exists_and_is_v0_7(self) -> None:
+        self.assertTrue(self.DOCKERFILE.is_file())
+        content = self.DOCKERFILE.read_text(encoding="utf-8")
+        for marker in (
+            "FROM ${BASE_IMAGE}",
+            "useradd -m -u 1000 codelewm",
+            "USER codelewm",
+            "uv pip install --system",
+            'org.opencontainers.image.version="v0.7"',
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+
+    def test_dockerfile_wires_v0_7_entrypoint(self) -> None:
+        content = self.DOCKERFILE.read_text(encoding="utf-8")
+        self.assertIn(
+            "containers/v0_7/entrypoint.sh /usr/local/bin/codelewm-runtime-entrypoint",
+            content,
+        )
+        self.assertIn(
+            'ENTRYPOINT ["/usr/local/bin/codelewm-runtime-entrypoint"]',
+            content,
+        )
+
+    def test_entrypoint_script_exists_and_is_executable(self) -> None:
+        self.assertTrue(self.ENTRYPOINT.is_file(), f"missing {self.ENTRYPOINT}")
+        self.assertTrue(
+            os.access(self.ENTRYPOINT, os.X_OK),
+            f"entrypoint {self.ENTRYPOINT} is not executable",
+        )
+        body = self.ENTRYPOINT.read_text(encoding="utf-8")
+        for marker in ("hf download", '"$@"', "hf upload"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
+    def test_build_script_supports_dockerfile_override(self) -> None:
+        content = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("--dockerfile", content)
+
+
 @unittest.skipUnless(
     _DOCKER_AVAILABLE and _RUN_CONTAINER_TESTS,
     "docker not available or CODELEWM_TEST_CONTAINER_BUILD not set",
