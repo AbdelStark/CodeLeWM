@@ -115,6 +115,10 @@ class ExecutionTrainObjectiveConfig:
     sigreg_weight: float
     action_swap_contrastive_weight: float
     inverse_action_reconstruction_weight: float
+    # RFC-0015 WS-C3: in-batch InfoNCE/retrieval term. Optional, default 0.0
+    # (off) so existing configs are unchanged; capped at 0.10 to match the
+    # objective's retrieval_weight_cap.
+    retrieval_weight: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -317,6 +321,10 @@ class ExecutionTrainConfig:
             raise ExecutionTrainConfigError(
                 "objective.action_swap_contrastive_weight must be non-negative"
             )
+        if not 0.0 <= self.objective.retrieval_weight <= 0.10:
+            raise ExecutionTrainConfigError(
+                "objective.retrieval_weight must be in [0.0, 0.10]"
+            )
         if self.objective.inverse_action_reconstruction_weight < 0.0:
             raise ExecutionTrainConfigError(
                 "objective.inverse_action_reconstruction_weight must be non-negative"
@@ -425,6 +433,7 @@ class ExecutionTrainConfig:
                 "inverse_action_reconstruction_weight": (
                     self.objective.inverse_action_reconstruction_weight
                 ),
+                "retrieval_weight": self.objective.retrieval_weight,
             },
             "seeds": list(self.seeds),
             "hf_jobs": {
@@ -654,6 +663,7 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "sigreg_weight",
             "action_swap_contrastive_weight",
             "inverse_action_reconstruction_weight",
+            "retrieval_weight",
         },
         "config.objective",
     )
@@ -812,6 +822,10 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         inverse_action_reconstruction_weight=_require_float(
             objective_payload, "inverse_action_reconstruction_weight", "config.objective"
         ),
+        retrieval_weight=_optional_float(
+            objective_payload, "retrieval_weight", "config.objective"
+        )
+        or 0.0,
     )
 
     hf_jobs = ExecutionTrainHfJobsConfig(
@@ -994,6 +1008,19 @@ def _optional_int(
     if isinstance(value, bool) or not isinstance(value, int):
         raise ExecutionTrainConfigError(f"{section}.{key} must be an integer")
     return value
+
+
+def _optional_float(
+    payload: Mapping[str, Any], key: str, section: str
+) -> float | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ExecutionTrainConfigError(f"{section}.{key} must be a number")
+    return float(value)
 
 
 def _require_float(

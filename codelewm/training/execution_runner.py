@@ -264,6 +264,8 @@ def train_execution_run(
     objective_config = ObjectiveConfig(
         sigreg_weight=config.objective.sigreg_weight,
         prediction_mse_weight=config.objective.prediction_mse_weight,
+        enable_retrieval_loss=config.objective.retrieval_weight > 0.0,
+        retrieval_weight=config.objective.retrieval_weight,
         enable_action_swap_contrastive=(
             config.objective.action_swap_contrastive_weight > 0.0
         ),

@@ -272,6 +272,25 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         with self.assertRaisesRegex(self.Error, "sigreg_weight"):
             self._load_payload(payload)
 
+    def test_retrieval_weight_defaults_off(self) -> None:
+        # RFC-0015 WS-C3: legacy configs without the field keep InfoNCE off.
+        cfg = self._load_payload(_config_payload())
+        self.assertEqual(cfg.objective.retrieval_weight, 0.0)
+
+    def test_retrieval_weight_parses_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["retrieval_weight"] = 0.05
+        cfg = self._load_payload(payload)
+        self.assertEqual(cfg.objective.retrieval_weight, 0.05)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertEqual(cfg2.objective.retrieval_weight, 0.05)
+
+    def test_retrieval_weight_over_cap_rejected(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["retrieval_weight"] = 0.2  # > 0.10 cap
+        with self.assertRaisesRegex(self.Error, "retrieval_weight"):
+            self._load_payload(payload)
+
     def test_zero_collapse_diag_cadence_rejected(self) -> None:
         payload = _config_payload()
         payload["trainer"]["collapse_diagnostics_every_n_steps"] = 0
