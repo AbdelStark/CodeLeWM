@@ -124,6 +124,33 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
         self.assertEqual(cfg.objective.sigreg_weight, 0.09)
         self.assertEqual(cfg.claim_boundary.name, "execution_substrate.v1")
 
+    def test_loads_checked_in_v0_7_yaml(self) -> None:
+        """The v0.7 recipe wires the RFC-0015 WS-C architecture levers."""
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_7_a10g.yaml"
+        cfg = load_execution_train_config(path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_7_a10g")
+        self.assertEqual(cfg.seeds, (42, 1729))
+        # WS-C1: transformer state encoder replaces the v0.6 bag-of-embeddings.
+        self.assertEqual(cfg.wm.state_encoder_type, "transformer")
+        self.assertEqual(cfg.wm.state_encoder_layers, 4)
+        self.assertEqual(cfg.wm.state_encoder_heads, 8)
+        # WS-C3: in-batch InfoNCE retrieval term is enabled (capped <= 0.10).
+        self.assertEqual(cfg.objective.retrieval_weight, 0.05)
+        # WS-C5: prediction_mse_weight is now an explicit, applied lever.
+        self.assertEqual(cfg.objective.prediction_mse_weight, 1.0)
+        # Consumes the bucket-augmented v0.7 pack + v0.7 runtime container.
+        self.assertEqual(cfg.data.pack_revision, "v0.7.0-rc1")
+        self.assertEqual(
+            cfg.hf_jobs.runtime_image,
+            "ghcr.io/abdelstark/codelewm-runtime:v0.7",
+        )
+
     def test_loads_json_round_trip(self) -> None:
         from codelewm.training import (
             ExecutionTrainConfig,
