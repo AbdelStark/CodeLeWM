@@ -27,6 +27,12 @@ class CodeStateEncoderConfig:
     embed_dim: int = LATENT_DIM
     segment_vocab_size: int = 16
     dropout: float = 0.1
+    # RFC-0015 WS-C1: "pool" is the v0.6 bag-of-embeddings mean-pool (default,
+    # backward compatible); "transformer" adds a contextual encoder before
+    # pooling to close the capacity asymmetry with the action encoder/predictor.
+    encoder_type: str = "pool"
+    num_layers: int = 4
+    num_heads: int = 8
 
     def __post_init__(self) -> None:
         if self.vocab_size <= 1:
@@ -39,6 +45,12 @@ class CodeStateEncoderConfig:
             raise ValueError("segment_vocab_size must be greater than 1")
         if not 0.0 <= self.dropout < 1.0:
             raise ValueError("dropout must be in [0, 1)")
+        if self.encoder_type not in {"pool", "transformer"}:
+            raise ValueError("encoder_type must be 'pool' or 'transformer'")
+        if self.num_layers <= 0:
+            raise ValueError("num_layers must be positive")
+        if self.num_heads <= 0 or self.embed_dim % self.num_heads != 0:
+            raise ValueError("num_heads must be positive and divide embed_dim")
 
 
 class CodeStateEncoder(nn.Module if nn is not None else object):
@@ -55,6 +67,22 @@ class CodeStateEncoder(nn.Module if nn is not None else object):
         self.position = nn.Parameter(torch.zeros(1, config.max_length, config.embed_dim))
         self.dropout = nn.Dropout(config.dropout)
         self.norm = nn.LayerNorm(config.embed_dim)
+        self.encoder = None
+        if config.encoder_type == "transformer":
+            layer = nn.TransformerEncoderLayer(
+                d_model=config.embed_dim,
+                nhead=config.num_heads,
+                dim_feedforward=config.embed_dim * 4,
+                dropout=config.dropout,
+                activation="gelu",
+                batch_first=True,
+                norm_first=True,
+            )
+            # enable_nested_tensor=False avoids the nested-tensor attention fast
+            # path, which is unimplemented on Apple MPS and only warns here.
+            self.encoder = nn.TransformerEncoder(
+                layer, num_layers=config.num_layers, enable_nested_tensor=False
+            )
         self.proj = nn.Sequential(
             nn.Linear(config.embed_dim, config.embed_dim * 2),
             nn.GELU(),
@@ -95,6 +123,10 @@ class CodeStateEncoder(nn.Module if nn is not None else object):
             + self.position[:, : input_ids.shape[-1], :]
         )
         hidden = self.norm(self.dropout(hidden))
+        if self.encoder is not None:
+            # src_key_padding_mask marks positions to ignore (True = pad).
+            pad_mask = attention_mask == 0
+            hidden = self.encoder(hidden, src_key_padding_mask=pad_mask)
         mask = attention_mask.to(dtype=hidden.dtype).unsqueeze(-1)
         pooled = (hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1.0)
         return self.proj(pooled)
