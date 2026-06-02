@@ -316,15 +316,35 @@ means the no-action baseline scored better.
 The non-interactive renderer contract is
 `codelewm.harness.visual_view_model.v1`: an ANSI-free JSON view model that
 normalizes summary state, generator metadata, candidate rank rows, compact diff
-statistics, diagnostic slots, artifact gates, warnings, and the claim gate for
-terminal, HTML, raw JSON, and optional Textual TUI rendering. The optional TUI
-also exposes a deterministic `codelewm.harness.demo_tui_snapshot.v1` snapshot
-for headless tests.
+statistics, a scalar inference trace over transition-energy/no-action deltas,
+diagnostic slots, artifact gates, warnings, and the claim gate for terminal,
+HTML, raw JSON, and optional Textual TUI rendering. The optional TUI also
+exposes a deterministic `codelewm.harness.demo_tui_snapshot.v1` snapshot for
+headless tests. Raw latent vectors are not implied by the visual trace; linked
+latent-matrix and checkpoint diagnostics remain the representation-summary
+surfaces.
 Diagnostic slots can reference checkpoint-inspection, latent-matrix,
 TensorBoard export, and run-timeline artifacts. Available external diagnostics
 carry the source manifest path, parent artifact id, manifest file path, schema,
 checksum, and byte size; missing diagnostics remain structured
 `not_configured` entries.
+
+The v0.6 execution-trace showcase has its own higher-is-better contract,
+`codelewm.harness.execution_rerank_view_model.v1`, written to
+`reports/execution_rerank_view_model.json`. It is the single schema-versioned
+view model that feeds both the static web report (`demo.html`) and the optional
+execution-rerank Textual TUI; the TUI exposes a deterministic
+`codelewm.harness.execution_rerank_tui_snapshot.v1` snapshot for headless tests.
+The view model normalizes the candidate/trace ranking with per-baseline rank
+disagreement, the headline and an explicit CodeLeWM-versus-no-action comparison,
+per-baseline pass@1 with bootstrap lift CIs, diagnostic slots that stay
+`not_recorded` when absent, and deterministic artifact lineage (parent
+candidate-pack ids, demo command, run-relative paths). The tour forces the
+claim gate closed, never serializes raw latent vectors, and both surfaces
+present diagnostic workflow evidence only. The end-to-end demo is driven by
+`codelewm execution-rerank-demo` (writing the artifact set) and
+`codelewm execution-rerank-tui --demo-dir` (reading the same run), or through
+`scripts/llm-world-model-demo --scenario execution-rerank-mbpp --tour N`.
 
 Demo failure is not a model failure. The report must distinguish provider
 errors, malformed candidate outputs, invalid candidate patches, score/rerank

@@ -51,6 +51,7 @@ def render_demo_terminal_report(
     )
     summary = _mapping(view_model.get("summary"))
     diagnostics = _mapping(view_model.get("diagnostics"))
+    inference_trace = _mapping(view_model.get("inference_trace"))
     view_candidates = [
         candidate for candidate in view_model.get("candidates", ()) if isinstance(candidate, Mapping)
     ]
@@ -181,6 +182,11 @@ def render_demo_terminal_report(
     lines.append(painter.paint("Candidate ranking", "bold"))
     lines.append("-" * 42)
     lines.extend(_candidate_table(view_candidates, painter))
+
+    lines.append("")
+    lines.append(painter.paint("World-model score trace", "bold"))
+    lines.append("-" * 42)
+    lines.extend(_score_trace_table(inference_trace, painter))
 
     lines.append("")
     lines.append(painter.paint("Diagnostics", "bold"))
@@ -323,6 +329,51 @@ def _diagnostics_table(diagnostics: Mapping[str, Any]) -> list[str]:
             f"{' -> ' + _safe_text(slot.get('path')) if slot.get('path') else ''}"
             f"{suffix}"
         )
+    return lines
+
+
+def _score_trace_table(
+    inference_trace: Mapping[str, Any],
+    painter: _Painter,
+) -> list[str]:
+    if not inference_trace:
+        return ["score trace: not_available"]
+    baseline = _mapping(inference_trace.get("baseline"))
+    latent_details = _mapping(inference_trace.get("latent_details"))
+    rows = [
+        row
+        for row in inference_trace.get("rows", ())
+        if isinstance(row, Mapping)
+    ]
+    lines = [
+        f"baseline: no_action {_safe_text(baseline.get('final_score_display'))}",
+        "best delta: "
+        f"{_safe_text(inference_trace.get('best_candidate_minus_no_action_display'))} "
+        f"({_safe_text(inference_trace.get('best_no_action_delta_interpretation'))})",
+        "all candidates worse than no-op: "
+        f"{str(bool(inference_trace.get('all_candidates_worse_than_no_action'))).lower()}",
+    ]
+    if not rows:
+        lines.append("candidate deltas: not_available")
+    else:
+        lines.append(f"{'candidate':<14} {'delta':>12} {'component':<20} trace")
+        for row in rows:
+            delta = _safe_text(row.get("candidate_minus_no_action_display"))
+            interpretation = _safe_text(row.get("no_action_delta_interpretation"))
+            color = "red" if interpretation == "worse_than_no_action" else "green"
+            width = row.get("delta_bar_width")
+            bar_width = width if isinstance(width, int) else 0
+            bar = painter.paint("#" * max(1, min(24, int(bar_width / 4))), color)
+            component = f"energy={_safe_text(row.get('transition_energy_display'))}"
+            lines.append(
+                f"{_safe_text(row.get('candidate_id')):<14} {delta:>12} "
+                f"{component:<20} {bar} {interpretation}"
+            )
+    lines.append(
+        "latent details: "
+        f"{_safe_text(latent_details.get('status'))}"
+        f" - {_safe_text(latent_details.get('reason'))}"
+    )
     return lines
 
 

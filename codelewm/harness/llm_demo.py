@@ -354,6 +354,7 @@ def render_llm_world_model_demo_html(
     generator = _mapping(view_model.get("generator"))
     orders_payload = _mapping(view_model.get("orders"))
     diagnostics = _mapping(view_model.get("diagnostics"))
+    inference_trace = _mapping(view_model.get("inference_trace"))
     candidates = [
         candidate for candidate in view_model.get("candidates", []) if isinstance(candidate, Mapping)
     ]
@@ -383,6 +384,7 @@ def render_llm_world_model_demo_html(
         _candidate_row(candidate, max_score=max_score)
         for candidate in candidates
     )
+    inference_trace_markup = _inference_trace_markup(inference_trace)
     patch_cards = "\n".join(_patch_card(candidate) for candidate in candidates)
     diagnostic_cards = _diagnostics_markup(diagnostics)
     orders = _orders_markup(
@@ -457,36 +459,45 @@ def render_llm_world_model_demo_html(
     </div>
   </section>
 
-  <section class="s" id="orders" data-num="03">
+  <section class="s" id="inference" data-num="03">
     <div class="wrap">
-      <div class="section-head"><span class="section-num">03</span><span class="section-kind">baselines</span></div>
+      <div class="section-head"><span class="section-num">03</span><span class="section-kind">inference</span></div>
+      <h2>World-model inference <em>trace</em>.</h2>
+      <p class="s-deck">This is the scorer evidence recorded by the demo: scalar transition energy, the no-action baseline, and candidate deltas. Latent internals stay explicit when they were not recorded.</p>
+      {inference_trace_markup}
+    </div>
+  </section>
+
+  <section class="s" id="orders" data-num="04">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">04</span><span class="section-kind">baselines</span></div>
       <h2>Orders side by <em>side</em>.</h2>
       <p class="s-deck">This is the tangible harness use case: compare the LLM's original order with CodeLeWM and cheap baselines.</p>
       <div class="order-grid">{orders}</div>
     </div>
   </section>
 
-  <section class="s" id="patches" data-num="04">
+  <section class="s" id="patches" data-num="05">
     <div class="wrap">
-      <div class="section-head"><span class="section-num">04</span><span class="section-kind">patches</span></div>
+      <div class="section-head"><span class="section-num">05</span><span class="section-kind">patches</span></div>
       <h2>Compact candidate <em>diffs</em>.</h2>
       <p class="s-deck">Candidate code is treated as untrusted text. The shared view model shows bounded diff summaries; full patches stay in local artifacts and are not executed.</p>
       <div class="patch-grid">{patch_cards}</div>
     </div>
   </section>
 
-  <section class="s" id="diagnostics" data-num="05">
+  <section class="s" id="diagnostics" data-num="06">
     <div class="wrap">
-      <div class="section-head"><span class="section-num">05</span><span class="section-kind">diagnostics</span></div>
+      <div class="section-head"><span class="section-num">06</span><span class="section-kind">diagnostics</span></div>
       <h2>Model and latent <em>links</em>.</h2>
       <p class="s-deck">The same normalized view model feeds JSON, terminal, HTML, and the future Textual TUI. Missing diagnostics stay explicit.</p>
       <div class="grid-3">{diagnostic_cards}</div>
     </div>
   </section>
 
-  <section class="s" id="next" data-num="06">
+  <section class="s" id="next" data-num="07">
     <div class="wrap">
-      <div class="section-head"><span class="section-num">06</span><span class="section-kind">next run</span></div>
+      <div class="section-head"><span class="section-num">07</span><span class="section-kind">next run</span></div>
       <h2>Make the next run <em>live</em>.</h2>
       <p class="s-deck">Set the dry-run flags to zero when you want provider output instead of fixture candidates.</p>
       <pre class="code">CODELEWM_LLM_DRY_RUN=0
@@ -842,6 +853,74 @@ def _score_by_candidate_id(report: Mapping[str, Any]) -> dict[str, float | None]
     return result
 
 
+def _inference_trace_markup(trace: Mapping[str, Any]) -> str:
+    if not trace:
+        return "<article class=\"mini\"><span>trace</span><strong>not available</strong><p>No scorer trace was recorded.</p></article>"
+    baseline = _mapping(trace.get("baseline"))
+    latent_details = _mapping(trace.get("latent_details"))
+    rows = [
+        row
+        for row in trace.get("rows", ())
+        if isinstance(row, Mapping)
+    ]
+    row_markup = "\n".join(_trace_row(row) for row in rows) or (
+        "<div class=\"trace-empty\">No candidate score rows were recorded.</div>"
+    )
+    span = trace.get("score_span")
+    span_text = "n/a" if not isinstance(span, (int, float)) else f"{float(span):.6f}"
+    return (
+        "<div class=\"trace-panel\">"
+        "<div class=\"trace-stats\">"
+        f"{_trace_stat('scorer', trace.get('model_id'))}"
+        f"{_trace_stat('no-action energy', baseline.get('final_score_display', 'n/a'))}"
+        f"{_trace_stat('best delta', trace.get('best_candidate_minus_no_action_display', 'n/a'))}"
+        f"{_trace_stat('energy span', span_text)}"
+        "</div>"
+        "<div class=\"trace-bars\">"
+        f"{row_markup}"
+        "</div>"
+        "<div class=\"trace-note\">"
+        f"<strong>{_h(trace.get('component_note', 'score components unavailable'))}</strong>"
+        f"<span>latent details: {_h(latent_details.get('status', 'n/a'))}. "
+        f"{_h(latent_details.get('reason', 'not recorded'))}</span>"
+        "</div>"
+        "</div>"
+    )
+
+
+def _trace_stat(label: str, value: object) -> str:
+    return (
+        "<article class=\"trace-stat\">"
+        f"<span>{_h(label)}</span>"
+        f"<strong>{_h(value)}</strong>"
+        "</article>"
+    )
+
+
+def _trace_row(row: Mapping[str, Any]) -> str:
+    candidate_id = str(row.get("candidate_id", "unknown"))
+    interpretation = str(row.get("no_action_delta_interpretation", "not_available"))
+    if interpretation == "better_than_no_action":
+        delta_class = "good"
+    elif interpretation == "worse_than_no_action":
+        delta_class = "bad"
+    else:
+        delta_class = "tie"
+    width = row.get("delta_bar_width")
+    bar_width = width if isinstance(width, int) else 0
+    component = f"energy {_h(row.get('transition_energy_display', 'n/a'))}"
+    return (
+        "<div class=\"trace-row\">"
+        f"<code>{_h(candidate_id)}</code>"
+        f"<span>{_h(row.get('candidate_minus_no_action_display', 'n/a'))}</span>"
+        "<div class=\"delta-track\">"
+        f"<i class=\"delta-fill {delta_class}\" style=\"width:{max(0, min(100, bar_width))}%\"></i>"
+        "</div>"
+        f"<small>{component} / {_h(interpretation)}</small>"
+        "</div>"
+    )
+
+
 def _candidate_row(
     candidate: Mapping[str, Any],
     *,
@@ -970,7 +1049,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:400 13px/1.55 var(--mon
 .hero{padding:72px 0 48px;border-bottom:1px solid var(--line)}
 .hero-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:36px;align-items:start}
 .ident{font:700 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--acid)}
-h1{margin:16px 0 14px;font:700 52px/1.02 var(--mono);letter-spacing:-.02em;color:var(--paper)}
+h1{margin:16px 0 14px;font:700 52px/1.02 var(--mono);letter-spacing:0;color:var(--paper)}
 .deck,.s-deck{font:400 17px/1.55 var(--serif);color:var(--ink-dim);max-width:760px}
 .pill-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 .pill{border:1px solid var(--line-2);padding:8px 10px;color:var(--ink);background:var(--bg-2)}
@@ -1000,6 +1079,25 @@ h2 em{font-style:normal;color:var(--acid)}
 code{color:var(--paper)}
 .bar{height:11px;background:#111a13;border:1px solid var(--line)}
 .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--amber))}
+.trace-panel{background:var(--bg-2);border:1px solid var(--line-2)}
+.trace-stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.trace-stat{padding:14px;border-right:1px solid var(--line)}
+.trace-stat:last-child{border-right:0}
+.trace-stat span{display:block;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.14em;font-size:10px}
+.trace-stat strong{display:block;margin-top:8px;color:var(--paper);font-size:16px;word-break:break-word}
+.trace-bars{padding:14px}
+.trace-row{display:grid;grid-template-columns:130px 92px minmax(140px,1fr) 260px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.trace-row:last-child{border-bottom:0}
+.trace-row span{color:var(--paper);text-align:right}
+.trace-row small{color:var(--ink-dim)}
+.delta-track{height:13px;background:#111a13;border:1px solid var(--line)}
+.delta-fill{display:block;height:100%}
+.delta-fill.good{background:var(--acid)}
+.delta-fill.bad{background:var(--rose)}
+.delta-fill.tie{background:var(--amber)}
+.trace-note{display:grid;gap:6px;padding:14px;border-top:1px solid var(--line);color:var(--ink-dim)}
+.trace-note strong{color:var(--paper);font-weight:500}
+.trace-empty{color:var(--ink-dim);padding:8px 0}
 .order-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .order-card{padding:14px}
 .order-card h3{margin:0 0 10px;color:var(--paper);font-size:14px}
@@ -1014,7 +1112,10 @@ pre{margin:0;white-space:pre-wrap;overflow:auto;color:var(--ink);background:#070
 .code{padding:16px;border:1px solid var(--line-2);background:#070907;color:var(--paper)}
 .footnote{color:var(--ink-dim);font:400 14px/1.55 var(--serif)}
 @media (max-width:820px){
-  .hero-grid,.grid-3,.order-grid{grid-template-columns:1fr}
+  .hero-grid,.grid-3,.order-grid,.trace-stats{grid-template-columns:1fr}
+  .trace-stat{border-right:0;border-bottom:1px solid var(--line)}
+  .trace-row{grid-template-columns:1fr;gap:6px}
+  .trace-row span{text-align:left}
   h1{font-size:38px}
 }
 """

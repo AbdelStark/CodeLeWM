@@ -20,15 +20,25 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
+
+from codelewm.observability.logging import redact_value
 
 
 EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION = (
     "codelewm.harness.execution_rerank_view_model.v1"
 )
 SCORE_DIRECTION_HIGHER_IS_BETTER = "higher_is_better"
+
+# Diagnostic slots are always present so that a missing slot stays explicit in
+# both the TUI and the web report rather than silently disappearing.
+EXECUTION_RERANK_DIAGNOSTIC_SLOTS = ("retrieval_evidence", "checkpoint", "sandbox")
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
 class ExecutionRerankViewModelError(ValueError):
@@ -66,6 +76,9 @@ class ExecutionRerankViewModel:
     claim_reason: str
     completion_panels: tuple[CompletionPanelEntry, ...]
     headline_panel: dict[str, Any]
+    no_action_panel: dict[str, Any]
+    diagnostics: dict[str, Any]
+    artifact_lineage: dict[str, Any]
     score_direction: str
     notes: tuple[str, ...]
 
@@ -96,6 +109,9 @@ class ExecutionRerankViewModel:
                 for c in self.completion_panels
             ],
             "headline_panel": dict(self.headline_panel),
+            "no_action_panel": dict(self.no_action_panel),
+            "diagnostics": dict(self.diagnostics),
+            "artifact_lineage": dict(self.artifact_lineage),
             "score_direction": self.score_direction,
             "notes": list(self.notes),
         }
@@ -107,6 +123,8 @@ def build_execution_rerank_view_model(
     scenario_id: str,
     completion_records: Sequence[Mapping[str, Any]],
     code_preview_chars: int = 240,
+    diagnostics: Mapping[str, Any] | None = None,
+    artifact_lineage: Mapping[str, Any] | None = None,
 ) -> ExecutionRerankViewModel:
     """Build the view model from a rerank report + per-completion records.
 
@@ -115,6 +133,12 @@ def build_execution_rerank_view_model(
     ``predicted_output_latent`` block. The contract is intentionally
     loose so the operator's offline-labeling pipeline can supply
     whatever extra metadata it wants without breaking the view model.
+
+    ``diagnostics`` and ``artifact_lineage`` are optional presentation
+    blocks supplied by the demo runner. They feed the same TUI and web
+    report, keeping the two surfaces in lockstep on one schema-versioned
+    contract. Missing diagnostic slots stay explicit (``not_recorded``)
+    rather than vanishing.
     """
 
     _require_keys(
@@ -206,16 +230,32 @@ def build_execution_rerank_view_model(
     llm_summary = next(
         (b for b in baselines if b["baseline"] == "llm_order"), None
     )
+    no_action_summary = next(
+        (b for b in baselines if b["baseline"] == "no_action"), None
+    )
 
+    codelewm_pass_at_1 = codelewm_summary["pass_at_1"] if codelewm_summary else 0.0
+    no_action_pass_at_1 = (
+        no_action_summary["pass_at_1"] if no_action_summary else None
+    )
     headline_panel = {
-        "codelewm_pass_at_1": codelewm_summary["pass_at_1"] if codelewm_summary else 0.0,
+        "codelewm_pass_at_1": codelewm_pass_at_1,
         "llm_order_pass_at_1": llm_summary["pass_at_1"] if llm_summary else 0.0,
+        "no_action_pass_at_1": no_action_pass_at_1,
         "pass_at_1_lift": lift,
         "bootstrap_lift_ci_lo": ci[0],
         "bootstrap_lift_ci_hi": ci[1],
         "claim_allowed": claim_allowed,
         "claim_reason": claim_reason,
     }
+
+    no_action_panel = _no_action_panel(
+        rerank_report=rerank_report,
+        codelewm_pass_at_1=codelewm_pass_at_1,
+        no_action_pass_at_1=no_action_pass_at_1,
+    )
+    diagnostics_view = _diagnostics_view(diagnostics)
+    artifact_lineage_view = _artifact_lineage_view(artifact_lineage)
 
     notes: list[str] = []
     if not claim_allowed:
@@ -243,6 +283,9 @@ def build_execution_rerank_view_model(
         claim_reason=claim_reason,
         completion_panels=tuple(panels),
         headline_panel=headline_panel,
+        no_action_panel=no_action_panel,
+        diagnostics=diagnostics_view,
+        artifact_lineage=artifact_lineage_view,
         score_direction=SCORE_DIRECTION_HIGHER_IS_BETTER,
         notes=tuple(notes),
     )
@@ -256,6 +299,212 @@ def _require_keys(
         raise ExecutionRerankViewModelError(
             f"{where} is missing required key(s): {missing}"
         )
+
+
+def _no_action_panel(
+    *,
+    rerank_report: Mapping[str, Any],
+    codelewm_pass_at_1: float,
+    no_action_pass_at_1: float | None,
+) -> dict[str, Any]:
+    """Explicit CodeLeWM-vs-no-action comparison (higher pass@1 is better)."""
+
+    lift_over_no_action = rerank_report.get("codelewm_lift_over_no_action")
+    ci_raw = rerank_report.get("bootstrap_lift_over_no_action_ci")
+    ci: list[float] | None = None
+    if isinstance(ci_raw, (list, tuple)) and len(ci_raw) == 2:
+        ci = [float(ci_raw[0]), float(ci_raw[1])]
+    lift = None if lift_over_no_action is None else float(lift_over_no_action)
+    if no_action_pass_at_1 is None:
+        return {
+            "status": "not_recorded",
+            "no_action_pass_at_1": None,
+            "codelewm_pass_at_1": float(codelewm_pass_at_1),
+            "codelewm_minus_no_action": None,
+            "codelewm_lift_over_no_action": lift,
+            "bootstrap_lift_over_no_action_ci": ci,
+            "interpretation": "not_recorded",
+        }
+    delta = float(codelewm_pass_at_1) - float(no_action_pass_at_1)
+    return {
+        "status": "available",
+        "no_action_pass_at_1": float(no_action_pass_at_1),
+        "codelewm_pass_at_1": float(codelewm_pass_at_1),
+        "codelewm_minus_no_action": delta,
+        "codelewm_lift_over_no_action": lift,
+        "bootstrap_lift_over_no_action_ci": ci,
+        "interpretation": _interpret_higher_is_better(delta),
+    }
+
+
+def _interpret_higher_is_better(delta: float) -> str:
+    if delta > 0:
+        return "better_than_no_action"
+    if delta < 0:
+        return "worse_than_no_action"
+    return "tied_with_no_action"
+
+
+def _diagnostics_view(diagnostics: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Normalize diagnostic slots so a missing slot stays explicit."""
+
+    provided = diagnostics if isinstance(diagnostics, Mapping) else {}
+    view: dict[str, Any] = {}
+    for name in EXECUTION_RERANK_DIAGNOSTIC_SLOTS:
+        view[name] = _diagnostic_slot(provided.get(name))
+    # Preserve any extra operator-supplied slots verbatim, still explicit.
+    for name, slot in provided.items():
+        key = str(name)
+        if key in view:
+            continue
+        view[key] = _diagnostic_slot(slot)
+    return view
+
+
+def _diagnostic_slot(slot: Any) -> dict[str, Any]:
+    if isinstance(slot, Mapping) and slot:
+        normalized = dict(slot)
+        normalized.setdefault("status", "available")
+        return normalized
+    return {"status": "not_recorded"}
+
+
+def ordered_diagnostic_slot_names(diagnostics: Mapping[str, Any]) -> list[str]:
+    """Canonical diagnostic-slot order independent of dict key order.
+
+    Both renderers (web report and TUI) use this so the slots appear in the
+    same order regardless of whether the view model came from memory or from a
+    ``sort_keys=True`` on-disk artifact, keeping the two surfaces in lockstep.
+    """
+
+    known = [name for name in EXECUTION_RERANK_DIAGNOSTIC_SLOTS if name in diagnostics]
+    extras = sorted(
+        str(name)
+        for name in diagnostics
+        if name not in EXECUTION_RERANK_DIAGNOSTIC_SLOTS
+    )
+    return known + extras
+
+
+def _artifact_lineage_view(
+    artifact_lineage: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Deterministic provenance pointers shared by both surfaces.
+
+    The artifact manifest id is intentionally absent: the manifest hashes
+    this view model, so it cannot reference its own descendant. Lineage
+    therefore records the upstream candidate-pack manifest ids, the demo
+    command, and the run-relative artifact paths.
+    """
+
+    provided = artifact_lineage if isinstance(artifact_lineage, Mapping) else {}
+    parents = provided.get("parent_artifact_ids")
+    command = provided.get("command")
+    return {
+        "parent_artifact_ids": [str(item) for item in parents or ()],
+        "command": [str(item) for item in command or ()],
+        "manifest_path": _optional_str(provided.get("manifest_path")),
+        "report_path": _optional_str(provided.get("report_path")),
+        "view_model_path": _optional_str(provided.get("view_model_path")),
+        "html_path": _optional_str(provided.get("html_path")),
+        "asciicast_path": _optional_str(provided.get("asciicast_path")),
+    }
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
+def validate_execution_rerank_view_model_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate an execution-rerank view-model payload; return its JSON dict."""
+
+    if not isinstance(payload, Mapping):
+        raise ExecutionRerankViewModelError(
+            "execution rerank view model must be a JSON object"
+        )
+    if payload.get("schema_version") != EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION:
+        raise ExecutionRerankViewModelError(
+            "unsupported execution rerank view model schema_version; "
+            f"expected {EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION!r}"
+        )
+    required = {
+        "schema_version",
+        "scenario_id",
+        "benchmark_id",
+        "problem_count",
+        "completions_per_problem",
+        "baselines",
+        "pass_at_1_lift",
+        "bootstrap_lift_ci",
+        "claim_allowed",
+        "claim_reason",
+        "completion_panels",
+        "headline_panel",
+        "no_action_panel",
+        "diagnostics",
+        "artifact_lineage",
+        "score_direction",
+        "notes",
+    }
+    missing = sorted(required - set(payload))
+    if missing:
+        raise ExecutionRerankViewModelError(
+            "execution rerank view model missing required key(s): "
+            f"{', '.join(missing)}"
+        )
+    normalized = dict(redact_value(payload))
+    _reject_ansi(normalized)
+    try:
+        json.dumps(normalized, allow_nan=False, sort_keys=True)
+    except (TypeError, ValueError) as exc:
+        raise ExecutionRerankViewModelError(
+            "execution rerank view model must be JSON-native"
+        ) from exc
+    return normalized
+
+
+def write_execution_rerank_view_model(
+    payload: Mapping[str, Any], path: Path | str
+) -> None:
+    """Write a validated execution-rerank view-model JSON artifact."""
+
+    normalized = validate_execution_rerank_view_model_payload(payload)
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(normalized, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def read_execution_rerank_view_model(path: Path | str) -> Mapping[str, Any]:
+    """Read and validate an execution-rerank view-model JSON artifact."""
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping):
+        raise ExecutionRerankViewModelError(
+            "execution rerank view model must be a JSON object"
+        )
+    return validate_execution_rerank_view_model_payload(payload)
+
+
+def _reject_ansi(value: Any) -> None:
+    if isinstance(value, str):
+        if _ANSI_RE.search(value):
+            raise ExecutionRerankViewModelError(
+                "execution rerank view model must not contain ANSI escape codes"
+            )
+        return
+    if isinstance(value, Mapping):
+        for item in value.values():
+            _reject_ansi(item)
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            _reject_ansi(item)
 
 
 def to_json(model: ExecutionRerankViewModel) -> str:

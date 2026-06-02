@@ -183,6 +183,12 @@ Planned schemas:
   by JSON, rich terminal, HTML, and optional Textual TUI views.
 - `codelewm.harness.demo_tui_snapshot.v1`: implemented deterministic snapshot
   consumed by the optional Textual TUI and headless TUI fixture tests.
+- `codelewm.harness.execution_rerank_view_model.v1`: implemented normalized data
+  for the v0.6 execution-trace showcase, consumed by JSON, rich terminal, the
+  web report, and the optional Textual TUI.
+- `codelewm.harness.execution_rerank_tui_snapshot.v1`: implemented deterministic
+  snapshot consumed by the optional execution-rerank Textual TUI and its
+  headless fixture tests.
 
 TensorBoard-compatible output and Textual rendering remain optional runtime
 surfaces. Base package imports, fixture tests, JSON reports, and non-interactive
@@ -206,15 +212,28 @@ and TUI panels. Visual reports are diagnostic only and cannot
 support positive semantic-latent-axis or coding-usefulness claims without the
 relevant benchmark gates.
 The LLM demo writes `reports/visual_view_model.json` with compact candidate
-diff summaries, score/no-action deltas, diagnostic slots, artifact gate status
-when available, and no ANSI terminal layout data. Textual is implemented behind
-the optional `tui` dependency group through `codelewm llm-demo-tui` and
+diff summaries, score/no-action deltas, a scalar transition-energy inference
+trace, diagnostic slots, artifact gate status when available, and no ANSI
+terminal layout data. Textual is implemented behind the optional `tui`
+dependency group through `codelewm llm-demo-tui` and
 `scripts/llm-world-model-demo --tui`; the view model remains the stable
 non-interactive contract consumed by JSON, rich terminal, HTML, and TUI views.
 The demo can link checkpoint-inspection, latent-matrix, TensorBoard export, and
 run-timeline diagnostics. Linked diagnostics include manifest-backed artifact
 ids and checksums when a manifest is provided; absent diagnostics are
 `not_configured`, not silently dropped.
+The v0.6 execution-trace showcase writes
+`reports/execution_rerank_view_model.json` as the single schema-versioned
+contract feeding both the static web report (`demo.html`) and the optional
+Textual TUI (`codelewm execution-rerank-tui`, `scripts/llm-world-model-demo
+--scenario execution-rerank-mbpp --tour N --tui`). The view model carries the
+candidate/trace ranking, the headline and explicit no-action comparison,
+per-baseline pass@1, diagnostic slots, and deterministic artifact lineage
+(parent candidate-pack ids, command, run-relative paths). Missing diagnostics
+stay explicit as `not_recorded`; raw latent vectors are never serialized; the
+claim gate stays closed for the demo, so both surfaces present diagnostic
+workflow evidence only. Live runs secret-scan every published artifact and emit
+a `demo_report` artifact manifest with candidate-pack lineage.
 
 ## Artifact Lineage
 

@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from codelewm.harness import (
     EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION,
     ExecutionRerankViewModelError,
     build_execution_rerank_view_model,
+    read_execution_rerank_view_model,
+    validate_execution_rerank_view_model_payload,
+    write_execution_rerank_view_model,
 )
 
 
@@ -164,6 +169,113 @@ class ExecutionRerankViewModelTest(unittest.TestCase):
                 scenario_id="execution-rerank-mbpp",
                 completion_records=_completions(),
             )
+
+    def test_no_action_panel_marks_missing_baseline_as_not_recorded(self) -> None:
+        model = build_execution_rerank_view_model(
+            rerank_report=_rerank_report(),
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+        )
+        panel = model.no_action_panel
+        self.assertEqual(panel["status"], "not_recorded")
+        self.assertIsNone(panel["no_action_pass_at_1"])
+        self.assertEqual(panel["interpretation"], "not_recorded")
+
+    def test_no_action_panel_computes_delta_when_baseline_present(self) -> None:
+        report = _rerank_report()
+        report["baselines"].append(
+            {
+                "baseline": "no_action",
+                "pass_at_1": 0.0,
+                "pass_count": 0,
+                "problem_count": 1,
+            }
+        )
+        report["codelewm_lift_over_no_action"] = 100.0
+        report["bootstrap_lift_over_no_action_ci"] = [60.0, 100.0]
+        model = build_execution_rerank_view_model(
+            rerank_report=report,
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+        )
+        panel = model.no_action_panel
+        self.assertEqual(panel["status"], "available")
+        self.assertEqual(panel["no_action_pass_at_1"], 0.0)
+        self.assertEqual(panel["codelewm_pass_at_1"], 1.0)
+        self.assertEqual(panel["codelewm_minus_no_action"], 1.0)
+        self.assertEqual(panel["interpretation"], "better_than_no_action")
+        self.assertEqual(panel["codelewm_lift_over_no_action"], 100.0)
+        self.assertEqual(panel["bootstrap_lift_over_no_action_ci"], [60.0, 100.0])
+        self.assertEqual(model.headline_panel["no_action_pass_at_1"], 0.0)
+
+    def test_diagnostic_slots_stay_explicit(self) -> None:
+        model = build_execution_rerank_view_model(
+            rerank_report=_rerank_report(),
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+            diagnostics={
+                "checkpoint": {"model_id": "codelewm.scorer.v1", "device": "cpu"},
+            },
+        )
+        diagnostics = model.diagnostics
+        # Provided slot gets an explicit available status.
+        self.assertEqual(diagnostics["checkpoint"]["status"], "available")
+        self.assertEqual(diagnostics["checkpoint"]["model_id"], "codelewm.scorer.v1")
+        # Unprovided slots are still present and explicit.
+        self.assertEqual(diagnostics["retrieval_evidence"]["status"], "not_recorded")
+        self.assertEqual(diagnostics["sandbox"]["status"], "not_recorded")
+
+    def test_artifact_lineage_carries_parents_command_and_paths(self) -> None:
+        model = build_execution_rerank_view_model(
+            rerank_report=_rerank_report(),
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+            artifact_lineage={
+                "parent_artifact_ids": ["candidate_pack-abc123"],
+                "command": ["scripts/llm-world-model-demo", "--tour", "2"],
+                "manifest_path": "manifest.json",
+                "view_model_path": "reports/execution_rerank_view_model.json",
+                "html_path": "demo.html",
+            },
+        )
+        lineage = model.artifact_lineage
+        self.assertEqual(lineage["parent_artifact_ids"], ["candidate_pack-abc123"])
+        self.assertEqual(
+            lineage["command"], ["scripts/llm-world-model-demo", "--tour", "2"]
+        )
+        self.assertEqual(lineage["manifest_path"], "manifest.json")
+        self.assertEqual(lineage["html_path"], "demo.html")
+        self.assertIsNone(lineage["asciicast_path"])
+
+    def test_validate_round_trips_through_disk(self) -> None:
+        model = build_execution_rerank_view_model(
+            rerank_report=_rerank_report(),
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+        )
+        payload = model.as_dict()
+        validated = validate_execution_rerank_view_model_payload(payload)
+        self.assertEqual(
+            validated["schema_version"], EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "view_model.json"
+            write_execution_rerank_view_model(payload, path)
+            reloaded = read_execution_rerank_view_model(path)
+        self.assertEqual(reloaded["completion_panels"][0]["completion_id"], "c2")
+        self.assertIn("no_action_panel", reloaded)
+        self.assertIn("diagnostics", reloaded)
+        self.assertIn("artifact_lineage", reloaded)
+
+    def test_validate_rejects_wrong_schema_version(self) -> None:
+        payload = build_execution_rerank_view_model(
+            rerank_report=_rerank_report(),
+            scenario_id="execution-rerank-mbpp",
+            completion_records=_completions(),
+        ).as_dict()
+        payload["schema_version"] = "codelewm.harness.execution_rerank_view_model.v0"
+        with self.assertRaises(ExecutionRerankViewModelError):
+            validate_execution_rerank_view_model_payload(payload)
 
 
 if __name__ == "__main__":  # pragma: no cover
