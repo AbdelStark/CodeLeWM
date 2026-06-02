@@ -74,24 +74,36 @@ def load_execution_source(
     source_path: Path,
     output_path: Path,
     limit: int | None = None,
+    deduplicate: bool = False,
 ) -> dict[str, object]:
     """Write a JSONL ingestion artifact from ``source_path``.
 
     Returns a summary dict with the count, output path, dataset, license,
     and a list of unique ``source_problem_id``s. The output file is JSONL
     where every line is a :class:`SourceSubmission` ``as_dict``.
+
+    When ``deduplicate`` is True (RFC-0015 WS-B3), submissions whose content
+    ``raw_hash`` was already written are skipped, so byte-identical
+    (code, input, output) submissions are not ingested more than once. The
+    default is False so existing build outputs are unchanged; the v0.7 pack
+    build opts in.
     """
 
     adapter = get_execution_source_adapter(source)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     seen_problems: set[str] = set()
     seen_submissions: set[str] = set()
+    seen_hashes: set[str] = set()
     count = 0
+    duplicate_count = 0
     held_out = adapter.held_out_for_eval
     with output_path.open("w", encoding="utf-8") as fh:
         for submission in adapter.iter_submissions(source_path=source_path):
             if limit is not None and count >= limit:
                 break
+            if deduplicate and submission.raw_hash in seen_hashes:
+                duplicate_count += 1
+                continue
             payload = submission.as_dict()
             payload["held_out_for_eval"] = held_out
             payload["schema_version"] = EXECUTION_SOURCE_RECORD_SCHEMA_VERSION
@@ -99,6 +111,7 @@ def load_execution_source(
             fh.write("\n")
             seen_problems.add(submission.source_problem_id)
             seen_submissions.add(submission.source_submission_id)
+            seen_hashes.add(submission.raw_hash)
             count += 1
     return {
         "source": source,
@@ -108,6 +121,8 @@ def load_execution_source(
         "submission_count": count,
         "unique_problem_count": len(seen_problems),
         "unique_submission_count": len(seen_submissions),
+        "deduplicate": deduplicate,
+        "duplicate_skipped_count": duplicate_count,
         "output_path": str(output_path),
         "schema_version": EXECUTION_SOURCE_RECORD_SCHEMA_VERSION,
     }
