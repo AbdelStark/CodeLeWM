@@ -691,7 +691,15 @@ def _mean_pairwise_cosine(emb: np.ndarray) -> float:
         return 0.0
     norms = np.linalg.norm(emb, axis=-1, keepdims=True) + 1e-12
     unit = emb / norms
-    sims = unit @ unit.T
-    n = sims.shape[0]
-    iu = np.triu_indices(n, k=1)
-    return float(sims[iu].mean())
+    # np.errstate guards the spurious divide/overflow/invalid RuntimeWarnings
+    # that numpy's Apple Accelerate matmul backend emits even on small, finite
+    # matrices (same quirk handled in rerank_calibrator). This is a
+    # diagnostics-only metric, so it never reaches the training gradient.
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        sims = unit @ unit.T
+        n = sims.shape[0]
+        iu = np.triu_indices(n, k=1)
+        mean_cosine = float(sims[iu].mean())
+    if not math.isfinite(mean_cosine):
+        return 0.0
+    return mean_cosine
