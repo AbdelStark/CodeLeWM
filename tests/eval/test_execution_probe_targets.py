@@ -25,9 +25,31 @@ class OutputTypeProbeTest(unittest.TestCase):
 
 
 class WillRaiseProbeTest(unittest.TestCase):
-    def test_exception_kind_is_true(self) -> None:
+    # RFC-0015 WS-B4: real packed records mark a raising run with
+    # execution_status="raised" / output_type="exception" (output_kind stays
+    # "value"), not output_kind="exception".
+    def test_raised_status_is_true(self) -> None:
         self.assertEqual(
-            label_record({"output_kind": "exception"}, "will_raise"), True
+            label_record(
+                {"execution_status": "raised", "output_type": "exception", "output_kind": "value"},
+                "will_raise",
+            ),
+            True,
+        )
+
+    def test_exception_output_type_is_true(self) -> None:
+        self.assertEqual(
+            label_record({"output_type": "exception", "output_kind": "value"}, "will_raise"),
+            True,
+        )
+
+    def test_ok_status_value_is_false(self) -> None:
+        self.assertEqual(
+            label_record(
+                {"execution_status": "ok", "output_type": "int", "output_kind": "value"},
+                "will_raise",
+            ),
+            False,
         )
 
     def test_value_kind_is_false(self) -> None:
