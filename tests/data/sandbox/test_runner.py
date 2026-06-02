@@ -301,6 +301,29 @@ class SandboxRunnerTimeoutTest(unittest.TestCase):
         self.assertEqual(result.exit_code, SandboxExitCode.TIMEOUT)
         self.assertEqual(result.output_kind, "timeout")
 
+    def test_cpu_limit_kill_is_graceful_not_fatal(self) -> None:
+        # RFC-0015 WS-B data hardening: a child killed by a resource signal
+        # (SIGXCPU here — CPU limit 1s fires before the 8s wall timeout) before
+        # it can emit a result line must be a graceful per-case limit result,
+        # not a fatal SandboxRunnerError that aborts the whole pack build.
+        # determinism_check=True matches the pack-build path that crashed.
+        code = "def f():\n    i = 0\n    while True:\n        i += 1\n"
+        result = run_one(
+            code,
+            input_repr=json.dumps([]),
+            function_name="f",
+            policy=_fast_policy(timeout_ms=8000, cpu_seconds=1, determinism_check=True),
+        )
+        self.assertNotEqual(result.exit_code, SandboxExitCode.OK)
+        self.assertIn(
+            result.exit_code,
+            {
+                SandboxExitCode.TIMEOUT,
+                SandboxExitCode.OOM,
+                SandboxExitCode.INTERNAL_ERROR,
+            },
+        )
+
 
 class SandboxRunnerDeterminismTest(unittest.TestCase):
     def test_deterministic_function_passes_check(self) -> None:
