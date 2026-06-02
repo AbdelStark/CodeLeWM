@@ -86,11 +86,16 @@ from .demo_scenarios import (
     write_demo_scenario_shell_env,
 )
 from .execution_rerank_view_model import (
+    EXECUTION_RERANK_DIAGNOSTIC_SLOTS,
     EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION,
     CompletionPanelEntry,
     ExecutionRerankViewModel,
     ExecutionRerankViewModelError,
     build_execution_rerank_view_model,
+    ordered_diagnostic_slot_names,
+    read_execution_rerank_view_model,
+    validate_execution_rerank_view_model_payload,
+    write_execution_rerank_view_model,
 )
 from .scorer import (
     ERROR_REPORT_SCHEMA_VERSION,
@@ -130,11 +135,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 __all__ = [
     "ERROR_REPORT_SCHEMA_VERSION",
     "CompletionPanelEntry",
+    "EXECUTION_RERANK_DIAGNOSTIC_SLOTS",
     "EXECUTION_RERANK_SCENARIO_ID",
     "EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION",
     "ExecutionRerankViewModel",
     "ExecutionRerankViewModelError",
     "build_execution_rerank_view_model",
+    "ordered_diagnostic_slot_names",
+    "read_execution_rerank_view_model",
+    "validate_execution_rerank_view_model_payload",
+    "write_execution_rerank_view_model",
     "INDEX_BUILD_RESULT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_ARTIFACT_SCHEMA_VERSION",
     "LLM_CANDIDATE_PACK_SCHEMA_VERSION",

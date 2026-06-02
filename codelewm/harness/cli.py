@@ -309,6 +309,54 @@ def build_parser() -> argparse.ArgumentParser:
     )
     llm_demo_tui.add_argument("--json", action="store_true", help="emit JSON errors")
     llm_demo_tui.set_defaults(func=_llm_demo_tui_command)
+    execution_demo = subparsers.add_parser(
+        "execution-rerank-demo",
+        help="run the v0.6 execution-rerank tour and write the showcase artifact set",
+    )
+    execution_demo.add_argument("--checkpoint", type=Path, required=True)
+    execution_demo.add_argument("--out", type=Path, required=True, help="run directory")
+    execution_demo.add_argument("--tour", type=int, default=5, help="number of built-in problems")
+    execution_demo.add_argument("--scenario", default="execution-rerank-mbpp")
+    execution_demo.add_argument(
+        "--device", default="cpu", choices=("cpu", "cuda", "mps", "auto")
+    )
+    execution_demo.add_argument(
+        "--html", type=Path, help="optional extra self-contained HTML export path"
+    )
+    execution_demo.add_argument("--allow-unsafe-checkpoint", action="store_true")
+    execution_demo.add_argument(
+        "--fixture-scorer",
+        action="store_true",
+        help="allow a deterministic fixture scorer for tests/demos",
+    )
+    execution_demo.add_argument("--overwrite", action="store_true")
+    execution_demo.add_argument(
+        "--tui", action="store_true", help="open the Textual TUI after the run"
+    )
+    execution_demo.add_argument("--json", action="store_true")
+    execution_demo.set_defaults(func=_execution_rerank_demo_command)
+    execution_tui = subparsers.add_parser(
+        "execution-rerank-tui",
+        help="open a Textual TUI for an existing execution-rerank tour",
+    )
+    execution_tui_source = execution_tui.add_mutually_exclusive_group(required=True)
+    execution_tui_source.add_argument(
+        "--view-model",
+        type=Path,
+        help="path to reports/execution_rerank_view_model.json",
+    )
+    execution_tui_source.add_argument(
+        "--demo-dir",
+        type=Path,
+        help="demo directory containing reports/execution_rerank_view_model.json",
+    )
+    execution_tui.add_argument(
+        "--snapshot-json",
+        action="store_true",
+        help="emit a deterministic JSON snapshot instead of opening Textual",
+    )
+    execution_tui.add_argument("--json", action="store_true", help="emit JSON errors")
+    execution_tui.set_defaults(func=_execution_rerank_tui_command)
     openrouter = subparsers.add_parser("openrouter", help="OpenRouter helper utilities")
     openrouter_subcommands = openrouter.add_subparsers(dest="openrouter_command")
     byok_register = openrouter_subcommands.add_parser(
@@ -1797,6 +1845,119 @@ def _llm_demo_tui_command(args: argparse.Namespace) -> int:
     except TextualDemoTuiError as exc:
         error = ScoreError(
             f"LLM demo TUI failed: {exc}",
+            error_type=exc.error_type,  # type: ignore[arg-type]
+            remediation=exc.remediation,
+            artifact=str(args.view_model or args.demo_dir or ""),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=bool(args.json or args.snapshot_json))
+        return 2
+
+
+def _execution_rerank_demo_command(args: argparse.Namespace) -> int:
+    if args.json and args.tui:
+        error = ScoreError(
+            "`codelewm execution-rerank-demo --json --tui` is ambiguous",
+            error_type="config_error",
+            remediation="use --json for machine output or --tui for the interactive Textual viewer",
+            artifact=str(args.out),
+        )
+        _emit_error(args, error, json_output=True)
+        return 2
+    try:
+        from codelewm.harness.execution_rerank_demo import (
+            ExecutionRerankDemoError,
+            render_execution_rerank_tour_terminal,
+            run_execution_rerank_tour,
+        )
+
+        result = run_execution_rerank_tour(
+            checkpoint=args.checkpoint,
+            out=args.out,
+            tour_count=args.tour,
+            scenario_id=args.scenario,
+            device=args.device,
+            html_export=args.html,
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            require_learned_scorer=not args.fixture_scorer,
+            overwrite=args.overwrite,
+            command=(
+                "codelewm",
+                "execution-rerank-demo",
+                "--scenario",
+                args.scenario,
+                "--tour",
+                str(args.tour),
+            ),
+        )
+    except (ExecutionRerankDemoError, ScoreError) as exc:
+        error = ScoreError(
+            f"execution-rerank tour failed: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the tour inputs, checkpoint, and output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0
+    if args.tui:
+        try:
+            from codelewm.harness.execution_rerank_tui import (
+                ExecutionRerankTuiError,
+                run_execution_rerank_tui,
+            )
+
+            return run_execution_rerank_tui(args.out / result.view_model_path)
+        except ExecutionRerankTuiError as exc:
+            error = ScoreError(
+                f"execution-rerank TUI failed: {exc}",
+                error_type=exc.error_type,  # type: ignore[arg-type]
+                remediation=exc.remediation,
+                artifact=str(args.out / result.view_model_path),
+                caused_by=f"{exc.__class__.__name__}: {exc}",
+            )
+            _emit_error(args, error, json_output=False)
+            return 2
+    report_path = args.out / result.report_path
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    print(render_execution_rerank_tour_terminal(report))
+    print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+    print(f"demo_report: {report_path}")
+    print(f"view_model: {args.out / result.view_model_path}")
+    print(f"html: {args.out / result.html_path}")
+    if result.html_export_path is not None:
+        print(f"html_export: {result.html_export_path}")
+    return 0
+
+
+def _execution_rerank_tui_command(args: argparse.Namespace) -> int:
+    try:
+        from codelewm.harness.execution_rerank_tui import (
+            ExecutionRerankTuiError,
+            build_execution_rerank_tui_snapshot,
+            load_execution_rerank_tui_view_model,
+            resolve_execution_rerank_tui_view_model_path,
+            run_execution_rerank_tui,
+        )
+
+        path = resolve_execution_rerank_tui_view_model_path(
+            view_model=args.view_model,
+            demo_dir=args.demo_dir,
+        )
+        if args.snapshot_json:
+            payload = build_execution_rerank_tui_snapshot(
+                load_execution_rerank_tui_view_model(path)
+            )
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        return run_execution_rerank_tui(path)
+    except ExecutionRerankTuiError as exc:
+        error = ScoreError(
+            f"execution-rerank TUI failed: {exc}",
             error_type=exc.error_type,  # type: ignore[arg-type]
             remediation=exc.remediation,
             artifact=str(args.view_model or args.demo_dir or ""),

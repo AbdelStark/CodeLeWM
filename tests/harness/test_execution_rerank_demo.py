@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from codelewm.harness.execution_rerank_demo import (
     EXECUTION_RERANK_TOUR_REPORT_SCHEMA_VERSION,
@@ -57,6 +58,27 @@ class ExecutionRerankDemoTest(unittest.TestCase):
         self.assertIn("return n * n", html)
         self.assertIn("square-neg:pass", html)
         self.assertIn("CodeLeWM execution-rerank tour", asciicast)
+        # The shared view model carries the new no-action, diagnostics, and
+        # lineage blocks that feed both the web report and the TUI.
+        self.assertIn("no_action_panel", view_model)
+        self.assertIn("diagnostics", view_model)
+        self.assertIn("artifact_lineage", view_model)
+        self.assertEqual(
+            view_model["diagnostics"]["retrieval_evidence"]["status"], "not_recorded"
+        )
+        self.assertEqual(view_model["diagnostics"]["checkpoint"]["status"], "available")
+        self.assertGreaterEqual(
+            len(view_model["artifact_lineage"]["parent_artifact_ids"]), 2
+        )
+        # The web report surfaces claim gate, no-action comparison, trace
+        # ranking, diagnostics, and lineage without requiring raw JSON.
+        self.assertIn("claim gate", html)
+        self.assertIn("No-action pass@1", html)
+        self.assertIn("trace ranking", html)
+        self.assertIn("retrieval_evidence", html)
+        self.assertIn("Artifact", html)
+        # Closed claim gate is visible above the fold.
+        self.assertIn("claim allowed: false", html)
         self.assertTrue(html_export_exists)
         self.assertEqual(manifest.artifact_kind, "demo_report")
         self.assertEqual(
@@ -73,6 +95,43 @@ class ExecutionRerankDemoTest(unittest.TestCase):
         self.assertEqual(first_problem["problem_id"], "mbpp-demo-square")
         self.assertEqual(first_problem["candidates"][0]["passed"], True)
         self.assertEqual(first_problem["candidates"][1]["passed"], False)
+
+
+    def test_report_redacts_absolute_home_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = (Path(tmp) / "home" / "operator").resolve()
+            home.mkdir(parents=True)
+            checkpoint = home / "checkpoint.bin"
+            checkpoint.write_bytes(b"fixture checkpoint")
+            out = home / "runs" / "tour"
+
+            with patch("pathlib.Path.home", return_value=home):
+                result = run_execution_rerank_tour(
+                    checkpoint=checkpoint,
+                    out=out,
+                    tour_count=1,
+                    env={
+                        "CODELEWM_LLM_PROVIDER": "openrouter",
+                        "CODELEWM_LLM_DRY_RUN": "1",
+                        "CODELEWM_LLM_MAX_CANDIDATES": "2",
+                    },
+                    allow_unsafe_checkpoint=True,
+                    require_learned_scorer=False,
+                    overwrite=True,
+                    command=("scripts/llm-world-model-demo", "--tour", "1"),
+                )
+                report_text = (out / result.report_path).read_text(encoding="utf-8")
+                manifest_text = (out / result.artifact_manifest_path).read_text(
+                    encoding="utf-8"
+                )
+
+            report = json.loads(report_text)
+            # The operator's absolute home path must not leak into published,
+            # secret-scanned artifacts; redaction collapses it to "~".
+            self.assertNotIn(str(home), report_text)
+            self.assertNotIn(str(home), manifest_text)
+            self.assertTrue(report["checkpoint"]["path"].startswith("~"))
+            self.assertTrue(report["generator"]["output_root"].startswith("~"))
 
 
 if __name__ == "__main__":

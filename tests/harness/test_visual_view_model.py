@@ -38,6 +38,13 @@ class DemoVisualViewModelTest(unittest.TestCase):
         self.assertEqual(payload["diagnostics"]["checkpoint_inspection"]["artifact_id"], "diag-model")
         self.assertEqual(payload["diagnostics"]["run_timeline"]["status"], "available")
         self.assertEqual(payload["diagnostics"]["latent_matrix"]["status"], "available")
+        self.assertEqual(payload["inference_trace"]["baseline"]["final_score"], 1.0)
+        self.assertEqual(payload["inference_trace"]["best_candidate"], "candidate_001")
+        self.assertEqual(
+            payload["inference_trace"]["best_no_action_delta_interpretation"],
+            "better_than_no_action",
+        )
+        self.assertEqual(payload["inference_trace"]["latent_details"]["status"], "not_recorded")
         first = payload["candidates"][0]
         self.assertEqual(first["patch_summary"]["changed_files"], ["app.py"])
         self.assertEqual(first["patch_summary"]["hunk_count"], 1)

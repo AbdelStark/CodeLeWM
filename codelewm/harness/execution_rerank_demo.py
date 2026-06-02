@@ -25,12 +25,15 @@ from codelewm.observability import (
     validate_artifact_checksums,
     write_artifact_manifest,
 )
+from codelewm.observability.logging import redact_text, redact_value
 from codelewm.security.secret_scan import scan_text
 
 from .demo_scenarios import EXECUTION_RERANK_SCENARIO_ID
 from .execution_rerank_view_model import (
     EXECUTION_RERANK_VIEW_MODEL_SCHEMA_VERSION,
     build_execution_rerank_view_model,
+    ordered_diagnostic_slot_names,
+    validate_execution_rerank_view_model_payload,
 )
 from .openrouter_adapter import (
     OpenRouterAdapterError,
@@ -324,11 +327,48 @@ def run_execution_rerank_tour(
         "demo_tour_is_not_scaled_downstream_benchmark_evidence; "
         "coding-usefulness claims require the 100-example gate"
     )
-    view_model = build_execution_rerank_view_model(
-        rerank_report=rerank_report,
-        scenario_id=scenario_id,
-        completion_records=tuple(completion_records),
-    ).as_dict()
+    diagnostics = {
+        "retrieval_evidence": {
+            "status": "not_recorded",
+            "reason": (
+                "the tour scores generated candidates and does not run "
+                "execution-pack retrieval; the retrieval no-action margin "
+                "evidence is published separately"
+            ),
+            "reference": "docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md",
+        },
+        "checkpoint": {
+            "status": "available",
+            "model_id": scorer.model_id,
+            "sha256_short": (
+                scorer.checkpoint_sha256[:12] if scorer.checkpoint_sha256 else None
+            ),
+            "device": device,
+        },
+        "sandbox": {
+            "status": "available",
+            "policy": sandbox_policy.as_dict(),
+            "scope": "operator-reviewed built-in execution-rerank tour inputs only",
+        },
+    }
+    artifact_lineage = {
+        "parent_artifact_ids": tuple(candidate_manifest_ids),
+        "command": tuple(command),
+        "manifest_path": "manifest.json",
+        "report_path": "reports/execution_rerank_tour_report.json",
+        "view_model_path": "reports/execution_rerank_view_model.json",
+        "html_path": "demo.html",
+        "asciicast_path": "docs/demo/execution_rerank_tour.cast",
+    }
+    view_model = validate_execution_rerank_view_model_payload(
+        build_execution_rerank_view_model(
+            rerank_report=rerank_report,
+            scenario_id=scenario_id,
+            completion_records=tuple(completion_records),
+            diagnostics=diagnostics,
+            artifact_lineage=artifact_lineage,
+        ).as_dict()
+    )
 
     report = {
         "schema_version": EXECUTION_RERANK_TOUR_REPORT_SCHEMA_VERSION,
@@ -361,6 +401,11 @@ def run_execution_rerank_tour(
             ],
         },
     }
+    # Redact home paths/secrets from the published report (e.g. the absolute
+    # checkpoint path and resolved output root) before it is written, rendered,
+    # or hashed into the manifest. The view model is redacted separately via
+    # validate_execution_rerank_view_model_payload.
+    report = redact_value(report)
     report_path.write_text(
         json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
@@ -391,7 +436,7 @@ def run_execution_rerank_tour(
         config={
             "scenario_id": scenario_id,
             "tour_count": tour_count,
-            "checkpoint": str(checkpoint_path),
+            "checkpoint": redact_text(str(checkpoint_path)),
             "device": device,
             "require_learned_scorer": require_learned_scorer,
         },
@@ -515,74 +560,147 @@ def render_execution_rerank_tour_html(
     report: Mapping[str, Any],
     view_model: Mapping[str, Any],
 ) -> str:
-    baselines = view_model.get("baselines") if isinstance(view_model.get("baselines"), list) else []
-    baseline_rows = "\n".join(
-        "<tr>"
-        f"<td>{_h(str(row.get('baseline', '')))}</td>"
-        f"<td>{float(row.get('pass_at_1', 0.0)):.3f}</td>"
-        f"<td>{int(row.get('pass_count', 0))}/{int(row.get('problem_count', 0))}</td>"
-        "</tr>"
-        for row in baselines
-        if isinstance(row, Mapping)
+    """Render the self-contained execution-rerank web report.
+
+    Both the web report and the Textual TUI consume the same
+    schema-versioned ``execution_rerank_view_model`` so the two surfaces
+    stay in lockstep. Per-problem candidate code is read from the report
+    (untrusted text, HTML-escaped) and never executed here.
+    """
+
+    headline = _mapping(view_model.get("headline_panel"))
+    no_action = _mapping(view_model.get("no_action_panel"))
+    diagnostics = _mapping(view_model.get("diagnostics"))
+    lineage = _mapping(view_model.get("artifact_lineage"))
+    panels = [p for p in view_model.get("completion_panels", ()) if isinstance(p, Mapping)]
+    baselines = [b for b in view_model.get("baselines", ()) if isinstance(b, Mapping)]
+    claim_allowed = bool(view_model.get("claim_allowed"))
+    claim_reason = str(view_model.get("claim_reason") or _nested(report, "claim_gate", "reason") or "")
+    notes = [str(item) for item in view_model.get("notes", ())]
+
+    model_id = str(_nested(report, "checkpoint", "model_id") or view_model.get("scenario_id") or "")
+    problem_count = int(view_model.get("problem_count") or len(report.get("problems", ())))
+    completions_per_problem = int(view_model.get("completions_per_problem") or 0)
+
+    stat_panel = "".join(
+        (
+            _exec_stat("CodeLeWM pass@1", _fmt_pass_at_1(headline.get("codelewm_pass_at_1"))),
+            _exec_stat("LLM-order pass@1", _fmt_pass_at_1(headline.get("llm_order_pass_at_1"))),
+            _exec_stat("No-action pass@1", _fmt_pass_at_1(headline.get("no_action_pass_at_1"))),
+            _exec_stat("Lift vs LLM order", _fmt_pts(view_model.get("pass_at_1_lift"))),
+            _exec_stat(
+                "Lift vs no-action", _fmt_pts(no_action.get("codelewm_lift_over_no_action"))
+            ),
+            _exec_stat("Problems x completions", f"{problem_count} x {completions_per_problem}"),
+        )
     )
+    claim_banner = _claim_banner_markup(claim_allowed, claim_reason)
+    no_action_markup = _no_action_markup(no_action)
+    ranking_rows = _ranking_rows_markup(panels)
+    baseline_rows = _baseline_rows_markup(baselines)
     problem_cards = "\n".join(
         _problem_html_card(problem)
         for problem in report.get("problems", ())
         if isinstance(problem, Mapping)
     )
+    diagnostics_markup = _diagnostics_markup(diagnostics)
+    lineage_markup = _lineage_markup(lineage)
+    notes_markup = (
+        "".join(f"<li>{_h(note)}</li>" for note in notes)
+        if notes
+        else "<li class=\"muted\">no notes recorded</li>"
+    )
+    css = _execution_demo_html_css()
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CodeLeWM execution-rerank tour</title>
-<style>
-body {{ margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #17201b; background: #f6f8f5; }}
-.hero {{ padding: 32px 20px; background: #10251b; color: #f6fff9; }}
-.wrap {{ max-width: 1120px; margin: 0 auto; }}
-.eyebrow {{ font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9ce0bd; }}
-h1 {{ margin: 8px 0 10px; font-size: 34px; line-height: 1.1; }}
-h2 {{ margin: 0 0 12px; font-size: 22px; }}
-.deck {{ max-width: 760px; color: #d7eee0; }}
-.pillrow {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }}
-.pill {{ border: 1px solid #6ea883; border-radius: 999px; padding: 6px 10px; font-size: 13px; }}
-main {{ padding: 24px 20px 48px; }}
-section {{ margin: 0 auto 22px; max-width: 1120px; }}
-.panel {{ background: #fff; border: 1px solid #d7ded8; border-radius: 8px; padding: 18px; box-shadow: 0 1px 2px rgba(16,37,27,.05); }}
-table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
-th, td {{ text-align: left; border-bottom: 1px solid #e4ebe5; padding: 8px; vertical-align: top; }}
-pre {{ white-space: pre-wrap; overflow-wrap: anywhere; background: #111814; color: #e7fff0; border-radius: 6px; padding: 10px; font-size: 12px; }}
-.grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }}
-.ok {{ color: #126b37; font-weight: 700; }}
-.bad {{ color: #8a2d20; font-weight: 700; }}
-.muted {{ color: #5d6a62; }}
-.rank {{ color: #315f8f; font-weight: 700; }}
-.code {{ margin-top: 8px; }}
-</style>
+<style>{css}</style>
 </head>
 <body>
 <header class="hero">
-  <div class="wrap">
-    <div class="eyebrow">CodeLeWM v0.6 execution substrate</div>
-    <h1>LLM candidate generation plus world-model reranking</h1>
-    <p class="deck">This self-contained tour samples candidate Python solutions, labels them with the dedicated sandbox path, scores them with the configured checkpoint, and keeps the public claim gate closed.</p>
-    <div class="pillrow">
-      <span class="pill">model: {_h(str(_nested(report, 'checkpoint', 'model_id')))}</span>
-      <span class="pill">problems: {_h(str(len(report.get('problems', ()))))}</span>
-      <span class="pill">claim allowed: false</span>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="ident">CodeLeWM v0.6 execution substrate</div>
+      <h1>Execution-trace <em>showcase</em>.</h1>
+      <p class="deck">LLM candidates are generated, labeled through the dedicated sandbox path, and reranked by the world-model checkpoint. This report and the Textual TUI read one schema-versioned view model; the public claim gate stays closed.</p>
+      <div class="pill-row">
+        <span class="pill">model: {_h(model_id)}</span>
+        <span class="pill">problems: {_h(str(problem_count))}</span>
+        <span class="pill claim-pill">claim allowed: {_h(str(claim_allowed).lower())}</span>
+      </div>
     </div>
+    <aside class="stat-panel">{stat_panel}</aside>
   </div>
 </header>
 <main>
-  <section class="panel">
-    <h2>Aggregate pass@1</h2>
-    <table><thead><tr><th>baseline</th><th>pass@1</th><th>passed</th></tr></thead><tbody>{baseline_rows}</tbody></table>
-    <p class="muted">Claim gate: {_h(str(_nested(report, 'claim_gate', 'reason')))}</p>
+  <section class="s" id="claim" data-num="01">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">01</span><span class="section-kind">claim gate</span></div>
+      <h2>Diagnostic evidence, claim gate <em>closed</em>.</h2>
+      <p class="s-deck">This tour is workflow evidence only. It does not support a downstream coding-usefulness claim; that requires the scaled benchmark gate.</p>
+      {claim_banner}
+    </div>
   </section>
-  <section>
-    <div class="grid">{problem_cards}</div>
+
+  <section class="s" id="no-action" data-num="02">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">02</span><span class="section-kind">no-action</span></div>
+      <h2>CodeLeWM versus <em>no-action</em>.</h2>
+      <p class="s-deck">The honest baseline question: does reranking beat doing nothing? Higher pass@1 is better.</p>
+      {no_action_markup}
+    </div>
+  </section>
+
+  <section class="s" id="ranking" data-num="03">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">03</span><span class="section-kind">trace ranking</span></div>
+      <h2>Candidate <em>ranking</em> trace.</h2>
+      <p class="s-deck">Each completion's CodeLeWM rank, hidden-test outcome, and the rank it would get under the LLM order and lexical baselines. The bar shows CodeLeWM score separation.</p>
+      <div class="panel"><table class="rank-table"><thead><tr><th>CodeLeWM rank</th><th>completion</th><th>tests</th><th>CodeLeWM score</th><th>LLM rank</th><th>lexical rank</th><th>separation</th></tr></thead><tbody>{ranking_rows}</tbody></table></div>
+    </div>
+  </section>
+
+  <section class="s" id="problems" data-num="04">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">04</span><span class="section-kind">per problem</span></div>
+      <h2>Per-problem <em>detail</em>.</h2>
+      <p class="s-deck">Candidate code is treated as untrusted text and HTML-escaped; it is never executed by this report. Hidden-test cases are summarized as pass/fail.</p>
+      <div class="grid">{problem_cards}</div>
+    </div>
+  </section>
+
+  <section class="s" id="baselines" data-num="05">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">05</span><span class="section-kind">baselines</span></div>
+      <h2>Aggregate <em>pass@1</em>.</h2>
+      <p class="s-deck">Pass@1 under every baseline ordering. Lift is reported in percentage points.</p>
+      <div class="panel"><table><thead><tr><th>baseline</th><th>pass@1</th><th>passed</th></tr></thead><tbody>{baseline_rows}</tbody></table></div>
+    </div>
+  </section>
+
+  <section class="s" id="diagnostics" data-num="06">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">06</span><span class="section-kind">diagnostics</span></div>
+      <h2>Diagnostics stay <em>explicit</em>.</h2>
+      <p class="s-deck">Missing diagnostics are shown, not hidden. Retrieval evidence is published separately and is marked not_recorded here.</p>
+      <div class="grid-3">{diagnostics_markup}</div>
+    </div>
+  </section>
+
+  <section class="s" id="lineage" data-num="07">
+    <div class="wrap">
+      <div class="section-head"><span class="section-num">07</span><span class="section-kind">lineage</span></div>
+      <h2>Artifact <em>lineage</em>.</h2>
+      <p class="s-deck">Provenance for this manifest-backed, secret-scanned artifact set. Both surfaces read the same view model.</p>
+      {lineage_markup}
+      <ul class="notes">{notes_markup}</ul>
+    </div>
   </section>
 </main>
+<footer class="foot"><div class="wrap"><p class="footnote">Diagnostic showcase for the v0.6 execution substrate. Not a claim that CodeLeWM improves coding agents; the claim gate is closed and scaled downstream usefulness remains unsupported.</p></div></footer>
 </body>
 </html>
 """
@@ -798,15 +916,300 @@ def _problem_html_card(problem: Mapping[str, Any]) -> str:
     table = "".join(rows)
     codelewm_order = ", ".join(str(value) for value in problem.get("codelewm_order", ()))
     return (
-        "<article class=\"panel\">"
-        f"<h2>{_h(str(problem.get('title', '')))}</h2>"
+        "<article class=\"panel problem-card\">"
+        f"<h3>{_h(str(problem.get('title', '')))}</h3>"
         f"<p class=\"muted\">{_h(str(problem.get('instruction', '')))}</p>"
         f"<p class=\"rank\">CodeLeWM order: {_h(codelewm_order)}</p>"
         "<table><thead><tr><th>completion</th><th>tests</th><th>score</th><th>LLM rank</th><th>hidden cases</th></tr></thead>"
         f"<tbody>{table}</tbody></table>"
-        f"<pre>{_h(str(problem.get('before_sha256', '')))}</pre>"
+        f"<p class=\"hash\">before sha256: {_h(str(problem.get('before_sha256', '')))}</p>"
         "</article>"
     )
+
+
+def _exec_stat(label: str, value: object) -> str:
+    return (
+        "<div class=\"stat\">"
+        f"<span>{_h(label)}</span>"
+        f"<b>{_h(str(value))}</b>"
+        "</div>"
+    )
+
+
+def _claim_banner_markup(allowed: bool, reason: str) -> str:
+    state = "open" if allowed else "closed"
+    cls = "ok" if allowed else "bad"
+    return (
+        f"<div class=\"claim-banner {cls}\">"
+        f"<strong>claim gate: {_h(state)}</strong>"
+        f"<span>{_h(reason or 'not recorded')}</span>"
+        "</div>"
+    )
+
+
+def _no_action_markup(no_action: Mapping[str, Any]) -> str:
+    status = str(no_action.get("status", "not_recorded"))
+    if status != "available":
+        return (
+            "<div class=\"panel na-panel\">"
+            "<p class=\"muted\">No-action pass@1 was not recorded for this run; "
+            "the CodeLeWM-versus-no-action margin is therefore explicit as "
+            "<code>not_recorded</code>.</p>"
+            "</div>"
+        )
+    interpretation = str(no_action.get("interpretation", "not_recorded"))
+    delta = no_action.get("codelewm_minus_no_action")
+    delta_cls = (
+        "good"
+        if interpretation == "better_than_no_action"
+        else "bad"
+        if interpretation == "worse_than_no_action"
+        else "tie"
+    )
+    width = _bar_width_signed(delta)
+    return (
+        "<div class=\"panel na-panel\">"
+        "<div class=\"na-stats\">"
+        f"{_exec_stat('CodeLeWM pass@1', _fmt_pass_at_1(no_action.get('codelewm_pass_at_1')))}"
+        f"{_exec_stat('No-action pass@1', _fmt_pass_at_1(no_action.get('no_action_pass_at_1')))}"
+        f"{_exec_stat('CodeLeWM - no-action', _fmt_delta(delta))}"
+        f"{_exec_stat('Lift vs no-action', _fmt_pts(no_action.get('codelewm_lift_over_no_action')))}"
+        "</div>"
+        "<div class=\"delta-track\">"
+        f"<i class=\"delta-fill {delta_cls}\" style=\"width:{width}%\"></i>"
+        "</div>"
+        f"<p class=\"muted\">interpretation: {_h(interpretation)}</p>"
+        "</div>"
+    )
+
+
+def _ranking_rows_markup(panels: Sequence[Mapping[str, Any]]) -> str:
+    scores = [
+        float(_nested(panel, "scores", "codelewm") or 0.0)
+        for panel in panels
+        if isinstance(panel, Mapping)
+    ]
+    lo = min(scores) if scores else 0.0
+    hi = max(scores) if scores else 0.0
+    rows = []
+    for panel in panels:
+        if not isinstance(panel, Mapping):
+            continue
+        passed = bool(panel.get("passed"))
+        score = float(_nested(panel, "scores", "codelewm") or 0.0)
+        width = _normalized_bar_width(score, lo, hi)
+        ranks = _mapping(panel.get("rank_by_baseline"))
+        rows.append(
+            "<tr>"
+            f"<td class=\"rank\">{_h(str(panel.get('codelewm_rank', 'n/a')))}</td>"
+            f"<td><code>{_h(str(panel.get('completion_id', '')))}</code></td>"
+            f"<td class=\"{'ok' if passed else 'bad'}\">{_h('pass' if passed else 'fail')}</td>"
+            f"<td>{_h(_fmt_score(score))}</td>"
+            f"<td>{_h(str(ranks.get('llm_order', 'n/a')))}</td>"
+            f"<td>{_h(str(ranks.get('lexical', 'n/a')))}</td>"
+            "<td><div class=\"bar\"><span style=\"width:"
+            f"{width}%\"></span></div></td>"
+            "</tr>"
+        )
+    return "".join(rows) or "<tr><td colspan=\"7\" class=\"muted\">no completions recorded</td></tr>"
+
+
+def _baseline_rows_markup(baselines: Sequence[Mapping[str, Any]]) -> str:
+    rows = []
+    for row in baselines:
+        if not isinstance(row, Mapping):
+            continue
+        highlight = " class=\"rank\"" if row.get("baseline") == "codelewm" else ""
+        rows.append(
+            "<tr>"
+            f"<td{highlight}>{_h(str(row.get('baseline', '')))}</td>"
+            f"<td>{_h(_fmt_score(row.get('pass_at_1')))}</td>"
+            f"<td>{int(row.get('pass_count', 0))}/{int(row.get('problem_count', 0))}</td>"
+            "</tr>"
+        )
+    return "".join(rows) or "<tr><td colspan=\"3\" class=\"muted\">no baselines recorded</td></tr>"
+
+
+def _diagnostics_markup(diagnostics: Mapping[str, Any]) -> str:
+    cards = []
+    for name in ordered_diagnostic_slot_names(diagnostics):
+        slot_map = _mapping(diagnostics.get(name))
+        status = str(slot_map.get("status", "not_recorded"))
+        detail = (
+            slot_map.get("reason")
+            or slot_map.get("model_id")
+            or slot_map.get("scope")
+            or slot_map.get("reference")
+            or ""
+        )
+        status_cls = "ok" if status == "available" else "warn"
+        cards.append(
+            "<article class=\"mini\">"
+            f"<span>{_h(str(name))}</span>"
+            f"<strong class=\"{status_cls}\">{_h(status)}</strong>"
+            f"<p>{_h(str(detail))}</p>"
+            "</article>"
+        )
+    return "".join(cards) or "<article class=\"mini\"><span>diagnostics</span><strong>not recorded</strong></article>"
+
+
+def _lineage_markup(lineage: Mapping[str, Any]) -> str:
+    parents = [str(item) for item in lineage.get("parent_artifact_ids", ())]
+    command = " ".join(str(item) for item in lineage.get("command", ()))
+    paths = [
+        ("manifest", lineage.get("manifest_path")),
+        ("report", lineage.get("report_path")),
+        ("view model", lineage.get("view_model_path")),
+        ("html", lineage.get("html_path")),
+        ("asciicast", lineage.get("asciicast_path")),
+    ]
+    path_rows = "".join(
+        f"<tr><td>{_h(label)}</td><td><code>{_h(str(value))}</code></td></tr>"
+        for label, value in paths
+        if value
+    )
+    parent_items = (
+        "".join(f"<li><code>{_h(pid)}</code></li>" for pid in parents)
+        if parents
+        else "<li class=\"muted\">no parent artifacts recorded</li>"
+    )
+    return (
+        "<div class=\"panel\">"
+        f"<p class=\"muted\">command: <code>{_h(command or 'n/a')}</code></p>"
+        "<p class=\"muted\">parent candidate-pack artifacts:</p>"
+        f"<ul class=\"notes\">{parent_items}</ul>"
+        f"<table><tbody>{path_rows}</tbody></table>"
+        "</div>"
+    )
+
+
+def _fmt_pass_at_1(value: object) -> str:
+    if value is None:
+        return "n/a"
+    try:
+        return f"{float(value):.3f}"
+    except (TypeError, ValueError):
+        return "n/a"
+
+
+def _fmt_pts(value: object) -> str:
+    if value is None:
+        return "n/a"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "n/a"
+    sign = "+" if number >= 0 else ""
+    return f"{sign}{number:.2f} pts"
+
+
+def _fmt_score(value: object) -> str:
+    if value is None:
+        return "n/a"
+    try:
+        return f"{float(value):.4f}"
+    except (TypeError, ValueError):
+        return "n/a"
+
+
+def _fmt_delta(value: object) -> str:
+    if value is None:
+        return "n/a"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "n/a"
+    sign = "+" if number >= 0 else ""
+    return f"{sign}{number:.3f}"
+
+
+def _normalized_bar_width(value: float, lo: float, hi: float) -> int:
+    if not math.isfinite(value) or not math.isfinite(lo) or not math.isfinite(hi):
+        return 4
+    if hi <= lo:
+        return 100
+    fraction = (value - lo) / (hi - lo)
+    return max(4, min(100, int(fraction * 100)))
+
+
+def _bar_width_signed(value: object) -> int:
+    try:
+        number = abs(float(value))
+    except (TypeError, ValueError):
+        return 0
+    if not math.isfinite(number):
+        return 0
+    # pass@1 deltas live in [-1, 1]; scale magnitude to a 0-100 bar.
+    return max(0, min(100, int(number * 100)))
+
+
+def _mapping(value: object) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _execution_demo_html_css() -> str:
+    return """
+:root{--bg:#090b09;--bg-2:#0f1411;--line:#203023;--line-2:#2f4534;--ink:#dce7dd;--ink-dim:#8d9b8e;--paper:#f1eadc;--acid:#9aff5e;--amber:#ffb454;--rose:#ff6b8b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--serif:Georgia,"Times New Roman",serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 13px/1.55 var(--mono)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.hero{padding:64px 0 44px;border-bottom:1px solid var(--line)}
+.hero-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:36px;align-items:start}
+.ident{font:700 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--acid)}
+h1{margin:16px 0 14px;font:700 48px/1.04 var(--mono);letter-spacing:0;color:var(--paper)}
+h1 em,h2 em{font-style:normal;color:var(--acid)}
+.deck,.s-deck{font:400 17px/1.55 var(--serif);color:var(--ink-dim);max-width:760px}
+.pill-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.pill{border:1px solid var(--line-2);padding:8px 10px;color:var(--ink);background:var(--bg-2)}
+.claim-pill{color:var(--amber)}
+.stat-panel{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-2);background:var(--bg-2)}
+.stat{padding:14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat span{display:block;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.12em;font-size:10px}
+.stat b{display:block;margin-top:8px;color:var(--paper);font-size:18px}
+.s{padding:40px 0;border-bottom:1px solid var(--line)}
+.section-head{display:flex;gap:12px;align-items:baseline;margin-bottom:8px}
+.section-num{font:700 12px/1 var(--mono);color:var(--acid)}
+.section-kind{font:700 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim)}
+h2{margin:0 0 12px;font:700 28px/1.12 var(--mono);color:var(--paper)}
+.panel{margin-top:18px;background:var(--bg-2);border:1px solid var(--line-2);padding:16px}
+table{width:100%;border-collapse:collapse;font:400 12px/1.5 var(--mono)}
+th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+th{color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+code{color:var(--paper)}
+.rank{color:var(--acid);font-weight:700}
+.ok{color:var(--acid);font-weight:700}
+.bad{color:var(--rose);font-weight:700}
+.warn{color:var(--amber);font-weight:700}
+.muted{color:var(--ink-dim)}
+.bar{height:11px;background:#111a13;border:1px solid var(--line)}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--amber))}
+.claim-banner{margin-top:18px;display:grid;gap:6px;padding:16px;border:1px solid var(--line-2);background:var(--bg-2)}
+.claim-banner.bad{border-color:var(--rose)}
+.claim-banner strong{color:var(--paper);text-transform:uppercase;letter-spacing:.08em}
+.na-stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);background:var(--bg)}
+.delta-track{height:14px;background:#111a13;border:1px solid var(--line);margin-top:12px}
+.delta-fill{display:block;height:100%}
+.delta-fill.good{background:var(--acid)}
+.delta-fill.bad{background:var(--rose)}
+.delta-fill.tie{background:var(--amber)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.problem-card h3{margin:0 0 8px;color:var(--paper);font-size:15px}
+.problem-card pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#070907;color:var(--ink);border:1px solid var(--line);padding:10px;font-size:12px;margin:0}
+.problem-card .hash{color:var(--ink-dim);font-size:11px;word-break:break-all}
+.mini{border:1px solid var(--line-2);background:var(--bg-2);padding:14px}
+.mini span{display:block;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.12em;font-size:10px}
+.mini strong{display:block;margin:8px 0;font-size:15px}
+.mini p{margin:0;color:var(--ink-dim);font:400 13px/1.5 var(--serif)}
+.notes{margin:8px 0 0;padding-left:18px;color:var(--ink-dim)}
+.foot{padding:32px 0}
+.footnote{color:var(--ink-dim);font:400 14px/1.55 var(--serif)}
+@media (max-width:820px){
+  .hero-grid,.stat-panel,.na-stats,.grid-3{grid-template-columns:1fr}
+  h1{font-size:36px}
+  .stat{border-right:0}
+}
+"""
 
 
 def _render_asciicast(terminal_text: str) -> str:

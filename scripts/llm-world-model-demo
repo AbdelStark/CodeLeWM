@@ -194,10 +194,6 @@ if [[ "$tour_count" != "0" ]]; then
     printf '%s\n' '--tour is currently supported only for --scenario execution-rerank-mbpp' >&2
     exit 2
   fi
-  if [[ "$output_mode" == "tui" ]]; then
-    printf '%s\n' 'execution-rerank tour does not open the Textual TUI; use --visual or --json' >&2
-    exit 2
-  fi
   tour_cmd=(
     "${uv_run[@]}" python -m codelewm.harness.execution_rerank_demo
     --scenario "$scenario_id"
@@ -217,7 +213,15 @@ if [[ "$tour_count" != "0" ]]; then
     tour_cmd+=(--json)
   fi
   "${tour_cmd[@]}"
-  exit $?
+  tour_status=$?
+  if [[ $tour_status -ne 0 ]]; then
+    exit $tour_status
+  fi
+  if [[ "$output_mode" == "tui" ]]; then
+    "${uv_run[@]}" python -m codelewm.harness.execution_rerank_tui --demo-dir "$out_dir"
+    exit $?
+  fi
+  exit 0
 fi
 
 tmp_dir="$(mktemp -d)"

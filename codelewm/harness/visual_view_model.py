@@ -48,6 +48,7 @@ def build_demo_visual_view_model(
     provider_options = _mapping(provider_routing.get("requested_provider_options"))
     codelewm_order = _string_list(_mapping(demo_report.get("orders")).get("codelewm", ()))
     score_by_id = _score_by_candidate_id(scores.get("codelewm_rerank", ()))
+    score_details_by_id = _score_details_by_candidate_id(scores.get("codelewm_rerank", ()))
     no_action = _mapping(scores.get("no_action"))
     no_action_score = _optional_float(no_action.get("final_score"))
     best_candidate = codelewm_order[0] if codelewm_order else None
@@ -110,6 +111,12 @@ def build_demo_visual_view_model(
             "random": _string_list(_mapping(demo_report.get("orders")).get("random", ())),
             "no_action": _string_list(_mapping(demo_report.get("orders")).get("no_action", ())),
         },
+        "inference_trace": _inference_trace_view(
+            scores=scores,
+            codelewm_order=codelewm_order,
+            score_details_by_id=score_details_by_id,
+            no_action=no_action,
+        ),
         "candidates": candidates,
         "diagnostics": {
             "checkpoint_inspection": _diagnostic_slot(
@@ -306,6 +313,136 @@ def _score_by_candidate_id(rows: Any) -> dict[str, float]:
         if candidate and value is not None:
             scores[candidate] = value
     return scores
+
+
+def _score_details_by_candidate_id(rows: Any) -> dict[str, Mapping[str, Any]]:
+    details: dict[str, Mapping[str, Any]] = {}
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        return details
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        candidate = Path(str(row.get("candidate", ""))).stem
+        if candidate:
+            details[candidate] = row
+    return details
+
+
+def _inference_trace_view(
+    *,
+    scores: Mapping[str, Any],
+    codelewm_order: Sequence[str],
+    score_details_by_id: Mapping[str, Mapping[str, Any]],
+    no_action: Mapping[str, Any],
+) -> dict[str, Any]:
+    no_action_score = _optional_float(no_action.get("final_score"))
+    no_action_transition = _optional_float(no_action.get("transition_energy"))
+    rows: list[dict[str, Any]] = []
+    candidate_scores: list[float] = []
+    deltas: list[float] = []
+    for rank, candidate_id in enumerate(codelewm_order, start=1):
+        score_payload = _mapping(score_details_by_id.get(candidate_id))
+        final_score = _optional_float(score_payload.get("final_score"))
+        transition = _optional_float(score_payload.get("transition_energy"))
+        retrieval_prior = _optional_float(score_payload.get("retrieval_prior"))
+        risk_penalty = _optional_float(score_payload.get("risk_penalty"))
+        delta = _delta(final_score, no_action_score)
+        if final_score is not None:
+            candidate_scores.append(final_score)
+        if delta is not None:
+            deltas.append(delta)
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "rank": rank,
+                "final_score": final_score,
+                "final_score_display": _format_score(final_score),
+                "transition_energy": transition,
+                "transition_energy_display": _format_score(transition),
+                "retrieval_prior": retrieval_prior,
+                "risk_penalty": risk_penalty,
+                "candidate_minus_no_action": delta,
+                "candidate_minus_no_action_display": _format_delta(delta),
+                "no_action_delta_interpretation": _delta_interpretation(delta),
+                "delta_bar_width": _delta_bar_width(delta, deltas),
+                "input_digest_short": _short_sha(score_payload.get("input_digest")),
+            }
+        )
+    max_abs_delta = max((abs(delta) for delta in deltas), default=0.0)
+    if max_abs_delta > 0:
+        for row in rows:
+            delta = _optional_float(row.get("candidate_minus_no_action"))
+            row["delta_bar_width"] = _delta_bar_width(delta, deltas)
+    best_row = rows[0] if rows else {}
+    score_floor = min(
+        [
+            score
+            for score in ([no_action_score] + candidate_scores)
+            if isinstance(score, float) and math.isfinite(score)
+        ],
+        default=None,
+    )
+    score_ceiling = max(
+        [
+            score
+            for score in ([no_action_score] + candidate_scores)
+            if isinstance(score, float) and math.isfinite(score)
+        ],
+        default=None,
+    )
+    return {
+        "score_direction": _safe_string(
+            scores.get("score_direction") or SCORE_DIRECTION_LOWER_IS_BETTER
+        ),
+        "model_id": _safe_string(scores.get("model_id")),
+        "baseline": {
+            "candidate_id": "no_action",
+            "final_score": no_action_score,
+            "final_score_display": _format_score(no_action_score),
+            "transition_energy": no_action_transition,
+            "transition_energy_display": _format_score(no_action_transition),
+            "input_digest_short": _short_sha(no_action.get("input_digest")),
+        },
+        "best_candidate": best_row.get("candidate_id"),
+        "best_candidate_minus_no_action": best_row.get("candidate_minus_no_action"),
+        "best_candidate_minus_no_action_display": best_row.get(
+            "candidate_minus_no_action_display", "n/a"
+        ),
+        "best_no_action_delta_interpretation": best_row.get(
+            "no_action_delta_interpretation", "not_available"
+        ),
+        "all_candidates_worse_than_no_action": bool(rows)
+        and all(
+            row.get("no_action_delta_interpretation") == "worse_than_no_action"
+            for row in rows
+        ),
+        "score_floor": score_floor,
+        "score_ceiling": score_ceiling,
+        "score_span": (
+            None
+            if score_floor is None or score_ceiling is None
+            else float(score_ceiling - score_floor)
+        ),
+        "max_abs_no_action_delta": max_abs_delta,
+        "component_note": "final_score equals transition_energy when retrieval_prior and risk_penalty are null",
+        "latent_details": {
+            "status": "not_recorded",
+            "reason": (
+                "score payload exposes scalar transition energy only; use linked "
+                "latent-matrix or checkpoint diagnostics for representation summaries"
+            ),
+        },
+        "rows": rows,
+    }
+
+
+def _delta_bar_width(value: float | None, deltas: Sequence[float]) -> int:
+    if value is None:
+        return 0
+    max_abs = max((abs(delta) for delta in deltas), default=0.0)
+    if max_abs <= 0:
+        return 0
+    return max(4, min(100, int((abs(value) / max_abs) * 100)))
 
 
 def _gate_view(payload: Mapping[str, Any] | None) -> dict[str, Any]:
