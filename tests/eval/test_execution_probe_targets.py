@@ -208,6 +208,40 @@ class ExtractLabelsTest(unittest.TestCase):
         self.assertIsNone(result.labels[3])
 
 
+class PrecomputedBucketTest(unittest.TestCase):
+    # RFC-0015 WS-B4: the published pack omits raw output_repr, so value-shape
+    # buckets are precomputed at build time; extractors must prefer them.
+    def test_magnitude_prefers_precomputed_without_output_repr(self) -> None:
+        self.assertEqual(
+            label_record(
+                {"output_type": "int", "output_magnitude_bucket": "large"},
+                "output_magnitude_bucket",
+            ),
+            "large",
+        )
+
+    def test_length_prefers_precomputed_without_output_repr(self) -> None:
+        self.assertEqual(
+            label_record(
+                {"output_type": "list", "output_length_bucket": "short"},
+                "output_length_bucket",
+            ),
+            "short",
+        )
+
+    def test_magnitude_falls_back_to_output_repr(self) -> None:
+        self.assertEqual(
+            label_record({"output_type": "int", "output_repr": "5"}, "output_magnitude_bucket"),
+            "small",
+        )
+
+    def test_no_signal_returns_none(self) -> None:
+        # neither precomputed bucket nor parseable output_repr present
+        self.assertIsNone(
+            label_record({"output_type": "int"}, "output_magnitude_bucket")
+        )
+
+
 class TargetRegistryTest(unittest.TestCase):
     def test_unknown_target_raises(self) -> None:
         with self.assertRaises(ExecutionProbeTargetError):

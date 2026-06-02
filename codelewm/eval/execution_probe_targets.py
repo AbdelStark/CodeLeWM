@@ -150,6 +150,11 @@ def _label_will_raise(record: Mapping[str, Any]) -> bool | None:
 
 
 def _label_output_magnitude(record: Mapping[str, Any]) -> str | None:
+    # Prefer the privacy-safe bucket precomputed at build time (RFC-0015 WS-B4);
+    # fall back to parsing a raw output_repr when present (legacy/local packs).
+    precomputed = record.get("output_magnitude_bucket")
+    if isinstance(precomputed, str) and precomputed:
+        return precomputed
     output_type = record.get("output_type")
     if output_type not in {"int", "float"}:
         return None
@@ -174,6 +179,9 @@ def _label_output_magnitude(record: Mapping[str, Any]) -> str | None:
 
 
 def _label_output_length(record: Mapping[str, Any]) -> str | None:
+    precomputed = record.get("output_length_bucket")
+    if isinstance(precomputed, str) and precomputed:
+        return precomputed
     output_type = record.get("output_type")
     if output_type not in {"str", "list", "tuple", "dict", "set", "bytes"}:
         return None

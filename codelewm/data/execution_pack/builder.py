@@ -21,6 +21,7 @@ JSONL directly for the substrate pivot's first run.
 
 from __future__ import annotations
 
+import ast
 import json
 import random
 from collections import Counter
@@ -50,6 +51,8 @@ from .manifest import (
 from .record import (
     PackedExecutionRecord,
     SplitName,
+    length_bucket,
+    magnitude_bucket,
     sha256_text,
     tokenize_text,
 )
@@ -414,6 +417,22 @@ def _run_one_case(
         # message so the model has something concrete to predict.
         output_repr = f"{result.exception_class}: {result.exception_message}"
 
+    # RFC-0015 WS-B4: precompute privacy-safe value-shape probe labels from the
+    # in-hand output value (the raw output_repr itself is not persisted). Only
+    # for non-raising value outputs; exceptions/stdout get None.
+    output_magnitude_bucket: str | None = None
+    output_length_bucket: str | None = None
+    if exit_value == "ok" and result.output_repr is not None:
+        try:
+            _output_value = ast.literal_eval(result.output_repr)
+        except (ValueError, SyntaxError, MemoryError, RecursionError):
+            _output_value = None
+        if _output_value is not None:
+            if result.output_type in {"int", "float"}:
+                output_magnitude_bucket = magnitude_bucket(_output_value)
+            elif result.output_type in {"str", "list", "tuple", "dict", "set", "bytes"}:
+                output_length_bucket = length_bucket(_output_value)
+
     return PackedExecutionRecord(
         source_dataset=submission.source_dataset,
         source_problem_id=submission.source_problem_id,
@@ -438,6 +457,8 @@ def _run_one_case(
         license=submission.license,
         license_attribution_url=submission.license_attribution_url,
         held_out_for_eval=submission.held_out_for_eval,
+        output_magnitude_bucket=output_magnitude_bucket,
+        output_length_bucket=output_length_bucket,
     )
 
 
