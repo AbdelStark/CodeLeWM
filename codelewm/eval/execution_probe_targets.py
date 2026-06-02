@@ -136,12 +136,15 @@ def _label_output_type(record: Mapping[str, Any]) -> str | None:
 
 
 def _label_will_raise(record: Mapping[str, Any]) -> bool | None:
-    output_kind = record.get("output_kind")
-    if not isinstance(output_kind, str):
-        return None
-    if output_kind == "exception":
+    # Execution-pack records mark a raising run with execution_status="raised"
+    # and output_type="exception" (output_kind stays "value"); the previous
+    # check on output_kind=="exception" never matched, so this target always
+    # collapsed to a single class. (RFC-0015 WS-B4.)
+    status = record.get("execution_status")
+    if status == "raised" or record.get("output_type") == "exception":
         return True
-    if output_kind in {"value", "stdout"}:
+    output_kind = record.get("output_kind")
+    if status == "ok" or output_kind in {"value", "stdout"}:
         return False
     return None
 
