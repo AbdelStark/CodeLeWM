@@ -1,0 +1,35 @@
+# Build-context hygiene for containers/*/Dockerfile.
+#
+# The runtime image only COPYs: pyproject.toml, uv.lock, README.md,
+# LICENSE, codelewm/, config/, scripts/, and containers/. Everything
+# else is excluded so the build context stays small — .artifacts/ alone
+# is multiple GB of local run output that must never enter the image.
+
+.git/
+.venv/
+.artifacts/
+.runs/
+.agents/
+.claude/
+.tldr/
+node_modules/
+dist/
+build/
+target/
+docs/
+tests/
+data/raw/
+docs/papers/arxiv/
+
+# Python caches and build leftovers.
+**/__pycache__/
+**/*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local scratch and editor noise.
+.DS_Store
+*.html
+.env
