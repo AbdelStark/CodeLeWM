@@ -19,6 +19,7 @@ class ObjectiveConfig:
     """Configuration for the base v0.1 transition objective."""
 
     sigreg_weight: float = 0.09
+    prediction_mse_weight: float = 1.0
     enable_retrieval_loss: bool = False
     retrieval_weight: float = 0.0
     retrieval_temperature: float = 0.1
@@ -38,6 +39,8 @@ class ObjectiveConfig:
     def __post_init__(self) -> None:
         if not math.isfinite(self.sigreg_weight) or self.sigreg_weight < 0.0:
             raise ValueError("sigreg_weight must be finite and non-negative")
+        if not math.isfinite(self.prediction_mse_weight) or self.prediction_mse_weight < 0.0:
+            raise ValueError("prediction_mse_weight must be finite and non-negative")
         if not math.isfinite(self.retrieval_weight) or self.retrieval_weight < 0.0:
             raise ValueError("retrieval_weight must be finite and non-negative")
         if not math.isfinite(self.retrieval_weight_cap) or self.retrieval_weight_cap <= 0.0:
@@ -172,7 +175,7 @@ def compute_transition_objective(
         seed=config.sigreg_seed,
     )
     sigreg_weighted = sigreg * config.sigreg_weight
-    total = prediction_mse + sigreg_weighted
+    total = config.prediction_mse_weight * prediction_mse + sigreg_weighted
     retrieval = None
     retrieval_weighted = None
     action_use_margin = None
