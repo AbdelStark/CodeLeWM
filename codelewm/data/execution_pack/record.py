@@ -50,6 +50,13 @@ class PackedExecutionRecord:
     license_attribution_url: str
     held_out_for_eval: bool
 
+    # RFC-0015 WS-B4: privacy-safe precomputed probe labels. The raw
+    # output_repr is intentionally not persisted (only tokens + checksum), so
+    # value-shape probe targets are derived at build time and stored as coarse
+    # buckets here. Optional + default None so legacy v1 packs load unchanged.
+    output_magnitude_bucket: str | None = None
+    output_length_bucket: str | None = None
+
     @property
     def record_id(self) -> str:
         return f"{self.source_problem_id}::{self.source_submission_id}::{self.input_id}"
@@ -80,7 +87,47 @@ class PackedExecutionRecord:
             "license": self.license,
             "license_attribution_url": self.license_attribution_url,
             "held_out_for_eval": self.held_out_for_eval,
+            "output_magnitude_bucket": self.output_magnitude_bucket,
+            "output_length_bucket": self.output_length_bucket,
         }
+
+
+_MAGNITUDE_BUCKETS = ("negative", "zero", "small", "medium", "large")
+_LENGTH_BUCKETS = ("empty", "short", "medium", "long", "huge")
+
+
+def magnitude_bucket(value: object) -> str | None:
+    """Coarse numeric magnitude bucket (bools excluded). None if not numeric."""
+
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    if value < 0:
+        return "negative"
+    if value == 0:
+        return "zero"
+    if value <= 10:
+        return "small"
+    if value <= 1000:
+        return "medium"
+    return "large"
+
+
+def length_bucket(value: object) -> str | None:
+    """Coarse length bucket for sized values. None if not sized."""
+
+    try:
+        n = len(value)  # type: ignore[arg-type]
+    except TypeError:
+        return None
+    if n == 0:
+        return "empty"
+    if n <= 5:
+        return "short"
+    if n <= 50:
+        return "medium"
+    if n <= 1000:
+        return "long"
+    return "huge"
 
 
 def classify_record_kind(record: PackedExecutionRecord) -> str:
