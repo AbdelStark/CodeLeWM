@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -260,6 +261,14 @@ def _invoke(
         raise SandboxRunnerError(f"cannot spawn sandbox child: {exc}") from exc
 
     if not completed.stdout.strip():
+        # A child killed by a resource signal before it could emit its result
+        # line (CPU limit SIGXCPU, memory kill SIGKILL, crash SIGSEGV) returns a
+        # negative process code. Treat this as a graceful per-case limit result
+        # so one runaway submission is rejected like a timeout rather than
+        # aborting the whole pack build. (RFC-0015 WS-B data hardening.)
+        rc = completed.returncode
+        if rc is not None and rc < 0:
+            return _resource_kill_result(-rc, completed, policy, start)
         raise SandboxRunnerError(
             "sandbox child produced no result line. "
             f"stderr={completed.stderr!r} return_code={completed.returncode}"
@@ -283,6 +292,44 @@ def _invoke(
         payload["exit_code"] = SandboxExitCode.POLICY_VIOLATION.value
 
     return payload
+
+
+def _resource_kill_result(
+    sig: int,
+    completed: "subprocess.CompletedProcess[str]",
+    policy: SandboxPolicy,
+    start: float,
+) -> dict[str, Any]:
+    """Graceful per-case result for a child killed by a resource signal."""
+
+    if sig == int(getattr(signal, "SIGXCPU", 24)):
+        exit_code = SandboxExitCode.TIMEOUT.value
+        kind, exc_class = "timeout", "CpuLimit"
+        message = f"cpu_seconds>{policy.cpu_seconds}"
+    elif sig == int(getattr(signal, "SIGKILL", 9)):
+        exit_code = SandboxExitCode.OOM.value
+        kind, exc_class = "oom", "Killed"
+        message = f"child killed by SIGKILL (likely memory_mb>{policy.memory_mb})"
+    else:
+        exit_code = SandboxExitCode.INTERNAL_ERROR.value
+        kind, exc_class = "internal_error", f"Signal{sig}"
+        message = f"child killed by signal {sig} before emitting a result"
+    return {
+        "exit_code": exit_code,
+        "output_repr": None,
+        "output_truncated": False,
+        "output_type": "none",
+        "output_kind": kind,
+        "stdout": (completed.stdout or "")[: policy.stdout_truncation_bytes]
+        if isinstance(completed.stdout, str)
+        else "",
+        "stdout_truncated": False,
+        "exception_class": exc_class,
+        "exception_message": message,
+        "policy_violations": [],
+        "wall_time_ms": (time.perf_counter() - start) * 1000.0,
+        "peak_rss_kb": 0,
+    }
 
 
 def _to_result(
