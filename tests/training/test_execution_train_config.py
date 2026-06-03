@@ -151,6 +151,33 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
             "ghcr.io/abdelstark/codelewm-runtime:v0.7",
         )
 
+    def test_loads_checked_in_v0_7_short_yaml(self) -> None:
+        """The short v0.7 recipe = full recipe with a guaranteed-to-finish step budget."""
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_7_short_a10g.yaml"
+        cfg = load_execution_train_config(path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_7_short_a10g")
+        # Same WS-C recipe as the full profile.
+        self.assertEqual(cfg.wm.state_encoder_type, "transformer")
+        self.assertEqual(cfg.objective.retrieval_weight, 0.05)
+        self.assertEqual(cfg.objective.prediction_mse_weight, 1.0)
+        self.assertEqual(cfg.data.pack_revision, "v0.7.0-rc1")
+        # Right-sized step budget that fits the 24h wall.
+        self.assertEqual(cfg.trainer.max_steps, 15000)
+        self.assertLess(cfg.trainer.max_steps, 50000)
+        # Distinct run/checkpoint names so uploads never collide with the 50k run.
+        self.assertIn("short", cfg.hf_jobs.run_name_template)
+        self.assertIn("short", cfg.hf_jobs.checkpoint_revision_template)
+        self.assertEqual(
+            cfg.hf_jobs.runtime_image,
+            "ghcr.io/abdelstark/codelewm-runtime:v0.7-short",
+        )
+
     def test_loads_json_round_trip(self) -> None:
         from codelewm.training import (
             ExecutionTrainConfig,
