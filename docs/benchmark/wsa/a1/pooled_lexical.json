@@ -1,0 +1,69 @@
+{
+  "all_fail_problem_count": 0,
+  "all_pass_problem_count": 0,
+  "calibrator_lift_pts": {
+    "calibrator_minus_codelewm": {
+      "ci95_pts": [
+        -4.2553,
+        21.2766
+      ],
+      "point_pts": 8.5106
+    },
+    "calibrator_minus_llm_order": {
+      "ci95_pts": [
+        -12.766,
+        14.9468
+      ],
+      "point_pts": 2.1277
+    },
+    "calibrator_minus_no_action": {
+      "ci95_pts": [
+        -12.766,
+        17.0213
+      ],
+      "point_pts": 2.1277
+    }
+  },
+  "candidates_per_problem": [
+    12
+  ],
+  "completion_count": 564,
+  "decodability": {
+    "calibrator_cv_auc": 0.47732005432322316,
+    "k_folds": 5,
+    "univariate_auc": {
+      "lexical": 0.5280217292892712,
+      "random": 0.5212313263920326
+    }
+  },
+  "feature_set": "lexical",
+  "features": [
+    "lexical",
+    "random"
+  ],
+  "max_possible_rerank_headroom_pts": 100.0,
+  "overall_pass_rate": 0.16666666666666666,
+  "problem_count": 47,
+  "rerank_pass_at_1": {
+    "all_problems": {
+      "calibrator": 0.1702127659574468,
+      "codelewm": 0.0851063829787234,
+      "lexical": 0.2978723404255319,
+      "llm_order": 0.14893617021276595,
+      "no_action": 0.14893617021276595
+    },
+    "unsaturated_only": {
+      "calibrator": 0.1702127659574468,
+      "codelewm": 0.0851063829787234,
+      "lexical": 0.2978723404255319,
+      "llm_order": 0.14893617021276595,
+      "no_action": 0.14893617021276595
+    }
+  },
+  "rerankable_problem_count": 47,
+  "schema_version": "codelewm.eval.rerank_calibration.v1",
+  "sources": [
+    "results/wsd/seed-1729/humaneval/reports/completion_scores.jsonl",
+    "results/wsd/seed-42/humaneval/reports/completion_scores.jsonl"
+  ]
+}
