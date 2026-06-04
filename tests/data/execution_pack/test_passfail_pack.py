@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -128,6 +129,46 @@ class PassFailExecutionPackTest(unittest.TestCase):
             )
             self.assertTrue(batches)
             self.assertTrue(all(batch.passed is not None for batch in batches))
+
+    def test_relative_output_dir_writes_valid_artifact_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            labels_dir = tmp / "labels"
+            source = FIXTURES / "mbpp_tiny.jsonl"
+            labels = build_mutation_rerank_pack(
+                benchmark="mbpp",
+                source_path=source,
+                out=labels_dir,
+                mutants_per_problem=8,
+                pool_size=2,
+                max_problems=2,
+                max_cases_per_problem=2,
+                sandbox_policy=_fast_policy(),
+            )
+
+            cwd = Path.cwd()
+            os.chdir(tmp)
+            try:
+                result = build_passfail_pack(
+                    completion_label_paths=(labels_dir / labels.labels_path,),
+                    source_path=source,
+                    benchmark="mbpp",
+                    output_dir=Path("relative-passfail"),
+                    sandbox_policy=_fast_policy(),
+                    train_frac=0.5,
+                    val_frac=0.25,
+                )
+            finally:
+                os.chdir(cwd)
+
+            pack_dir = tmp / "relative-passfail"
+            self.assertEqual(result.output_dir, pack_dir.resolve())
+            artifact_path = pack_dir / result.artifact_manifest_path
+            self.assertTrue(artifact_path.is_file())
+            artifact = read_artifact_manifest(artifact_path)
+            self.assertEqual(artifact.artifact_kind, "dataset")
+            self.assertEqual(artifact.artifact_id, result.manifest.pack_id)
+            validate_artifact_checksums(artifact, root=pack_dir)
 
 
 if __name__ == "__main__":  # pragma: no cover

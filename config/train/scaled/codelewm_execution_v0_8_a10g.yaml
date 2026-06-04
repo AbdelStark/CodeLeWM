@@ -1,0 +1,112 @@
+# CodeLeWM v0.8 correctness-aware execution-substrate training profile (A10G).
+#
+# v0.8 = v0.7 structure levers plus correctness co-training:
+#  - transformer state encoder (WS-C1);
+#  - EMA target encoder extension (WS-C2);
+#  - in-batch retrieval objective (WS-C3);
+#  - output-value auxiliary CE head (WS-C4);
+#  - explicit prediction_mse_weight application (WS-C5);
+#  - supervised p_pass BCE head from the v0.8 pass/fail execution pack.
+#
+# This is the full 50k-step profile. For HF Jobs' 24h wall, launch the
+# codelewm_execution_v0_8_short_a10g.yaml profile first; both profiles consume
+# the same v0.8.0-rc1 pack and runtime container tag.
+
+schema_version: codelewm.execution_train_config.v1
+name: codelewm_execution_v0_8_a10g
+substrate: execution_trace_v1
+parent_issue: 364
+implementing_issue: 370
+target_substrate_run: v0.8.0
+
+data:
+  pack_repo_id: abdelstark/codelewm-execution-pack
+  pack_revision: v0.8.0-rc1
+  pack_jsonl: pack.jsonl
+  manifest_filename: manifest.json
+  claim_boundary_filename: claim_boundary.md
+  ingestion_sources:
+    - humaneval
+  held_out_for_eval:
+    - humaneval_wsd_test_split
+    - humaneval
+    - mbpp_plus
+
+loader:
+  code_sequence_length: 1024
+  action_sequence_length: 256
+  output_sequence_length: 256
+  batch_size: 64
+  gradient_accumulation_steps: 4
+  effective_batch_size: 256
+  shuffle: true
+
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: bf16-mixed
+  max_steps: 50000
+  warmup_steps: 1000
+  cosine_decay_to: 0.0
+  gradient_clip_val: 1.0
+  checkpoint_every_n_steps: 5000
+  keep_last_n_checkpoints: 3
+  keep_best_by_metric: val_mse
+  tensorboard_enabled: true
+  collapse_diagnostics_every_n_steps: 1000
+
+optimizer:
+  name: adamw
+  lr: 0.0003
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+
+wm:
+  history_size: 1
+  num_preds: 1
+  embed_dim: 256
+  state_encoder_type: transformer
+  state_encoder_layers: 4
+  state_encoder_heads: 8
+  enable_ema_target_encoder: true
+  ema_target_decay: 0.99
+
+objective:
+  prediction_mse_weight: 1.0
+  sigreg_weight: 0.09
+  action_swap_contrastive_weight: 0.1
+  inverse_action_reconstruction_weight: 0.05
+  retrieval_weight: 0.05
+  p_pass_bce_weight: 0.5
+  p_pass_bce_pos_weight: 0.9145473041709054
+  output_value_ce_weight: 0.2
+
+seeds:
+  - 42
+  - 1729
+
+hf_jobs:
+  flavor: a10g-small
+  region: us-east-1
+  timeout_hours: 24
+  run_name_template: codelewm-v0-8-execution-{date}-{sha}-seed-{seed}
+  artifact_repo_id: abdelstark/codelewm-runs
+  checkpoint_repo_id: abdelstark/codelewm-transition-model
+  checkpoint_revision_template: v0.8.0-seed-{seed}
+  runtime_image: ghcr.io/abdelstark/codelewm-runtime:v0.8
+
+claim_gates:
+  retrieval_min_recall_at_1_lift_over_no_action: 0.05
+  retrieval_min_mrr_lift_over_no_action: 0.05
+  collapse_effective_rank_ratio_min: 0.20
+  collapse_per_dim_variance_median_min: 1.0e-8
+  collapse_nearest_neighbor_entropy_min: 0.10
+  surprise_mutation_auc_min: 0.65
+  surprise_same_problem_different_submission_auc_min: 0.60
+  surprise_same_code_different_input_auc_min: 0.70
+  downstream_rerank_pass_at_1_lift_min: 3.0
+  required_seeds: 2
+
+claim_boundary:
+  name: execution_substrate.v1
+  scope: v0_8_correctness_co_training

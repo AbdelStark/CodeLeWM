@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+V0_8_PASSFAIL_POS_WEIGHT = 0.9145473041709054
 
 
 _VALID_CONFIG_DICT = {
@@ -179,6 +180,70 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
             cfg.hf_jobs.runtime_image,
             "ghcr.io/abdelstark/codelewm-runtime:v0.7-short",
         )
+
+    def test_loads_checked_in_v0_8_yaml(self) -> None:
+        """The v0.8 recipe co-trains correctness heads on the pass/fail pack."""
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_8_a10g.yaml"
+        cfg = load_execution_train_config(path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_8_a10g")
+        self.assertEqual(cfg.parent_issue, 364)
+        self.assertEqual(cfg.implementing_issue, 370)
+        self.assertEqual(cfg.seeds, (42, 1729))
+        self.assertEqual(cfg.data.pack_revision, "v0.8.0-rc1")
+        self.assertEqual(cfg.data.ingestion_sources, ("humaneval",))
+        self.assertEqual(cfg.wm.state_encoder_type, "transformer")
+        self.assertEqual(cfg.wm.state_encoder_layers, 4)
+        self.assertEqual(cfg.wm.state_encoder_heads, 8)
+        self.assertTrue(cfg.wm.enable_ema_target_encoder)
+        self.assertEqual(cfg.wm.ema_target_decay, 0.99)
+        self.assertEqual(cfg.objective.prediction_mse_weight, 1.0)
+        self.assertEqual(cfg.objective.retrieval_weight, 0.05)
+        self.assertEqual(cfg.objective.p_pass_bce_weight, 0.5)
+        self.assertAlmostEqual(
+            cfg.objective.p_pass_bce_pos_weight,
+            V0_8_PASSFAIL_POS_WEIGHT,
+        )
+        self.assertEqual(cfg.objective.output_value_ce_weight, 0.2)
+        self.assertEqual(
+            cfg.hf_jobs.runtime_image,
+            "ghcr.io/abdelstark/codelewm-runtime:v0.8",
+        )
+        self.assertEqual(cfg.claim_gates.required_seeds, 2)
+        self.assertEqual(
+            cfg.claim_boundary.scope, "v0_8_correctness_co_training"
+        )
+
+    def test_loads_checked_in_v0_8_short_yaml(self) -> None:
+        """The short v0.8 profile keeps the same recipe with a smaller budget."""
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        full_path = REPO_ROOT / "config/train/scaled/codelewm_execution_v0_8_a10g.yaml"
+        short_path = (
+            REPO_ROOT
+            / "config/train/scaled/codelewm_execution_v0_8_short_a10g.yaml"
+        )
+        full = load_execution_train_config(full_path)
+        cfg = load_execution_train_config(short_path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_8_short_a10g")
+        self.assertEqual(cfg.data.pack_revision, full.data.pack_revision)
+        self.assertEqual(cfg.wm, full.wm)
+        self.assertEqual(cfg.objective, full.objective)
+        self.assertEqual(cfg.hf_jobs.runtime_image, full.hf_jobs.runtime_image)
+        self.assertEqual(cfg.trainer.max_steps, 12000)
+        self.assertLess(cfg.trainer.max_steps, full.trainer.max_steps)
+        self.assertEqual(cfg.trainer.checkpoint_every_n_steps, 4000)
+        self.assertIn("short", cfg.hf_jobs.run_name_template)
+        self.assertIn("short", cfg.hf_jobs.checkpoint_revision_template)
 
     def test_loads_json_round_trip(self) -> None:
         from codelewm.training import (

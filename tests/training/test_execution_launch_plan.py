@@ -24,6 +24,20 @@ CONFIG_PATH = (
     / "scaled"
     / "codelewm_execution_v0_6_a10g.yaml"
 )
+V0_8_CONFIG_PATH = (
+    REPO_ROOT
+    / "config"
+    / "train"
+    / "scaled"
+    / "codelewm_execution_v0_8_a10g.yaml"
+)
+V0_8_SHORT_CONFIG_PATH = (
+    REPO_ROOT
+    / "config"
+    / "train"
+    / "scaled"
+    / "codelewm_execution_v0_8_short_a10g.yaml"
+)
 LAUNCHER = REPO_ROOT / "scripts" / "hf-launch-execution-run"
 
 
@@ -138,6 +152,55 @@ class LaunchPlanBuilderTest(unittest.TestCase):
 
         for plan in plans:
             self.assertEqual(plan.objective["output_value_ce_weight"], 0.2)
+
+    def test_checked_in_v0_8_launch_plan_wires_correctness_recipe(self) -> None:
+        config = load_v0_6_config(V0_8_CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config,
+            config_path=V0_8_CONFIG_PATH,
+            git_sha="deadbee",
+            date="20260604",
+        )
+
+        self.assertEqual(len(plans), 2)
+        for plan in plans:
+            self.assertEqual(plan.pack_revision, "v0.8.0-rc1")
+            self.assertEqual(
+                plan.runtime_image,
+                "ghcr.io/abdelstark/codelewm-runtime:v0.8",
+            )
+            self.assertEqual(plan.objective["p_pass_bce_weight"], 0.5)
+            self.assertAlmostEqual(
+                plan.objective["p_pass_bce_pos_weight"],
+                0.9145473041709054,
+            )
+            self.assertEqual(plan.objective["output_value_ce_weight"], 0.2)
+            self.assertEqual(plan.objective["retrieval_weight"], 0.05)
+            self.assertIn("20260604", plan.run_name)
+            self.assertIn("deadbee", plan.run_name)
+            command_str = " ".join(plan.command)
+            self.assertIn("CODELEWM_EXECUTION_PACK_REVISION=v0.8.0-rc1", command_str)
+            self.assertIn(str(V0_8_CONFIG_PATH), command_str)
+            self.assertIn(plan.runtime_image, command_str)
+
+    def test_checked_in_v0_8_short_launch_plan_has_distinct_uploads(self) -> None:
+        config = load_v0_6_config(V0_8_SHORT_CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config,
+            config_path=V0_8_SHORT_CONFIG_PATH,
+            git_sha="deadbee",
+            date="20260604",
+        )
+
+        self.assertEqual(len(plans), 2)
+        for plan in plans:
+            self.assertIn("short", plan.run_name)
+            self.assertIn("short", plan.checkpoint_revision)
+            self.assertEqual(plan.trainer["max_steps"], 12000)
+            self.assertEqual(
+                plan.runtime_image,
+                "ghcr.io/abdelstark/codelewm-runtime:v0.8",
+            )
 
     def test_command_invokes_entrypoint_then_codelewm(self) -> None:
         """HF Jobs strips ENTRYPOINT when COMMAND is supplied.

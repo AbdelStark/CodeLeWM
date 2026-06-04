@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["huggingface_hub>=1.0"]
+# dependencies = ["huggingface_hub>=1.0", "numpy>=1.24"]
 # ///
 """Publish a CodeLeWM execution-substrate pack to Hugging Face.
 
@@ -14,8 +14,8 @@ The flow follows ``scripts/hf-publish-codelewm-artifacts``:
    into the pack directory as ``README.md``.
 3. In dry-run mode (the default in CI), emit the publish plan and exit
    without touching Hugging Face.
-4. With ``--no-dry-run`` and ``HF_TOKEN`` in the environment, upload the
-   pack directory to ``--repo-id`` under ``--revision``.
+4. With ``--no-dry-run`` and either ``HF_TOKEN`` or a cached Hugging Face login,
+   upload the pack directory to ``--repo-id`` under ``--revision``.
 """
 
 from __future__ import annotations
@@ -138,11 +138,6 @@ def main() -> int:
             print(f"  readme: {readme}")
         return 0
 
-    token = os.getenv("HF_TOKEN")
-    if not token:
-        print("HF_TOKEN is required for --no-dry-run", file=sys.stderr)
-        return 4
-
     try:
         from huggingface_hub import HfApi  # type: ignore[import-not-found]
     except ImportError:
@@ -152,7 +147,7 @@ def main() -> int:
         )
         return 5
 
-    api = HfApi(token=token)
+    api = HfApi(token=os.getenv("HF_TOKEN") or None)
     api.create_repo(
         repo_id=args.repo_id,
         repo_type="dataset",
