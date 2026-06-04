@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = []
+# dependencies = ["numpy>=1.24"]
 # ///
 """Launch the v0.6 execution-substrate HF Jobs run (one plan per seed).
 

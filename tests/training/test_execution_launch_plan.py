@@ -325,6 +325,10 @@ class V0_6ConfigErrorsTest(unittest.TestCase):
 
 
 class LauncherCLITest(unittest.TestCase):
+    def test_uv_script_metadata_declares_runtime_dependencies(self) -> None:
+        text = LAUNCHER.read_text(encoding="utf-8")
+        self.assertIn('"numpy>=1.24"', text)
+
     def test_dry_run_emits_json_plans(self) -> None:
         completed = subprocess.run(
             [
