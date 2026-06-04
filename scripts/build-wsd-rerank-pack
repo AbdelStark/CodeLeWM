@@ -29,7 +29,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--benchmark", required=True, help="humaneval | mbpp-plus")
     parser.add_argument("--source", required=True, type=Path, help="raw source JSONL")
     parser.add_argument("--out", required=True, type=Path, help="output pack directory")
-    parser.add_argument("--mutants-per-problem", type=int, default=8)
+    parser.add_argument("--mutants-per-problem", type=int, default=12)
+    parser.add_argument("--pool-size", type=int, default=6,
+                        help="candidates per problem (1 reference + pool_size-1 distractors)")
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--max-problems", type=int, default=None)
     parser.add_argument("--max-cases-per-problem", type=int, default=None)
@@ -47,6 +49,7 @@ def main(argv: list[str] | None = None) -> int:
             source_path=args.source,
             out=args.out,
             mutants_per_problem=args.mutants_per_problem,
+            pool_size=args.pool_size,
             seed=args.seed,
             max_problems=args.max_problems,
             max_cases_per_problem=args.max_cases_per_problem,
