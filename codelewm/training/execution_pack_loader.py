@@ -33,7 +33,7 @@ from typing import Any
 import numpy as np
 
 
-EXECUTION_PACK_BATCH_SCHEMA_VERSION = "codelewm.execution_pack_batch.v1"
+EXECUTION_PACK_BATCH_SCHEMA_VERSION = "codelewm.execution_pack_batch.v2"
 
 
 @dataclass(frozen=True)
@@ -53,6 +53,7 @@ class ExecutionPackBatch:
     output_attention_mask: np.ndarray  # (B, output_sequence_length) bool
     output_type_index: np.ndarray  # (B,) int32 — encoded OUTPUT_TYPE_VOCAB index
     will_raise: np.ndarray  # (B,) bool — derived from output_kind == "exception"
+    passed: np.ndarray | None  # (B,) bool when v0.8 pass/fail labels are present
     record_ids: tuple[str, ...]
     splits: tuple[str, ...]
 
@@ -67,6 +68,7 @@ class ExecutionPackBatch:
             "output_tokens": tuple(self.output_tokens.shape),
             "output_type_index": tuple(self.output_type_index.shape),
             "will_raise": tuple(self.will_raise.shape),
+            "passed": () if self.passed is None else tuple(self.passed.shape),
         }
 
 
@@ -115,6 +117,7 @@ class LoaderDiagnostics:
     output_kind_histogram: dict[str, int] = field(default_factory=dict)
     execution_status_histogram: dict[str, int] = field(default_factory=dict)
     split_histogram: dict[str, int] = field(default_factory=dict)
+    pass_label_histogram: dict[str, int] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -128,6 +131,7 @@ class LoaderDiagnostics:
                 sorted(self.execution_status_histogram.items())
             ),
             "split_histogram": dict(sorted(self.split_histogram.items())),
+            "pass_label_histogram": dict(sorted(self.pass_label_histogram.items())),
         }
 
 
@@ -209,6 +213,9 @@ def _to_batch(
     output_mask = np.zeros((batch_size, config.output_sequence_length), dtype=bool)
     output_type_index = np.zeros((batch_size,), dtype=np.int32)
     will_raise = np.zeros((batch_size,), dtype=bool)
+    passed = np.zeros((batch_size,), dtype=bool)
+    pass_label_seen = False
+    pass_label_missing = False
     record_ids: list[str] = []
     splits: list[str] = []
 
@@ -236,6 +243,19 @@ def _to_batch(
             output_type, _OUTPUT_TYPE_INDEX["other"]
         )
         will_raise[i] = str(row.get("output_kind") or "") == "exception"
+        pass_value = row.get("passed")
+        if pass_value is None:
+            pass_label_missing = True
+        elif isinstance(pass_value, bool):
+            passed[i] = pass_value
+            pass_label_seen = True
+            diagnostics.pass_label_histogram[str(pass_value).lower()] = (
+                diagnostics.pass_label_histogram.get(str(pass_value).lower(), 0) + 1
+            )
+        else:
+            raise ValueError(
+                f"record {row.get('record_id') or i}: passed must be bool or null"
+            )
         record_ids.append(str(row.get("record_id") or ""))
         splits.append(str(row.get("split") or "train"))
 
@@ -256,6 +276,11 @@ def _to_batch(
             diagnostics.split_histogram.get(split, 0) + 1
         )
 
+    if pass_label_seen and pass_label_missing:
+        raise ValueError(
+            "execution-pack batch mixes rows with and without passed labels"
+        )
+
     return ExecutionPackBatch(
         schema_version=EXECUTION_PACK_BATCH_SCHEMA_VERSION,
         code_tokens=code,
@@ -266,6 +291,7 @@ def _to_batch(
         output_attention_mask=output_mask,
         output_type_index=output_type_index,
         will_raise=will_raise,
+        passed=passed if pass_label_seen else None,
         record_ids=tuple(record_ids),
         splits=tuple(splits),
     )

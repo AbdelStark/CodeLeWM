@@ -10,7 +10,11 @@ from typing import Any
 
 
 EXECUTION_PACK_MANIFEST_SCHEMA_VERSION = "codelewm.execution_pack_manifest.v1"
-EXECUTION_PACK_RECORD_SCHEMA_VERSION = "codelewm.execution_pack_record.v1"
+EXECUTION_PACK_RECORD_SCHEMA_VERSION = "codelewm.execution_pack_record.v2"
+SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS = (
+    "codelewm.execution_pack_record.v1",
+    EXECUTION_PACK_RECORD_SCHEMA_VERSION,
+)
 
 
 @dataclass(frozen=True)

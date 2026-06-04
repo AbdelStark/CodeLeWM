@@ -12,7 +12,7 @@ from typing import Any
 
 from codelewm.data.execution_pack.manifest import (
     EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
-    EXECUTION_PACK_RECORD_SCHEMA_VERSION,
+    SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS,
 )
 from codelewm.observability import (
     ArtifactManifest,
@@ -402,7 +402,10 @@ def _load_pack_records(path: Path) -> tuple[dict[str, Any], ...]:
                 ) from exc
             if not isinstance(row, dict):
                 raise SemanticDecoyPackError(f"{path}:{line_no}: row must be an object")
-            if row.get("schema_version") != EXECUTION_PACK_RECORD_SCHEMA_VERSION:
+            if (
+                row.get("schema_version")
+                not in SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS
+            ):
                 raise SemanticDecoyPackError(
                     f"{path}:{line_no}: unsupported execution-pack record schema"
                 )

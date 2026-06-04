@@ -46,6 +46,7 @@ import numpy as np
 from codelewm.data import OptionalDependencyError, SourceUnavailableError
 from codelewm.data.execution_pack import (
     EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
+    EXECUTION_PACK_RECORD_SCHEMA_VERSION,
 )
 from codelewm.model import (
     CHECKPOINT_SCHEMA_VERSION,
@@ -858,7 +859,7 @@ def _write_periodic_checkpoint(
     manifest_path = checkpoint_path.with_name(checkpoint_path.name + ".manifest.json")
     metadata = build_checkpoint_metadata(
         _compatibility_payload(config),
-        record_schema_version="codelewm.execution_pack_record.v1",
+        record_schema_version=EXECUTION_PACK_RECORD_SCHEMA_VERSION,
         latent_dim=config.wm.embed_dim,
         action_view="text",
         model_class="TorchCodeTransitionModel",

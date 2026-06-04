@@ -46,7 +46,7 @@ COMPLETION_SAMPLING_PROMPT_SCHEMA_VERSION = (
 )
 DEFAULT_EXECUTION_RERANK_LLM = "openrouter:anthropic/claude-haiku-4-5"
 _OPENROUTER_PREFIX = "openrouter:"
-_BENCHMARK_CHOICES = {"humaneval", "mbpp_plus"}
+_BENCHMARK_CHOICES = {"humaneval", "mbpp", "mbpp_plus"}
 
 
 class CompletionSamplingError(RuntimeError):
@@ -675,11 +675,13 @@ def build_mutation_rerank_pack(
     )
 
 
-def normalize_completion_benchmark(benchmark: str) -> Literal["humaneval", "mbpp_plus"]:
+def normalize_completion_benchmark(
+    benchmark: str,
+) -> Literal["humaneval", "mbpp", "mbpp_plus"]:
     value = benchmark.strip().lower().replace("-", "_")
     if value not in _BENCHMARK_CHOICES:
         raise CompletionSamplingError(
-            "benchmark must be one of humaneval, mbpp-plus, or mbpp_plus"
+            "benchmark must be one of humaneval, mbpp, mbpp-plus, or mbpp_plus"
         )
     return value  # type: ignore[return-value]
 

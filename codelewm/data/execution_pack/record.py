@@ -56,6 +56,10 @@ class PackedExecutionRecord:
     # buckets here. Optional + default None so legacy v1 packs load unchanged.
     output_magnitude_bucket: str | None = None
     output_length_bucket: str | None = None
+    # v0.8 correctness-aware packs populate this with the sandboxed pass/fail
+    # result for this exact (completion, input) record. Legacy v1 packs leave it
+    # absent/None and still load for structure-only training and evaluation.
+    passed: bool | None = None
 
     @property
     def record_id(self) -> str:
@@ -89,6 +93,7 @@ class PackedExecutionRecord:
             "held_out_for_eval": self.held_out_for_eval,
             "output_magnitude_bucket": self.output_magnitude_bucket,
             "output_length_bucket": self.output_length_bucket,
+            "passed": self.passed,
         }
 
 
