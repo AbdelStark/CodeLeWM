@@ -1,0 +1,16 @@
+{
+  "checkpoint": ".artifacts/v0_7/dl-short/codelewm-v0-7-short-execution-20260603-bcc581d-seed-42/checkpoints/last.pt",
+  "decoys": [
+    "mutation",
+    "same_problem_different_submission",
+    "same_code_different_input"
+  ],
+  "device": "mps",
+  "max_examples": 1000,
+  "out": "results/v0_7/seed-42/execution_surprise",
+  "pack": ".artifacts/v0_7-build/pack-mbpp-v07",
+  "schema_version": "codelewm.eval.execution_surprise_run.v1",
+  "score_direction": "lower_is_better",
+  "seed": 42,
+  "semantic_decoy_manifest": ".artifacts/v0_7-build/semantic_decoy_pack/manifest.json"
+}

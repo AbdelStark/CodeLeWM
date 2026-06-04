@@ -1,0 +1,17 @@
+{
+  "bootstrap_samples": 200,
+  "checkpoint": ".artifacts/v0_7/dl-short/codelewm-v0-7-short-execution-20260603-bcc581d-seed-42/checkpoints/last.pt",
+  "device": "mps",
+  "max_examples_per_split": 1000,
+  "out": "results/v0_7/seed-42/execution_probe",
+  "pack": ".artifacts/v0_7-build/pack-mbpp-v07",
+  "schema_version": "codelewm.eval.execution_probe_run.v1",
+  "seed": 42,
+  "targets": [
+    "output_type",
+    "will_raise",
+    "output_magnitude_bucket",
+    "output_length_bucket",
+    "arithmetic_vs_string_vs_collection"
+  ]
+}
