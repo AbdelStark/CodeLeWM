@@ -24,6 +24,7 @@ from codelewm.model import (
     CodeStateBatch,
     TorchCodeTransitionModelConfig,
     build_torch_transition_model,
+    resolve_state_encoder_arch,
 )
 from codelewm.observability import (
     ArtifactManifest,
@@ -900,6 +901,9 @@ def _load_execution_torch_checkpoint(
         raise ExecutionEvalError(
             "checkpoint objective.inverse_action_reconstruction_weight must be numeric"
         ) from exc
+    encoder_type, encoder_layers, encoder_heads = resolve_state_encoder_arch(
+        wm, payload.get("model_state_dict")
+    )
     config = TorchCodeTransitionModelConfig(
         action_view=action_view,  # type: ignore[arg-type]
         latent_dim=int(wm.get("embed_dim", 256)),
@@ -911,6 +915,9 @@ def _load_execution_torch_checkpoint(
         dropout=0.0,
         action_fusion=str(wm.get("action_fusion", "conditional_transformer")),
         enable_inverse_action_head=inverse_weight > 0.0,
+        state_encoder_type=encoder_type,
+        state_encoder_layers=encoder_layers,
+        state_encoder_heads=encoder_heads,
     )
     model = build_torch_transition_model(config)
     try:
@@ -974,22 +981,59 @@ def _fold_token_id(token: int, *, vocab_size: int) -> int:
     return ((token - 1) % (vocab_size - 1)) + 1
 
 
-def _embed_rows(rows: Sequence[_ExecutionRow], *, model: Any, runtime: Any, device: Any) -> tuple[Any, Any, Any]:
+# Encode the eval rows in fixed-size chunks rather than one giant batch.
+# The transformer state encoder (RFC-0015 WS-C1) materializes a
+# seq x seq attention map per example, so a whole-split forward at
+# sequence length 1024 explodes memory (tens of GiB) and OOMs on MPS /
+# crawls on CPU. The per-example latents are tiny, so chunking bounds
+# peak memory to one chunk while leaving the concatenated outputs intact.
+_EMBED_CHUNK_SIZE = 32
+
+
+def _embed_rows(
+    rows: Sequence[_ExecutionRow],
+    *,
+    model: Any,
+    runtime: Any,
+    device: Any,
+    chunk_size: int = _EMBED_CHUNK_SIZE,
+) -> tuple[Any, Any, Any]:
     if not rows:
         raise ExecutionEvalError("cannot embed zero rows")
-    state_before = _state_batch(tuple(row.state_before for row in rows), runtime=runtime, device=device)
-    state_after = _state_batch(tuple(row.state_after for row in rows), runtime=runtime, device=device)
-    action = _action_batch(tuple(row.action for row in rows), runtime=runtime, device=device, action_view=model.config.action_view)
     was_training = bool(model.training)
     model.eval()
+    z_before_parts: list[Any] = []
+    z_pred_parts: list[Any] = []
+    z_after_parts: list[Any] = []
     with runtime.no_grad():
-        z_before = model.encode_state(state_before)
-        action_emb = model.encode_action(action)
-        z_after = model.encode_state(state_after)
-        z_pred_after = model.predict_after(z_before, action_emb)
+        for start in range(0, len(rows), chunk_size):
+            chunk = rows[start : start + chunk_size]
+            state_before = _state_batch(
+                tuple(row.state_before for row in chunk), runtime=runtime, device=device
+            )
+            state_after = _state_batch(
+                tuple(row.state_after for row in chunk), runtime=runtime, device=device
+            )
+            action = _action_batch(
+                tuple(row.action for row in chunk),
+                runtime=runtime,
+                device=device,
+                action_view=model.config.action_view,
+            )
+            z_before = model.encode_state(state_before)
+            action_emb = model.encode_action(action)
+            z_after = model.encode_state(state_after)
+            z_pred_after = model.predict_after(z_before, action_emb)
+            z_before_parts.append(z_before.float())
+            z_pred_parts.append(z_pred_after.float())
+            z_after_parts.append(z_after.float())
     if was_training:
         model.train()
-    return z_before.float(), z_pred_after.float(), z_after.float()
+    return (
+        runtime.cat(z_before_parts, dim=0),
+        runtime.cat(z_pred_parts, dim=0),
+        runtime.cat(z_after_parts, dim=0),
+    )
 
 
 def _embed_shuffled_predictions(
@@ -1005,15 +1049,25 @@ def _embed_shuffled_predictions(
     if len(action_rows) > 1:
         rng = random.Random(seed + 991)
         rng.shuffle(action_rows)
-    action = _action_batch(tuple(action_rows), runtime=runtime, device=device, action_view=model.config.action_view)
     was_training = bool(model.training)
     model.eval()
+    parts: list[Any] = []
     with runtime.no_grad():
-        action_emb = model.encode_action(action)
-        z_pred_after = model.predict_after(z_before, action_emb)
+        for start in range(0, len(action_rows), _EMBED_CHUNK_SIZE):
+            chunk = action_rows[start : start + _EMBED_CHUNK_SIZE]
+            action = _action_batch(
+                tuple(chunk),
+                runtime=runtime,
+                device=device,
+                action_view=model.config.action_view,
+            )
+            action_emb = model.encode_action(action)
+            z_before_chunk = z_before[start : start + len(chunk)]
+            z_pred_after = model.predict_after(z_before_chunk, action_emb)
+            parts.append(z_pred_after.float())
     if was_training:
         model.train()
-    return z_pred_after.float()
+    return runtime.cat(parts, dim=0)
 
 
 def _embed_state(state: Mapping[str, np.ndarray], *, model: Any, runtime: Any, device: Any) -> Any:

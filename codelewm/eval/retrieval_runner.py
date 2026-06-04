@@ -24,6 +24,7 @@ from codelewm.model import (
     CodeStateBatch,
     TorchCodeTransitionModelConfig,
     build_torch_transition_model,
+    resolve_state_encoder_arch,
 )
 from codelewm.observability import (
     ArtifactManifest,
@@ -866,6 +867,9 @@ def _load_torch_checkpoint(checkpoint_path: Path, *, device: Any, runtime: Any) 
     action_view = str(wm.get("action_view", "text"))
     if action_view not in {"text", "abstract"}:
         raise RetrievalEvalError("patch action is diagnostic only and cannot be a headline retrieval model")
+    encoder_type, encoder_layers, encoder_heads = resolve_state_encoder_arch(
+        wm, payload.get("model_state_dict")
+    )
     config = TorchCodeTransitionModelConfig(
         action_view=action_view,  # type: ignore[arg-type]
         latent_dim=int(wm.get("embed_dim", 256)),
@@ -881,6 +885,9 @@ def _load_torch_checkpoint(checkpoint_path: Path, *, device: Any, runtime: Any) 
                 and compatibility["loss"].get("enable_inverse_action_reconstruction")
             )
         ),
+        state_encoder_type=encoder_type,
+        state_encoder_layers=encoder_layers,
+        state_encoder_heads=encoder_heads,
     )
     model = build_torch_transition_model(config)
     try:

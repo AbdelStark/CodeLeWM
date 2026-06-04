@@ -887,6 +887,12 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
             "action_view": "text",
             "state_sequence_length": STATE_SEQUENCE_LENGTH,
             "action_sequence_length": TEXT_ACTION_SEQUENCE_LENGTH,
+            # Persist the state-encoder architecture (RFC-0015 WS-C1) so the
+            # checkpoint is self-describing: eval rebuilds the matching model
+            # without inferring it from the weights.
+            "state_encoder_type": config.wm.state_encoder_type,
+            "state_encoder_layers": config.wm.state_encoder_layers,
+            "state_encoder_heads": config.wm.state_encoder_heads,
         },
         "objective": {
             "prediction_mse_weight": config.objective.prediction_mse_weight,
