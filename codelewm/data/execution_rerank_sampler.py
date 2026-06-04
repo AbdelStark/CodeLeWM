@@ -433,13 +433,14 @@ def build_mutation_rerank_pack(
     source = Path(source_path)
     output_dir = Path(out).resolve()
     labels_path = output_dir / f"{benchmark_id}_completion_labels.jsonl"
+    prompt_path = output_dir / "prompts" / "sampling_prompts.jsonl"
     config_path = output_dir / "config.json"
     report_path = output_dir / "reports" / "completion_sampling_report.json"
     secret_scan_report_path = output_dir / "reports" / "secret_scan_report.json"
     manifest_path = output_dir / "manifest.json"
     _reject_existing(
         output_dir,
-        (labels_path, config_path, report_path, secret_scan_report_path, manifest_path),
+        (labels_path, prompt_path, config_path, report_path, secret_scan_report_path, manifest_path),
         overwrite=overwrite,
     )
 
@@ -451,6 +452,7 @@ def build_mutation_rerank_pack(
             _limit_submission_cases(submission, limit=max_cases_per_problem)
             for submission in submissions
         )
+    problem_prompts = _load_problem_prompts(source)
 
     config_payload = {
         "schema_version": COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION,
@@ -473,6 +475,7 @@ def build_mutation_rerank_pack(
     )
 
     rows: list[dict[str, Any]] = []
+    prompt_rows: list[dict[str, Any]] = []
     problem_summaries: list[dict[str, Any]] = []
     kept_problems = 0
     skipped_reference_fail = 0
@@ -509,12 +512,15 @@ def build_mutation_rerank_pack(
             *failing[: pool_size - 1],
         ]
 
+        # Emit candidates in a deterministic *shuffled* order so neither the
+        # row order nor any score tie-break leaks the reference position; the
+        # shuffle index is the honest "llm_order" baseline ranking.
         order = list(range(len(candidates)))
         random.Random(seed + _stable_hash(pid)).shuffle(order)
-        rank_by_index = {cand_index: rank for rank, cand_index in enumerate(order)}
 
         problem_passes = 0
-        for cand_index, (code, passed, results, descriptor) in enumerate(candidates):
+        for emit_rank, cand_index in enumerate(order):
+            code, passed, results, descriptor = candidates[cand_index]
             valid_candidate = _valid_candidate_from_results(results)
             if passed:
                 problem_passes += 1
@@ -527,11 +533,11 @@ def build_mutation_rerank_pack(
                     "completion_text": code,
                     "code": code,
                     "completion_sha256": _sha256_text(code),
-                    "llm_order_rank": rank_by_index[cand_index],
+                    "llm_order_rank": emit_rank,
                     "llm": "wsd-mutation",
                     "llm_seed": seed,
                     "sample_seed": seed,
-                    "sample_rank": cand_index + 1,
+                    "sample_rank": emit_rank + 1,
                     "dry_run": False,
                     "wsd_mutation": descriptor,
                     "scoring_inputs": [
@@ -550,6 +556,14 @@ def build_mutation_rerank_pack(
                 }
             )
         kept_problems += 1
+        prompt_rows.append(
+            {
+                "schema_version": COMPLETION_SAMPLING_PROMPT_SCHEMA_VERSION,
+                "benchmark_id": benchmark_id,
+                "problem_id": pid,
+                "prompt_text": problem_prompts.get(pid) or submission.code,
+            }
+        )
         problem_summaries.append(
             {
                 "problem_id": pid,
@@ -566,6 +580,7 @@ def build_mutation_rerank_pack(
         )
 
     _write_jsonl(labels_path, rows)
+    _write_jsonl(prompt_path, prompt_rows)
 
     passed_count = sum(1 for row in rows if row["passed"])
     valid_count = sum(1 for row in rows if row["valid_candidate"])
@@ -606,7 +621,9 @@ def build_mutation_rerank_pack(
     )
 
     scan_report = scan_paths(
-        (labels_path, config_path, report_path), include_suffixes=(), recursive=False
+        (labels_path, prompt_path, config_path, report_path),
+        include_suffixes=(),
+        recursive=False,
     )
     scan_payload = _relative_secret_scan_payload(scan_report.to_dict(), output_dir)
     secret_scan_report_path.write_text(
@@ -621,7 +638,7 @@ def build_mutation_rerank_pack(
     artifact_manifest = build_artifact_manifest(
         artifact_kind="downstream_benchmark",
         root=output_dir,
-        files=(labels_path, config_path, report_path, secret_scan_report_path),
+        files=(labels_path, prompt_path, config_path, report_path, secret_scan_report_path),
         command=command,
         config=config_payload,
         metadata={
