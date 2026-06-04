@@ -50,7 +50,10 @@ SCORE_RESULT_SCHEMA_VERSION = "codelewm.score.v1"
 RERANK_RESULT_SCHEMA_VERSION = "codelewm.rerank.v1"
 ERROR_REPORT_SCHEMA_VERSION = "codelewm.error.v1"
 EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION = "codelewm.execution_train_checkpoint.v1"
-EXECUTION_PACK_RECORD_SCHEMA_VERSION = "codelewm.execution_pack_record.v1"
+SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS = (
+    "codelewm.execution_pack_record.v1",
+    "codelewm.execution_pack_record.v2",
+)
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 _DATA_TOKEN_RE = re.compile(r"\w+|[^\w\s]")
 HarnessErrorType = Literal[
@@ -963,11 +966,11 @@ def _default_scoring_backend(
     record_schema = None if trusted_manifest is None else trusted_manifest.metadata.record_schema_version
     is_execution_manifest = (
         model_class == "TorchCodeTransitionModel"
-        and record_schema == EXECUTION_PACK_RECORD_SCHEMA_VERSION
+        and record_schema in SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS
     )
     is_torch_manifest = (
         model_class == "TorchCodeTransitionModel"
-        and record_schema != EXECUTION_PACK_RECORD_SCHEMA_VERSION
+        and record_schema not in SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS
     )
     unsafe_schema = (
         _peek_torch_checkpoint_schema(checkpoint, device=device)

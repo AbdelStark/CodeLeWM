@@ -36,6 +36,7 @@ from .manifest import (
     EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
     EXECUTION_PACK_RECORD_SCHEMA_VERSION,
     ExecutionPackManifest,
+    SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS,
 )
 from .publish import (
     CLAIM_BOUNDARY_NAME,
@@ -67,6 +68,7 @@ __all__ = [
     "PrePublishGateError",
     "PrePublishReport",
     "SplitName",
+    "SUPPORTED_EXECUTION_PACK_RECORD_SCHEMA_VERSIONS",
     "build_execution_pack",
     "classify_record_kind",
     "context_from_manifest",

@@ -439,6 +439,28 @@ CodeLeWM lift over no-action, bootstrap confidence intervals, and an explicit
 claim gate. Positive downstream claims require both the LLM-order and no-action
 lift gates to pass; otherwise the report remains diagnostic.
 
+`scripts/build-passfail-pack` converts one or more
+`codelewm.eval.completion_label.v1` JSONL files into a v0.8 supervised execution
+pack for correctness co-training:
+
+```bash
+scripts/build-passfail-pack \
+  --benchmark mbpp \
+  --source data/mbpp_train.jsonl \
+  --completion-labels results/v0_8/wsd_mbpp/mbpp_completion_labels.jsonl \
+  --out results/v0_8/passfail_pack \
+  --json
+```
+
+The script re-executes each completion in the data-prep sandbox to recover the
+model target output, writes `pack.jsonl` records with
+`schema_version=codelewm.execution_pack_record.v2` and per-record `passed`
+labels, reports class balance and `pos_weight` in
+`reports/passfail_pack_report.json`, emits a redacted secret-scan report, and
+writes a `codelewm.artifact_manifest.v1` dataset manifest. This is a data-build
+surface only; training, scoring, indexing, and evaluation consumers continue to
+load the JSONL pack without importing the sandbox.
+
 `codelewm eval ablation` consolidates a retrieval artifact and training artifact
 into an action-view ablation report:
 

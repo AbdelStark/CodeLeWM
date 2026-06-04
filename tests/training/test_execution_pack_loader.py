@@ -89,6 +89,7 @@ class ExecutionPackLoaderTest(unittest.TestCase):
                 )
                 self.assertEqual(batch.code_tokens.dtype, np.int32)
                 self.assertEqual(batch.code_attention_mask.dtype, bool)
+                self.assertIsNone(batch.passed)
 
     def test_diagnostics_record_count_matches_pack(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -173,6 +173,28 @@ Packed HDF5 files store `schema_version`, `features.action_patch`, and
 Manifest checksums are SHA-256 over artifact bytes. Parquet staging shards are
 written before HDF5 packing and are listed alongside the HDF5 artifact.
 
+## Execution Pack v2
+
+`codelewm.execution_pack_record.v2` is the v0.8 correctness-aware extension of
+the execution-substrate pack. It keeps the v1 tokenized `(code, input, output)`
+fields and adds:
+
+```python
+passed: bool | None
+```
+
+Structure-only v1-compatible packs omit the field or set it to `None`. Pass/fail
+training packs must set it on every row. The label granularity is one
+`(problem, completion, input)` record: the data-prep adapter re-executes a
+manifested `codelewm.eval.completion_label.v1` completion against its persisted
+scoring input, recovers `output_repr` for the model target, and sets `passed`
+by comparing the recovered output hash with the expected-output hash stored in
+the completion-label artifact. Splits remain grouped by `source_problem_id`.
+
+`codelewm.execution_pack_batch.v2` exposes `passed` as a boolean batch vector
+when every row in the batch is labeled and as `None` for legacy unlabeled packs.
+Mixed labeled/unlabeled batches are invalid.
+
 ## Filtering Rules
 
 Keep rows only when:
