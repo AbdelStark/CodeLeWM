@@ -15,6 +15,7 @@ from codelewm.model import (
     TransitionBatch,
     expected_action_sequence_length,
     infer_shape,
+    resolve_state_encoder_arch,
     transition_energy,
 )
 
@@ -82,6 +83,37 @@ class TransitionContractTest(unittest.TestCase):
                     segment_ids=[[0]],
                 )
             )
+
+
+class ResolveStateEncoderArchTest(unittest.TestCase):
+    """The eval loader must rebuild the right state-encoder architecture."""
+
+    def test_prefers_persisted_compatibility_fields(self) -> None:
+        arch = resolve_state_encoder_arch(
+            {
+                "state_encoder_type": "transformer",
+                "state_encoder_layers": 6,
+                "state_encoder_heads": 4,
+            },
+            {},
+        )
+        self.assertEqual(arch, ("transformer", 6, 4))
+
+    def test_infers_transformer_from_state_dict_for_legacy_checkpoints(self) -> None:
+        # Pre-persistence v0.7 checkpoints carry transformer weights but no
+        # encoder fields in compatibility_config.wm; infer from the weights.
+        state_dict = {
+            "encoder.encoder.layers.0.self_attn.in_proj_weight": None,
+            "encoder.encoder.layers.1.norm1.weight": None,
+            "encoder.pool.weight": None,
+        }
+        self.assertEqual(resolve_state_encoder_arch({}, state_dict), ("transformer", 2, 8))
+
+    def test_defaults_to_pool_without_transformer_weights(self) -> None:
+        self.assertEqual(
+            resolve_state_encoder_arch({}, {"encoder.proj.weight": None}),
+            ("pool", 4, 8),
+        )
 
 
 if __name__ == "__main__":

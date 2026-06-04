@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -142,6 +143,43 @@ class TorchCodeTransitionModel(CodeTransitionModel):
         if self.inverse_action_head is not None:
             output["action_reconstruction"] = self.reconstruct_action(z_before, z_after)
         return output
+
+
+def resolve_state_encoder_arch(
+    wm_config: Any, state_dict: Any
+) -> tuple[str, int, int]:
+    """Resolve ``(encoder_type, num_layers, num_heads)`` for loading a checkpoint.
+
+    Prefers the architecture persisted in the checkpoint's
+    ``compatibility_config.wm``. Falls back to inferring from the
+    ``model_state_dict`` for older checkpoints that did not persist the
+    state-encoder architecture: the transformer state encoder was added in
+    v0.7 (RFC-0015 WS-C1), so a checkpoint whose weights carry
+    ``encoder.encoder.layers.*`` is a transformer encoder regardless of what
+    its compatibility block records. ``num_heads`` is not recoverable from
+    weight shapes, so it defaults to the v0.7 head count when not persisted.
+    """
+
+    wm = wm_config if isinstance(wm_config, Mapping) else {}
+    sd = state_dict if isinstance(state_dict, Mapping) else {}
+    layer_indices = [
+        int(key.split(".")[3])
+        for key in sd
+        if key.startswith("encoder.encoder.layers.")
+        and key.split(".")[3].isdigit()
+    ]
+    has_transformer_weights = bool(layer_indices)
+
+    encoder_type = wm.get("state_encoder_type")
+    if encoder_type is None:
+        encoder_type = "transformer" if has_transformer_weights else "pool"
+
+    num_layers = wm.get("state_encoder_layers")
+    if num_layers is None:
+        num_layers = (max(layer_indices) + 1) if layer_indices else 4
+
+    num_heads = wm.get("state_encoder_heads", 8)
+    return str(encoder_type), int(num_layers), int(num_heads)
 
 
 def build_torch_transition_model(
