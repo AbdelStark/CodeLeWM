@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -448,6 +449,137 @@ class CompletionRerankEvaluationTest(unittest.TestCase):
             self.assertEqual(payload["benchmark"], "humaneval")
             self.assertFalse(payload["claim_allowed"])
             self.assertTrue((root / "rerank" / payload["report_path"]).is_file())
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("torch") is not None
+        and importlib.util.find_spec("einops") is not None,
+        "torch scoring runtime is unavailable",
+    )
+    def test_cli_runs_humaneval_with_pass_head_checkpoint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            labels_out = root / "labels"
+            sampling = sample_execution_rerank_completions(
+                benchmark="humaneval",
+                source_path=FIXTURES / "humaneval_tiny.jsonl",
+                out=labels_out,
+                samples_per_problem=2,
+                llm_seeds=(17,),
+            )
+            checkpoint = _write_pass_head_execution_checkpoint(root)
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codelewm.harness.cli",
+                    "eval",
+                    "rerank-humaneval",
+                    "--completion-manifest",
+                    str(labels_out / sampling.artifact_manifest_path),
+                    "--checkpoint",
+                    str(checkpoint),
+                    "--out",
+                    str(root / "rerank"),
+                    "--device",
+                    "cpu",
+                    "--require-learned-scorer",
+                    "--bootstrap-samples",
+                    "32",
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout)
+            report = json.loads(
+                (root / "rerank" / payload["report_path"]).read_text(
+                    encoding="utf-8"
+                )
+            )
+            score_rows = [
+                json.loads(line)
+                for line in (root / "rerank" / payload["score_rows_path"])
+                .read_text(encoding="utf-8")
+                .splitlines()
+            ]
+
+        self.assertEqual(payload["schema_version"], EXECUTION_RERANK_EVAL_RUN_SCHEMA_VERSION)
+        self.assertEqual(
+            report["scoring_summary"]["model_id"],
+            "codelewm.execution_torch_transition_scorer.v1",
+        )
+        self.assertTrue(all("codelewm" in row["scores"] for row in score_rows))
+
+
+def _write_pass_head_execution_checkpoint(root: Path) -> Path:
+    import torch
+
+    from codelewm.harness.scorer import EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION
+    from codelewm.model import (
+        TorchCodeTransitionModelConfig,
+        build_torch_transition_model,
+        compute_config_hash,
+    )
+    from codelewm.model.checkpoint import (
+        build_checkpoint_metadata,
+        write_checkpoint_manifest,
+    )
+    from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
+
+    compatibility = {
+        "wm": {
+            "action_view": "text",
+            "embed_dim": 256,
+            "state_sequence_length": 1024,
+            "action_sequence_length": 256,
+            "action_fusion": "conditional_transformer",
+            "enable_pass_head": True,
+        },
+        "objective": {
+            "inverse_action_reconstruction_weight": 0.0,
+            "p_pass_bce_weight": 0.5,
+            "p_pass_bce_pos_weight": 1.0,
+        },
+        "loader": {"output_sequence_length": 256},
+    }
+    model = build_torch_transition_model(
+        TorchCodeTransitionModelConfig(
+            vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+            dropout=0.0,
+            enable_pass_head=True,
+        )
+    )
+    assert model.pass_head is not None
+    with torch.no_grad():
+        for param in model.pass_head.parameters():
+            param.zero_()
+        model.pass_head[-1].bias.fill_(2.5)
+    checkpoint = root / "pass_head_last.pt"
+    torch.save(
+        {
+            "schema_version": EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION,
+            "step": 12,
+            "model_state_dict": model.state_dict(),
+            "compatibility_config": compatibility,
+            "compatibility_config_hash": compute_config_hash(compatibility),
+            "metrics": {"fixture": 1.0},
+        },
+        checkpoint,
+    )
+    write_checkpoint_manifest(
+        metadata=build_checkpoint_metadata(
+            compatibility,
+            record_schema_version="codelewm.execution_pack_record.v2",
+            action_view="text",
+            model_class="TorchCodeTransitionModel",
+        ),
+        checkpoint_path=checkpoint,
+        manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+    )
+    return checkpoint
 
 
 if __name__ == "__main__":  # pragma: no cover
