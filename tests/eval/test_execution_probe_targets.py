@@ -192,6 +192,25 @@ class JudgeVerdictProbeTest(unittest.TestCase):
         self.assertIsNone(label_record({}, "judge_verdict"))
 
 
+class PassedProbeTest(unittest.TestCase):
+    def test_boolean_labels_are_returned_verbatim(self) -> None:
+        self.assertEqual(label_record({"passed": True}, "passed"), True)
+        self.assertEqual(label_record({"passed": False}, "passed"), False)
+
+    def test_missing_or_non_boolean_label_is_none(self) -> None:
+        self.assertIsNone(label_record({}, "passed"))
+        self.assertIsNone(label_record({"passed": "true"}, "passed"))
+
+    def test_extract_labels_counts_pass_fail_classes(self) -> None:
+        result = extract_labels(
+            [{"passed": True}, {"passed": False}, {"passed": True}, {}],
+            target="passed",
+        )
+        self.assertEqual(result.applicable_count, 3)
+        self.assertEqual(result.class_distribution, {"False": 1, "True": 2})
+        self.assertIsNone(result.labels[3])
+
+
 class ExtractLabelsTest(unittest.TestCase):
     def test_class_distribution_counts_applicable(self) -> None:
         records = [
@@ -253,6 +272,7 @@ class TargetRegistryTest(unittest.TestCase):
             "output_kind": "value",
             "output_repr": "5",
             "judge_verdict": "accepted",
+            "passed": True,
         }
         for target in EXECUTION_PROBE_TARGETS:
             with self.subTest(target=target):

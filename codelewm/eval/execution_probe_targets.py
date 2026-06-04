@@ -22,6 +22,8 @@ intentionally minimal and well-grounded:
   shape.
 - ``judge_verdict`` — 3-class on records where the source carried a
   judge verdict (currently only CodeNet).
+- ``passed`` — binary over v0.8 pass/fail records that explicitly carry a
+  sandboxed completion-level correctness label.
 
 For records that do not belong to a target's domain (e.g. numeric
 magnitude on a string output), the extractor returns ``None`` and the
@@ -46,6 +48,7 @@ EXECUTION_PROBE_TARGETS: tuple[str, ...] = (
     "output_length_bucket",
     "arithmetic_vs_string_vs_collection",
     "judge_verdict",
+    "passed",
 )
 
 ExecutionProbeTarget = Literal[
@@ -55,6 +58,7 @@ ExecutionProbeTarget = Literal[
     "output_length_bucket",
     "arithmetic_vs_string_vs_collection",
     "judge_verdict",
+    "passed",
 ]
 
 
@@ -98,6 +102,8 @@ def label_record(record: Mapping[str, Any], target: str) -> object | None:
         return _label_coarse_kind(record)
     if target == "judge_verdict":
         return _label_judge_verdict(record)
+    if target == "passed":
+        return _label_passed(record)
     raise ExecutionProbeTargetError(f"unsupported probe target: {target!r}")
 
 
@@ -232,4 +238,11 @@ def _label_judge_verdict(record: Mapping[str, Any]) -> str | None:
         return "wrong_answer"
     if normalized in {"runtime_error"}:
         return "runtime_error"
+    return None
+
+
+def _label_passed(record: Mapping[str, Any]) -> bool | None:
+    passed = record.get("passed")
+    if isinstance(passed, bool):
+        return passed
     return None

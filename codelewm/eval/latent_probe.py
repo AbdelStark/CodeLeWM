@@ -31,6 +31,7 @@ SUPPORTED_LATENT_PROBE_TARGETS = (
     "output_length_bucket",
     "arithmetic_vs_string_vs_collection",
     "judge_verdict",
+    "passed",
 )
 LATENT_PROBE_VIEWS = ("z_before", "z_after", "z_pred_after")
 LATENT_PROBE_BASELINES = (
