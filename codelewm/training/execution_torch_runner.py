@@ -104,6 +104,9 @@ class ExecutionTorchTrainConfig:
     eval_every: int = 50
     enable_inverse_action_reconstruction: bool = False
     inverse_action_reconstruction_weight: float = 0.0
+    enable_p_pass_bce: bool = False
+    p_pass_bce_weight: float = 0.0
+    p_pass_bce_pos_weight: float = 1.0
 
     def __post_init__(self) -> None:
         if self.code_sequence_length != STATE_SEQUENCE_LENGTH:
@@ -123,6 +126,16 @@ class ExecutionTorchTrainConfig:
             raise ExecutionTorchRunnerError("batch_size must be positive")
         if self.max_steps < 1:
             raise ExecutionTorchRunnerError("max_steps must be positive")
+        if self.enable_p_pass_bce and self.p_pass_bce_weight <= 0.0:
+            raise ExecutionTorchRunnerError(
+                "enable_p_pass_bce requires p_pass_bce_weight > 0"
+            )
+        if not self.enable_p_pass_bce and self.p_pass_bce_weight != 0.0:
+            raise ExecutionTorchRunnerError(
+                "p_pass_bce_weight requires enable_p_pass_bce"
+            )
+        if self.p_pass_bce_pos_weight <= 0.0:
+            raise ExecutionTorchRunnerError("p_pass_bce_pos_weight must be positive")
 
 
 @dataclass(frozen=True)
@@ -134,6 +147,8 @@ class ExecutionTorchStep:
     loss_prediction_mse: float
     loss_sigreg: float
     loss_action_swap_contrastive: float | None
+    loss_p_pass_bce: float | None
+    loss_p_pass_bce_weighted: float | None
     no_action_mse: float
     margin_no_action_minus_pred: float
     wall_time_s: float
@@ -146,6 +161,8 @@ class ExecutionTorchStep:
             "loss_prediction_mse": self.loss_prediction_mse,
             "loss_sigreg": self.loss_sigreg,
             "loss_action_swap_contrastive": self.loss_action_swap_contrastive,
+            "loss_p_pass_bce": self.loss_p_pass_bce,
+            "loss_p_pass_bce_weighted": self.loss_p_pass_bce_weighted,
             "no_action_mse": self.no_action_mse,
             "margin_no_action_minus_pred": self.margin_no_action_minus_pred,
             "wall_time_s": self.wall_time_s,
@@ -235,6 +252,7 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             state_sequence_length=STATE_SEQUENCE_LENGTH,
             action_sequence_length=TEXT_ACTION_SEQUENCE_LENGTH,
             vocab_size=config.vocab_size,
+            enable_pass_head=config.enable_p_pass_bce,
         )
     ).to(device)
     model.train()
@@ -262,6 +280,11 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             if config.enable_inverse_action_reconstruction
             else 0.0
         ),
+        enable_p_pass_bce=config.enable_p_pass_bce,
+        p_pass_bce_weight=(
+            config.p_pass_bce_weight if config.enable_p_pass_bce else 0.0
+        ),
+        p_pass_bce_pos_weight=config.p_pass_bce_pos_weight,
     )
 
     steps: list[ExecutionTorchStep] = []
@@ -298,6 +321,8 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             loss_prediction_mse=scalar["loss/prediction_mse"],
             loss_sigreg=scalar["loss/sigreg"],
             loss_action_swap_contrastive=swap_val,
+            loss_p_pass_bce=scalar.get("loss/p_pass_bce"),
+            loss_p_pass_bce_weighted=scalar.get("loss/p_pass_bce_weighted"),
             no_action_mse=no_action_mse_val,
             margin_no_action_minus_pred=margin_val,
             wall_time_s=time.perf_counter(),
@@ -308,6 +333,11 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
                 "loss_total": record.loss_total,
                 "loss_prediction_mse": record.loss_prediction_mse,
                 "loss_sigreg": record.loss_sigreg,
+                **(
+                    {"loss_p_pass_bce": record.loss_p_pass_bce}
+                    if record.loss_p_pass_bce is not None
+                    else {}
+                ),
                 "no_action_mse": record.no_action_mse,
                 "margin_no_action_minus_pred": record.margin_no_action_minus_pred,
             }
@@ -327,6 +357,16 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             s.margin_no_action_minus_pred for s in tail
         ),
     }
+    if any(s.loss_p_pass_bce is not None for s in tail):
+        final["loss_p_pass_bce"] = _mean(
+            s.loss_p_pass_bce for s in tail if s.loss_p_pass_bce is not None
+        )
+    if any(s.loss_p_pass_bce_weighted is not None for s in tail):
+        final["loss_p_pass_bce_weighted"] = _mean(
+            s.loss_p_pass_bce_weighted
+            for s in tail
+            if s.loss_p_pass_bce_weighted is not None
+        )
     initial = initial or final
     deltas = {
         k: final[k] - initial[k] for k in initial
@@ -364,6 +404,9 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             "enable_action_swap_contrastive": config.enable_action_swap_contrastive,
             "action_swap_contrastive_weight": config.action_swap_contrastive_weight,
             "action_swap_contrastive_margin": config.action_swap_contrastive_margin,
+            "enable_p_pass_bce": config.enable_p_pass_bce,
+            "p_pass_bce_weight": config.p_pass_bce_weight,
+            "p_pass_bce_pos_weight": config.p_pass_bce_pos_weight,
             "pack_batch_schema_version": EXECUTION_PACK_BATCH_SCHEMA_VERSION,
             "pack_manifest_schema_version": EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
         },
@@ -454,6 +497,15 @@ def _train_one_step(
     z_after = model.encode_state(output_state)
     z_pred_after = model.predict_after(z_before, action_emb)
     z_pred_after_swapped = model.predict_after(z_before, action_emb_swapped)
+    p_pass_logit = None
+    pass_labels = None
+    if objective_config.enable_p_pass_bce:
+        if batch.passed is None:
+            raise ExecutionTorchRunnerError(
+                "p_pass BCE requires execution-pack rows with passed labels"
+            )
+        p_pass_logit = model.pass_logit(z_before, action_emb, z_pred_after)
+        pass_labels = torch_.from_numpy(batch.passed.astype(np.float32)).to(device)
 
     # The inverse-action head reconstructs the action embedding from
     # (z_before, z_after); the objective compares it against the true
@@ -476,6 +528,8 @@ def _train_one_step(
         ),
         action_emb=action_emb if objective_config.enable_inverse_action_reconstruction else None,
         action_reconstruction=action_reconstruction,
+        p_pass_logit=p_pass_logit,
+        pass_labels=pass_labels,
     )
 
     # No-action baseline: how well would the identity "z_pred = z_before"

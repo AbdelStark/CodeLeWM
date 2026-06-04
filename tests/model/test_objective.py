@@ -11,6 +11,7 @@ from codelewm.model import (
     compute_action_swap_contrastive_loss,
     compute_action_use_margin_loss,
     compute_inverse_action_reconstruction_loss,
+    compute_p_pass_bce_loss,
     compute_prediction_mse,
     compute_sigreg_loss,
     compute_transition_objective,
@@ -223,6 +224,67 @@ class ObjectiveNumpyTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ObjectiveConfig(prediction_mse_weight=-1.0)
 
+    def test_p_pass_bce_matches_hand_computed_value(self) -> None:
+        loss = compute_p_pass_bce_loss(
+            np.array([0.0, 0.0]),
+            np.array([0.0, 1.0]),
+            pos_weight=2.0,
+        )
+
+        self.assertAlmostEqual(loss, 1.5 * math.log(2.0), places=6)
+
+    def test_transition_objective_reports_p_pass_bce_terms(self) -> None:
+        z_before = np.array([[0.0, 0.0], [0.0, 1.0]])
+        z_after = np.array([[1.0, 0.0], [1.0, 1.0]])
+        z_pred = np.array([[0.9, 0.0], [0.9, 1.0]])
+        p_pass_logit = np.array([[0.0], [1.0]])
+        pass_labels = np.array([0.0, 1.0])
+        config = ObjectiveConfig(
+            sigreg_weight=0.0,
+            enable_p_pass_bce=True,
+            p_pass_bce_weight=0.4,
+            p_pass_bce_pos_weight=2.0,
+            sigreg_num_proj=8,
+            sigreg_seed=3,
+        )
+
+        terms = compute_transition_objective(
+            z_before,
+            z_after,
+            z_pred,
+            config=config,
+            p_pass_logit=p_pass_logit,
+            pass_labels=pass_labels,
+        )
+        scalars = terms.scalars()
+
+        self.assertIn("loss/p_pass_bce", scalars)
+        self.assertIn("loss/p_pass_bce_weighted", scalars)
+        self.assertAlmostEqual(
+            scalars["loss/p_pass_bce_weighted"],
+            scalars["loss/p_pass_bce"] * 0.4,
+        )
+        self.assertAlmostEqual(
+            scalars["loss/total"],
+            scalars["loss/prediction_mse"]
+            + scalars["loss/sigreg_weighted"]
+            + scalars["loss/p_pass_bce_weighted"],
+        )
+
+    def test_p_pass_bce_requires_explicit_gate_and_binary_labels(self) -> None:
+        with self.assertRaisesRegex(ValueError, "enable_p_pass_bce"):
+            ObjectiveConfig(p_pass_bce_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero p_pass_bce_weight"):
+            ObjectiveConfig(enable_p_pass_bce=True)
+        with self.assertRaisesRegex(ValueError, "p_pass_bce_pos_weight"):
+            ObjectiveConfig(
+                enable_p_pass_bce=True,
+                p_pass_bce_weight=0.1,
+                p_pass_bce_pos_weight=0.0,
+            )
+        with self.assertRaisesRegex(ValueError, "0/1"):
+            compute_p_pass_bce_loss(np.array([0.0, 0.0]), np.array([0.0, 0.5]))
+
 
 class ObjectiveTorchTest(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
@@ -254,6 +316,13 @@ class ObjectiveTorchTest(unittest.TestCase):
         self.assertIsNotNone(z_pred.grad)
         self.assertIsNone(z_before.grad)
         self.assertIsNone(z_after.grad)
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
+    def test_torch_p_pass_bce_rejects_non_binary_labels(self) -> None:
+        import torch
+
+        with self.assertRaisesRegex(ValueError, "0/1"):
+            compute_p_pass_bce_loss(torch.zeros(2, 1), torch.tensor([0.0, 0.5]))
 
 
 if __name__ == "__main__":

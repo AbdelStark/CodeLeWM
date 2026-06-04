@@ -123,6 +123,9 @@ class ScaledTrainConfigLoadTest(unittest.TestCase):
                 self.assertEqual(configs[name].loss.action_swap_contrastive_margin, 0.0)
                 self.assertFalse(configs[name].loss.enable_inverse_action_reconstruction)
                 self.assertEqual(configs[name].loss.inverse_action_reconstruction_weight, 0.0)
+                self.assertFalse(configs[name].loss.enable_p_pass_bce)
+                self.assertEqual(configs[name].loss.p_pass_bce_weight, 0.0)
+                self.assertEqual(configs[name].loss.p_pass_bce_pos_weight, 1.0)
 
         action_margin = configs["codelewm_scaled_action_use_margin_gpu_a10g"]
         self.assertTrue(action_margin.loss.enable_action_use_margin)
@@ -350,6 +353,10 @@ class TrainConfigValidationTest(unittest.TestCase):
         self.assertNotIn("action_swap_contrastive_margin", payload["loss"])
         self.assertNotIn("enable_inverse_action_reconstruction", payload["loss"])
         self.assertNotIn("inverse_action_reconstruction_weight", payload["loss"])
+        self.assertNotIn("enable_pass_head", payload["wm"])
+        self.assertNotIn("enable_p_pass_bce", payload["loss"])
+        self.assertNotIn("p_pass_bce_weight", payload["loss"])
+        self.assertNotIn("p_pass_bce_pos_weight", payload["loss"])
 
     def test_compatibility_hash_records_enabled_action_margin_surface(self) -> None:
         payload = copy.deepcopy(self.payload)
@@ -380,6 +387,26 @@ class TrainConfigValidationTest(unittest.TestCase):
         self.assertEqual(compatibility_payload["loss"]["action_swap_contrastive_margin"], 0.05)
         self.assertTrue(compatibility_payload["loss"]["enable_inverse_action_reconstruction"])
         self.assertEqual(compatibility_payload["loss"]["inverse_action_reconstruction_weight"], 0.10)
+
+    def test_compatibility_hash_records_enabled_p_pass_surface(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["loss"]["enable_p_pass_bce"] = True
+        payload["loss"]["p_pass_bce_weight"] = 0.3
+        payload["loss"]["p_pass_bce_pos_weight"] = 2.0
+        config = validate_train_config(payload)
+        compatibility_payload = compatibility_config_payload(config)
+
+        self.assertTrue(compatibility_payload["wm"]["enable_pass_head"])
+        self.assertTrue(compatibility_payload["loss"]["enable_p_pass_bce"])
+        self.assertEqual(compatibility_payload["loss"]["p_pass_bce_weight"], 0.3)
+        self.assertEqual(compatibility_payload["loss"]["p_pass_bce_pos_weight"], 2.0)
+
+    def test_validation_rejects_p_pass_bce_weight_without_gate(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["loss"]["p_pass_bce_weight"] = 0.3
+
+        with self.assertRaisesRegex(TrainConfigError, "enable_p_pass_bce"):
+            validate_train_config(payload)
 
     def test_validation_rejects_image_control_data_paths(self) -> None:
         payload = copy.deepcopy(self.payload)

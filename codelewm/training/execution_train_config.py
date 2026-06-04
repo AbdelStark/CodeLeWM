@@ -119,6 +119,8 @@ class ExecutionTrainObjectiveConfig:
     # (off) so existing configs are unchanged; capped at 0.10 to match the
     # objective's retrieval_weight_cap.
     retrieval_weight: float = 0.0
+    p_pass_bce_weight: float = 0.0
+    p_pass_bce_pos_weight: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -329,6 +331,14 @@ class ExecutionTrainConfig:
             raise ExecutionTrainConfigError(
                 "objective.inverse_action_reconstruction_weight must be non-negative"
             )
+        if self.objective.p_pass_bce_weight < 0.0:
+            raise ExecutionTrainConfigError(
+                "objective.p_pass_bce_weight must be non-negative"
+            )
+        if self.objective.p_pass_bce_pos_weight <= 0.0:
+            raise ExecutionTrainConfigError(
+                "objective.p_pass_bce_pos_weight must be positive"
+            )
         # HF Jobs contract.
         if self.hf_jobs.timeout_hours <= 0:
             raise ExecutionTrainConfigError("hf_jobs.timeout_hours must be positive")
@@ -434,6 +444,8 @@ class ExecutionTrainConfig:
                     self.objective.inverse_action_reconstruction_weight
                 ),
                 "retrieval_weight": self.objective.retrieval_weight,
+                "p_pass_bce_weight": self.objective.p_pass_bce_weight,
+                "p_pass_bce_pos_weight": self.objective.p_pass_bce_pos_weight,
             },
             "seeds": list(self.seeds),
             "hf_jobs": {
@@ -664,6 +676,8 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "action_swap_contrastive_weight",
             "inverse_action_reconstruction_weight",
             "retrieval_weight",
+            "p_pass_bce_weight",
+            "p_pass_bce_pos_weight",
         },
         "config.objective",
     )
@@ -809,6 +823,9 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         or 8,
     )
 
+    p_pass_bce_pos_weight = _optional_float(
+        objective_payload, "p_pass_bce_pos_weight", "config.objective"
+    )
     objective = ExecutionTrainObjectiveConfig(
         prediction_mse_weight=_require_float(
             objective_payload, "prediction_mse_weight", "config.objective"
@@ -826,6 +843,13 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             objective_payload, "retrieval_weight", "config.objective"
         )
         or 0.0,
+        p_pass_bce_weight=_optional_float(
+            objective_payload, "p_pass_bce_weight", "config.objective"
+        )
+        or 0.0,
+        p_pass_bce_pos_weight=(
+            1.0 if p_pass_bce_pos_weight is None else p_pass_bce_pos_weight
+        ),
     )
 
     hf_jobs = ExecutionTrainHfJobsConfig(
