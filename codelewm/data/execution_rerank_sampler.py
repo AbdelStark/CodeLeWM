@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import random
 import re
 import sys
 from collections.abc import Mapping, Sequence
@@ -30,6 +31,7 @@ from codelewm.data.sandbox import (
     SandboxRunnerError,
     run_one,
 )
+from codelewm.data.wsd_mutations import generate_mutants
 from codelewm.observability import build_artifact_manifest, write_artifact_manifest
 from codelewm.security.secret_scan import scan_paths
 
@@ -371,6 +373,269 @@ def sample_execution_rerank_completions(
         completion_count=len(rows),
         passed_completion_count=passed_count,
         dry_run=dry_run,
+    )
+
+
+WSD_RERANK_REPORT_SCHEMA_VERSION = "codelewm.eval.wsd_rerank_pack_report.v1"
+
+
+def _stable_hash(text: str) -> int:
+    """Process-stable non-negative hash (Python's ``hash`` is salted per run)."""
+    return int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:4], "big")
+
+
+def build_mutation_rerank_pack(
+    *,
+    benchmark: str,
+    source_path: Path | str,
+    out: Path | str,
+    mutants_per_problem: int = 8,
+    seed: int = 17,
+    max_problems: int | None = None,
+    max_cases_per_problem: int | None = None,
+    sandbox_policy: SandboxPolicy = DEFAULT_SANDBOX_POLICY,
+    overwrite: bool = False,
+    allow_secret_findings: bool = False,
+    command: Sequence[str] = ("scripts/build-wsd-rerank-pack",),
+    source_git_sha: str | None = None,
+    created_at: str | None = None,
+) -> CompletionSamplingResult:
+    """Build an *unsaturated* WS-D rerank pack from mutation distractors.
+
+    For each problem the known-correct reference solution is labeled, then up
+    to ``mutants_per_problem`` single-point mutants are generated and labeled
+    in the sandbox. Only problems whose pool ends up with a pass/fail mix (the
+    reference passes and at least one mutant fails) are kept, so reranking has
+    headroom by construction. Candidates are deterministically shuffled and the
+    shuffle position is written as ``llm_order_rank`` so the rerank gate's
+    "llm_order" baseline is an honest (non-reference-first) ordering.
+
+    Emits the same ``completion_label.v1`` JSONL + ``downstream_benchmark``
+    manifest contract as :func:`sample_execution_rerank_completions`, so the
+    existing ``codelewm eval rerank-*`` consumers read it unchanged.
+    """
+
+    benchmark_id = normalize_completion_benchmark(benchmark)
+    _positive_int(mutants_per_problem, "mutants_per_problem")
+    if max_problems is not None:
+        _positive_int(max_problems, "max_problems")
+    if max_cases_per_problem is not None:
+        _positive_int(max_cases_per_problem, "max_cases_per_problem")
+
+    source = Path(source_path)
+    output_dir = Path(out).resolve()
+    labels_path = output_dir / f"{benchmark_id}_completion_labels.jsonl"
+    config_path = output_dir / "config.json"
+    report_path = output_dir / "reports" / "completion_sampling_report.json"
+    secret_scan_report_path = output_dir / "reports" / "secret_scan_report.json"
+    manifest_path = output_dir / "manifest.json"
+    _reject_existing(
+        output_dir,
+        (labels_path, config_path, report_path, secret_scan_report_path, manifest_path),
+        overwrite=overwrite,
+    )
+
+    submissions = _load_submissions(
+        benchmark_id=benchmark_id, source_path=source, max_problems=max_problems
+    )
+    if max_cases_per_problem is not None:
+        submissions = tuple(
+            _limit_submission_cases(submission, limit=max_cases_per_problem)
+            for submission in submissions
+        )
+
+    config_payload = {
+        "schema_version": COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION,
+        "label_schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+        "benchmark_id": benchmark_id,
+        "source_path": str(source),
+        "generator": "wsd_mutation",
+        "mutants_per_problem": mutants_per_problem,
+        "seed": seed,
+        "max_problems": max_problems,
+        "max_cases_per_problem": max_cases_per_problem,
+        "sandbox_policy": sandbox_policy.as_dict(),
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(
+        json.dumps(config_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+    rows: list[dict[str, Any]] = []
+    problem_summaries: list[dict[str, Any]] = []
+    kept_problems = 0
+    skipped_reference_fail = 0
+    skipped_no_mix = 0
+    for submission in submissions:
+        pid = submission.source_problem_id
+        ref_results, ref_passed = _label_completion(
+            submission.code, submission=submission, sandbox_policy=sandbox_policy
+        )
+        if not ref_passed:
+            skipped_reference_fail += 1
+            continue
+        candidates: list[tuple[str, bool, list[dict[str, Any]], str]] = [
+            (submission.code, True, ref_results, "reference")
+        ]
+        for mutant in generate_mutants(
+            submission.code, count=mutants_per_problem, seed=seed
+        ):
+            m_results, m_passed = _label_completion(
+                mutant.source, submission=submission, sandbox_policy=sandbox_policy
+            )
+            candidates.append((mutant.source, m_passed, m_results, mutant.description))
+        if not any(not passed for _, passed, _, _ in candidates):
+            # every mutant happened to be behavior-preserving -> no headroom
+            skipped_no_mix += 1
+            continue
+
+        order = list(range(len(candidates)))
+        random.Random(seed + _stable_hash(pid)).shuffle(order)
+        rank_by_index = {cand_index: rank for rank, cand_index in enumerate(order)}
+
+        problem_passes = 0
+        for cand_index, (code, passed, results, descriptor) in enumerate(candidates):
+            valid_candidate = _valid_candidate_from_results(results)
+            if passed:
+                problem_passes += 1
+            rows.append(
+                {
+                    "schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+                    "benchmark_id": benchmark_id,
+                    "problem_id": pid,
+                    "completion_id": f"{pid}::wsd::{cand_index}",
+                    "completion_text": code,
+                    "code": code,
+                    "completion_sha256": _sha256_text(code),
+                    "llm_order_rank": rank_by_index[cand_index],
+                    "llm": "wsd-mutation",
+                    "llm_seed": seed,
+                    "sample_seed": seed,
+                    "sample_rank": cand_index + 1,
+                    "dry_run": False,
+                    "wsd_mutation": descriptor,
+                    "scoring_inputs": [
+                        {
+                            "input_id": input_case.input_id,
+                            "input_repr": input_case.input_repr,
+                            "input_kind": input_case.input_kind,
+                            "function_name": input_case.function_name,
+                        }
+                        for input_case in submission.inputs
+                    ],
+                    "label": "pass" if passed else "fail",
+                    "passed": passed,
+                    "valid_candidate": valid_candidate,
+                    "test_results": results,
+                }
+            )
+        kept_problems += 1
+        problem_summaries.append(
+            {
+                "problem_id": pid,
+                "completion_count": len(candidates),
+                "input_case_count": len(submission.inputs),
+                "passed_completion_count": problem_passes,
+            }
+        )
+
+    if not rows:
+        raise CompletionSamplingError(
+            "no problems yielded a pass/fail mix; increase mutants_per_problem "
+            "or check the source reference solutions"
+        )
+
+    _write_jsonl(labels_path, rows)
+
+    passed_count = sum(1 for row in rows if row["passed"])
+    valid_count = sum(1 for row in rows if row["valid_candidate"])
+    mixed_problems = sum(
+        1
+        for s in problem_summaries
+        if 0 < s["passed_completion_count"] < s["completion_count"]
+    )
+    report_payload = {
+        "schema_version": WSD_RERANK_REPORT_SCHEMA_VERSION,
+        "label_schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+        "benchmark_id": benchmark_id,
+        "generator": "wsd_mutation",
+        "mutants_per_problem": mutants_per_problem,
+        "seed": seed,
+        "source_problem_count": len(submissions),
+        "kept_problem_count": kept_problems,
+        "skipped_reference_fail": skipped_reference_fail,
+        "skipped_no_mix": skipped_no_mix,
+        "mixed_problem_count": mixed_problems,
+        "mixed_problem_rate": mixed_problems / kept_problems if kept_problems else 0.0,
+        "completion_count": len(rows),
+        "passed_completion_count": passed_count,
+        "failed_completion_count": len(rows) - passed_count,
+        "valid_completion_count": valid_count,
+        "test_pass_rate": passed_count / len(rows) if rows else 0.0,
+        "sandbox_policy": sandbox_policy.as_dict(),
+        "source_path": str(source),
+        "labels_path": _relative_to_root(labels_path, output_dir),
+        "problem_summaries": problem_summaries,
+        "claim_allowed": False,
+        "claim_reason": "wsd_pack_only_downstream_rerank_not_run",
+    }
+    report_path.write_text(
+        json.dumps(report_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+    scan_report = scan_paths(
+        (labels_path, config_path, report_path), include_suffixes=(), recursive=False
+    )
+    scan_payload = _relative_secret_scan_payload(scan_report.to_dict(), output_dir)
+    secret_scan_report_path.write_text(
+        json.dumps(scan_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    if scan_payload["findings"] and not allow_secret_findings:
+        raise CompletionSamplingError(
+            "WS-D rerank pack contains secret-scan findings; refusing to publish"
+        )
+
+    artifact_manifest = build_artifact_manifest(
+        artifact_kind="downstream_benchmark",
+        root=output_dir,
+        files=(labels_path, config_path, report_path, secret_scan_report_path),
+        command=command,
+        config=config_payload,
+        metadata={
+            "schema_version": COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION,
+            "label_schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+            "benchmark_id": benchmark_id,
+            "generator": "wsd_mutation",
+            "problem_count": kept_problems,
+            "completion_count": len(rows),
+            "passed_completion_count": passed_count,
+            "valid_completion_count": valid_count,
+            "mixed_problem_rate": report_payload["mixed_problem_rate"],
+            "dry_run": False,
+            "secret_scan_ok": bool(scan_payload["ok"]),
+        },
+        source_git_sha=source_git_sha,
+        created_at=created_at,
+    )
+    write_artifact_manifest(artifact_manifest, manifest_path)
+
+    return CompletionSamplingResult(
+        schema_version=COMPLETION_LABEL_ARTIFACT_SCHEMA_VERSION,
+        output_dir=output_dir,
+        labels_path=_relative_to_root(labels_path, output_dir),
+        report_path=_relative_to_root(report_path, output_dir),
+        secret_scan_report_path=_relative_to_root(secret_scan_report_path, output_dir),
+        artifact_manifest_id=artifact_manifest.artifact_id,
+        artifact_manifest_path=_relative_to_root(manifest_path, output_dir),
+        benchmark_id=benchmark_id,
+        problem_count=kept_problems,
+        completion_count=len(rows),
+        passed_completion_count=passed_count,
+        dry_run=False,
     )
 
 
