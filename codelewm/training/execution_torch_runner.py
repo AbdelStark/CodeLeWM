@@ -107,6 +107,8 @@ class ExecutionTorchTrainConfig:
     enable_p_pass_bce: bool = False
     p_pass_bce_weight: float = 0.0
     p_pass_bce_pos_weight: float = 1.0
+    enable_ema_target_encoder: bool = False
+    ema_target_decay: float = 0.99
 
     def __post_init__(self) -> None:
         if self.code_sequence_length != STATE_SEQUENCE_LENGTH:
@@ -136,6 +138,10 @@ class ExecutionTorchTrainConfig:
             )
         if self.p_pass_bce_pos_weight <= 0.0:
             raise ExecutionTorchRunnerError("p_pass_bce_pos_weight must be positive")
+        if not math.isfinite(self.ema_target_decay) or not 0.0 <= self.ema_target_decay < 1.0:
+            raise ExecutionTorchRunnerError(
+                "ema_target_decay must be finite and in [0.0, 1.0)"
+            )
 
 
 @dataclass(frozen=True)
@@ -253,12 +259,15 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             action_sequence_length=TEXT_ACTION_SEQUENCE_LENGTH,
             vocab_size=config.vocab_size,
             enable_pass_head=config.enable_p_pass_bce,
+            enable_ema_target_encoder=config.enable_ema_target_encoder,
+            ema_target_decay=config.ema_target_decay,
         )
     ).to(device)
     model.train()
 
+    trainable_parameters = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(
-        model.parameters(), lr=config.lr, weight_decay=config.weight_decay
+        trainable_parameters, lr=config.lr, weight_decay=config.weight_decay
     )
 
     objective_config = ObjectiveConfig(
@@ -311,8 +320,10 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
 
         optimizer.zero_grad(set_to_none=True)
         terms.total.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(trainable_parameters, max_norm=1.0)
         optimizer.step()
+        if config.enable_ema_target_encoder:
+            model.update_ema_target_encoder()
 
         scalar = terms.scalars()
         record = ExecutionTorchStep(
@@ -407,6 +418,8 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             "enable_p_pass_bce": config.enable_p_pass_bce,
             "p_pass_bce_weight": config.p_pass_bce_weight,
             "p_pass_bce_pos_weight": config.p_pass_bce_pos_weight,
+            "enable_ema_target_encoder": config.enable_ema_target_encoder,
+            "ema_target_decay": config.ema_target_decay,
             "pack_batch_schema_version": EXECUTION_PACK_BATCH_SCHEMA_VERSION,
             "pack_manifest_schema_version": EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
         },
@@ -494,7 +507,12 @@ def _train_one_step(
     z_before = model.encode_state(code_state)
     action_emb = model.encode_action(action_batch)
     action_emb_swapped = model.encode_action(action_batch_swapped)
-    z_after = model.encode_state(output_state)
+    z_after_online = model.encode_state(output_state)
+    z_after = (
+        model.encode_target_state(output_state)
+        if model.target_encoder is not None
+        else z_after_online
+    )
     z_pred_after = model.predict_after(z_before, action_emb)
     z_pred_after_swapped = model.predict_after(z_before, action_emb_swapped)
     p_pass_logit = None
@@ -514,7 +532,7 @@ def _train_one_step(
     # :func:`codelewm.training.execution_runner.train_execution_run`).
     action_reconstruction = None
     if objective_config.enable_inverse_action_reconstruction:
-        action_reconstruction = model.reconstruct_action(z_before, z_after)
+        action_reconstruction = model.reconstruct_action(z_before, z_after_online)
 
     terms = compute_transition_objective(
         z_before,
@@ -530,6 +548,7 @@ def _train_one_step(
         action_reconstruction=action_reconstruction,
         p_pass_logit=p_pass_logit,
         pass_labels=pass_labels,
+        z_after_for_sigreg=z_after_online,
     )
 
     # No-action baseline: how well would the identity "z_pred = z_before"

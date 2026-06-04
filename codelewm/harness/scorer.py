@@ -1084,6 +1084,7 @@ def _build_torch_model_from_compatibility(
     from codelewm.model import (
         TorchCodeTransitionModelConfig,
         build_torch_transition_model,
+        resolve_ema_target_encoder_config,
         resolve_state_encoder_arch,
     )
 
@@ -1111,6 +1112,9 @@ def _build_torch_model_from_compatibility(
         and any(str(key).startswith("pass_head.") for key in state_dict)
     )
     try:
+        enable_ema_target_encoder, ema_target_decay = resolve_ema_target_encoder_config(
+            wm, state_dict
+        )
         config = TorchCodeTransitionModelConfig(
             action_view=action_view,  # type: ignore[arg-type]
             latent_dim=int(wm.get("embed_dim", 256)),
@@ -1144,6 +1148,8 @@ def _build_torch_model_from_compatibility(
                 )
             ),
             enable_pass_head=bool(wm.get("enable_pass_head") or has_pass_head_weights),
+            enable_ema_target_encoder=enable_ema_target_encoder,
+            ema_target_decay=ema_target_decay,
             state_encoder_type=encoder_type,
             state_encoder_layers=encoder_layers,
             state_encoder_heads=encoder_heads,

@@ -83,6 +83,8 @@ class WorldModelTrainConfig:
     state_sequence_length: int = STATE_SEQUENCE_LENGTH
     action_sequence_length: int = TEXT_ACTION_SEQUENCE_LENGTH
     action_fusion: str = "conditional_transformer"
+    enable_ema_target_encoder: bool = False
+    ema_target_decay: float = 0.99
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any]) -> "WorldModelTrainConfig":
@@ -96,6 +98,8 @@ class WorldModelTrainConfig:
                 "state_sequence_length",
                 "action_sequence_length",
                 "action_fusion",
+                "enable_ema_target_encoder",
+                "ema_target_decay",
             },
             "wm",
         )
@@ -127,6 +131,18 @@ class WorldModelTrainConfig:
                 default=default_action_sequence_length,
             ),
             action_fusion=action_fusion,
+            enable_ema_target_encoder=_optional_bool(
+                payload,
+                "enable_ema_target_encoder",
+                "wm",
+                default=False,
+            ),
+            ema_target_decay=_optional_float(
+                payload,
+                "ema_target_decay",
+                "wm",
+                default=0.99,
+            ),
         )
 
     def __post_init__(self) -> None:
@@ -147,6 +163,8 @@ class WorldModelTrainConfig:
             )
         if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
             raise TrainConfigError("wm.action_fusion must be conditional_transformer or gated_residual")
+        if not math.isfinite(self.ema_target_decay) or not 0.0 <= self.ema_target_decay < 1.0:
+            raise TrainConfigError("wm.ema_target_decay must be finite and in [0.0, 1.0)")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -157,6 +175,8 @@ class WorldModelTrainConfig:
             "state_sequence_length": self.state_sequence_length,
             "action_sequence_length": self.action_sequence_length,
             "action_fusion": self.action_fusion,
+            "enable_ema_target_encoder": self.enable_ema_target_encoder,
+            "ema_target_decay": self.ema_target_decay,
         }
 
     def to_compatibility_dict(self) -> dict[str, Any]:
@@ -170,6 +190,9 @@ class WorldModelTrainConfig:
         }
         if self.action_fusion != "conditional_transformer":
             payload["action_fusion"] = self.action_fusion
+        if self.enable_ema_target_encoder:
+            payload["enable_ema_target_encoder"] = True
+            payload["ema_target_decay"] = self.ema_target_decay
         return payload
 
 

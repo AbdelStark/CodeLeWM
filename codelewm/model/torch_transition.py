@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -48,6 +50,8 @@ class TorchCodeTransitionModelConfig:
     action_fusion: str = "conditional_transformer"
     enable_inverse_action_head: bool = False
     enable_pass_head: bool = False
+    enable_ema_target_encoder: bool = False
+    ema_target_decay: float = 0.99
     # RFC-0015 WS-C1: state encoder backbone. "pool" is the v0.6 default;
     # "transformer" adds a contextual encoder before pooling.
     state_encoder_type: str = "pool"
@@ -73,6 +77,8 @@ class TorchCodeTransitionModelConfig:
             )
         if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
             raise ValueError("action_fusion must be conditional_transformer or gated_residual")
+        if not math.isfinite(self.ema_target_decay) or not 0.0 <= self.ema_target_decay < 1.0:
+            raise ValueError("ema_target_decay must be finite and in [0.0, 1.0)")
 
 
 class TorchCodeTransitionModel(CodeTransitionModel):
@@ -91,6 +97,11 @@ class TorchCodeTransitionModel(CodeTransitionModel):
         super().__init__()
         self.config = config
         self.encoder = state_encoder
+        self.target_encoder = (
+            self._build_target_encoder(state_encoder)
+            if config.enable_ema_target_encoder
+            else None
+        )
         self.action_encoder = action_encoder
         self.predictor = predictor
         self.projector = nn.Identity()
@@ -116,6 +127,23 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             else None
         )
 
+    def train(self, mode: bool = True) -> Any:
+        result = super().train(mode)
+        if self.target_encoder is not None and hasattr(self.target_encoder, "eval"):
+            self.target_encoder.eval()
+        return result
+
+    def _build_target_encoder(self, state_encoder: Any) -> Any:
+        target_encoder = copy.deepcopy(state_encoder)
+        if hasattr(target_encoder, "requires_grad_"):
+            target_encoder.requires_grad_(False)
+        else:
+            for parameter in getattr(target_encoder, "parameters", lambda: ())():
+                parameter.requires_grad_(False)
+        if hasattr(target_encoder, "eval"):
+            target_encoder.eval()
+        return target_encoder
+
     def encode_state(self, batch: CodeStateBatch) -> Any:
         return self.encoder(
             batch.input_ids,
@@ -123,6 +151,43 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             batch.segment_ids,
             batch.changed_hunk_mask,
         )
+
+    def encode_target_state(self, batch: CodeStateBatch) -> Any:
+        if self.target_encoder is None:
+            return self.encode_state(batch)
+        with torch.no_grad():
+            return self.target_encoder(
+                batch.input_ids,
+                batch.attention_mask,
+                batch.segment_ids,
+                batch.changed_hunk_mask,
+            ).detach()
+
+    def update_ema_target_encoder(self, decay: float | None = None) -> None:
+        if self.target_encoder is None:
+            raise ValueError("EMA target encoder is disabled")
+        decay_value = self.config.ema_target_decay if decay is None else float(decay)
+        if not math.isfinite(decay_value) or not 0.0 <= decay_value < 1.0:
+            raise ValueError("EMA target decay must be finite and in [0.0, 1.0)")
+
+        online_params = _named_parameters(self.encoder)
+        target_params = _named_parameters(self.target_encoder)
+        if set(online_params) != set(target_params):
+            raise RuntimeError("EMA target encoder parameters do not match online encoder")
+        with torch.no_grad():
+            for name, online_param in online_params.items():
+                target_param = target_params[name]
+                target_param.mul_(decay_value).add_(
+                    online_param.detach(),
+                    alpha=1.0 - decay_value,
+                )
+
+            online_buffers = _named_buffers(self.encoder)
+            target_buffers = _named_buffers(self.target_encoder)
+            if set(online_buffers) != set(target_buffers):
+                raise RuntimeError("EMA target encoder buffers do not match online encoder")
+            for name, online_buffer in online_buffers.items():
+                target_buffers[name].copy_(online_buffer.detach())
 
     def encode_action(self, batch: ActionBatch) -> Any:
         if batch.action_view != self.config.action_view:
@@ -154,7 +219,12 @@ class TorchCodeTransitionModel(CodeTransitionModel):
     def forward(self, batch: TransitionBatch) -> dict[str, Any]:
         z_before = self.encode_state(batch.state_before)
         action_emb = self.encode_action(batch.action)
-        z_after = self.encode_state(batch.state_after)
+        z_after_online = self.encode_state(batch.state_after)
+        z_after = (
+            self.encode_target_state(batch.state_after)
+            if self.target_encoder is not None
+            else z_after_online
+        )
         z_pred_after = self.predict_after(z_before, action_emb)
         output = {
             "z_before": z_before,
@@ -162,8 +232,12 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             "z_after": z_after,
             "z_pred_after": z_pred_after,
         }
+        if self.target_encoder is not None:
+            output["z_after_online"] = z_after_online
         if self.inverse_action_head is not None:
-            output["action_reconstruction"] = self.reconstruct_action(z_before, z_after)
+            output["action_reconstruction"] = self.reconstruct_action(
+                z_before, z_after_online
+            )
         if self.pass_head is not None:
             output["pass_logit"] = self.pass_logit(z_before, action_emb, z_pred_after)
         return output
@@ -204,6 +278,42 @@ def resolve_state_encoder_arch(
 
     num_heads = wm.get("state_encoder_heads", 8)
     return str(encoder_type), int(num_layers), int(num_heads)
+
+
+def resolve_ema_target_encoder_config(
+    wm_config: Any,
+    state_dict: Any,
+) -> tuple[bool, float]:
+    """Resolve EMA target settings for checkpoint loading.
+
+    New checkpoints persist the opt-in flag in ``compatibility_config.wm``.
+    The state-dict fallback keeps older consumers able to load a checkpoint
+    whose compatibility payload is incomplete but whose weights include the
+    target encoder module.
+    """
+
+    wm = wm_config if isinstance(wm_config, Mapping) else {}
+    sd = state_dict if isinstance(state_dict, Mapping) else {}
+    has_target_weights = any(str(key).startswith("target_encoder.") for key in sd)
+    enabled = bool(wm.get("enable_ema_target_encoder") or has_target_weights)
+    decay = wm.get("ema_target_decay", 0.99)
+    try:
+        decay_value = float(decay)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ema_target_decay must be numeric") from exc
+    return enabled, decay_value
+
+
+def _named_parameters(module: Any) -> dict[str, Any]:
+    if not hasattr(module, "named_parameters"):
+        return {}
+    return dict(module.named_parameters())
+
+
+def _named_buffers(module: Any) -> dict[str, Any]:
+    if not hasattr(module, "named_buffers"):
+        return {}
+    return dict(module.named_buffers())
 
 
 def build_torch_transition_model(

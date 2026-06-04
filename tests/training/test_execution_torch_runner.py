@@ -349,6 +349,20 @@ class ExecutionTorchRunnerConfigTest(unittest.TestCase):
                 p_pass_bce_pos_weight=0.0,
             )
 
+    def test_ema_target_decay_must_be_valid(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "ema_target_decay"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                enable_ema_target_encoder=True,
+                ema_target_decay=1.0,
+            )
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

@@ -37,11 +37,15 @@ class TrainConfigLoadTest(unittest.TestCase):
         self.assertEqual(tiny.wm.embed_dim, LATENT_DIM)
         self.assertEqual(tiny.wm.action_view, "text")
         self.assertEqual(tiny.wm.action_sequence_length, 256)
+        self.assertFalse(tiny.wm.enable_ema_target_encoder)
+        self.assertEqual(tiny.wm.ema_target_decay, 0.99)
         self.assertEqual(small.wm.history_size, 1)
         self.assertEqual(small.wm.num_preds, 1)
         self.assertEqual(small.wm.embed_dim, LATENT_DIM)
         self.assertEqual(small.wm.action_view, "text")
         self.assertEqual(small.wm.action_sequence_length, 256)
+        self.assertFalse(small.wm.enable_ema_target_encoder)
+        self.assertEqual(small.wm.ema_target_decay, 0.99)
 
     def test_tiny_config_is_cpu_smoke_sized(self) -> None:
         tiny = load_train_config(ROOT / "config/train/codelewm_tiny.yaml")
@@ -354,6 +358,8 @@ class TrainConfigValidationTest(unittest.TestCase):
         self.assertNotIn("enable_inverse_action_reconstruction", payload["loss"])
         self.assertNotIn("inverse_action_reconstruction_weight", payload["loss"])
         self.assertNotIn("enable_pass_head", payload["wm"])
+        self.assertNotIn("enable_ema_target_encoder", payload["wm"])
+        self.assertNotIn("ema_target_decay", payload["wm"])
         self.assertNotIn("enable_p_pass_bce", payload["loss"])
         self.assertNotIn("p_pass_bce_weight", payload["loss"])
         self.assertNotIn("p_pass_bce_pos_weight", payload["loss"])
@@ -400,6 +406,23 @@ class TrainConfigValidationTest(unittest.TestCase):
         self.assertTrue(compatibility_payload["loss"]["enable_p_pass_bce"])
         self.assertEqual(compatibility_payload["loss"]["p_pass_bce_weight"], 0.3)
         self.assertEqual(compatibility_payload["loss"]["p_pass_bce_pos_weight"], 2.0)
+
+    def test_compatibility_hash_records_enabled_ema_target_encoder(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["wm"]["enable_ema_target_encoder"] = True
+        payload["wm"]["ema_target_decay"] = 0.95
+        config = validate_train_config(payload)
+        compatibility_payload = compatibility_config_payload(config)
+
+        self.assertTrue(compatibility_payload["wm"]["enable_ema_target_encoder"])
+        self.assertEqual(compatibility_payload["wm"]["ema_target_decay"], 0.95)
+
+    def test_validation_rejects_invalid_ema_target_decay(self) -> None:
+        payload = copy.deepcopy(self.payload)
+        payload["wm"]["ema_target_decay"] = 1.0
+
+        with self.assertRaisesRegex(TrainConfigError, "ema_target_decay"):
+            validate_train_config(payload)
 
     def test_validation_rejects_p_pass_bce_weight_without_gate(self) -> None:
         payload = copy.deepcopy(self.payload)

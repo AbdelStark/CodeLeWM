@@ -102,6 +102,8 @@ def _config(
     inverse_action_reconstruction_weight: float = 0.0,
     p_pass_bce_weight: float = 0.0,
     p_pass_bce_pos_weight: float = 1.0,
+    enable_ema_target_encoder: bool = False,
+    ema_target_decay: float = 0.99,
 ) -> "ExecutionTrainConfig":
     from codelewm.training import (
         ExecutionTrainClaimBoundaryConfig,
@@ -162,7 +164,11 @@ def _config(
             weight_decay=0.1,
         ),
         wm=ExecutionTrainWorldModelConfig(
-            history_size=1, num_preds=1, embed_dim=256
+            history_size=1,
+            num_preds=1,
+            embed_dim=256,
+            enable_ema_target_encoder=enable_ema_target_encoder,
+            ema_target_decay=ema_target_decay,
         ),
         objective=ExecutionTrainObjectiveConfig(
             prediction_mse_weight=1.0,
@@ -406,6 +412,57 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             self.assertEqual(
                 checkpoint["compatibility_config"]["objective"]["p_pass_bce_weight"],
                 0.5,
+            )
+
+    def test_runner_with_ema_target_persists_target_encoder_compatibility(self) -> None:
+        from codelewm.training import train_execution_run
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir = _build_pack(tmp)
+            output_dir = tmp / "run-ema"
+            cfg = _config(
+                max_steps=3,
+                collapse_every=1,
+                enable_ema_target_encoder=True,
+                ema_target_decay=0.5,
+            )
+            result = train_execution_run(
+                cfg,
+                seed=42,
+                output_dir=output_dir,
+                root=tmp,
+                pack_local_dir=pack_dir,
+            )
+
+            report = json.loads(result.report_path.read_text(encoding="utf-8"))
+            self.assertTrue(report["world_model"]["enable_ema_target_encoder"])
+            self.assertEqual(report["world_model"]["ema_target_decay"], 0.5)
+            self.assertGreater(
+                report["z_diagnostics"]["z_pred_effective_rank_ratio"],
+                0.0,
+            )
+            self.assertTrue(result.checkpoint_paths)
+
+            import torch
+
+            checkpoint = torch.load(
+                result.checkpoint_paths[-1],
+                map_location="cpu",
+                weights_only=False,
+            )
+            self.assertTrue(
+                checkpoint["compatibility_config"]["wm"]["enable_ema_target_encoder"]
+            )
+            self.assertEqual(
+                checkpoint["compatibility_config"]["wm"]["ema_target_decay"],
+                0.5,
+            )
+            self.assertTrue(
+                any(
+                    key.startswith("target_encoder.")
+                    for key in checkpoint["model_state_dict"]
+                )
             )
 
     def test_runner_respects_env_pack_local_dir(self) -> None:

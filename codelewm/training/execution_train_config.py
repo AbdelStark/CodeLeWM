@@ -27,6 +27,7 @@ parsers in lockstep so the operator-facing surface stays consistent.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
@@ -107,6 +108,8 @@ class ExecutionTrainWorldModelConfig:
     state_encoder_type: str = "pool"
     state_encoder_layers: int = 4
     state_encoder_heads: int = 8
+    enable_ema_target_encoder: bool = False
+    ema_target_decay: float = 0.99
 
 
 @dataclass(frozen=True)
@@ -312,6 +315,13 @@ class ExecutionTrainConfig:
             raise ExecutionTrainConfigError(
                 "wm.state_encoder_heads must be positive and divide wm.embed_dim"
             )
+        if (
+            not math.isfinite(self.wm.ema_target_decay)
+            or not 0.0 <= self.wm.ema_target_decay < 1.0
+        ):
+            raise ExecutionTrainConfigError(
+                "wm.ema_target_decay must be finite and in [0.0, 1.0)"
+            )
         # Objective contract.
         if self.objective.prediction_mse_weight < 0.0:
             raise ExecutionTrainConfigError(
@@ -433,6 +443,8 @@ class ExecutionTrainConfig:
                 "state_encoder_type": self.wm.state_encoder_type,
                 "state_encoder_layers": self.wm.state_encoder_layers,
                 "state_encoder_heads": self.wm.state_encoder_heads,
+                "enable_ema_target_encoder": self.wm.enable_ema_target_encoder,
+                "ema_target_decay": self.wm.ema_target_decay,
             },
             "objective": {
                 "prediction_mse_weight": self.objective.prediction_mse_weight,
@@ -663,6 +675,8 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "state_encoder_type",
             "state_encoder_layers",
             "state_encoder_heads",
+            "enable_ema_target_encoder",
+            "ema_target_decay",
         },
         "config.wm",
     )
@@ -805,6 +819,9 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         ),
     )
 
+    ema_target_decay = _optional_float(
+        wm_payload, "ema_target_decay", "config.wm"
+    )
     wm = ExecutionTrainWorldModelConfig(
         history_size=_require_int(wm_payload, "history_size", "config.wm"),
         num_preds=_require_int(wm_payload, "num_preds", "config.wm"),
@@ -821,6 +838,10 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             wm_payload, "state_encoder_heads", "config.wm"
         )
         or 8,
+        enable_ema_target_encoder=_optional_bool(
+            wm_payload, "enable_ema_target_encoder", "config.wm"
+        ),
+        ema_target_decay=0.99 if ema_target_decay is None else ema_target_decay,
     )
 
     p_pass_bce_pos_weight = _optional_float(
@@ -1061,6 +1082,17 @@ def _require_float(
 def _require_bool(payload: Mapping[str, Any], key: str, section: str) -> bool:
     if key not in payload:
         raise ExecutionTrainConfigError(f"{section}.{key} is required")
+    value = payload[key]
+    if not isinstance(value, bool):
+        raise ExecutionTrainConfigError(f"{section}.{key} must be true or false")
+    return value
+
+
+def _optional_bool(
+    payload: Mapping[str, Any], key: str, section: str, *, default: bool = False
+) -> bool:
+    if key not in payload:
+        return default
     value = payload[key]
     if not isinstance(value, bool):
         raise ExecutionTrainConfigError(f"{section}.{key} must be true or false")

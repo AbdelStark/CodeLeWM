@@ -23,10 +23,10 @@ absent the runner falls back to
 :func:`huggingface_hub.snapshot_download` so a developer can also run
 the full pipeline directly with `HF_TOKEN` exported.
 
-Architecture note: no EMA target encoder. The objective config is built
-from the YAML's ``objective`` block verbatim — SIGReg alone is doing
-the anti-collapse work, matching the substrate-pivot's headline claim
-(#288 / RFC-0014). See ``docs/operations/V0_6_EXECUTION_RUN_RUNBOOK.md``.
+Architecture note: the v0.6 default still uses the online encoder as
+the after-state target. v0.8 configs may opt into an EMA target encoder
+via ``wm.enable_ema_target_encoder`` while keeping the public claim
+boundary explicit in checkpoint compatibility metadata.
 """
 
 from __future__ import annotations
@@ -249,6 +249,8 @@ def train_execution_run(
                 config.objective.inverse_action_reconstruction_weight > 0.0
             ),
             enable_pass_head=config.objective.p_pass_bce_weight > 0.0,
+            enable_ema_target_encoder=config.wm.enable_ema_target_encoder,
+            ema_target_decay=config.wm.ema_target_decay,
             state_encoder_type=config.wm.state_encoder_type,
             state_encoder_layers=config.wm.state_encoder_layers,
             state_encoder_heads=config.wm.state_encoder_heads,
@@ -256,8 +258,9 @@ def train_execution_run(
     ).to(selected_device)
     model.train()
 
+    trainable_parameters = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(
-        model.parameters(),
+        trainable_parameters,
         lr=config.optimizer.lr,
         weight_decay=config.optimizer.weight_decay,
         betas=tuple(config.optimizer.betas),
@@ -357,7 +360,7 @@ def train_execution_run(
 
         if config.trainer.gradient_clip_val > 0.0:
             torch.nn.utils.clip_grad_norm_(
-                model.parameters(), max_norm=config.trainer.gradient_clip_val
+                trainable_parameters, max_norm=config.trainer.gradient_clip_val
             )
         optimizer_step += 1
 
@@ -372,6 +375,8 @@ def train_execution_run(
             group["lr"] = lr_now
 
         optimizer.step()
+        if config.wm.enable_ema_target_encoder:
+            model.update_ema_target_encoder()
         optimizer.zero_grad(set_to_none=True)
 
         scalar = terms.scalars()
@@ -508,6 +513,13 @@ def train_execution_run(
             ),
             "p_pass_bce_weight": config.objective.p_pass_bce_weight,
             "p_pass_bce_pos_weight": config.objective.p_pass_bce_pos_weight,
+        },
+        "world_model": {
+            "enable_ema_target_encoder": config.wm.enable_ema_target_encoder,
+            "ema_target_decay": config.wm.ema_target_decay,
+            "state_encoder_type": config.wm.state_encoder_type,
+            "state_encoder_layers": config.wm.state_encoder_layers,
+            "state_encoder_heads": config.wm.state_encoder_heads,
         },
         "claim_gates": {
             "retrieval_min_recall_at_1_lift_over_no_action": (
@@ -892,22 +904,27 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
     or schedule differences do not invalidate the checkpoint.
     """
 
+    wm_payload = {
+        "history_size": config.wm.history_size,
+        "num_preds": config.wm.num_preds,
+        "embed_dim": config.wm.embed_dim,
+        "action_view": "text",
+        "state_sequence_length": STATE_SEQUENCE_LENGTH,
+        "action_sequence_length": TEXT_ACTION_SEQUENCE_LENGTH,
+        # Persist the state-encoder architecture (RFC-0015 WS-C1) so the
+        # checkpoint is self-describing: eval rebuilds the matching model
+        # without inferring it from the weights.
+        "state_encoder_type": config.wm.state_encoder_type,
+        "state_encoder_layers": config.wm.state_encoder_layers,
+        "state_encoder_heads": config.wm.state_encoder_heads,
+        "enable_pass_head": config.objective.p_pass_bce_weight > 0.0,
+    }
+    if config.wm.enable_ema_target_encoder:
+        wm_payload["enable_ema_target_encoder"] = True
+        wm_payload["ema_target_decay"] = config.wm.ema_target_decay
+
     return {
-        "wm": {
-            "history_size": config.wm.history_size,
-            "num_preds": config.wm.num_preds,
-            "embed_dim": config.wm.embed_dim,
-            "action_view": "text",
-            "state_sequence_length": STATE_SEQUENCE_LENGTH,
-            "action_sequence_length": TEXT_ACTION_SEQUENCE_LENGTH,
-            # Persist the state-encoder architecture (RFC-0015 WS-C1) so the
-            # checkpoint is self-describing: eval rebuilds the matching model
-            # without inferring it from the weights.
-            "state_encoder_type": config.wm.state_encoder_type,
-            "state_encoder_layers": config.wm.state_encoder_layers,
-            "state_encoder_heads": config.wm.state_encoder_heads,
-            "enable_pass_head": config.objective.p_pass_bce_weight > 0.0,
-        },
+        "wm": wm_payload,
         "objective": {
             "prediction_mse_weight": config.objective.prediction_mse_weight,
             "sigreg_weight": config.objective.sigreg_weight,
