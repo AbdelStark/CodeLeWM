@@ -296,6 +296,94 @@ class ScoreApiTest(unittest.TestCase):
         self.assertGreaterEqual(result.transition_energy, 0.0)
         self.assertTrue(any("checkpoint_step=11" == warning for warning in result.warnings))
         self.assertTrue(any("execution-substrate" in warning for warning in result.warnings))
+        self.assertTrue(
+            any(
+                warning
+                == "transition_energy=predicted_output_latent_norm_plus_abs_code_similarity"
+                for warning in result.warnings
+            )
+        )
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("torch") is not None and importlib.util.find_spec("einops") is not None,
+        "torch scoring runtime is unavailable",
+    )
+    def test_execution_backend_uses_negative_pass_logit_for_pass_head_checkpoint(self) -> None:
+        import torch
+
+        from codelewm.model import (
+            TorchCodeTransitionModelConfig,
+            build_torch_transition_model,
+            compute_config_hash,
+        )
+        from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
+
+        compatibility = {
+            "wm": {
+                "action_view": "text",
+                "embed_dim": 256,
+                "state_sequence_length": 1024,
+                "action_sequence_length": 256,
+                "action_fusion": "conditional_transformer",
+                "enable_pass_head": True,
+            },
+            "objective": {
+                "inverse_action_reconstruction_weight": 0.0,
+                "p_pass_bce_weight": 0.5,
+                "p_pass_bce_pos_weight": 1.0,
+            },
+            "loader": {"output_sequence_length": 256},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = root / "last.pt"
+            model = build_torch_transition_model(
+                TorchCodeTransitionModelConfig(
+                    vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+                    dropout=0.0,
+                    enable_pass_head=True,
+                )
+            )
+            assert model.pass_head is not None
+            with torch.no_grad():
+                for param in model.pass_head.parameters():
+                    param.zero_()
+                model.pass_head[-1].bias.fill_(2.5)
+            torch.save(
+                {
+                    "schema_version": EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION,
+                    "step": 12,
+                    "model_state_dict": model.state_dict(),
+                    "compatibility_config": compatibility,
+                    "compatibility_config_hash": compute_config_hash(compatibility),
+                    "metrics": {"fixture": 1.0},
+                },
+                checkpoint,
+            )
+            write_checkpoint_manifest(
+                metadata=build_checkpoint_metadata(
+                    compatibility,
+                    record_schema_version="codelewm.execution_pack_record.v2",
+                    action_view="text",
+                    model_class="TorchCodeTransitionModel",
+                ),
+                checkpoint_path=checkpoint,
+                manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+            )
+
+            scorer = load_scorer(checkpoint, device="cpu", require_learned_backend=True)
+            result = scorer.score_texts(
+                before="",
+                instruction="[3]",
+                candidate="def compute_square(n):\n    return n * n\n",
+            )
+
+        self.assertEqual(result.model_id, "codelewm.execution_torch_transition_scorer.v1")
+        self.assertAlmostEqual(result.transition_energy, -2.5, places=6)
+        self.assertAlmostEqual(result.final_score, -2.5, places=6)
+        self.assertTrue(
+            any(warning == "transition_energy=neg_pass_logit" for warning in result.warnings)
+        )
 
 
 if __name__ == "__main__":

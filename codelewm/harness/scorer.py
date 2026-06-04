@@ -534,11 +534,16 @@ class ExecutionTorchTransitionScoringBackend:
     @property
     def warnings(self) -> tuple[str, ...]:
         step = "unknown" if self.checkpoint_step is None else str(self.checkpoint_step)
+        energy_formula = (
+            "neg_pass_logit"
+            if getattr(self.model, "pass_head", None) is not None
+            else "predicted_output_latent_norm_plus_abs_code_similarity"
+        )
         return (
             "learned execution-substrate torch runtime loaded from checkpoint",
             f"checkpoint_step={step}",
             f"action_view={self.action_view}",
-            "transition_energy=predicted_output_latent_norm_plus_abs_code_similarity",
+            f"transition_energy={energy_formula}",
             "execution score is diagnostic; correctness requires sandbox labels or a downstream benchmark",
         )
 
@@ -635,14 +640,19 @@ class ExecutionTorchTransitionScoringBackend:
                     z_code = self.model.encode_state(code_state)
                     action_emb = self.model.encode_action(action_batch)
                     z_pred_after = self.model.predict_after(z_code, action_emb)
-                    pred_norm = z_pred_after.norm(p=2, dim=-1)
-                    similarity = self.runtime.nn.functional.cosine_similarity(
-                        z_pred_after,
-                        z_code,
-                        dim=-1,
-                        eps=1e-12,
-                    ).abs()
-                    energy = pred_norm + similarity
+                    if getattr(self.model, "pass_head", None) is not None:
+                        energy = -self.model.pass_logit(
+                            z_code, action_emb, z_pred_after
+                        ).squeeze(-1)
+                    else:
+                        pred_norm = z_pred_after.norm(p=2, dim=-1)
+                        similarity = self.runtime.nn.functional.cosine_similarity(
+                            z_pred_after,
+                            z_code,
+                            dim=-1,
+                            eps=1e-12,
+                        ).abs()
+                        energy = pred_norm + similarity
         except (RuntimeError, ValueError, NotImplementedError) as exc:
             raise ScoreError(
                 f"execution torch transition scoring failed: {exc}",
@@ -1096,6 +1106,10 @@ def _build_torch_model_from_compatibility(
     encoder_type, encoder_layers, encoder_heads = resolve_state_encoder_arch(
         wm, state_dict
     )
+    has_pass_head_weights = (
+        isinstance(state_dict, Mapping)
+        and any(str(key).startswith("pass_head.") for key in state_dict)
+    )
     try:
         config = TorchCodeTransitionModelConfig(
             action_view=action_view,  # type: ignore[arg-type]
@@ -1129,6 +1143,7 @@ def _build_torch_model_from_compatibility(
                     > 0.0
                 )
             ),
+            enable_pass_head=bool(wm.get("enable_pass_head") or has_pass_head_weights),
             state_encoder_type=encoder_type,
             state_encoder_layers=encoder_layers,
             state_encoder_heads=encoder_heads,
