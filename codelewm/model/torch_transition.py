@@ -50,6 +50,10 @@ class TorchCodeTransitionModelConfig:
     action_fusion: str = "conditional_transformer"
     enable_inverse_action_head: bool = False
     enable_pass_head: bool = False
+    enable_output_value_head: bool = False
+    output_type_class_count: int = 12
+    output_magnitude_bucket_class_count: int = 5
+    output_length_bucket_class_count: int = 5
     enable_ema_target_encoder: bool = False
     ema_target_decay: float = 0.99
     # RFC-0015 WS-C1: state encoder backbone. "pool" is the v0.6 default;
@@ -77,6 +81,12 @@ class TorchCodeTransitionModelConfig:
             )
         if self.action_fusion not in {"conditional_transformer", "gated_residual"}:
             raise ValueError("action_fusion must be conditional_transformer or gated_residual")
+        if self.output_type_class_count <= 0:
+            raise ValueError("output_type_class_count must be positive")
+        if self.output_magnitude_bucket_class_count <= 0:
+            raise ValueError("output_magnitude_bucket_class_count must be positive")
+        if self.output_length_bucket_class_count <= 0:
+            raise ValueError("output_length_bucket_class_count must be positive")
         if not math.isfinite(self.ema_target_decay) or not 0.0 <= self.ema_target_decay < 1.0:
             raise ValueError("ema_target_decay must be finite and in [0.0, 1.0)")
 
@@ -124,6 +134,30 @@ class TorchCodeTransitionModel(CodeTransitionModel):
                 nn.Linear(config.latent_dim, 1),
             )
             if config.enable_pass_head
+            else None
+        )
+        self.output_value_head = (
+            nn.ModuleDict(
+                {
+                    "shared": nn.Sequential(
+                        nn.Linear(config.latent_dim, config.latent_dim),
+                        nn.GELU(),
+                        nn.Dropout(config.dropout),
+                    ),
+                    "output_type": nn.Linear(
+                        config.latent_dim, config.output_type_class_count
+                    ),
+                    "output_magnitude_bucket": nn.Linear(
+                        config.latent_dim,
+                        config.output_magnitude_bucket_class_count,
+                    ),
+                    "output_length_bucket": nn.Linear(
+                        config.latent_dim,
+                        config.output_length_bucket_class_count,
+                    ),
+                }
+            )
+            if config.enable_output_value_head
             else None
         )
 
@@ -216,6 +250,22 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             raise ValueError("z_pred_after latent dimension does not match config")
         return self.pass_head(torch.cat((z_before, action_emb, z_pred_after), dim=-1))
 
+    def output_value_logits(self, z_pred_after: Any) -> dict[str, Any]:
+        if self.output_value_head is None:
+            raise ValueError("output value head is disabled")
+        if z_pred_after.shape[-1] != self.config.latent_dim:
+            raise ValueError("z_pred_after latent dimension does not match config")
+        hidden = self.output_value_head["shared"](z_pred_after)
+        return {
+            "output_type": self.output_value_head["output_type"](hidden),
+            "output_magnitude_bucket": self.output_value_head[
+                "output_magnitude_bucket"
+            ](hidden),
+            "output_length_bucket": self.output_value_head[
+                "output_length_bucket"
+            ](hidden),
+        }
+
     def forward(self, batch: TransitionBatch) -> dict[str, Any]:
         z_before = self.encode_state(batch.state_before)
         action_emb = self.encode_action(batch.action)
@@ -240,6 +290,8 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             )
         if self.pass_head is not None:
             output["pass_logit"] = self.pass_logit(z_before, action_emb, z_pred_after)
+        if self.output_value_head is not None:
+            output["output_value_logits"] = self.output_value_logits(z_pred_after)
         return output
 
 
@@ -302,6 +354,20 @@ def resolve_ema_target_encoder_config(
     except (TypeError, ValueError) as exc:
         raise ValueError("ema_target_decay must be numeric") from exc
     return enabled, decay_value
+
+
+def resolve_output_value_head_config(
+    wm_config: Any,
+    state_dict: Any,
+) -> bool:
+    """Return whether a checkpoint needs the optional output-value head."""
+
+    wm = wm_config if isinstance(wm_config, Mapping) else {}
+    sd = state_dict if isinstance(state_dict, Mapping) else {}
+    return bool(
+        wm.get("enable_output_value_head")
+        or any(str(key).startswith("output_value_head.") for key in sd)
+    )
 
 
 def _named_parameters(module: Any) -> dict[str, Any]:

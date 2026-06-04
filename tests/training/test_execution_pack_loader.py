@@ -16,7 +16,10 @@ from codelewm.data.execution_sources import load_execution_source
 from codelewm.data.sandbox import SandboxPolicy
 from codelewm.training import (
     EXECUTION_PACK_BATCH_SCHEMA_VERSION,
+    OUTPUT_LENGTH_BUCKET_VOCAB,
+    OUTPUT_MAGNITUDE_BUCKET_VOCAB,
     OUTPUT_TYPE_VOCAB,
+    OUTPUT_VALUE_IGNORE_INDEX,
     ExecutionPackLoaderConfig,
     LoaderDiagnostics,
     collect_diagnostics,
@@ -89,6 +92,36 @@ class ExecutionPackLoaderTest(unittest.TestCase):
                 )
                 self.assertEqual(batch.code_tokens.dtype, np.int32)
                 self.assertEqual(batch.code_attention_mask.dtype, bool)
+                self.assertEqual(batch.output_type_index.shape, (batch.batch_size,))
+                self.assertEqual(
+                    batch.output_magnitude_bucket_index.shape,
+                    (batch.batch_size,),
+                )
+                self.assertEqual(
+                    batch.output_length_bucket_index.shape,
+                    (batch.batch_size,),
+                )
+                self.assertTrue(
+                    np.all(batch.output_type_index < len(OUTPUT_TYPE_VOCAB))
+                )
+                self.assertTrue(
+                    np.all(
+                        (batch.output_magnitude_bucket_index == OUTPUT_VALUE_IGNORE_INDEX)
+                        | (
+                            batch.output_magnitude_bucket_index
+                            < len(OUTPUT_MAGNITUDE_BUCKET_VOCAB)
+                        )
+                    )
+                )
+                self.assertTrue(
+                    np.all(
+                        (batch.output_length_bucket_index == OUTPUT_VALUE_IGNORE_INDEX)
+                        | (
+                            batch.output_length_bucket_index
+                            < len(OUTPUT_LENGTH_BUCKET_VOCAB)
+                        )
+                    )
+                )
                 self.assertIsNone(batch.passed)
 
     def test_diagnostics_record_count_matches_pack(self) -> None:
@@ -107,6 +140,18 @@ class ExecutionPackLoaderTest(unittest.TestCase):
             self.assertGreater(diagnostics.record_count, 0)
             self.assertEqual(
                 sum(diagnostics.output_type_histogram.values()),
+                diagnostics.record_count,
+            )
+            self.assertGreater(
+                sum(diagnostics.output_magnitude_bucket_histogram.values()),
+                0,
+            )
+            self.assertLessEqual(
+                sum(diagnostics.output_magnitude_bucket_histogram.values()),
+                diagnostics.record_count,
+            )
+            self.assertLessEqual(
+                sum(diagnostics.output_length_bucket_histogram.values()),
                 diagnostics.record_count,
             )
 
@@ -168,6 +213,18 @@ class OutputTypeVocabTest(unittest.TestCase):
                 "exception",
                 "other",
             ),
+        )
+
+    def test_output_value_bucket_vocabs_are_stable(self) -> None:
+        # These indices are v0.8 output-value CE labels, so changing
+        # order would invalidate checkpoint/config compatibility.
+        self.assertEqual(
+            OUTPUT_MAGNITUDE_BUCKET_VOCAB,
+            ("negative", "zero", "small", "medium", "large"),
+        )
+        self.assertEqual(
+            OUTPUT_LENGTH_BUCKET_VOCAB,
+            ("empty", "short", "medium", "long", "huge"),
         )
 
 

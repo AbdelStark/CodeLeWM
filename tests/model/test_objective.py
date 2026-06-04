@@ -11,6 +11,7 @@ from codelewm.model import (
     compute_action_swap_contrastive_loss,
     compute_action_use_margin_loss,
     compute_inverse_action_reconstruction_loss,
+    compute_output_value_ce_loss,
     compute_p_pass_bce_loss,
     compute_prediction_mse,
     compute_sigreg_loss,
@@ -308,6 +309,99 @@ class ObjectiveNumpyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "0/1"):
             compute_p_pass_bce_loss(np.array([0.0, 0.0]), np.array([0.0, 0.5]))
 
+    def test_output_value_ce_matches_hand_computed_value_with_ignore_index(self) -> None:
+        logits = {
+            "output_type": np.array([[2.0, 0.0], [0.0, 2.0]]),
+            "output_magnitude_bucket": np.array([[0.0, 1.0], [3.0, 0.0]]),
+            "output_length_bucket": np.array([[1.0, 0.0], [0.0, 1.0]]),
+        }
+        output_type_labels = np.array([0, 1])
+        magnitude_labels = np.array([-100, 0])
+        length_labels = np.array([-100, -100])
+
+        total, task_losses = compute_output_value_ce_loss(
+            logits,
+            output_type_labels=output_type_labels,
+            output_magnitude_bucket_labels=magnitude_labels,
+            output_length_bucket_labels=length_labels,
+        )
+
+        task_map = dict(task_losses)
+        expected_type = float(np.log1p(np.exp(-2.0)))
+        expected_magnitude = float(np.log1p(np.exp(-3.0)))
+        self.assertEqual(set(task_map), {"output_type", "output_magnitude_bucket"})
+        self.assertAlmostEqual(task_map["output_type"], expected_type, places=6)
+        self.assertAlmostEqual(
+            task_map["output_magnitude_bucket"],
+            expected_magnitude,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            total,
+            (expected_type + expected_magnitude) / 2.0,
+            places=6,
+        )
+
+    def test_transition_objective_reports_output_value_ce_terms(self) -> None:
+        z_before = np.array([[0.0, 0.0], [0.0, 1.0]])
+        z_after = np.array([[1.0, 0.0], [1.0, 1.0]])
+        z_pred = np.array([[0.9, 0.0], [0.9, 1.0]])
+        config = ObjectiveConfig(
+            sigreg_weight=0.0,
+            enable_output_value_ce=True,
+            output_value_ce_weight=0.25,
+            sigreg_num_proj=8,
+            sigreg_seed=3,
+        )
+
+        terms = compute_transition_objective(
+            z_before,
+            z_after,
+            z_pred,
+            config=config,
+            output_value_logits={
+                "output_type": np.array([[3.0, 0.0], [0.0, 3.0]]),
+                "output_magnitude_bucket": np.array([[2.0, 0.0], [2.0, 0.0]]),
+                "output_length_bucket": np.array([[0.0, 2.0], [2.0, 0.0]]),
+            },
+            output_type_labels=np.array([0, 1]),
+            output_magnitude_bucket_labels=np.array([0, -100]),
+            output_length_bucket_labels=np.array([-100, 0]),
+        )
+        scalars = terms.scalars()
+
+        self.assertIn("loss/output_value_ce", scalars)
+        self.assertIn("loss/output_value_ce_weighted", scalars)
+        self.assertIn("loss/output_value_ce/output_type", scalars)
+        self.assertIn("loss/output_value_ce/output_magnitude_bucket", scalars)
+        self.assertIn("loss/output_value_ce/output_length_bucket", scalars)
+        self.assertAlmostEqual(
+            scalars["loss/output_value_ce_weighted"],
+            scalars["loss/output_value_ce"] * 0.25,
+        )
+        self.assertAlmostEqual(
+            scalars["loss/total"],
+            scalars["loss/prediction_mse"]
+            + scalars["loss/sigreg_weighted"]
+            + scalars["loss/output_value_ce_weighted"],
+        )
+
+    def test_output_value_ce_requires_explicit_gate_and_labels(self) -> None:
+        with self.assertRaisesRegex(ValueError, "enable_output_value_ce"):
+            ObjectiveConfig(output_value_ce_weight=0.1)
+        with self.assertRaisesRegex(ValueError, "nonzero output_value_ce_weight"):
+            ObjectiveConfig(enable_output_value_ce=True)
+        with self.assertRaisesRegex(ValueError, "output value CE requires"):
+            compute_output_value_ce_loss(
+                {"output_type": np.zeros((2, 2))},
+                output_type_labels=np.array([-100, -100]),
+            )
+        with self.assertRaisesRegex(ValueError, "outside the class range"):
+            compute_output_value_ce_loss(
+                {"output_type": np.zeros((2, 2))},
+                output_type_labels=np.array([0, 2]),
+            )
+
 
 class ObjectiveTorchTest(unittest.TestCase):
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
@@ -346,6 +440,26 @@ class ObjectiveTorchTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "0/1"):
             compute_p_pass_bce_loss(torch.zeros(2, 1), torch.tensor([0.0, 0.5]))
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is not installed")
+    def test_torch_output_value_ce_backprops_through_logits(self) -> None:
+        import torch
+
+        logits = {
+            "output_type": torch.randn(3, 4, requires_grad=True),
+            "output_magnitude_bucket": torch.randn(3, 5, requires_grad=True),
+        }
+
+        total, task_losses = compute_output_value_ce_loss(
+            logits,
+            output_type_labels=torch.tensor([0, 1, 2]),
+            output_magnitude_bucket_labels=torch.tensor([1, -100, 3]),
+        )
+        total.backward()
+
+        self.assertEqual(len(task_losses), 2)
+        self.assertIsNotNone(logits["output_type"].grad)
+        self.assertIsNotNone(logits["output_magnitude_bucket"].grad)
 
 
 if __name__ == "__main__":

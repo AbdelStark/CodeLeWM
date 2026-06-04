@@ -102,6 +102,7 @@ def _config(
     inverse_action_reconstruction_weight: float = 0.0,
     p_pass_bce_weight: float = 0.0,
     p_pass_bce_pos_weight: float = 1.0,
+    output_value_ce_weight: float = 0.0,
     enable_ema_target_encoder: bool = False,
     ema_target_decay: float = 0.99,
 ) -> "ExecutionTrainConfig":
@@ -179,6 +180,7 @@ def _config(
             ),
             p_pass_bce_weight=p_pass_bce_weight,
             p_pass_bce_pos_weight=p_pass_bce_pos_weight,
+            output_value_ce_weight=output_value_ce_weight,
         ),
         seeds=(42,),
         hf_jobs=ExecutionTrainHfJobsConfig(
@@ -461,6 +463,62 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             self.assertTrue(
                 any(
                     key.startswith("target_encoder.")
+                    for key in checkpoint["model_state_dict"]
+                )
+            )
+
+    def test_runner_with_output_value_ce_persists_head_compatibility(self) -> None:
+        from codelewm.training import train_execution_run
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir = _build_pack(tmp)
+            output_dir = tmp / "run-output-value"
+            cfg = _config(
+                max_steps=4,
+                collapse_every=2,
+                output_value_ce_weight=0.2,
+            )
+            result = train_execution_run(
+                cfg,
+                seed=42,
+                output_dir=output_dir,
+                root=tmp,
+                pack_local_dir=pack_dir,
+            )
+
+            metric_rows = [
+                json.loads(line)
+                for line in result.metrics_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            report = json.loads(result.report_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(len(metric_rows), 4)
+            self.assertIn("loss_output_value_ce", metric_rows[-1]["metrics"])
+            self.assertEqual(report["objective"]["output_value_ce_weight"], 0.2)
+            self.assertTrue(report["world_model"]["enable_output_value_head"])
+            self.assertTrue(result.checkpoint_paths)
+
+            import torch
+
+            checkpoint = torch.load(
+                result.checkpoint_paths[-1],
+                map_location="cpu",
+                weights_only=False,
+            )
+            self.assertTrue(
+                checkpoint["compatibility_config"]["wm"]["enable_output_value_head"]
+            )
+            self.assertEqual(
+                checkpoint["compatibility_config"]["objective"][
+                    "output_value_ce_weight"
+                ],
+                0.2,
+            )
+            self.assertTrue(
+                any(
+                    key.startswith("output_value_head.")
                     for key in checkpoint["model_state_dict"]
                 )
             )

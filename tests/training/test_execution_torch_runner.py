@@ -50,6 +50,28 @@ def _fast_policy():
     )
 
 
+def _build_pack(tmp: Path) -> Path:
+    from codelewm.data.execution_pack import build_execution_pack
+    from codelewm.data.execution_sources import load_execution_source
+
+    ingest = tmp / "mbpp.jsonl"
+    load_execution_source(
+        source="mbpp",
+        source_path=FIXTURES / "mbpp_tiny.jsonl",
+        output_path=ingest,
+    )
+    pack_dir = tmp / "pack"
+    build_execution_pack(
+        ingestion_paths=[ingest],
+        output_dir=pack_dir,
+        sandbox_policy=_fast_policy(),
+        seed=42,
+        train_frac=0.5,
+        val_frac=0.25,
+    )
+    return pack_dir
+
+
 def _build_passfail_pack(tmp: Path) -> tuple[Path, float]:
     from codelewm.data.execution_pack.build_passfail_pack import build_passfail_pack
     from codelewm.data.execution_rerank_sampler import build_mutation_rerank_pack
@@ -82,9 +104,6 @@ def _build_passfail_pack(tmp: Path) -> tuple[Path, float]:
 @unittest.skipUnless(_TORCH_AVAILABLE, "torch not installed")
 class ExecutionTorchRunnerSmokeTest(unittest.TestCase):
     def test_loss_trajectory_satisfies_smoke_gate(self) -> None:
-        from codelewm.data.execution_pack import build_execution_pack
-        from codelewm.data.execution_sources import load_execution_source
-        from codelewm.data.sandbox import SandboxPolicy
         from codelewm.training import (
             EXECUTION_TRAIN_REPORT_SCHEMA_VERSION,
             ExecutionTorchTrainConfig,
@@ -93,26 +112,7 @@ class ExecutionTorchRunnerSmokeTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
-            ingest = tmp / "mbpp.jsonl"
-            load_execution_source(
-                source="mbpp",
-                source_path=FIXTURES / "mbpp_tiny.jsonl",
-                output_path=ingest,
-            )
-            pack_dir = tmp / "pack"
-            build_execution_pack(
-                ingestion_paths=[ingest],
-                output_dir=pack_dir,
-                sandbox_policy=SandboxPolicy(
-                    timeout_ms=3000,
-                    memory_mb=1024,
-                    cpu_seconds=2,
-                    determinism_check=True,
-                ),
-                seed=42,
-                train_frac=0.5,
-                val_frac=0.25,
-            )
+            pack_dir = _build_pack(tmp)
             report = train_execution_smoke(
                 ExecutionTorchTrainConfig(
                     pack_jsonl=pack_dir / "pack.jsonl",
@@ -200,6 +200,40 @@ class ExecutionTorchRunnerSmokeTest(unittest.TestCase):
             )
             self.assertEqual(report.config["enable_p_pass_bce"], True)
             self.assertEqual(report.config["p_pass_bce_weight"], 0.5)
+
+    def test_output_value_ce_head_decreases_on_tiny_pack(self) -> None:
+        from codelewm.training import ExecutionTorchTrainConfig, train_execution_smoke
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir = _build_pack(tmp)
+            report = train_execution_smoke(
+                ExecutionTorchTrainConfig(
+                    pack_jsonl=pack_dir / "pack.jsonl",
+                    output_dir=tmp / "output-value-out",
+                    batch_size=4,
+                    max_steps=60,
+                    warmup_steps=5,
+                    lr=1.0e-3,
+                    device="cpu",
+                    seed=42,
+                    enable_output_value_ce=True,
+                    output_value_ce_weight=0.2,
+                )
+            )
+
+            self.assertIn("loss_output_value_ce", report.initial_metrics)
+            self.assertIn("loss_output_value_ce", report.final_metrics)
+            self.assertLess(
+                report.final_metrics["loss_output_value_ce"],
+                report.initial_metrics["loss_output_value_ce"],
+                msg=(
+                    f"initial={report.initial_metrics['loss_output_value_ce']:.4f} "
+                    f"final={report.final_metrics['loss_output_value_ce']:.4f}"
+                ),
+            )
+            self.assertEqual(report.config["enable_output_value_ce"], True)
+            self.assertEqual(report.config["output_value_ce_weight"], 0.2)
 
 
 @unittest.skipUnless(_TORCH_AVAILABLE, "torch not installed")
@@ -361,6 +395,32 @@ class ExecutionTorchRunnerConfigTest(unittest.TestCase):
                 output_dir=Path("/tmp/out"),
                 enable_ema_target_encoder=True,
                 ema_target_decay=1.0,
+            )
+
+    def test_output_value_ce_weight_requires_gate(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "enable_output_value_ce"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                output_value_ce_weight=0.1,
+            )
+
+    def test_output_value_ce_gate_requires_positive_weight(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "output_value_ce_weight"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                enable_output_value_ce=True,
             )
 
 

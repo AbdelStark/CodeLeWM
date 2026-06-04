@@ -69,6 +69,10 @@ from codelewm.observability import (
 from .execution_pack_loader import (
     EXECUTION_PACK_BATCH_SCHEMA_VERSION,
     ExecutionPackLoaderConfig,
+    OUTPUT_LENGTH_BUCKET_VOCAB,
+    OUTPUT_MAGNITUDE_BUCKET_VOCAB,
+    OUTPUT_TYPE_VOCAB,
+    OUTPUT_VALUE_IGNORE_INDEX,
     iter_batches,
     iter_records,
 )
@@ -249,6 +253,10 @@ def train_execution_run(
                 config.objective.inverse_action_reconstruction_weight > 0.0
             ),
             enable_pass_head=config.objective.p_pass_bce_weight > 0.0,
+            enable_output_value_head=config.objective.output_value_ce_weight > 0.0,
+            output_type_class_count=len(OUTPUT_TYPE_VOCAB),
+            output_magnitude_bucket_class_count=len(OUTPUT_MAGNITUDE_BUCKET_VOCAB),
+            output_length_bucket_class_count=len(OUTPUT_LENGTH_BUCKET_VOCAB),
             enable_ema_target_encoder=config.wm.enable_ema_target_encoder,
             ema_target_decay=config.wm.ema_target_decay,
             state_encoder_type=config.wm.state_encoder_type,
@@ -285,6 +293,9 @@ def train_execution_run(
         enable_p_pass_bce=config.objective.p_pass_bce_weight > 0.0,
         p_pass_bce_weight=config.objective.p_pass_bce_weight,
         p_pass_bce_pos_weight=config.objective.p_pass_bce_pos_weight,
+        enable_output_value_ce=config.objective.output_value_ce_weight > 0.0,
+        output_value_ce_weight=config.objective.output_value_ce_weight,
+        output_value_ignore_index=OUTPUT_VALUE_IGNORE_INDEX,
         sigreg_seed=seed,
     )
 
@@ -396,6 +407,14 @@ def train_execution_run(
         if "loss/p_pass_bce_weighted" in scalar:
             metric_row["loss_p_pass_bce_weighted"] = float(
                 scalar["loss/p_pass_bce_weighted"]
+            )
+        if "loss/output_value_ce" in scalar:
+            metric_row["loss_output_value_ce"] = float(
+                scalar["loss/output_value_ce"]
+            )
+        if "loss/output_value_ce_weighted" in scalar:
+            metric_row["loss_output_value_ce_weighted"] = float(
+                scalar["loss/output_value_ce_weighted"]
             )
         if initial_metrics is None:
             initial_metrics = dict(metric_row)
@@ -513,10 +532,14 @@ def train_execution_run(
             ),
             "p_pass_bce_weight": config.objective.p_pass_bce_weight,
             "p_pass_bce_pos_weight": config.objective.p_pass_bce_pos_weight,
+            "output_value_ce_weight": config.objective.output_value_ce_weight,
         },
         "world_model": {
             "enable_ema_target_encoder": config.wm.enable_ema_target_encoder,
             "ema_target_decay": config.wm.ema_target_decay,
+            "enable_output_value_head": (
+                config.objective.output_value_ce_weight > 0.0
+            ),
             "state_encoder_type": config.wm.state_encoder_type,
             "state_encoder_layers": config.wm.state_encoder_layers,
             "state_encoder_heads": config.wm.state_encoder_heads,
@@ -919,6 +942,8 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
         "state_encoder_heads": config.wm.state_encoder_heads,
         "enable_pass_head": config.objective.p_pass_bce_weight > 0.0,
     }
+    if config.objective.output_value_ce_weight > 0.0:
+        wm_payload["enable_output_value_head"] = True
     if config.wm.enable_ema_target_encoder:
         wm_payload["enable_ema_target_encoder"] = True
         wm_payload["ema_target_decay"] = config.wm.ema_target_decay
@@ -936,6 +961,7 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
             ),
             "p_pass_bce_weight": config.objective.p_pass_bce_weight,
             "p_pass_bce_pos_weight": config.objective.p_pass_bce_pos_weight,
+            "output_value_ce_weight": config.objective.output_value_ce_weight,
         },
         "loader": {
             "code_sequence_length": config.loader.code_sequence_length,

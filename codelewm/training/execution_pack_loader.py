@@ -34,6 +34,7 @@ import numpy as np
 
 
 EXECUTION_PACK_BATCH_SCHEMA_VERSION = "codelewm.execution_pack_batch.v2"
+OUTPUT_VALUE_IGNORE_INDEX = -100
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,8 @@ class ExecutionPackBatch:
     output_tokens: np.ndarray  # (B, output_sequence_length) int32
     output_attention_mask: np.ndarray  # (B, output_sequence_length) bool
     output_type_index: np.ndarray  # (B,) int32 — encoded OUTPUT_TYPE_VOCAB index
+    output_magnitude_bucket_index: np.ndarray  # (B,) int32 or OUTPUT_VALUE_IGNORE_INDEX
+    output_length_bucket_index: np.ndarray  # (B,) int32 or OUTPUT_VALUE_IGNORE_INDEX
     will_raise: np.ndarray  # (B,) bool — derived from output_kind == "exception"
     passed: np.ndarray | None  # (B,) bool when v0.8 pass/fail labels are present
     record_ids: tuple[str, ...]
@@ -67,6 +70,12 @@ class ExecutionPackBatch:
             "input_tokens": tuple(self.input_tokens.shape),
             "output_tokens": tuple(self.output_tokens.shape),
             "output_type_index": tuple(self.output_type_index.shape),
+            "output_magnitude_bucket_index": tuple(
+                self.output_magnitude_bucket_index.shape
+            ),
+            "output_length_bucket_index": tuple(
+                self.output_length_bucket_index.shape
+            ),
             "will_raise": tuple(self.will_raise.shape),
             "passed": () if self.passed is None else tuple(self.passed.shape),
         }
@@ -89,6 +98,26 @@ OUTPUT_TYPE_VOCAB: tuple[str, ...] = (
     "other",
 )
 _OUTPUT_TYPE_INDEX: dict[str, int] = {kind: i for i, kind in enumerate(OUTPUT_TYPE_VOCAB)}
+OUTPUT_MAGNITUDE_BUCKET_VOCAB: tuple[str, ...] = (
+    "negative",
+    "zero",
+    "small",
+    "medium",
+    "large",
+)
+OUTPUT_LENGTH_BUCKET_VOCAB: tuple[str, ...] = (
+    "empty",
+    "short",
+    "medium",
+    "long",
+    "huge",
+)
+_OUTPUT_MAGNITUDE_BUCKET_INDEX: dict[str, int] = {
+    bucket: i for i, bucket in enumerate(OUTPUT_MAGNITUDE_BUCKET_VOCAB)
+}
+_OUTPUT_LENGTH_BUCKET_INDEX: dict[str, int] = {
+    bucket: i for i, bucket in enumerate(OUTPUT_LENGTH_BUCKET_VOCAB)
+}
 
 
 @dataclass(frozen=True)
@@ -115,6 +144,8 @@ class LoaderDiagnostics:
     truncated_output: int = 0
     output_type_histogram: dict[str, int] = field(default_factory=dict)
     output_kind_histogram: dict[str, int] = field(default_factory=dict)
+    output_magnitude_bucket_histogram: dict[str, int] = field(default_factory=dict)
+    output_length_bucket_histogram: dict[str, int] = field(default_factory=dict)
     execution_status_histogram: dict[str, int] = field(default_factory=dict)
     split_histogram: dict[str, int] = field(default_factory=dict)
     pass_label_histogram: dict[str, int] = field(default_factory=dict)
@@ -127,6 +158,12 @@ class LoaderDiagnostics:
             "truncated_output": self.truncated_output,
             "output_type_histogram": dict(sorted(self.output_type_histogram.items())),
             "output_kind_histogram": dict(sorted(self.output_kind_histogram.items())),
+            "output_magnitude_bucket_histogram": dict(
+                sorted(self.output_magnitude_bucket_histogram.items())
+            ),
+            "output_length_bucket_histogram": dict(
+                sorted(self.output_length_bucket_histogram.items())
+            ),
             "execution_status_histogram": dict(
                 sorted(self.execution_status_histogram.items())
             ),
@@ -212,6 +249,16 @@ def _to_batch(
     )
     output_mask = np.zeros((batch_size, config.output_sequence_length), dtype=bool)
     output_type_index = np.zeros((batch_size,), dtype=np.int32)
+    output_magnitude_bucket_index = np.full(
+        (batch_size,),
+        OUTPUT_VALUE_IGNORE_INDEX,
+        dtype=np.int32,
+    )
+    output_length_bucket_index = np.full(
+        (batch_size,),
+        OUTPUT_VALUE_IGNORE_INDEX,
+        dtype=np.int32,
+    )
     will_raise = np.zeros((batch_size,), dtype=bool)
     passed = np.zeros((batch_size,), dtype=bool)
     pass_label_seen = False
@@ -242,6 +289,30 @@ def _to_batch(
         output_type_index[i] = _OUTPUT_TYPE_INDEX.get(
             output_type, _OUTPUT_TYPE_INDEX["other"]
         )
+        output_magnitude_bucket = row.get("output_magnitude_bucket")
+        if isinstance(output_magnitude_bucket, str) and output_magnitude_bucket:
+            output_magnitude_bucket_index[i] = _OUTPUT_MAGNITUDE_BUCKET_INDEX.get(
+                output_magnitude_bucket,
+                OUTPUT_VALUE_IGNORE_INDEX,
+            )
+            diagnostics.output_magnitude_bucket_histogram[
+                output_magnitude_bucket
+            ] = (
+                diagnostics.output_magnitude_bucket_histogram.get(
+                    output_magnitude_bucket, 0
+                )
+                + 1
+            )
+        output_length_bucket = row.get("output_length_bucket")
+        if isinstance(output_length_bucket, str) and output_length_bucket:
+            output_length_bucket_index[i] = _OUTPUT_LENGTH_BUCKET_INDEX.get(
+                output_length_bucket,
+                OUTPUT_VALUE_IGNORE_INDEX,
+            )
+            diagnostics.output_length_bucket_histogram[output_length_bucket] = (
+                diagnostics.output_length_bucket_histogram.get(output_length_bucket, 0)
+                + 1
+            )
         will_raise[i] = str(row.get("output_kind") or "") == "exception"
         pass_value = row.get("passed")
         if pass_value is None:
@@ -290,6 +361,8 @@ def _to_batch(
         output_tokens=outputs,
         output_attention_mask=output_mask,
         output_type_index=output_type_index,
+        output_magnitude_bucket_index=output_magnitude_bucket_index,
+        output_length_bucket_index=output_length_bucket_index,
         will_raise=will_raise,
         passed=passed if pass_label_seen else None,
         record_ids=tuple(record_ids),

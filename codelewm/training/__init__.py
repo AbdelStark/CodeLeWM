@@ -62,7 +62,10 @@ from .torch_executor import (
 )
 from .execution_pack_loader import (
     EXECUTION_PACK_BATCH_SCHEMA_VERSION,
+    OUTPUT_LENGTH_BUCKET_VOCAB,
+    OUTPUT_MAGNITUDE_BUCKET_VOCAB,
     OUTPUT_TYPE_VOCAB,
+    OUTPUT_VALUE_IGNORE_INDEX,
     ExecutionPackBatch,
     ExecutionPackLoaderConfig,
     LoaderDiagnostics,
@@ -141,7 +144,10 @@ __all__ = [
     "ExecutionTrainWorldModelConfig",
     "LaunchPlan",
     "LoaderDiagnostics",
+    "OUTPUT_LENGTH_BUCKET_VOCAB",
+    "OUTPUT_MAGNITUDE_BUCKET_VOCAB",
     "OUTPUT_TYPE_VOCAB",
+    "OUTPUT_VALUE_IGNORE_INDEX",
     "build_launch_plans",
     "collect_diagnostics",
     "iter_batches",

@@ -64,6 +64,7 @@ _OPTIONAL_OBJECTIVE_KEYS = (
     "retrieval_weight",
     "p_pass_bce_weight",
     "p_pass_bce_pos_weight",
+    "output_value_ce_weight",
 )
 _KNOWN_OBJECTIVE_KEYS = frozenset(
     (*_REQUIRED_OBJECTIVE_KEYS, *_OPTIONAL_OBJECTIVE_KEYS)

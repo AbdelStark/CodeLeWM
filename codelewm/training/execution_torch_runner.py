@@ -60,6 +60,10 @@ from .execution_pack_loader import (
     EXECUTION_PACK_BATCH_SCHEMA_VERSION,
     ExecutionPackBatch,
     ExecutionPackLoaderConfig,
+    OUTPUT_LENGTH_BUCKET_VOCAB,
+    OUTPUT_MAGNITUDE_BUCKET_VOCAB,
+    OUTPUT_TYPE_VOCAB,
+    OUTPUT_VALUE_IGNORE_INDEX,
     iter_batches,
     iter_records,
 )
@@ -107,6 +111,8 @@ class ExecutionTorchTrainConfig:
     enable_p_pass_bce: bool = False
     p_pass_bce_weight: float = 0.0
     p_pass_bce_pos_weight: float = 1.0
+    enable_output_value_ce: bool = False
+    output_value_ce_weight: float = 0.0
     enable_ema_target_encoder: bool = False
     ema_target_decay: float = 0.99
 
@@ -138,6 +144,14 @@ class ExecutionTorchTrainConfig:
             )
         if self.p_pass_bce_pos_weight <= 0.0:
             raise ExecutionTorchRunnerError("p_pass_bce_pos_weight must be positive")
+        if self.enable_output_value_ce and self.output_value_ce_weight <= 0.0:
+            raise ExecutionTorchRunnerError(
+                "enable_output_value_ce requires output_value_ce_weight > 0"
+            )
+        if not self.enable_output_value_ce and self.output_value_ce_weight != 0.0:
+            raise ExecutionTorchRunnerError(
+                "output_value_ce_weight requires enable_output_value_ce"
+            )
         if not math.isfinite(self.ema_target_decay) or not 0.0 <= self.ema_target_decay < 1.0:
             raise ExecutionTorchRunnerError(
                 "ema_target_decay must be finite and in [0.0, 1.0)"
@@ -155,6 +169,8 @@ class ExecutionTorchStep:
     loss_action_swap_contrastive: float | None
     loss_p_pass_bce: float | None
     loss_p_pass_bce_weighted: float | None
+    loss_output_value_ce: float | None
+    loss_output_value_ce_weighted: float | None
     no_action_mse: float
     margin_no_action_minus_pred: float
     wall_time_s: float
@@ -169,6 +185,8 @@ class ExecutionTorchStep:
             "loss_action_swap_contrastive": self.loss_action_swap_contrastive,
             "loss_p_pass_bce": self.loss_p_pass_bce,
             "loss_p_pass_bce_weighted": self.loss_p_pass_bce_weighted,
+            "loss_output_value_ce": self.loss_output_value_ce,
+            "loss_output_value_ce_weighted": self.loss_output_value_ce_weighted,
             "no_action_mse": self.no_action_mse,
             "margin_no_action_minus_pred": self.margin_no_action_minus_pred,
             "wall_time_s": self.wall_time_s,
@@ -259,6 +277,10 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             action_sequence_length=TEXT_ACTION_SEQUENCE_LENGTH,
             vocab_size=config.vocab_size,
             enable_pass_head=config.enable_p_pass_bce,
+            enable_output_value_head=config.enable_output_value_ce,
+            output_type_class_count=len(OUTPUT_TYPE_VOCAB),
+            output_magnitude_bucket_class_count=len(OUTPUT_MAGNITUDE_BUCKET_VOCAB),
+            output_length_bucket_class_count=len(OUTPUT_LENGTH_BUCKET_VOCAB),
             enable_ema_target_encoder=config.enable_ema_target_encoder,
             ema_target_decay=config.ema_target_decay,
         )
@@ -294,6 +316,11 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             config.p_pass_bce_weight if config.enable_p_pass_bce else 0.0
         ),
         p_pass_bce_pos_weight=config.p_pass_bce_pos_weight,
+        enable_output_value_ce=config.enable_output_value_ce,
+        output_value_ce_weight=(
+            config.output_value_ce_weight if config.enable_output_value_ce else 0.0
+        ),
+        output_value_ignore_index=OUTPUT_VALUE_IGNORE_INDEX,
     )
 
     steps: list[ExecutionTorchStep] = []
@@ -334,6 +361,10 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             loss_action_swap_contrastive=swap_val,
             loss_p_pass_bce=scalar.get("loss/p_pass_bce"),
             loss_p_pass_bce_weighted=scalar.get("loss/p_pass_bce_weighted"),
+            loss_output_value_ce=scalar.get("loss/output_value_ce"),
+            loss_output_value_ce_weighted=scalar.get(
+                "loss/output_value_ce_weighted"
+            ),
             no_action_mse=no_action_mse_val,
             margin_no_action_minus_pred=margin_val,
             wall_time_s=time.perf_counter(),
@@ -347,6 +378,11 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
                 **(
                     {"loss_p_pass_bce": record.loss_p_pass_bce}
                     if record.loss_p_pass_bce is not None
+                    else {}
+                ),
+                **(
+                    {"loss_output_value_ce": record.loss_output_value_ce}
+                    if record.loss_output_value_ce is not None
                     else {}
                 ),
                 "no_action_mse": record.no_action_mse,
@@ -377,6 +413,16 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             s.loss_p_pass_bce_weighted
             for s in tail
             if s.loss_p_pass_bce_weighted is not None
+        )
+    if any(s.loss_output_value_ce is not None for s in tail):
+        final["loss_output_value_ce"] = _mean(
+            s.loss_output_value_ce for s in tail if s.loss_output_value_ce is not None
+        )
+    if any(s.loss_output_value_ce_weighted is not None for s in tail):
+        final["loss_output_value_ce_weighted"] = _mean(
+            s.loss_output_value_ce_weighted
+            for s in tail
+            if s.loss_output_value_ce_weighted is not None
         )
     initial = initial or final
     deltas = {
@@ -418,6 +464,8 @@ def train_execution_smoke(config: ExecutionTorchTrainConfig) -> ExecutionTorchRe
             "enable_p_pass_bce": config.enable_p_pass_bce,
             "p_pass_bce_weight": config.p_pass_bce_weight,
             "p_pass_bce_pos_weight": config.p_pass_bce_pos_weight,
+            "enable_output_value_ce": config.enable_output_value_ce,
+            "output_value_ce_weight": config.output_value_ce_weight,
             "enable_ema_target_encoder": config.enable_ema_target_encoder,
             "ema_target_decay": config.ema_target_decay,
             "pack_batch_schema_version": EXECUTION_PACK_BATCH_SCHEMA_VERSION,
@@ -517,6 +565,10 @@ def _train_one_step(
     z_pred_after_swapped = model.predict_after(z_before, action_emb_swapped)
     p_pass_logit = None
     pass_labels = None
+    output_value_logits = None
+    output_type_labels = None
+    output_magnitude_bucket_labels = None
+    output_length_bucket_labels = None
     if objective_config.enable_p_pass_bce:
         if batch.passed is None:
             raise ExecutionTorchRunnerError(
@@ -524,6 +576,17 @@ def _train_one_step(
             )
         p_pass_logit = model.pass_logit(z_before, action_emb, z_pred_after)
         pass_labels = torch_.from_numpy(batch.passed.astype(np.float32)).to(device)
+    if objective_config.enable_output_value_ce:
+        output_value_logits = model.output_value_logits(z_pred_after)
+        output_type_labels = torch_.from_numpy(
+            batch.output_type_index.astype(np.int64)
+        ).to(device)
+        output_magnitude_bucket_labels = torch_.from_numpy(
+            batch.output_magnitude_bucket_index.astype(np.int64)
+        ).to(device)
+        output_length_bucket_labels = torch_.from_numpy(
+            batch.output_length_bucket_index.astype(np.int64)
+        ).to(device)
 
     # The inverse-action head reconstructs the action embedding from
     # (z_before, z_after); the objective compares it against the true
@@ -549,6 +612,10 @@ def _train_one_step(
         p_pass_logit=p_pass_logit,
         pass_labels=pass_labels,
         z_after_for_sigreg=z_after_online,
+        output_value_logits=output_value_logits,
+        output_type_labels=output_type_labels,
+        output_magnitude_bucket_labels=output_magnitude_bucket_labels,
+        output_length_bucket_labels=output_length_bucket_labels,
     )
 
     # No-action baseline: how well would the identity "z_pred = z_before"

@@ -124,6 +124,7 @@ class ExecutionTrainObjectiveConfig:
     retrieval_weight: float = 0.0
     p_pass_bce_weight: float = 0.0
     p_pass_bce_pos_weight: float = 1.0
+    output_value_ce_weight: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -349,6 +350,10 @@ class ExecutionTrainConfig:
             raise ExecutionTrainConfigError(
                 "objective.p_pass_bce_pos_weight must be positive"
             )
+        if self.objective.output_value_ce_weight < 0.0:
+            raise ExecutionTrainConfigError(
+                "objective.output_value_ce_weight must be non-negative"
+            )
         # HF Jobs contract.
         if self.hf_jobs.timeout_hours <= 0:
             raise ExecutionTrainConfigError("hf_jobs.timeout_hours must be positive")
@@ -458,6 +463,7 @@ class ExecutionTrainConfig:
                 "retrieval_weight": self.objective.retrieval_weight,
                 "p_pass_bce_weight": self.objective.p_pass_bce_weight,
                 "p_pass_bce_pos_weight": self.objective.p_pass_bce_pos_weight,
+                "output_value_ce_weight": self.objective.output_value_ce_weight,
             },
             "seeds": list(self.seeds),
             "hf_jobs": {
@@ -692,6 +698,7 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "retrieval_weight",
             "p_pass_bce_weight",
             "p_pass_bce_pos_weight",
+            "output_value_ce_weight",
         },
         "config.objective",
     )
@@ -871,6 +878,10 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         p_pass_bce_pos_weight=(
             1.0 if p_pass_bce_pos_weight is None else p_pass_bce_pos_weight
         ),
+        output_value_ce_weight=_optional_float(
+            objective_payload, "output_value_ce_weight", "config.objective"
+        )
+        or 0.0,
     )
 
     hf_jobs = ExecutionTrainHfJobsConfig(

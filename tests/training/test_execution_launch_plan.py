@@ -127,6 +127,18 @@ class LaunchPlanBuilderTest(unittest.TestCase):
             self.assertEqual(plan.objective["p_pass_bce_weight"], 0.4)
             self.assertEqual(plan.objective["p_pass_bce_pos_weight"], 2.0)
 
+    def test_output_value_objective_field_round_trips_when_present(self) -> None:
+        config = load_v0_6_config(CONFIG_PATH)
+        config["objective"] = dict(config["objective"])
+        config["objective"]["output_value_ce_weight"] = 0.2
+
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+
+        for plan in plans:
+            self.assertEqual(plan.objective["output_value_ce_weight"], 0.2)
+
     def test_command_invokes_entrypoint_then_codelewm(self) -> None:
         """HF Jobs strips ENTRYPOINT when COMMAND is supplied.
 

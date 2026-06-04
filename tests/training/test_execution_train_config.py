@@ -394,6 +394,26 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         with self.assertRaisesRegex(self.Error, "p_pass_bce_pos_weight"):
             self._load_payload(payload)
 
+    def test_output_value_ce_weight_parses_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["output_value_ce_weight"] = 0.2
+        cfg = self._load_payload(payload)
+
+        self.assertEqual(cfg.objective.output_value_ce_weight, 0.2)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertEqual(cfg2.objective.output_value_ce_weight, 0.2)
+
+    def test_output_value_ce_weight_defaults_off(self) -> None:
+        cfg = self._load_payload(_config_payload())
+
+        self.assertEqual(cfg.objective.output_value_ce_weight, 0.0)
+
+    def test_output_value_ce_invalid_weight_rejected(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["output_value_ce_weight"] = -0.1
+        with self.assertRaisesRegex(self.Error, "output_value_ce_weight"):
+            self._load_payload(payload)
+
     def test_retrieval_weight_over_cap_rejected(self) -> None:
         payload = _config_payload()
         payload["objective"]["retrieval_weight"] = 0.2  # > 0.10 cap

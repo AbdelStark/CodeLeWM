@@ -191,9 +191,13 @@ scoring input, recovers `output_repr` for the model target, and sets `passed`
 by comparing the recovered output hash with the expected-output hash stored in
 the completion-label artifact. Splits remain grouped by `source_problem_id`.
 
-`codelewm.execution_pack_batch.v2` exposes `passed` as a boolean batch vector
-when every row in the batch is labeled and as `None` for legacy unlabeled packs.
-Mixed labeled/unlabeled batches are invalid.
+`codelewm.execution_pack_batch.v2` exposes `output_type_index`,
+`output_magnitude_bucket_index`, and `output_length_bucket_index` as stable
+integer label vectors for output-value auxiliary objectives and probes. Missing
+or non-applicable magnitude/length labels use the configured ignore index
+instead of silently collapsing into a real class. It also exposes `passed` as a
+boolean batch vector when every row in the batch is labeled and as `None` for
+legacy unlabeled packs. Mixed labeled/unlabeled batches are invalid.
 
 ## Filtering Rules
 

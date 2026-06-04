@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -35,6 +36,9 @@ class ObjectiveConfig:
     enable_p_pass_bce: bool = False
     p_pass_bce_weight: float = 0.0
     p_pass_bce_pos_weight: float = 1.0
+    enable_output_value_ce: bool = False
+    output_value_ce_weight: float = 0.0
+    output_value_ignore_index: int = -100
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
     sigreg_seed: int | None = None
@@ -110,6 +114,12 @@ class ObjectiveConfig:
             raise ValueError("enable_p_pass_bce requires nonzero p_pass_bce_weight")
         if not self.enable_p_pass_bce and self.p_pass_bce_weight != 0.0:
             raise ValueError("p_pass_bce_weight requires enable_p_pass_bce=true")
+        if not math.isfinite(self.output_value_ce_weight) or self.output_value_ce_weight < 0.0:
+            raise ValueError("output_value_ce_weight must be finite and non-negative")
+        if self.enable_output_value_ce and self.output_value_ce_weight <= 0.0:
+            raise ValueError("enable_output_value_ce requires nonzero output_value_ce_weight")
+        if not self.enable_output_value_ce and self.output_value_ce_weight != 0.0:
+            raise ValueError("output_value_ce_weight requires enable_output_value_ce=true")
         if self.sigreg_knots < 2:
             raise ValueError("sigreg_knots must be at least 2")
         if self.sigreg_num_proj <= 0:
@@ -134,6 +144,9 @@ class ObjectiveTerms:
     inverse_action_reconstruction_weighted: Any | None = None
     p_pass_bce: Any | None = None
     p_pass_bce_weighted: Any | None = None
+    output_value_ce: Any | None = None
+    output_value_ce_weighted: Any | None = None
+    output_value_ce_tasks: tuple[tuple[str, Any], ...] = ()
 
     def scalars(self) -> dict[str, float]:
         values = {
@@ -170,6 +183,14 @@ class ObjectiveTerms:
             values["loss/p_pass_bce_weighted"] = _as_float(
                 self.p_pass_bce_weighted
             )
+        if self.output_value_ce is not None:
+            values["loss/output_value_ce"] = _as_float(self.output_value_ce)
+        if self.output_value_ce_weighted is not None:
+            values["loss/output_value_ce_weighted"] = _as_float(
+                self.output_value_ce_weighted
+            )
+        for task_name, task_value in self.output_value_ce_tasks:
+            values[f"loss/output_value_ce/{task_name}"] = _as_float(task_value)
         return values
 
 
@@ -185,6 +206,10 @@ def compute_transition_objective(
     p_pass_logit: Any | None = None,
     pass_labels: Any | None = None,
     z_after_for_sigreg: Any | None = None,
+    output_value_logits: Mapping[str, Any] | None = None,
+    output_type_labels: Any | None = None,
+    output_magnitude_bucket_labels: Any | None = None,
+    output_length_bucket_labels: Any | None = None,
 ) -> ObjectiveTerms:
     """Return MSE, SIGReg, and total loss for one-step latent prediction."""
 
@@ -209,6 +234,9 @@ def compute_transition_objective(
     inverse_action_reconstruction_weighted = None
     p_pass_bce = None
     p_pass_bce_weighted = None
+    output_value_ce = None
+    output_value_ce_weighted = None
+    output_value_ce_tasks: tuple[tuple[str, Any], ...] = ()
     if config.enable_retrieval_loss:
         retrieval = compute_in_batch_retrieval_loss(
             z_pred_after,
@@ -262,6 +290,18 @@ def compute_transition_objective(
         )
         p_pass_bce_weighted = p_pass_bce * config.p_pass_bce_weight
         total = total + p_pass_bce_weighted
+    if config.enable_output_value_ce:
+        if output_value_logits is None:
+            raise ValueError("enable_output_value_ce requires output_value_logits")
+        output_value_ce, output_value_ce_tasks = compute_output_value_ce_loss(
+            output_value_logits,
+            output_type_labels=output_type_labels,
+            output_magnitude_bucket_labels=output_magnitude_bucket_labels,
+            output_length_bucket_labels=output_length_bucket_labels,
+            ignore_index=config.output_value_ignore_index,
+        )
+        output_value_ce_weighted = output_value_ce * config.output_value_ce_weight
+        total = total + output_value_ce_weighted
     _check_finite(total, "loss/total")
     _check_finite(prediction_mse, "loss/prediction_mse")
     _check_finite(sigreg, "loss/sigreg")
@@ -275,6 +315,8 @@ def compute_transition_objective(
         _check_finite(inverse_action_reconstruction, "loss/inverse_action_reconstruction")
     if p_pass_bce is not None:
         _check_finite(p_pass_bce, "loss/p_pass_bce")
+    if output_value_ce is not None:
+        _check_finite(output_value_ce, "loss/output_value_ce")
     return ObjectiveTerms(
         total=total,
         prediction_mse=prediction_mse,
@@ -290,6 +332,9 @@ def compute_transition_objective(
         inverse_action_reconstruction_weighted=inverse_action_reconstruction_weighted,
         p_pass_bce=p_pass_bce,
         p_pass_bce_weighted=p_pass_bce_weighted,
+        output_value_ce=output_value_ce,
+        output_value_ce_weighted=output_value_ce_weighted,
+        output_value_ce_tasks=output_value_ce_tasks,
     )
 
 
@@ -480,6 +525,96 @@ def compute_p_pass_bce_loss(
         + (1.0 - labels) * np.log(1.0 - probs)
     )
     return float(loss.mean())
+
+
+def compute_output_value_ce_loss(
+    output_value_logits: Mapping[str, Any],
+    *,
+    output_type_labels: Any | None = None,
+    output_magnitude_bucket_labels: Any | None = None,
+    output_length_bucket_labels: Any | None = None,
+    ignore_index: int = -100,
+) -> tuple[Any, tuple[tuple[str, Any], ...]]:
+    """Cross-entropy over output type/magnitude/length auxiliary labels."""
+
+    tasks: list[tuple[str, Any, Any | None]] = [
+        ("output_type", output_value_logits.get("output_type"), output_type_labels),
+        (
+            "output_magnitude_bucket",
+            output_value_logits.get("output_magnitude_bucket"),
+            output_magnitude_bucket_labels,
+        ),
+        (
+            "output_length_bucket",
+            output_value_logits.get("output_length_bucket"),
+            output_length_bucket_labels,
+        ),
+    ]
+    losses: list[tuple[str, Any]] = []
+    for task_name, logits, labels in tasks:
+        if labels is None:
+            continue
+        if logits is None:
+            raise ValueError(f"output_value_logits missing {task_name!r}")
+        loss = _cross_entropy_with_ignore(
+            logits,
+            labels,
+            task_name=task_name,
+            ignore_index=ignore_index,
+        )
+        if loss is not None:
+            losses.append((task_name, loss))
+    if not losses:
+        raise ValueError("output value CE requires at least one non-ignored label")
+    if _is_torch_tensor(losses[0][1]):
+        total = sum(loss for _, loss in losses) / len(losses)
+    else:
+        total = float(sum(float(loss) for _, loss in losses) / len(losses))
+    return total, tuple(losses)
+
+
+def _cross_entropy_with_ignore(
+    logits: Any,
+    labels: Any,
+    *,
+    task_name: str,
+    ignore_index: int,
+) -> Any | None:
+    _check_finite(logits, f"{task_name} logits")
+    if _is_torch_tensor(logits):
+        if logits.ndim != 2:
+            raise ValueError(f"{task_name} logits must have shape [batch, classes]")
+        label_tensor = labels
+        if not torch.is_tensor(label_tensor):
+            label_tensor = torch.as_tensor(labels, device=logits.device)
+        label_tensor = label_tensor.to(device=logits.device, dtype=torch.long)
+        if tuple(label_tensor.shape) != (int(logits.shape[0]),):
+            raise ValueError(f"{task_name} labels must have shape [batch]")
+        valid = label_tensor != int(ignore_index)
+        if not bool(valid.any().detach().cpu().item()):
+            return None
+        valid_labels = label_tensor[valid]
+        out_of_range = ((valid_labels < 0) | (valid_labels >= logits.shape[1])).any()
+        if bool(out_of_range.detach().cpu().item()):
+            raise ValueError(f"{task_name} labels are outside the class range")
+        return torch.nn.functional.cross_entropy(logits[valid], valid_labels)
+
+    logits_arr = np.asarray(logits, dtype=float)
+    if logits_arr.ndim != 2:
+        raise ValueError(f"{task_name} logits must have shape [batch, classes]")
+    labels_arr = np.asarray(labels, dtype=np.int64)
+    if labels_arr.shape != (logits_arr.shape[0],):
+        raise ValueError(f"{task_name} labels must have shape [batch]")
+    valid = labels_arr != int(ignore_index)
+    if not np.any(valid):
+        return None
+    valid_labels = labels_arr[valid]
+    if np.any((valid_labels < 0) | (valid_labels >= logits_arr.shape[1])):
+        raise ValueError(f"{task_name} labels are outside the class range")
+    selected_logits = logits_arr[valid]
+    stabilized = selected_logits - selected_logits.max(axis=1, keepdims=True)
+    log_probs = stabilized - np.log(np.exp(stabilized).sum(axis=1, keepdims=True))
+    return float(-log_probs[np.arange(valid_labels.shape[0]), valid_labels].mean())
 
 
 def stack_objective_embeddings(z_before: Any, z_after: Any, z_pred_after: Any) -> Any:
