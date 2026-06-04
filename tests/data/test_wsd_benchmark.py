@@ -85,10 +85,10 @@ class WsdBenchmarkBuilderTest(unittest.TestCase):
             )
             labels_path = out / f"{result.benchmark_id}_completion_labels.jsonl"
             rows = [json.loads(line) for line in labels_path.read_text().splitlines()]
-            # candidate 0 of each problem is the reference (sample_rank == 1)
-            ref_ranks = [r["llm_order_rank"] for r in rows if r["sample_rank"] == 1]
+            # the reference (the one passing candidate) must not always be
+            # llm_order rank 0, else the "llm_order" baseline trivially wins.
+            ref_ranks = [r["llm_order_rank"] for r in rows if r["wsd_mutation"] == "reference"]
             self.assertTrue(ref_ranks)
-            # not all references are at rank 0 (the shuffle moved at least one)
             self.assertFalse(all(rank == 0 for rank in ref_ranks))
 
 
