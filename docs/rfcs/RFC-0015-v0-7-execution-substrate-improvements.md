@@ -231,6 +231,55 @@ candidates) — the sweet spot requires a controlled, unsaturated set.
 - Every v0.7 artifact passes manifest verification and secret scans; the public
   claim boundary is preserved and any partial-positive shape is scoped.
 
+## Outcomes and v0.8 Direction (2026-06-04)
+
+v0.7 was executed end-to-end (2-seed A10G training on the bucket-augmented
+mbpp pack, full eval, the WS-D unsaturated rerank benchmark, and the WS-A
+correctness probes). Verdict by work-stream:
+
+| WS | Result |
+|----|--------|
+| WS-B (data: probe labels, dedup, buckets) | **Shipped.** Probe gate flipped `not_evaluable` → evaluable; `output_magnitude_bucket` / `output_length_bucket` now labeled. |
+| WS-C (transformer encoder, InfoNCE, applied pred-MSE) | **Shipped + trained.** Non-collapsed latent (eff-rank ratio 0.30–0.33), surprise AUC 1.0, retrieval recall@1 +0.48/+0.51, and a reproducible **positive**: the latent **predicts output magnitude** above every control on both seeds (+0.21 / +0.15) — newly measurable vs v0.6. |
+| WS-D (unsaturated rerank benchmark) | **Shipped.** Deterministic mutation-distractor packs (mix rate 1.0 vs 0.039). Revealed v0.7 reranks at **chance** (codelewm pass@1 0.06–0.17 vs random 0.17), so the flat downstream result was not only saturation. |
+| WS-A (correctness-aware scoring) | **Diagnosed, not shipped.** A1: scalar features decode correctness at chance (AUC 0.500). A1.5: the **full 256-dim latents** decode correctness at chance too (0.47–0.54, both seeds). The SSL representation does not encode correctness — so A1/A2 and a frozen-trunk A3 head are all ruled out. |
+
+**The v0.7 conclusion.** The execution substrate learns genuine execution
+*structure* (retrieval, surprise, output-magnitude prediction — all positive,
+2-seed) but carries **no correctness signal**: the `(code, input) → output`
+self-supervised objective never sees the problem's expected output / spec, so
+"is this output the correct one" is outside what the representation is trained
+to capture. This is the root cause of both the WS-D rerank-at-chance result
+and the A1/A1.5 probes.
+
+**v0.8 direction — inject correctness at training time.** The cheap read-out
+fixes are dead; correctness must be co-trained into the trunk:
+
+1. **Pass/fail training data** — a new `completion_label.v1 → pack` adapter
+   that re-executes the WS-D mutation completions to recover `output_repr`,
+   tokenizes, assigns splits, and writes a `passed` label (the execution pack
+   has no correctness labels by construction). Plus the `record.py` / loader /
+   executor schema bumps.
+2. **A3 co-trained from scratch** — the `p_pass = σ(W·[z_code, action,
+   z_pred_after])` BCE head trained *jointly* with the SSL objective (not a
+   frozen-trunk second stage, which A1.5 rules out), so the trunk learns a
+   correctness-bearing representation. Verified change points: head at
+   `torch_transition.py:97-106`, BCE term at `objective.py:217-229`, scorer
+   fusion at `scorer.py:614-653`.
+3. **WS-C2/C4 as enablers** — EMA target encoder and the output-value
+   auxiliary head (predict the output bucket from `z_pred_after`) to force the
+   latent to encode output semantics / spec alignment, a likely prerequisite
+   for correctness to be learnable at all.
+4. **Measure on WS-D** — the unsaturated benchmark is now the instrument:
+   success = a calibrated p_pass that reranks above the lexical baseline
+   (~0.30) with bootstrap-CI clearance.
+
+Full evidence: `docs/benchmark/EXECUTION_V0_7_RESULTS_2026-06-04.md`,
+`EXECUTION_V0_7_WSD_RESULTS_2026-06-04.md`,
+`EXECUTION_V0_7_WSA_A1_RESULTS_2026-06-04.md`,
+`EXECUTION_V0_7_WSA_A15_LATENT_PROBE_2026-06-04.md`, and the consolidated
+`EXECUTION_V0_7_CONCLUSION_2026-06-04.md`.
+
 ## Related
 
 - RFC-0014 (execution-trace substrate), RFC-0005 (objective and collapse
