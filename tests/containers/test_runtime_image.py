@@ -174,6 +174,55 @@ class RuntimeImageV07DockerfileTest(unittest.TestCase):
         self.assertIn("--dockerfile", content)
 
 
+class RuntimeImageV08DockerfileTest(unittest.TestCase):
+    """Static checks for the v0.8 correctness-aware runtime image."""
+
+    DOCKERFILE = REPO_ROOT / "containers" / "v0_8" / "Dockerfile"
+    ENTRYPOINT = REPO_ROOT / "containers" / "v0_8" / "entrypoint.sh"
+
+    def test_dockerfile_exists_and_is_v0_8(self) -> None:
+        self.assertTrue(self.DOCKERFILE.is_file())
+        content = self.DOCKERFILE.read_text(encoding="utf-8")
+        for marker in (
+            "FROM ${BASE_IMAGE}",
+            "useradd -m -u 1000 codelewm",
+            "USER codelewm",
+            "uv pip install --system",
+            'org.opencontainers.image.version="v0.8"',
+            "p_pass BCE head",
+            "output-value auxiliary CE head",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+
+    def test_dockerfile_wires_v0_8_entrypoint(self) -> None:
+        content = self.DOCKERFILE.read_text(encoding="utf-8")
+        self.assertIn(
+            "containers/v0_8/entrypoint.sh /usr/local/bin/codelewm-runtime-entrypoint",
+            content,
+        )
+        self.assertIn(
+            'ENTRYPOINT ["/usr/local/bin/codelewm-runtime-entrypoint"]',
+            content,
+        )
+
+    def test_entrypoint_script_exists_and_is_executable(self) -> None:
+        self.assertTrue(self.ENTRYPOINT.is_file(), f"missing {self.ENTRYPOINT}")
+        self.assertTrue(
+            os.access(self.ENTRYPOINT, os.X_OK),
+            f"entrypoint {self.ENTRYPOINT} is not executable",
+        )
+        body = self.ENTRYPOINT.read_text(encoding="utf-8")
+        for marker in ("hf download", '"$@"', "hf upload", "codelewm v0.8 run"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
+    def test_build_script_mentions_v0_8_dockerfile(self) -> None:
+        content = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("containers/v0_8/Dockerfile", content)
+        self.assertIn("ghcr.io/abdelstark/codelewm-runtime:v0.8", content)
+
+
 @unittest.skipUnless(
     _DOCKER_AVAILABLE and _RUN_CONTAINER_TESTS,
     "docker not available or CODELEWM_TEST_CONTAINER_BUILD not set",

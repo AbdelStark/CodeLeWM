@@ -139,6 +139,11 @@ class DatasetCardRenderTest(unittest.TestCase):
 
 
 class HFPublishScriptDryRunTest(unittest.TestCase):
+    def test_uv_script_metadata_declares_runtime_dependencies(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('"huggingface_hub>=1.0"', text)
+        self.assertIn('"numpy>=1.24"', text)
+
     def test_dry_run_emits_json_plan_and_renders_readme(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             pack = _build_small_pack(Path(tmpdir))

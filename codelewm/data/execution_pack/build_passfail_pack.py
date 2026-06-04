@@ -127,7 +127,7 @@ def build_passfail_pack(
     if max_records is not None:
         _positive_int(max_records, "max_records")
 
-    output_dir = Path(output_dir)
+    output_dir = Path(output_dir).expanduser().resolve()
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
         raise PassFailPackBuilderError(
             f"output_dir must be empty or --overwrite must be set: {output_dir}"

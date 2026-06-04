@@ -14,6 +14,11 @@
 #       --tag ghcr.io/abdelstark/codelewm-runtime:v0.7 \
 #       --dockerfile containers/v0_7/Dockerfile --push
 #
+# For the v0.8 correctness-aware image:
+#   scripts/build-codelewm-runtime \
+#       --tag ghcr.io/abdelstark/codelewm-runtime:v0.8 \
+#       --dockerfile containers/v0_8/Dockerfile --push
+#
 # This script wraps ``docker build`` so the git SHA + label set is
 # uniform across local builds and CI. It prints the resulting image
 # digest to stdout. Pushing is opt-in via ``--push``.
