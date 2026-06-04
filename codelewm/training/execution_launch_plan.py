@@ -60,6 +60,14 @@ _REQUIRED_OBJECTIVE_KEYS = (
     "action_swap_contrastive_weight",
     "inverse_action_reconstruction_weight",
 )
+_OPTIONAL_OBJECTIVE_KEYS = (
+    "retrieval_weight",
+    "p_pass_bce_weight",
+    "p_pass_bce_pos_weight",
+)
+_KNOWN_OBJECTIVE_KEYS = frozenset(
+    (*_REQUIRED_OBJECTIVE_KEYS, *_OPTIONAL_OBJECTIVE_KEYS)
+)
 
 
 class ExecutionLaunchPlanError(ValueError):
@@ -137,6 +145,7 @@ def load_v0_6_config(path: Path) -> dict[str, Any]:
     _require_keys(
         config["objective"], _REQUIRED_OBJECTIVE_KEYS, "config.objective"
     )
+    _reject_unknown_keys(config["objective"], _KNOWN_OBJECTIVE_KEYS, "config.objective")
     if config["schema_version"] != "codelewm.execution_train_config.v1":
         raise ExecutionLaunchPlanError(
             f"unsupported schema_version: {config['schema_version']!r}"
@@ -166,6 +175,7 @@ def build_launch_plans(
     _require_keys(
         config["objective"], _REQUIRED_OBJECTIVE_KEYS, "config.objective"
     )
+    _reject_unknown_keys(config["objective"], _KNOWN_OBJECTIVE_KEYS, "config.objective")
     if not isinstance(config["seeds"], list) or not config["seeds"]:
         raise ExecutionLaunchPlanError("config.seeds must be a non-empty list")
     date_str = date or datetime.now(timezone.utc).strftime("%Y%m%d")
@@ -271,6 +281,18 @@ def _require_keys(payload: Any, keys: tuple[str, ...], where: str) -> None:
     if missing:
         raise ExecutionLaunchPlanError(
             f"{where} is missing required key(s): {missing}"
+        )
+
+
+def _reject_unknown_keys(payload: Any, allowed: frozenset[str], where: str) -> None:
+    if not isinstance(payload, dict):
+        raise ExecutionLaunchPlanError(
+            f"{where} must be a mapping, got {type(payload).__name__}"
+        )
+    unknown = sorted(set(payload) - allowed)
+    if unknown:
+        raise ExecutionLaunchPlanError(
+            f"{where} has unknown key(s): {unknown}"
         )
 
 

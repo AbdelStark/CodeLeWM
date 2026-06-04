@@ -47,6 +47,7 @@ class TorchCodeTransitionModelConfig:
     dropout: float = 0.1
     action_fusion: str = "conditional_transformer"
     enable_inverse_action_head: bool = False
+    enable_pass_head: bool = False
     # RFC-0015 WS-C1: state encoder backbone. "pool" is the v0.6 default;
     # "transformer" adds a contextual encoder before pooling.
     state_encoder_type: str = "pool"
@@ -104,6 +105,16 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             if config.enable_inverse_action_head
             else None
         )
+        self.pass_head = (
+            nn.Sequential(
+                nn.Linear(config.latent_dim * 3, config.latent_dim),
+                nn.GELU(),
+                nn.Dropout(config.dropout),
+                nn.Linear(config.latent_dim, 1),
+            )
+            if config.enable_pass_head
+            else None
+        )
 
     def encode_state(self, batch: CodeStateBatch) -> Any:
         return self.encoder(
@@ -129,6 +140,17 @@ class TorchCodeTransitionModel(CodeTransitionModel):
             raise ValueError("inverse action head is disabled")
         return self.inverse_action_head(torch.cat((z_before, z_after), dim=-1))
 
+    def pass_logit(self, z_before: Any, action_emb: Any, z_pred_after: Any) -> Any:
+        if self.pass_head is None:
+            raise ValueError("pass head is disabled")
+        if z_before.shape[-1] != self.config.latent_dim:
+            raise ValueError("z_before latent dimension does not match config")
+        if action_emb.shape[-1] != self.config.latent_dim:
+            raise ValueError("action_emb latent dimension does not match config")
+        if z_pred_after.shape[-1] != self.config.latent_dim:
+            raise ValueError("z_pred_after latent dimension does not match config")
+        return self.pass_head(torch.cat((z_before, action_emb, z_pred_after), dim=-1))
+
     def forward(self, batch: TransitionBatch) -> dict[str, Any]:
         z_before = self.encode_state(batch.state_before)
         action_emb = self.encode_action(batch.action)
@@ -142,6 +164,8 @@ class TorchCodeTransitionModel(CodeTransitionModel):
         }
         if self.inverse_action_head is not None:
             output["action_reconstruction"] = self.reconstruct_action(z_before, z_after)
+        if self.pass_head is not None:
+            output["pass_logit"] = self.pass_logit(z_before, action_emb, z_pred_after)
         return output
 
 

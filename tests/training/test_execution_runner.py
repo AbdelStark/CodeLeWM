@@ -55,11 +55,53 @@ def _build_pack(tmpdir: Path) -> Path:
     return pack_dir
 
 
+def _fast_policy():
+    from codelewm.data.sandbox import SandboxPolicy
+
+    return SandboxPolicy(
+        timeout_ms=3000,
+        memory_mb=1024,
+        cpu_seconds=2,
+        determinism_check=True,
+    )
+
+
+def _build_passfail_pack(tmpdir: Path) -> tuple[Path, float]:
+    from codelewm.data.execution_pack.build_passfail_pack import build_passfail_pack
+    from codelewm.data.execution_rerank_sampler import build_mutation_rerank_pack
+
+    source = FIXTURE_DIR / "mbpp_tiny.jsonl"
+    labels_dir = tmpdir / "labels"
+    labels = build_mutation_rerank_pack(
+        benchmark="mbpp",
+        source_path=source,
+        out=labels_dir,
+        mutants_per_problem=8,
+        pool_size=2,
+        max_problems=2,
+        max_cases_per_problem=2,
+        sandbox_policy=_fast_policy(),
+    )
+    pack_dir = tmpdir / "passfail-pack"
+    result = build_passfail_pack(
+        completion_label_paths=(labels_dir / labels.labels_path,),
+        source_path=source,
+        benchmark="mbpp",
+        output_dir=pack_dir,
+        sandbox_policy=_fast_policy(),
+        train_frac=0.5,
+        val_frac=0.25,
+    )
+    return pack_dir, result.pos_weight
+
+
 def _config(
     *,
     max_steps: int = 6,
     collapse_every: int = 2,
     inverse_action_reconstruction_weight: float = 0.0,
+    p_pass_bce_weight: float = 0.0,
+    p_pass_bce_pos_weight: float = 1.0,
 ) -> "ExecutionTrainConfig":
     from codelewm.training import (
         ExecutionTrainClaimBoundaryConfig,
@@ -129,6 +171,8 @@ def _config(
             inverse_action_reconstruction_weight=(
                 inverse_action_reconstruction_weight
             ),
+            p_pass_bce_weight=p_pass_bce_weight,
+            p_pass_bce_pos_weight=p_pass_bce_pos_weight,
         ),
         seeds=(42,),
         hf_jobs=ExecutionTrainHfJobsConfig(
@@ -314,6 +358,55 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
                 if line.strip()
             ]
             self.assertEqual(len(metric_rows), 4)
+
+    def test_runner_with_p_pass_bce_persists_pass_head_compatibility(self) -> None:
+        from codelewm.training import train_execution_run
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir, pos_weight = _build_passfail_pack(tmp)
+            output_dir = tmp / "run-passfail"
+            cfg = _config(
+                max_steps=4,
+                collapse_every=2,
+                p_pass_bce_weight=0.5,
+                p_pass_bce_pos_weight=pos_weight,
+            )
+            result = train_execution_run(
+                cfg,
+                seed=42,
+                output_dir=output_dir,
+                root=tmp,
+                pack_local_dir=pack_dir,
+            )
+
+            metric_rows = [
+                json.loads(line)
+                for line in result.metrics_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            report = json.loads(result.report_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(len(metric_rows), 4)
+            self.assertIn("loss_p_pass_bce", metric_rows[-1]["metrics"])
+            self.assertTrue(report["objective"]["p_pass_bce_weight"] > 0.0)
+            self.assertEqual(report["objective"]["p_pass_bce_pos_weight"], pos_weight)
+            self.assertTrue(result.checkpoint_paths)
+
+            import torch
+
+            checkpoint = torch.load(
+                result.checkpoint_paths[-1],
+                map_location="cpu",
+                weights_only=False,
+            )
+            self.assertTrue(
+                checkpoint["compatibility_config"]["wm"]["enable_pass_head"]
+            )
+            self.assertEqual(
+                checkpoint["compatibility_config"]["objective"]["p_pass_bce_weight"],
+                0.5,
+            )
 
     def test_runner_respects_env_pack_local_dir(self) -> None:
         from codelewm.training import train_execution_run

@@ -116,6 +116,11 @@ def torch_training_executor(
     """Train the package-native transition model over packed HDF5 batches."""
 
     runtime = _require_torch_runtime()
+    if context.config.loss.enable_p_pass_bce:
+        raise TrainingRunError(
+            "p_pass BCE requires v0.8 execution-pack training; "
+            "packed HDF5 transitions do not carry pass/fail labels"
+        )
     _seed_everything(context.config.seed, runtime)
     selected_device = _resolve_device(device or context.config.trainer.accelerator, runtime)
     precision = _precision_dtype(context.config.trainer.precision, selected_device, runtime)
@@ -190,6 +195,8 @@ def torch_training_executor(
                     z_pred_after_swapped=z_pred_after_swapped,
                     action_emb=outputs["action_emb"],
                     action_reconstruction=outputs.get("action_reconstruction"),
+                    p_pass_logit=outputs.get("pass_logit"),
+                    pass_labels=None,
                 )
             terms.total.backward()
             grad_norm = runtime.nn.utils.clip_grad_norm_(
@@ -483,6 +490,7 @@ def _model_config(config: TrainConfig) -> TorchCodeTransitionModelConfig:
         dropout=0.0,
         action_fusion=config.wm.action_fusion,
         enable_inverse_action_head=config.loss.enable_inverse_action_reconstruction,
+        enable_pass_head=config.loss.enable_p_pass_bce,
     )
 
 
@@ -500,6 +508,9 @@ def _objective_config(config: TrainConfig) -> ObjectiveConfig:
         action_swap_contrastive_margin=config.loss.action_swap_contrastive_margin,
         enable_inverse_action_reconstruction=config.loss.enable_inverse_action_reconstruction,
         inverse_action_reconstruction_weight=config.loss.inverse_action_reconstruction_weight,
+        enable_p_pass_bce=config.loss.enable_p_pass_bce,
+        p_pass_bce_weight=config.loss.p_pass_bce_weight,
+        p_pass_bce_pos_weight=config.loss.p_pass_bce_pos_weight,
         sigreg_knots=config.loss.sigreg_knots,
         sigreg_num_proj=config.loss.sigreg_num_proj,
         sigreg_seed=config.seed,
@@ -590,6 +601,8 @@ def _evaluate_validation(
                 z_pred_after_swapped=z_pred_after_swapped,
                 action_emb=outputs["action_emb"],
                 action_reconstruction=outputs.get("action_reconstruction"),
+                p_pass_logit=outputs.get("pass_logit"),
+                pass_labels=None,
             )
             for key, value in terms.scalars().items():
                 accum.setdefault(f"val/{key}", []).append(value)

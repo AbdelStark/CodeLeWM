@@ -257,6 +257,23 @@ class TorchTrainingExecutorTest(unittest.TestCase):
         self.assertTrue(report["objective"]["enable_inverse_action_reconstruction"])
         self.assertTrue(manifest.metadata["executor"]["objective"]["enable_action_swap_contrastive"])
 
+    def test_p_pass_bce_is_rejected_for_legacy_hdf5_training(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pack_dir = _build_and_pack_fixture(root)
+            payload = _train_config_payload(root, pack_dir, name="torch_p_pass_fixture")
+            payload["loss"]["enable_p_pass_bce"] = True
+            payload["loss"]["p_pass_bce_weight"] = 0.25
+            config = validate_train_config(payload)
+
+            with self.assertRaisesRegex(TrainingRunError, "pass/fail labels"):
+                train_torch(
+                    config,
+                    root=root,
+                    source_git_sha=SOURCE_SHA,
+                    created_at=CREATED_AT,
+                )
+
 
 def _build_and_pack_fixture(root: Path) -> Path:
     build_dir = root / "build"

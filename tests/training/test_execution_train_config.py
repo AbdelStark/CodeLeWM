@@ -339,6 +339,35 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         cfg2 = self._load_payload(cfg.to_dict())
         self.assertEqual(cfg2.objective.retrieval_weight, 0.05)
 
+    def test_p_pass_bce_parses_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["p_pass_bce_weight"] = 0.4
+        payload["objective"]["p_pass_bce_pos_weight"] = 2.5
+        cfg = self._load_payload(payload)
+
+        self.assertEqual(cfg.objective.p_pass_bce_weight, 0.4)
+        self.assertEqual(cfg.objective.p_pass_bce_pos_weight, 2.5)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertEqual(cfg2.objective.p_pass_bce_weight, 0.4)
+        self.assertEqual(cfg2.objective.p_pass_bce_pos_weight, 2.5)
+
+    def test_p_pass_bce_defaults_off(self) -> None:
+        cfg = self._load_payload(_config_payload())
+
+        self.assertEqual(cfg.objective.p_pass_bce_weight, 0.0)
+        self.assertEqual(cfg.objective.p_pass_bce_pos_weight, 1.0)
+
+    def test_p_pass_bce_invalid_weights_rejected(self) -> None:
+        payload = _config_payload()
+        payload["objective"]["p_pass_bce_weight"] = -0.1
+        with self.assertRaisesRegex(self.Error, "p_pass_bce_weight"):
+            self._load_payload(payload)
+
+        payload = _config_payload()
+        payload["objective"]["p_pass_bce_pos_weight"] = 0.0
+        with self.assertRaisesRegex(self.Error, "p_pass_bce_pos_weight"):
+            self._load_payload(payload)
+
     def test_retrieval_weight_over_cap_rejected(self) -> None:
         payload = _config_payload()
         payload["objective"]["retrieval_weight"] = 0.2  # > 0.10 cap

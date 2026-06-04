@@ -32,6 +32,9 @@ class ObjectiveConfig:
     action_swap_contrastive_margin: float = 0.0
     enable_inverse_action_reconstruction: bool = False
     inverse_action_reconstruction_weight: float = 0.0
+    enable_p_pass_bce: bool = False
+    p_pass_bce_weight: float = 0.0
+    p_pass_bce_pos_weight: float = 1.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
     sigreg_seed: int | None = None
@@ -99,6 +102,14 @@ class ObjectiveConfig:
             raise ValueError(
                 "inverse_action_reconstruction_weight requires enable_inverse_action_reconstruction=true"
             )
+        if not math.isfinite(self.p_pass_bce_weight) or self.p_pass_bce_weight < 0.0:
+            raise ValueError("p_pass_bce_weight must be finite and non-negative")
+        if not math.isfinite(self.p_pass_bce_pos_weight) or self.p_pass_bce_pos_weight <= 0.0:
+            raise ValueError("p_pass_bce_pos_weight must be finite and positive")
+        if self.enable_p_pass_bce and self.p_pass_bce_weight <= 0.0:
+            raise ValueError("enable_p_pass_bce requires nonzero p_pass_bce_weight")
+        if not self.enable_p_pass_bce and self.p_pass_bce_weight != 0.0:
+            raise ValueError("p_pass_bce_weight requires enable_p_pass_bce=true")
         if self.sigreg_knots < 2:
             raise ValueError("sigreg_knots must be at least 2")
         if self.sigreg_num_proj <= 0:
@@ -121,6 +132,8 @@ class ObjectiveTerms:
     action_swap_contrastive_weighted: Any | None = None
     inverse_action_reconstruction: Any | None = None
     inverse_action_reconstruction_weighted: Any | None = None
+    p_pass_bce: Any | None = None
+    p_pass_bce_weighted: Any | None = None
 
     def scalars(self) -> dict[str, float]:
         values = {
@@ -151,6 +164,12 @@ class ObjectiveTerms:
             values["loss/inverse_action_reconstruction_weighted"] = _as_float(
                 self.inverse_action_reconstruction_weighted
             )
+        if self.p_pass_bce is not None:
+            values["loss/p_pass_bce"] = _as_float(self.p_pass_bce)
+        if self.p_pass_bce_weighted is not None:
+            values["loss/p_pass_bce_weighted"] = _as_float(
+                self.p_pass_bce_weighted
+            )
         return values
 
 
@@ -163,6 +182,8 @@ def compute_transition_objective(
     z_pred_after_swapped: Any | None = None,
     action_emb: Any | None = None,
     action_reconstruction: Any | None = None,
+    p_pass_logit: Any | None = None,
+    pass_labels: Any | None = None,
 ) -> ObjectiveTerms:
     """Return MSE, SIGReg, and total loss for one-step latent prediction."""
 
@@ -184,6 +205,8 @@ def compute_transition_objective(
     action_swap_contrastive_weighted = None
     inverse_action_reconstruction = None
     inverse_action_reconstruction_weighted = None
+    p_pass_bce = None
+    p_pass_bce_weighted = None
     if config.enable_retrieval_loss:
         retrieval = compute_in_batch_retrieval_loss(
             z_pred_after,
@@ -227,6 +250,16 @@ def compute_transition_objective(
             inverse_action_reconstruction * config.inverse_action_reconstruction_weight
         )
         total = total + inverse_action_reconstruction_weighted
+    if config.enable_p_pass_bce:
+        if p_pass_logit is None or pass_labels is None:
+            raise ValueError("enable_p_pass_bce requires p_pass_logit and pass_labels")
+        p_pass_bce = compute_p_pass_bce_loss(
+            p_pass_logit,
+            pass_labels,
+            pos_weight=config.p_pass_bce_pos_weight,
+        )
+        p_pass_bce_weighted = p_pass_bce * config.p_pass_bce_weight
+        total = total + p_pass_bce_weighted
     _check_finite(total, "loss/total")
     _check_finite(prediction_mse, "loss/prediction_mse")
     _check_finite(sigreg, "loss/sigreg")
@@ -238,6 +271,8 @@ def compute_transition_objective(
         _check_finite(action_swap_contrastive, "loss/action_swap_contrastive")
     if inverse_action_reconstruction is not None:
         _check_finite(inverse_action_reconstruction, "loss/inverse_action_reconstruction")
+    if p_pass_bce is not None:
+        _check_finite(p_pass_bce, "loss/p_pass_bce")
     return ObjectiveTerms(
         total=total,
         prediction_mse=prediction_mse,
@@ -251,6 +286,8 @@ def compute_transition_objective(
         action_swap_contrastive_weighted=action_swap_contrastive_weighted,
         inverse_action_reconstruction=inverse_action_reconstruction,
         inverse_action_reconstruction_weighted=inverse_action_reconstruction_weighted,
+        p_pass_bce=p_pass_bce,
+        p_pass_bce_weighted=p_pass_bce_weighted,
     )
 
 
@@ -394,6 +431,53 @@ def compute_inverse_action_reconstruction_loss(action_reconstruction: Any, actio
     reconstruction = np.asarray(action_reconstruction, dtype=float)
     target = np.asarray(action_emb, dtype=float)
     return float(np.square(reconstruction - target).mean())
+
+
+def compute_p_pass_bce_loss(
+    p_pass_logit: Any,
+    pass_labels: Any,
+    *,
+    pos_weight: float = 1.0,
+) -> Any:
+    """Binary cross entropy over execution pass/fail labels."""
+
+    if not math.isfinite(pos_weight) or pos_weight <= 0.0:
+        raise ValueError("pos_weight must be finite and positive")
+    if _is_torch_tensor(p_pass_logit):
+        labels = pass_labels
+        if not torch.is_tensor(labels):
+            labels = torch.as_tensor(labels, device=p_pass_logit.device)
+        labels = labels.to(device=p_pass_logit.device, dtype=p_pass_logit.dtype)
+        logits = p_pass_logit.squeeze(-1)
+        _require_same_shape(logits, labels, "p_pass_logit", "pass_labels")
+        _check_finite(logits, "p_pass_logit")
+        _check_finite(labels, "pass_labels")
+        invalid = ((labels != 0.0) & (labels != 1.0)).any()
+        if bool(invalid.detach().cpu().item()):
+            raise ValueError("pass_labels must contain only 0/1 or bool values")
+        return torch.nn.functional.binary_cross_entropy_with_logits(
+            logits,
+            labels,
+            pos_weight=torch.as_tensor(
+                pos_weight, dtype=logits.dtype, device=logits.device
+            ),
+        )
+    logits = np.asarray(p_pass_logit, dtype=float)
+    if logits.ndim > 0 and logits.shape[-1] == 1:
+        logits = np.squeeze(logits, axis=-1)
+    labels = np.asarray(pass_labels, dtype=float)
+    _require_same_shape(logits, labels, "p_pass_logit", "pass_labels")
+    _check_finite(logits, "p_pass_logit")
+    _check_finite(labels, "pass_labels")
+    if not np.all((labels == 0.0) | (labels == 1.0)):
+        raise ValueError("pass_labels must contain only 0/1 or bool values")
+    probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -80.0, 80.0)))
+    probs = np.clip(probs, 1e-12, 1.0 - 1e-12)
+    loss = -(
+        pos_weight * labels * np.log(probs)
+        + (1.0 - labels) * np.log(1.0 - probs)
+    )
+    return float(loss.mean())
 
 
 def stack_objective_embeddings(z_before: Any, z_after: Any, z_pred_after: Any) -> Any:

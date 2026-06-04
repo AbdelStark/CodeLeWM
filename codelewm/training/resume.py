@@ -219,8 +219,11 @@ def _compatibility_config_payload(config: TrainConfig) -> dict:
     can resume into a fresh run directory.
     """
 
+    wm_payload = config.wm.to_compatibility_dict()
+    if config.loss.enable_p_pass_bce or config.loss.p_pass_bce_weight != 0.0:
+        wm_payload["enable_pass_head"] = True
     return {
-        "wm": config.wm.to_compatibility_dict(),
+        "wm": wm_payload,
         "loss": config.loss.to_compatibility_dict(),
     }
 

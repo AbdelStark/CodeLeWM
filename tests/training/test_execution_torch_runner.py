@@ -39,6 +39,46 @@ SCRIPT = (
 )
 
 
+def _fast_policy():
+    from codelewm.data.sandbox import SandboxPolicy
+
+    return SandboxPolicy(
+        timeout_ms=3000,
+        memory_mb=1024,
+        cpu_seconds=2,
+        determinism_check=True,
+    )
+
+
+def _build_passfail_pack(tmp: Path) -> tuple[Path, float]:
+    from codelewm.data.execution_pack.build_passfail_pack import build_passfail_pack
+    from codelewm.data.execution_rerank_sampler import build_mutation_rerank_pack
+
+    source = FIXTURES / "mbpp_tiny.jsonl"
+    labels_dir = tmp / "labels"
+    labels = build_mutation_rerank_pack(
+        benchmark="mbpp",
+        source_path=source,
+        out=labels_dir,
+        mutants_per_problem=8,
+        pool_size=2,
+        max_problems=2,
+        max_cases_per_problem=2,
+        sandbox_policy=_fast_policy(),
+    )
+    pack_dir = tmp / "passfail-pack"
+    result = build_passfail_pack(
+        completion_label_paths=(labels_dir / labels.labels_path,),
+        source_path=source,
+        benchmark="mbpp",
+        output_dir=pack_dir,
+        sandbox_policy=_fast_policy(),
+        train_frac=0.5,
+        val_frac=0.25,
+    )
+    return pack_dir, result.pos_weight
+
+
 @unittest.skipUnless(_TORCH_AVAILABLE, "torch not installed")
 class ExecutionTorchRunnerSmokeTest(unittest.TestCase):
     def test_loss_trajectory_satisfies_smoke_gate(self) -> None:
@@ -125,6 +165,41 @@ class ExecutionTorchRunnerSmokeTest(unittest.TestCase):
             self.assertTrue(
                 (tmp / "out" / "execution_train_report.json").is_file()
             )
+
+    def test_passfail_pack_trains_p_pass_bce_head(self) -> None:
+        from codelewm.training import ExecutionTorchTrainConfig, train_execution_smoke
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            pack_dir, pos_weight = _build_passfail_pack(tmp)
+            report = train_execution_smoke(
+                ExecutionTorchTrainConfig(
+                    pack_jsonl=pack_dir / "pack.jsonl",
+                    output_dir=tmp / "passfail-out",
+                    batch_size=4,
+                    max_steps=40,
+                    warmup_steps=5,
+                    lr=1.0e-3,
+                    device="cpu",
+                    seed=42,
+                    enable_p_pass_bce=True,
+                    p_pass_bce_weight=0.5,
+                    p_pass_bce_pos_weight=pos_weight,
+                )
+            )
+
+            self.assertIn("loss_p_pass_bce", report.initial_metrics)
+            self.assertIn("loss_p_pass_bce", report.final_metrics)
+            self.assertLess(
+                report.final_metrics["loss_p_pass_bce"],
+                report.initial_metrics["loss_p_pass_bce"],
+                msg=(
+                    f"initial={report.initial_metrics['loss_p_pass_bce']:.4f} "
+                    f"final={report.final_metrics['loss_p_pass_bce']:.4f}"
+                ),
+            )
+            self.assertEqual(report.config["enable_p_pass_bce"], True)
+            self.assertEqual(report.config["p_pass_bce_weight"], 0.5)
 
 
 @unittest.skipUnless(_TORCH_AVAILABLE, "torch not installed")
@@ -232,6 +307,47 @@ class ExecutionTorchRunnerConfigTest(unittest.TestCase):
                         max_steps=1,
                     )
                 )
+
+    def test_p_pass_weight_requires_gate(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "enable_p_pass_bce"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                p_pass_bce_weight=0.1,
+            )
+
+    def test_p_pass_gate_requires_positive_weight(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "p_pass_bce_weight"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                enable_p_pass_bce=True,
+            )
+
+    def test_p_pass_pos_weight_must_be_positive(self) -> None:
+        from codelewm.training import (
+            ExecutionTorchRunnerError,
+            ExecutionTorchTrainConfig,
+        )
+
+        with self.assertRaisesRegex(ExecutionTorchRunnerError, "p_pass_bce_pos_weight"):
+            ExecutionTorchTrainConfig(
+                pack_jsonl=Path("/tmp/pack.jsonl"),
+                output_dir=Path("/tmp/out"),
+                enable_p_pass_bce=True,
+                p_pass_bce_weight=0.1,
+                p_pass_bce_pos_weight=0.0,
+            )
 
 
 if __name__ == "__main__":  # pragma: no cover

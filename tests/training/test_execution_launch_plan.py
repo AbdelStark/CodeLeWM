@@ -113,6 +113,20 @@ class LaunchPlanBuilderTest(unittest.TestCase):
             command_str = " ".join(plan.command)
             self.assertIn(plan.runtime_image, command_str)
 
+    def test_passfail_objective_fields_round_trip_when_present(self) -> None:
+        config = load_v0_6_config(CONFIG_PATH)
+        config["objective"] = dict(config["objective"])
+        config["objective"]["p_pass_bce_weight"] = 0.4
+        config["objective"]["p_pass_bce_pos_weight"] = 2.0
+
+        plans = build_launch_plans(
+            config=config, config_path=CONFIG_PATH, git_sha="x", date="y"
+        )
+
+        for plan in plans:
+            self.assertEqual(plan.objective["p_pass_bce_weight"], 0.4)
+            self.assertEqual(plan.objective["p_pass_bce_pos_weight"], 2.0)
+
     def test_command_invokes_entrypoint_then_codelewm(self) -> None:
         """HF Jobs strips ENTRYPOINT when COMMAND is supplied.
 
@@ -219,6 +233,17 @@ class V0_6ConfigErrorsTest(unittest.TestCase):
         broken = dict(config)
         broken["seeds"] = ["not-an-int"]
         with self.assertRaises(ExecutionLaunchPlanError):
+            build_launch_plans(
+                config=broken, config_path=CONFIG_PATH, git_sha="x", date="y"
+            )
+
+    def test_unknown_objective_key_rejected(self) -> None:
+        config = load_v0_6_config(CONFIG_PATH)
+        broken = dict(config)
+        broken["objective"] = dict(config["objective"])
+        broken["objective"]["mystery_loss"] = 1.0
+
+        with self.assertRaisesRegex(ExecutionLaunchPlanError, "unknown key"):
             build_launch_plans(
                 config=broken, config_path=CONFIG_PATH, git_sha="x", date="y"
             )

@@ -308,6 +308,9 @@ class TrainingLossConfig:
     action_swap_contrastive_margin: float = 0.0
     enable_inverse_action_reconstruction: bool = False
     inverse_action_reconstruction_weight: float = 0.0
+    enable_p_pass_bce: bool = False
+    p_pass_bce_weight: float = 0.0
+    p_pass_bce_pos_weight: float = 1.0
     sigreg_knots: int = 17
     sigreg_num_proj: int = 1024
 
@@ -328,6 +331,9 @@ class TrainingLossConfig:
                 "action_swap_contrastive_margin",
                 "enable_inverse_action_reconstruction",
                 "inverse_action_reconstruction_weight",
+                "enable_p_pass_bce",
+                "p_pass_bce_weight",
+                "p_pass_bce_pos_weight",
                 "sigreg_knots",
                 "sigreg_num_proj",
             },
@@ -381,6 +387,24 @@ class TrainingLossConfig:
                 "loss",
                 default=0.0,
             ),
+            enable_p_pass_bce=_optional_bool(
+                payload,
+                "enable_p_pass_bce",
+                "loss",
+                default=False,
+            ),
+            p_pass_bce_weight=_optional_float(
+                payload,
+                "p_pass_bce_weight",
+                "loss",
+                default=0.0,
+            ),
+            p_pass_bce_pos_weight=_optional_float(
+                payload,
+                "p_pass_bce_pos_weight",
+                "loss",
+                default=1.0,
+            ),
             sigreg_knots=_optional_int(payload, "sigreg_knots", "loss", default=17),
             sigreg_num_proj=_optional_int(payload, "sigreg_num_proj", "loss", default=1024),
         )
@@ -400,6 +424,9 @@ class TrainingLossConfig:
                 action_swap_contrastive_margin=self.action_swap_contrastive_margin,
                 enable_inverse_action_reconstruction=self.enable_inverse_action_reconstruction,
                 inverse_action_reconstruction_weight=self.inverse_action_reconstruction_weight,
+                enable_p_pass_bce=self.enable_p_pass_bce,
+                p_pass_bce_weight=self.p_pass_bce_weight,
+                p_pass_bce_pos_weight=self.p_pass_bce_pos_weight,
                 sigreg_knots=self.sigreg_knots,
                 sigreg_num_proj=self.sigreg_num_proj,
             )
@@ -420,6 +447,9 @@ class TrainingLossConfig:
             action_swap_contrastive_margin=self.action_swap_contrastive_margin,
             enable_inverse_action_reconstruction=self.enable_inverse_action_reconstruction,
             inverse_action_reconstruction_weight=self.inverse_action_reconstruction_weight,
+            enable_p_pass_bce=self.enable_p_pass_bce,
+            p_pass_bce_weight=self.p_pass_bce_weight,
+            p_pass_bce_pos_weight=self.p_pass_bce_pos_weight,
             sigreg_knots=self.sigreg_knots,
             sigreg_num_proj=self.sigreg_num_proj,
         )
@@ -438,6 +468,9 @@ class TrainingLossConfig:
             "action_swap_contrastive_margin": self.action_swap_contrastive_margin,
             "enable_inverse_action_reconstruction": self.enable_inverse_action_reconstruction,
             "inverse_action_reconstruction_weight": self.inverse_action_reconstruction_weight,
+            "enable_p_pass_bce": self.enable_p_pass_bce,
+            "p_pass_bce_weight": self.p_pass_bce_weight,
+            "p_pass_bce_pos_weight": self.p_pass_bce_pos_weight,
             "sigreg_knots": self.sigreg_knots,
             "sigreg_num_proj": self.sigreg_num_proj,
         }
@@ -486,6 +519,19 @@ class TrainingLossConfig:
                 {
                     "enable_inverse_action_reconstruction": self.enable_inverse_action_reconstruction,
                     "inverse_action_reconstruction_weight": self.inverse_action_reconstruction_weight,
+                }
+            )
+        has_p_pass_surface = (
+            self.enable_p_pass_bce
+            or self.p_pass_bce_weight != 0.0
+            or self.p_pass_bce_pos_weight != 1.0
+        )
+        if has_p_pass_surface:
+            payload.update(
+                {
+                    "enable_p_pass_bce": self.enable_p_pass_bce,
+                    "p_pass_bce_weight": self.p_pass_bce_weight,
+                    "p_pass_bce_pos_weight": self.p_pass_bce_pos_weight,
                 }
             )
         return payload

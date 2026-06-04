@@ -248,6 +248,7 @@ def train_execution_run(
             enable_inverse_action_head=(
                 config.objective.inverse_action_reconstruction_weight > 0.0
             ),
+            enable_pass_head=config.objective.p_pass_bce_weight > 0.0,
             state_encoder_type=config.wm.state_encoder_type,
             state_encoder_layers=config.wm.state_encoder_layers,
             state_encoder_heads=config.wm.state_encoder_heads,
@@ -278,6 +279,9 @@ def train_execution_run(
         inverse_action_reconstruction_weight=(
             config.objective.inverse_action_reconstruction_weight
         ),
+        enable_p_pass_bce=config.objective.p_pass_bce_weight > 0.0,
+        p_pass_bce_weight=config.objective.p_pass_bce_weight,
+        p_pass_bce_pos_weight=config.objective.p_pass_bce_pos_weight,
         sigreg_seed=seed,
     )
 
@@ -382,6 +386,12 @@ def train_execution_run(
             "margin_no_action_minus_pred": float(margin_val),
             "lr": float(lr_now),
         }
+        if "loss/p_pass_bce" in scalar:
+            metric_row["loss_p_pass_bce"] = float(scalar["loss/p_pass_bce"])
+        if "loss/p_pass_bce_weighted" in scalar:
+            metric_row["loss_p_pass_bce_weighted"] = float(
+                scalar["loss/p_pass_bce_weighted"]
+            )
         if initial_metrics is None:
             initial_metrics = dict(metric_row)
         last_metrics = dict(metric_row)
@@ -496,6 +506,8 @@ def train_execution_run(
             "inverse_action_reconstruction_weight": (
                 config.objective.inverse_action_reconstruction_weight
             ),
+            "p_pass_bce_weight": config.objective.p_pass_bce_weight,
+            "p_pass_bce_pos_weight": config.objective.p_pass_bce_pos_weight,
         },
         "claim_gates": {
             "retrieval_min_recall_at_1_lift_over_no_action": (
@@ -894,6 +906,7 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
             "state_encoder_type": config.wm.state_encoder_type,
             "state_encoder_layers": config.wm.state_encoder_layers,
             "state_encoder_heads": config.wm.state_encoder_heads,
+            "enable_pass_head": config.objective.p_pass_bce_weight > 0.0,
         },
         "objective": {
             "prediction_mse_weight": config.objective.prediction_mse_weight,
@@ -904,6 +917,8 @@ def _compatibility_payload(config: ExecutionTrainConfig) -> dict[str, Any]:
             "inverse_action_reconstruction_weight": (
                 config.objective.inverse_action_reconstruction_weight
             ),
+            "p_pass_bce_weight": config.objective.p_pass_bce_weight,
+            "p_pass_bce_pos_weight": config.objective.p_pass_bce_pos_weight,
         },
         "loader": {
             "code_sequence_length": config.loader.code_sequence_length,
