@@ -356,7 +356,11 @@ class TorchCheckpointTransitionScoringBackend:
                 remediation="provide a checkpoint written by codelewm train --executor torch",
                 artifact=str(checkpoint_path),
             )
-        model = _build_torch_model_from_compatibility(compatibility, artifact=str(checkpoint_path))
+        model = _build_torch_model_from_compatibility(
+            compatibility,
+            artifact=str(checkpoint_path),
+            state_dict=payload.get("model_state_dict"),
+        )
         try:
             model.load_state_dict(payload["model_state_dict"])
         except (KeyError, RuntimeError, ValueError) as exc:
@@ -579,7 +583,11 @@ class ExecutionTorchTransitionScoringBackend:
                 remediation="provide a checkpoint written by codelewm train with an execution config",
                 artifact=str(checkpoint_path),
             )
-        model = _build_torch_model_from_compatibility(compatibility, artifact=str(checkpoint_path))
+        model = _build_torch_model_from_compatibility(
+            compatibility,
+            artifact=str(checkpoint_path),
+            state_dict=payload.get("model_state_dict"),
+        )
         try:
             model.load_state_dict(payload["model_state_dict"])
         except (KeyError, RuntimeError, ValueError) as exc:
@@ -1054,8 +1062,17 @@ def _resolve_torch_device(device: str, runtime: Any) -> Any:
     return runtime.device(device)
 
 
-def _build_torch_model_from_compatibility(compatibility: Mapping[str, Any], *, artifact: str) -> Any:
-    from codelewm.model import TorchCodeTransitionModelConfig, build_torch_transition_model
+def _build_torch_model_from_compatibility(
+    compatibility: Mapping[str, Any],
+    *,
+    artifact: str,
+    state_dict: Any = None,
+) -> Any:
+    from codelewm.model import (
+        TorchCodeTransitionModelConfig,
+        build_torch_transition_model,
+        resolve_state_encoder_arch,
+    )
 
     wm = compatibility.get("wm")
     if not isinstance(wm, Mapping):
@@ -1073,6 +1090,9 @@ def _build_torch_model_from_compatibility(compatibility: Mapping[str, Any], *, a
             remediation="provide a text or abstract action checkpoint",
             artifact=artifact,
         )
+    encoder_type, encoder_layers, encoder_heads = resolve_state_encoder_arch(
+        wm, state_dict
+    )
     try:
         config = TorchCodeTransitionModelConfig(
             action_view=action_view,  # type: ignore[arg-type]
@@ -1106,6 +1126,9 @@ def _build_torch_model_from_compatibility(compatibility: Mapping[str, Any], *, a
                     > 0.0
                 )
             ),
+            state_encoder_type=encoder_type,
+            state_encoder_layers=encoder_layers,
+            state_encoder_heads=encoder_heads,
         )
         return build_torch_transition_model(config)
     except (RuntimeError, ValueError, TypeError) as exc:
