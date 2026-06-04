@@ -233,6 +233,74 @@ class ScoreApiTest(unittest.TestCase):
         importlib.util.find_spec("torch") is not None and importlib.util.find_spec("einops") is not None,
         "torch scoring runtime is unavailable",
     )
+    def test_load_scorer_accepts_ema_target_encoder_checkpoint(self) -> None:
+        import torch
+
+        from codelewm.model import (
+            TorchCodeTransitionModelConfig,
+            build_torch_transition_model,
+            compute_config_hash,
+        )
+        from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE, TORCH_CHECKPOINT_SCHEMA_VERSION
+
+        compatibility = {
+            "wm": {
+                "action_view": "text",
+                "embed_dim": 256,
+                "state_sequence_length": 1024,
+                "action_sequence_length": 256,
+                "action_fusion": "conditional_transformer",
+                "enable_ema_target_encoder": True,
+                "ema_target_decay": 0.5,
+            },
+            "loss": {"enable_inverse_action_reconstruction": False},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = root / "checkpoint.pt"
+            model = build_torch_transition_model(
+                TorchCodeTransitionModelConfig(
+                    vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+                    dropout=0.0,
+                    enable_ema_target_encoder=True,
+                    ema_target_decay=0.5,
+                )
+            )
+            torch.save(
+                {
+                    "schema_version": TORCH_CHECKPOINT_SCHEMA_VERSION,
+                    "step": 8,
+                    "model_state_dict": model.state_dict(),
+                    "compatibility_config": compatibility,
+                    "compatibility_config_hash": compute_config_hash(compatibility),
+                    "metrics": {"fixture": 1.0},
+                },
+                checkpoint,
+            )
+            write_checkpoint_manifest(
+                metadata=build_checkpoint_metadata(
+                    compatibility,
+                    action_view="text",
+                    model_class="TorchCodeTransitionModel",
+                ),
+                checkpoint_path=checkpoint,
+                manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+            )
+
+            scorer = load_scorer(checkpoint, device="cpu", require_learned_backend=True)
+            result = scorer.score_texts(
+                before="value = 1\n",
+                instruction="increment value",
+                candidate="value = 2\n",
+            )
+
+        self.assertEqual(result.model_id, "codelewm.torch_transition_scorer.v1")
+        self.assertTrue(any("checkpoint_step=8" == warning for warning in result.warnings))
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("torch") is not None and importlib.util.find_spec("einops") is not None,
+        "torch scoring runtime is unavailable",
+    )
     def test_load_scorer_uses_execution_backend_for_v0_6_checkpoint_manifest(self) -> None:
         import torch
 

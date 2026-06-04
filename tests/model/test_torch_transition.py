@@ -9,6 +9,7 @@ from codelewm.model import (
     TorchCodeTransitionModel,
     TorchCodeTransitionModelConfig,
     TransitionBatch,
+    build_torch_transition_model,
 )
 
 
@@ -54,6 +55,65 @@ class TorchTransitionPassHeadTest(unittest.TestCase):
 
         output = model(_transition_batch(batch_size=3))
         self.assertEqual(tuple(output["pass_logit"].shape), (3, 1))
+
+    def test_ema_target_encoder_is_frozen_and_detached(self) -> None:
+        model = build_torch_transition_model(
+            TorchCodeTransitionModelConfig(
+                vocab_size=64,
+                dropout=0.5,
+                enable_ema_target_encoder=True,
+                ema_target_decay=0.5,
+            )
+        )
+
+        self.assertIsNotNone(model.target_encoder)
+        assert model.target_encoder is not None
+        self.assertFalse(any(param.requires_grad for param in model.target_encoder.parameters()))
+
+        model.train()
+        self.assertFalse(model.target_encoder.training)
+
+        batch = _transition_batch(batch_size=2)
+        online = model.encode_state(batch.state_after)
+        target = model.encode_target_state(batch.state_after)
+
+        self.assertTrue(online.requires_grad)
+        self.assertFalse(target.requires_grad)
+
+        output = model(batch)
+        self.assertIn("z_after_online", output)
+        self.assertFalse(output["z_after"].requires_grad)
+        self.assertTrue(output["z_after_online"].requires_grad)
+
+    def test_ema_target_encoder_updates_toward_online_encoder(self) -> None:
+        import torch
+
+        model = build_torch_transition_model(
+            TorchCodeTransitionModelConfig(
+                vocab_size=64,
+                dropout=0.0,
+                enable_ema_target_encoder=True,
+                ema_target_decay=0.5,
+            )
+        )
+        assert model.target_encoder is not None
+        name, online_param = next(iter(model.encoder.named_parameters()))
+        target_param = dict(model.target_encoder.named_parameters())[name]
+        old_target = target_param.detach().clone()
+        with torch.no_grad():
+            online_param.add_(2.0)
+        expected = old_target.mul(0.5).add(online_param.detach(), alpha=0.5)
+
+        model.update_ema_target_encoder()
+
+        torch.testing.assert_close(target_param, expected)
+
+    def test_ema_target_decay_is_validated(self) -> None:
+        with self.assertRaisesRegex(ValueError, "ema_target_decay"):
+            TorchCodeTransitionModelConfig(
+                enable_ema_target_encoder=True,
+                ema_target_decay=1.0,
+            )
 
 
 def _dummy_model(config: TorchCodeTransitionModelConfig) -> TorchCodeTransitionModel:

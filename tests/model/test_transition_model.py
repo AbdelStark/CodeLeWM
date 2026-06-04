@@ -15,6 +15,7 @@ from codelewm.model import (
     TransitionBatch,
     expected_action_sequence_length,
     infer_shape,
+    resolve_ema_target_encoder_config,
     resolve_state_encoder_arch,
     transition_energy,
 )
@@ -113,6 +114,32 @@ class ResolveStateEncoderArchTest(unittest.TestCase):
         self.assertEqual(
             resolve_state_encoder_arch({}, {"encoder.proj.weight": None}),
             ("pool", 4, 8),
+        )
+
+
+class ResolveEmaTargetEncoderConfigTest(unittest.TestCase):
+    def test_prefers_persisted_compatibility_fields(self) -> None:
+        self.assertEqual(
+            resolve_ema_target_encoder_config(
+                {"enable_ema_target_encoder": True, "ema_target_decay": 0.95},
+                {},
+            ),
+            (True, 0.95),
+        )
+
+    def test_infers_enabled_from_target_encoder_weights(self) -> None:
+        self.assertEqual(
+            resolve_ema_target_encoder_config(
+                {},
+                {"target_encoder.token_embedding.weight": None},
+            ),
+            (True, 0.99),
+        )
+
+    def test_defaults_off_without_target_weights(self) -> None:
+        self.assertEqual(
+            resolve_ema_target_encoder_config({}, {"encoder.proj.weight": None}),
+            (False, 0.99),
         )
 
 

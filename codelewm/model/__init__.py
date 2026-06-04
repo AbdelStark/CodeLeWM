@@ -68,6 +68,7 @@ from .torch_transition import (
     TorchCodeTransitionModel,
     TorchCodeTransitionModelConfig,
     build_torch_transition_model,
+    resolve_ema_target_encoder_config,
     resolve_state_encoder_arch,
 )
 
@@ -105,6 +106,7 @@ __all__ = [
     "TransitionBatch",
     "build_checkpoint_metadata",
     "build_torch_transition_model",
+    "resolve_ema_target_encoder_config",
     "resolve_state_encoder_arch",
     "compute_action_swap_contrastive_loss",
     "compute_action_use_margin_loss",

@@ -184,11 +184,13 @@ def compute_transition_objective(
     action_reconstruction: Any | None = None,
     p_pass_logit: Any | None = None,
     pass_labels: Any | None = None,
+    z_after_for_sigreg: Any | None = None,
 ) -> ObjectiveTerms:
     """Return MSE, SIGReg, and total loss for one-step latent prediction."""
 
     prediction_mse = compute_prediction_mse(z_pred_after, z_after)
-    sigreg_input = stack_objective_embeddings(z_before, z_after, z_pred_after)
+    sigreg_target = z_after if z_after_for_sigreg is None else z_after_for_sigreg
+    sigreg_input = stack_objective_embeddings(z_before, sigreg_target, z_pred_after)
     sigreg = compute_sigreg_loss(
         sigreg_input,
         knots=config.sigreg_knots,

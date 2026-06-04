@@ -45,6 +45,29 @@ class ObjectiveNumpyTest(unittest.TestCase):
             scalars["loss/prediction_mse"] + scalars["loss/sigreg_weighted"],
         )
 
+    def test_transition_objective_can_sigreg_online_after_latents(self) -> None:
+        z_before = np.array([[0.0, 1.0], [1.0, 0.0]])
+        z_after_target = np.array([[1.0, 1.0], [2.0, 0.0]])
+        z_after_online = np.array([[0.5, 0.25], [0.75, 0.5]])
+        z_pred = np.array([[1.0, 0.0], [1.0, 1.0]])
+        config = ObjectiveConfig(sigreg_weight=0.5, sigreg_num_proj=8, sigreg_seed=7)
+
+        terms = compute_transition_objective(
+            z_before,
+            z_after_target,
+            z_pred,
+            config=config,
+            z_after_for_sigreg=z_after_online,
+        )
+        expected_sigreg = compute_sigreg_loss(
+            stack_objective_embeddings(z_before, z_after_online, z_pred),
+            knots=config.sigreg_knots,
+            num_proj=config.sigreg_num_proj,
+            seed=config.sigreg_seed,
+        )
+
+        self.assertAlmostEqual(terms.scalars()["loss/sigreg"], expected_sigreg)
+
     def test_sigreg_is_finite_for_random_embeddings(self) -> None:
         rng = np.random.default_rng(123)
         embeddings = rng.normal(size=(3, 8, 4))

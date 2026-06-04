@@ -143,8 +143,9 @@ def torch_training_executor(
 
     model = build_torch_transition_model(_model_config(context.config))
     model.to(selected_device)
+    trainable_parameters = [p for p in model.parameters() if p.requires_grad]
     optimizer = runtime.optim.AdamW(
-        model.parameters(),
+        trainable_parameters,
         lr=context.config.optimizer.lr,
         weight_decay=context.config.optimizer.weight_decay,
     )
@@ -197,13 +198,16 @@ def torch_training_executor(
                     action_reconstruction=outputs.get("action_reconstruction"),
                     p_pass_logit=outputs.get("pass_logit"),
                     pass_labels=None,
+                    z_after_for_sigreg=outputs.get("z_after_online"),
                 )
             terms.total.backward()
             grad_norm = runtime.nn.utils.clip_grad_norm_(
-                model.parameters(),
+                trainable_parameters,
                 max_norm=context.config.trainer.gradient_clip_val,
             )
             optimizer.step()
+            if context.config.wm.enable_ema_target_encoder:
+                model.update_ema_target_encoder()
             step += 1
             batch_size = int(batch.state_before.input_ids.shape[0])
             examples_seen += batch_size
@@ -491,6 +495,8 @@ def _model_config(config: TrainConfig) -> TorchCodeTransitionModelConfig:
         action_fusion=config.wm.action_fusion,
         enable_inverse_action_head=config.loss.enable_inverse_action_reconstruction,
         enable_pass_head=config.loss.enable_p_pass_bce,
+        enable_ema_target_encoder=config.wm.enable_ema_target_encoder,
+        ema_target_decay=config.wm.ema_target_decay,
     )
 
 
@@ -603,6 +609,7 @@ def _evaluate_validation(
                 action_reconstruction=outputs.get("action_reconstruction"),
                 p_pass_logit=outputs.get("pass_logit"),
                 pass_labels=None,
+                z_after_for_sigreg=outputs.get("z_after_online"),
             )
             for key, value in terms.scalars().items():
                 accum.setdefault(f"val/{key}", []).append(value)
@@ -653,7 +660,7 @@ def _collapse_embeddings(outputs: dict[str, Any], *, runtime: Any) -> np.ndarray
     values = runtime.cat(
         (
             outputs["z_before"].detach(),
-            outputs["z_after"].detach(),
+            outputs.get("z_after_online", outputs["z_after"]).detach(),
             outputs["z_pred_after"].detach(),
         ),
         dim=0,

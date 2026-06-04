@@ -24,6 +24,7 @@ from codelewm.model import (
     CodeStateBatch,
     TorchCodeTransitionModelConfig,
     build_torch_transition_model,
+    resolve_ema_target_encoder_config,
     resolve_state_encoder_arch,
 )
 from codelewm.observability import (
@@ -904,6 +905,9 @@ def _load_execution_torch_checkpoint(
     encoder_type, encoder_layers, encoder_heads = resolve_state_encoder_arch(
         wm, payload.get("model_state_dict")
     )
+    enable_ema_target_encoder, ema_target_decay = resolve_ema_target_encoder_config(
+        wm, payload.get("model_state_dict")
+    )
     config = TorchCodeTransitionModelConfig(
         action_view=action_view,  # type: ignore[arg-type]
         latent_dim=int(wm.get("embed_dim", 256)),
@@ -915,6 +919,8 @@ def _load_execution_torch_checkpoint(
         dropout=0.0,
         action_fusion=str(wm.get("action_fusion", "conditional_transformer")),
         enable_inverse_action_head=inverse_weight > 0.0,
+        enable_ema_target_encoder=enable_ema_target_encoder,
+        ema_target_decay=ema_target_decay,
         state_encoder_type=encoder_type,
         state_encoder_layers=encoder_layers,
         state_encoder_heads=encoder_heads,

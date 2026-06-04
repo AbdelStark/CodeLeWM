@@ -140,6 +140,8 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
         self.assertEqual(cfg.wm.state_encoder_type, "transformer")
         self.assertEqual(cfg.wm.state_encoder_layers, 4)
         self.assertEqual(cfg.wm.state_encoder_heads, 8)
+        self.assertFalse(cfg.wm.enable_ema_target_encoder)
+        self.assertEqual(cfg.wm.ema_target_decay, 0.99)
         # WS-C3: in-batch InfoNCE retrieval term is enabled (capped <= 0.10).
         self.assertEqual(cfg.objective.retrieval_weight, 0.05)
         # WS-C5: prediction_mse_weight is now an explicit, applied lever.
@@ -307,6 +309,30 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         self.assertEqual(cfg.wm.state_encoder_layers, 6)
         cfg2 = self._load_payload(cfg.to_dict())
         self.assertEqual(cfg2.wm.state_encoder_type, "transformer")
+
+    def test_ema_target_encoder_parses_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["enable_ema_target_encoder"] = True
+        payload["wm"]["ema_target_decay"] = 0.95
+        cfg = self._load_payload(payload)
+
+        self.assertTrue(cfg.wm.enable_ema_target_encoder)
+        self.assertEqual(cfg.wm.ema_target_decay, 0.95)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertTrue(cfg2.wm.enable_ema_target_encoder)
+        self.assertEqual(cfg2.wm.ema_target_decay, 0.95)
+
+    def test_ema_target_encoder_defaults_off(self) -> None:
+        cfg = self._load_payload(_config_payload())
+
+        self.assertFalse(cfg.wm.enable_ema_target_encoder)
+        self.assertEqual(cfg.wm.ema_target_decay, 0.99)
+
+    def test_invalid_ema_target_decay_rejected(self) -> None:
+        payload = _config_payload()
+        payload["wm"]["ema_target_decay"] = 1.0
+        with self.assertRaisesRegex(self.Error, "ema_target_decay"):
+            self._load_payload(payload)
 
     def test_invalid_state_encoder_type_rejected(self) -> None:
         payload = _config_payload()
