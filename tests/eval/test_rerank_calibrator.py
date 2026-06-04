@@ -121,3 +121,42 @@ class RerankCalibrationTest(unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class FeatureSubsetTest(unittest.TestCase):
+    """The A1 --features ablation must isolate model vs lexical signal."""
+
+    def test_model_subset_finds_signal_lexical_does_not(self) -> None:
+        from codelewm.eval.rerank_calibrator import (
+            _LEXICAL_FEATURE_KEYS,
+            _MODEL_FEATURE_KEYS,
+            _resolve_feature_keys,
+        )
+
+        rows = _separable_rows(n_problems=60, seed=3)  # signal is in `codelewm`
+        model = evaluate_rerank_calibration(rows, feature_keys=_MODEL_FEATURE_KEYS, seed=3)
+        lexical = evaluate_rerank_calibration(rows, feature_keys=_LEXICAL_FEATURE_KEYS, seed=3)
+        # `codelewm` lives in the model subset, so the model calibrator must
+        # decode correctness while the lexical-only calibrator cannot.
+        self.assertGreater(model["decodability"]["calibrator_cv_auc"], 0.8)
+        self.assertLess(lexical["decodability"]["calibrator_cv_auc"], 0.65)
+        self.assertEqual(model["features"], list(_MODEL_FEATURE_KEYS))
+
+    def test_resolve_feature_keys(self) -> None:
+        from codelewm.eval.rerank_calibrator import (
+            _FEATURE_KEYS,
+            _LEXICAL_FEATURE_KEYS,
+            _MODEL_FEATURE_KEYS,
+            _resolve_feature_keys,
+        )
+
+        self.assertEqual(_resolve_feature_keys("all"), _FEATURE_KEYS)
+        self.assertEqual(_resolve_feature_keys("model"), _MODEL_FEATURE_KEYS)
+        self.assertEqual(_resolve_feature_keys("lexical"), _LEXICAL_FEATURE_KEYS)
+        self.assertEqual(_resolve_feature_keys("codelewm,lexical"), ("codelewm", "lexical"))
+        with self.assertRaises(RerankCalibratorError):
+            _resolve_feature_keys("nonsense_feature")
+
+
+if __name__ == "__main__":
+    unittest.main()

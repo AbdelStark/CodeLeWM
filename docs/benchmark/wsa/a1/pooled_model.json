@@ -1,0 +1,75 @@
+{
+  "all_fail_problem_count": 0,
+  "all_pass_problem_count": 0,
+  "calibrator_lift_pts": {
+    "calibrator_minus_codelewm": {
+      "ci95_pts": [
+        2.1277,
+        34.0426
+      ],
+      "point_pts": 17.0213
+    },
+    "calibrator_minus_llm_order": {
+      "ci95_pts": [
+        -8.5106,
+        27.6596
+      ],
+      "point_pts": 10.6383
+    },
+    "calibrator_minus_no_action": {
+      "ci95_pts": [
+        -4.3085,
+        27.6596
+      ],
+      "point_pts": 10.6383
+    }
+  },
+  "candidates_per_problem": [
+    12
+  ],
+  "completion_count": 564,
+  "decodability": {
+    "calibrator_cv_auc": 0.5720235400633771,
+    "k_folds": 5,
+    "univariate_auc": {
+      "codelewm": 0.5001131733816206,
+      "codelewm_minus_no_action": 0.4948166591217746,
+      "neg_llm_order_rank": 0.42127659574468085,
+      "no_action": 0.5020823902218198,
+      "shuffled_action": 0.5004526935264826
+    }
+  },
+  "feature_set": "model",
+  "features": [
+    "codelewm",
+    "no_action",
+    "shuffled_action",
+    "codelewm_minus_no_action",
+    "neg_llm_order_rank"
+  ],
+  "max_possible_rerank_headroom_pts": 100.0,
+  "overall_pass_rate": 0.16666666666666666,
+  "problem_count": 47,
+  "rerank_pass_at_1": {
+    "all_problems": {
+      "calibrator": 0.2553191489361702,
+      "codelewm": 0.0851063829787234,
+      "lexical": 0.2978723404255319,
+      "llm_order": 0.14893617021276595,
+      "no_action": 0.14893617021276595
+    },
+    "unsaturated_only": {
+      "calibrator": 0.2553191489361702,
+      "codelewm": 0.0851063829787234,
+      "lexical": 0.2978723404255319,
+      "llm_order": 0.14893617021276595,
+      "no_action": 0.14893617021276595
+    }
+  },
+  "rerankable_problem_count": 47,
+  "schema_version": "codelewm.eval.rerank_calibration.v1",
+  "sources": [
+    "results/wsd/seed-1729/humaneval/reports/completion_scores.jsonl",
+    "results/wsd/seed-42/humaneval/reports/completion_scores.jsonl"
+  ]
+}

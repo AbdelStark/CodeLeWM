@@ -74,19 +74,40 @@ def load_completion_scores(paths: Sequence[str | Path]) -> list[dict[str, Any]]:
     return rows
 
 
-def _feature_vector(row: Mapping[str, Any]) -> list[float]:
+# Feature subsets for the A1 model-vs-lexical ablation. "model" = features
+# derived from the learned encoder's energies; "lexical" = the prompt-overlap
+# and random controls. The decisive A1 question is whether "model" adds
+# correctness signal beyond "lexical".
+_MODEL_FEATURE_KEYS = (
+    "codelewm",
+    "no_action",
+    "shuffled_action",
+    "codelewm_minus_no_action",
+    "neg_llm_order_rank",
+)
+_LEXICAL_FEATURE_KEYS = ("lexical", "random")
+
+
+def _feature_dict(row: Mapping[str, Any]) -> dict[str, float]:
     scores = row.get("scores") if isinstance(row.get("scores"), Mapping) else {}
     codelewm = float(scores.get("codelewm", 0.0))
     no_action = float(scores.get("no_action", 0.0))
-    return [
-        codelewm,
-        no_action,
-        float(scores.get("lexical", 0.0)),
-        float(scores.get("shuffled_action", 0.0)),
-        float(scores.get("random", 0.0)),
-        codelewm - no_action,
-        -float(row.get("llm_order_rank", 0)),
-    ]
+    return {
+        "codelewm": codelewm,
+        "no_action": no_action,
+        "lexical": float(scores.get("lexical", 0.0)),
+        "shuffled_action": float(scores.get("shuffled_action", 0.0)),
+        "random": float(scores.get("random", 0.0)),
+        "codelewm_minus_no_action": codelewm - no_action,
+        "neg_llm_order_rank": -float(row.get("llm_order_rank", 0)),
+    }
+
+
+def _feature_vector(
+    row: Mapping[str, Any], feature_keys: Sequence[str] = _FEATURE_KEYS
+) -> list[float]:
+    feats = _feature_dict(row)
+    return [feats[key] for key in feature_keys]
 
 
 def _ranking_score(row: Mapping[str, Any], key: str) -> float:
@@ -197,13 +218,15 @@ def evaluate_rerank_calibration(
     seed: int = 0,
     l2: float = 1.0,
     bootstrap_samples: int = 2000,
+    feature_keys: Sequence[str] = _FEATURE_KEYS,
 ) -> dict[str, Any]:
     """Fit the OOF calibrator and report decodability + rerank pass@1."""
 
+    feature_keys = tuple(feature_keys)
     rows = list(rows)
     n = len(rows)
     y = np.array([1 if bool(r.get("passed")) else 0 for r in rows], dtype=float)
-    x = np.array([_feature_vector(r) for r in rows], dtype=float)
+    x = np.array([_feature_vector(r, feature_keys) for r in rows], dtype=float)
     groups = [str(r.get("problem_id", f"_row{i}")) for i, r in enumerate(rows)]
 
     # Problem-grouped k-fold; out-of-fold calibrator predictions (no leakage).
@@ -226,7 +249,7 @@ def evaluate_rerank_calibration(
     # Decodability.
     calibrator_auc = roc_auc(y, oof)
     univariate_auc = {
-        name: roc_auc(y, x[:, j]) for j, name in enumerate(_FEATURE_KEYS)
+        name: roc_auc(y, x[:, j]) for j, name in enumerate(feature_keys)
     }
 
     # Rerank pass@1.
@@ -278,7 +301,7 @@ def evaluate_rerank_calibration(
             "unsaturated_only": pass_at_1_unsat,
         },
         "calibrator_lift_pts": lift_ci,
-        "features": list(_FEATURE_KEYS),
+        "features": list(feature_keys),
     }
 
 
@@ -332,6 +355,26 @@ def _expand_paths(patterns: Sequence[str]) -> list[str]:
     return found
 
 
+def _resolve_feature_keys(spec: str) -> tuple[str, ...]:
+    """Resolve a --features spec to a tuple of feature column names."""
+    spec = spec.strip().lower()
+    if spec == "all":
+        return _FEATURE_KEYS
+    if spec == "model":
+        return _MODEL_FEATURE_KEYS
+    if spec == "lexical":
+        return _LEXICAL_FEATURE_KEYS
+    keys = tuple(k.strip() for k in spec.split(",") if k.strip())
+    unknown = [k for k in keys if k not in _FEATURE_KEYS]
+    if unknown:
+        raise RerankCalibratorError(
+            f"unknown feature(s): {unknown}; valid: {list(_FEATURE_KEYS)}"
+        )
+    if not keys:
+        raise RerankCalibratorError("--features resolved to an empty set")
+    return keys
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Phase-0 rerank calibration probe over completion_scores.jsonl"
@@ -344,9 +387,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--l2", type=float, default=1.0)
     parser.add_argument("--bootstrap-samples", type=int, default=2000)
     parser.add_argument("--out", type=Path, help="write the JSON report to this path")
+    parser.add_argument(
+        "--features",
+        default="all",
+        help="feature subset: 'all', 'model', 'lexical', or a comma-separated list",
+    )
     parser.add_argument("--json", action="store_true", help="print the full JSON report")
     args = parser.parse_args(argv)
 
+    feature_keys = _resolve_feature_keys(args.features)
     paths = _expand_paths(args.scores)
     rows = load_completion_scores(paths)
     report = evaluate_rerank_calibration(
@@ -355,8 +404,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         seed=args.seed,
         l2=args.l2,
         bootstrap_samples=args.bootstrap_samples,
+        feature_keys=feature_keys,
     )
     report["sources"] = paths
+    report["feature_set"] = args.features
     if args.out is not None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(
