@@ -1085,6 +1085,7 @@ def _build_torch_model_from_compatibility(
         TorchCodeTransitionModelConfig,
         build_torch_transition_model,
         resolve_ema_target_encoder_config,
+        resolve_output_value_head_config,
         resolve_state_encoder_arch,
     )
 
@@ -1115,6 +1116,7 @@ def _build_torch_model_from_compatibility(
         enable_ema_target_encoder, ema_target_decay = resolve_ema_target_encoder_config(
             wm, state_dict
         )
+        enable_output_value_head = resolve_output_value_head_config(wm, state_dict)
         config = TorchCodeTransitionModelConfig(
             action_view=action_view,  # type: ignore[arg-type]
             latent_dim=int(wm.get("embed_dim", 256)),
@@ -1148,6 +1150,7 @@ def _build_torch_model_from_compatibility(
                 )
             ),
             enable_pass_head=bool(wm.get("enable_pass_head") or has_pass_head_weights),
+            enable_output_value_head=enable_output_value_head,
             enable_ema_target_encoder=enable_ema_target_encoder,
             ema_target_decay=ema_target_decay,
             state_encoder_type=encoder_type,

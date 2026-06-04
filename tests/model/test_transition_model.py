@@ -16,6 +16,7 @@ from codelewm.model import (
     expected_action_sequence_length,
     infer_shape,
     resolve_ema_target_encoder_config,
+    resolve_output_value_head_config,
     resolve_state_encoder_arch,
     transition_energy,
 )
@@ -140,6 +141,29 @@ class ResolveEmaTargetEncoderConfigTest(unittest.TestCase):
         self.assertEqual(
             resolve_ema_target_encoder_config({}, {"encoder.proj.weight": None}),
             (False, 0.99),
+        )
+
+
+class ResolveOutputValueHeadConfigTest(unittest.TestCase):
+    def test_prefers_persisted_compatibility_field(self) -> None:
+        self.assertTrue(
+            resolve_output_value_head_config(
+                {"enable_output_value_head": True},
+                {},
+            )
+        )
+
+    def test_infers_enabled_from_head_weights(self) -> None:
+        self.assertTrue(
+            resolve_output_value_head_config(
+                {},
+                {"output_value_head.output_type.weight": None},
+            )
+        )
+
+    def test_defaults_off_without_head_weights(self) -> None:
+        self.assertFalse(
+            resolve_output_value_head_config({}, {"encoder.proj.weight": None})
         )
 
 

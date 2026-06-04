@@ -56,6 +56,43 @@ class TorchTransitionPassHeadTest(unittest.TestCase):
         output = model(_transition_batch(batch_size=3))
         self.assertEqual(tuple(output["pass_logit"].shape), (3, 1))
 
+    def test_output_value_head_is_disabled_by_default(self) -> None:
+        import torch
+
+        model = _dummy_model(TorchCodeTransitionModelConfig())
+
+        self.assertIsNone(model.output_value_head)
+        with self.assertRaisesRegex(ValueError, "output value head is disabled"):
+            model.output_value_logits(torch.zeros(2, 256))
+
+        output = model(_transition_batch(batch_size=2))
+        self.assertNotIn("output_value_logits", output)
+
+    def test_enabled_output_value_head_emits_logits_per_task(self) -> None:
+        import torch
+
+        model = _dummy_model(
+            TorchCodeTransitionModelConfig(enable_output_value_head=True, dropout=0.0)
+        )
+        z_pred_after = torch.randn(3, 256, requires_grad=True)
+
+        logits = model.output_value_logits(z_pred_after)
+        sum(value.mean() for value in logits.values()).backward()
+
+        self.assertEqual(tuple(logits["output_type"].shape), (3, 12))
+        self.assertEqual(tuple(logits["output_magnitude_bucket"].shape), (3, 5))
+        self.assertEqual(tuple(logits["output_length_bucket"].shape), (3, 5))
+        self.assertIsNotNone(z_pred_after.grad)
+        assert model.output_value_head is not None
+        first_layer = model.output_value_head["shared"][0]
+        self.assertIsNotNone(first_layer.weight.grad)
+
+        output = model(_transition_batch(batch_size=3))
+        self.assertEqual(
+            tuple(output["output_value_logits"]["output_type"].shape),
+            (3, 12),
+        )
+
     def test_ema_target_encoder_is_frozen_and_detached(self) -> None:
         model = build_torch_transition_model(
             TorchCodeTransitionModelConfig(
