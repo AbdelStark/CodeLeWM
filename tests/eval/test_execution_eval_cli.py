@@ -177,6 +177,23 @@ class ExecutionEvalCliTest(unittest.TestCase):
                     self.assertEqual(verify.returncode, 0, verify.stderr)
                     self.assertTrue(verify_payload["ok"])
 
+    def test_execution_eval_loader_accepts_pass_head_checkpoint(self) -> None:
+        import torch
+
+        from codelewm.eval.execution_runner import _load_execution_torch_checkpoint
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoint = _write_pass_head_execution_checkpoint(root)
+            model, payload = _load_execution_torch_checkpoint(
+                checkpoint, device=torch.device("cpu"), runtime=torch
+            )
+
+        self.assertEqual(
+            payload["schema_version"], "codelewm.execution_train_checkpoint.v1"
+        )
+        self.assertIsNotNone(model.pass_head)
+
 
 @dataclass(frozen=True)
 class _EvalCase:
@@ -259,6 +276,69 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+
+
+def _write_pass_head_execution_checkpoint(root: Path) -> Path:
+    import torch
+
+    from codelewm.harness.scorer import EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION
+    from codelewm.model import (
+        TorchCodeTransitionModelConfig,
+        build_torch_transition_model,
+        compute_config_hash,
+    )
+    from codelewm.model.checkpoint import (
+        build_checkpoint_metadata,
+        write_checkpoint_manifest,
+    )
+    from codelewm.training import DEFAULT_TRAINING_VOCAB_SIZE
+
+    compatibility = {
+        "wm": {
+            "action_view": "text",
+            "embed_dim": 256,
+            "state_sequence_length": 1024,
+            "action_sequence_length": 256,
+            "action_fusion": "conditional_transformer",
+            "enable_pass_head": True,
+        },
+        "objective": {
+            "inverse_action_reconstruction_weight": 0.0,
+            "p_pass_bce_weight": 0.5,
+            "p_pass_bce_pos_weight": 1.0,
+        },
+        "loader": {"output_sequence_length": 256},
+    }
+    model = build_torch_transition_model(
+        TorchCodeTransitionModelConfig(
+            vocab_size=DEFAULT_TRAINING_VOCAB_SIZE,
+            dropout=0.0,
+            enable_pass_head=True,
+        )
+    )
+    checkpoint = root / "pass_head_last.pt"
+    torch.save(
+        {
+            "schema_version": EXECUTION_TRAIN_CHECKPOINT_SCHEMA_VERSION,
+            "step": 12,
+            "model_state_dict": model.state_dict(),
+            "compatibility_config": compatibility,
+            "compatibility_config_hash": compute_config_hash(compatibility),
+            "metrics": {"fixture": 1.0},
+        },
+        checkpoint,
+    )
+    write_checkpoint_manifest(
+        metadata=build_checkpoint_metadata(
+            compatibility,
+            record_schema_version="codelewm.execution_pack_record.v2",
+            action_view="text",
+            model_class="TorchCodeTransitionModel",
+        ),
+        checkpoint_path=checkpoint,
+        manifest_path=checkpoint.with_name(checkpoint.name + ".manifest.json"),
+    )
+    return checkpoint
 
 
 if __name__ == "__main__":

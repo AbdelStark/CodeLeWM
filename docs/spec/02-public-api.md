@@ -389,9 +389,12 @@ It writes `reports/latent_probe_report.json` with schema
 `codelewm.eval.latent_probe_report.v1` and emits
 `codelewm.eval.execution_probe_run.v1` on JSON stdout. The execution target
 set includes `output_type`, `will_raise`, `output_magnitude_bucket`,
-`output_length_bucket`, `arithmetic_vs_string_vs_collection`, and
-`judge_verdict`. Positive semantic-axis claims remain gated by the existing
-latent-probe report claim boundary.
+`output_length_bucket`, `arithmetic_vs_string_vs_collection`, `judge_verdict`,
+and `passed`. The `passed` target is applicable only to v0.8 pass/fail
+execution-pack records that carry an explicit boolean completion-level
+correctness label; legacy rows without that field are excluded for that target.
+Positive semantic-axis claims remain gated by the existing latent-probe report
+claim boundary.
 
 `codelewm eval crash-prediction` is the scoped v0.6 crash-prediction fallback
 gate:
