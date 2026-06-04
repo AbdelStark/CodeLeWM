@@ -1,0 +1,88 @@
+{
+  "baselines": [
+    {
+      "baseline": "random",
+      "mrr": 0.42517730496453904,
+      "pass_at_1": 0.2127659574468085,
+      "pass_at_k": 0.8085106382978723,
+      "pass_at_k_value": 5,
+      "pass_count": 10,
+      "problem_count": 47
+    },
+    {
+      "baseline": "lexical",
+      "mrr": 0.7890070921985815,
+      "pass_at_1": 0.6595744680851063,
+      "pass_at_k": 0.9361702127659575,
+      "pass_at_k_value": 5,
+      "pass_count": 31,
+      "problem_count": 47
+    },
+    {
+      "baseline": "llm_order",
+      "mrr": 0.3709219858156028,
+      "pass_at_1": 0.14893617021276595,
+      "pass_at_k": 0.7446808510638298,
+      "pass_at_k_value": 5,
+      "pass_count": 7,
+      "problem_count": 47
+    },
+    {
+      "baseline": "no_action",
+      "mrr": 0.4106382978723403,
+      "pass_at_1": 0.1276595744680851,
+      "pass_at_k": 0.9361702127659575,
+      "pass_at_k_value": 5,
+      "pass_count": 6,
+      "problem_count": 47
+    },
+    {
+      "baseline": "shuffled_action",
+      "mrr": 0.4117021276595744,
+      "pass_at_1": 0.14893617021276595,
+      "pass_at_k": 0.9574468085106383,
+      "pass_at_k_value": 5,
+      "pass_count": 7,
+      "problem_count": 47
+    },
+    {
+      "baseline": "codelewm",
+      "mrr": 0.4347517730496453,
+      "pass_at_1": 0.1702127659574468,
+      "pass_at_k": 0.9574468085106383,
+      "pass_at_k_value": 5,
+      "pass_count": 8,
+      "problem_count": 47
+    }
+  ],
+  "benchmark": "humaneval",
+  "bootstrap_lift_ci": [
+    -10.638297872340425,
+    14.893617021276595
+  ],
+  "bootstrap_lift_over_no_action_ci": [
+    -4.25531914893617,
+    12.76595744680851
+  ],
+  "bootstrap_seed": 17,
+  "claim_allowed": false,
+  "claim_reason": "llm_order_lift=2.13pts ci=(-10.64,14.89); requires lift>=3.0 and ci_lo>0; no_action_lift=4.26pts ci=(-4.26,12.77); requires lift>=3.0 and ci_lo>0",
+  "codelewm_lift_over_llm_order": 2.1276595744680855,
+  "codelewm_lift_over_no_action": 4.255319148936171,
+  "completions_per_problem": 6,
+  "confidence_level": 0.95,
+  "pass_at_k": 5,
+  "problem_count": 47,
+  "schema_version": "codelewm.eval.execution_rerank_report.v1",
+  "scoring_summary": {
+    "checkpoint": ".artifacts/v0_7/dl-short/codelewm-v0-7-short-execution-20260603-bcc581d-seed-1729/checkpoints/last.pt",
+    "checkpoint_sha256": "ea88e07176cf4fd9563c73483346c783e13f08b271daaba702303f4767ef710d",
+    "completion_count": 282,
+    "completion_label_artifact_id": "downstream_benchmark-f015b6696b3e29e1",
+    "completion_label_path": ".artifacts/wsd/humaneval/humaneval_completion_labels.jsonl",
+    "model_id": "codelewm.execution_torch_transition_scorer.v1",
+    "problem_count": 47,
+    "score_direction": "higher_is_better_after_negating_energy",
+    "score_error_count": 0
+  }
+}
