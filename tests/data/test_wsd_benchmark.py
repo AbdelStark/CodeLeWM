@@ -20,20 +20,29 @@ class WsdBenchmarkBuilderTest(unittest.TestCase):
     def test_builds_unsaturated_mixed_pool_pack(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "wsd"
+            pool_size = 4
             result = build_mutation_rerank_pack(
                 benchmark="humaneval",
                 source_path=FIXTURES / "humaneval_tiny.jsonl",
                 out=out,
-                mutants_per_problem=8,
+                mutants_per_problem=10,
+                pool_size=pool_size,
                 seed=17,
                 overwrite=True,
             )
             self.assertGreaterEqual(result.problem_count, 1)
-            # a pool is reference + >=1 mutant
-            self.assertGreater(result.completion_count, result.problem_count)
+            # fixed-size pools: every problem has exactly pool_size candidates
+            self.assertEqual(result.completion_count, result.problem_count * pool_size)
 
             labels_path = out / f"{result.benchmark_id}_completion_labels.jsonl"
             rows = [json.loads(line) for line in labels_path.read_text().splitlines()]
+            # exactly one passing candidate (the reference) per problem
+            by_problem: dict[str, list[dict]] = {}
+            for r in rows:
+                by_problem.setdefault(r["problem_id"], []).append(r)
+            for pid, pool in by_problem.items():
+                self.assertEqual(len(pool), pool_size, pid)
+                self.assertEqual(sum(1 for r in pool if r["passed"]), 1, pid)
             # completion_label.v1 contract
             self.assertTrue(
                 all(r["schema_version"] == COMPLETION_LABEL_SCHEMA_VERSION for r in rows)
@@ -69,7 +78,8 @@ class WsdBenchmarkBuilderTest(unittest.TestCase):
                 benchmark="humaneval",
                 source_path=FIXTURES / "humaneval_tiny.jsonl",
                 out=out,
-                mutants_per_problem=8,
+                mutants_per_problem=10,
+                pool_size=4,
                 seed=17,
                 overwrite=True,
             )

@@ -389,7 +389,8 @@ def build_mutation_rerank_pack(
     benchmark: str,
     source_path: Path | str,
     out: Path | str,
-    mutants_per_problem: int = 8,
+    mutants_per_problem: int = 12,
+    pool_size: int = 6,
     seed: int = 17,
     max_problems: int | None = None,
     max_cases_per_problem: int | None = None,
@@ -417,6 +418,13 @@ def build_mutation_rerank_pack(
 
     benchmark_id = normalize_completion_benchmark(benchmark)
     _positive_int(mutants_per_problem, "mutants_per_problem")
+    _positive_int(pool_size, "pool_size")
+    if pool_size < 2:
+        raise CompletionSamplingError("pool_size must be at least 2 (1 pass + 1 fail)")
+    if pool_size - 1 > mutants_per_problem:
+        raise CompletionSamplingError(
+            "mutants_per_problem must be >= pool_size - 1 to fill a pool"
+        )
     if max_problems is not None:
         _positive_int(max_problems, "max_problems")
     if max_cases_per_problem is not None:
@@ -451,6 +459,7 @@ def build_mutation_rerank_pack(
         "source_path": str(source),
         "generator": "wsd_mutation",
         "mutants_per_problem": mutants_per_problem,
+        "pool_size": pool_size,
         "seed": seed,
         "max_problems": max_problems,
         "max_cases_per_problem": max_cases_per_problem,
@@ -476,20 +485,29 @@ def build_mutation_rerank_pack(
         if not ref_passed:
             skipped_reference_fail += 1
             continue
-        candidates: list[tuple[str, bool, list[dict[str, Any]], str]] = [
-            (submission.code, True, ref_results, "reference")
-        ]
+        # Collect failing distractors until the pool is full. Short-circuiting
+        # once we have pool_size-1 failures keeps the sandbox cost down.
+        failing: list[tuple[str, bool, list[dict[str, Any]], str]] = []
         for mutant in generate_mutants(
             submission.code, count=mutants_per_problem, seed=seed
         ):
             m_results, m_passed = _label_completion(
                 mutant.source, submission=submission, sandbox_policy=sandbox_policy
             )
-            candidates.append((mutant.source, m_passed, m_results, mutant.description))
-        if not any(not passed for _, passed, _, _ in candidates):
-            # every mutant happened to be behavior-preserving -> no headroom
+            if not m_passed:
+                failing.append((mutant.source, False, m_results, mutant.description))
+            if len(failing) >= pool_size - 1:
+                break
+        if len(failing) < pool_size - 1:
+            # not enough behavior-changing distractors to fill a fixed pool
             skipped_no_mix += 1
             continue
+        # Exactly one passing candidate (the reference) + (pool_size-1) failing
+        # distractors -> a fixed-size pool with a single correct answer.
+        candidates: list[tuple[str, bool, list[dict[str, Any]], str]] = [
+            (submission.code, True, ref_results, "reference"),
+            *failing[: pool_size - 1],
+        ]
 
         order = list(range(len(candidates)))
         random.Random(seed + _stable_hash(pid)).shuffle(order)
@@ -562,6 +580,7 @@ def build_mutation_rerank_pack(
         "benchmark_id": benchmark_id,
         "generator": "wsd_mutation",
         "mutants_per_problem": mutants_per_problem,
+        "pool_size": pool_size,
         "seed": seed,
         "source_problem_count": len(submissions),
         "kept_problem_count": kept_problems,
