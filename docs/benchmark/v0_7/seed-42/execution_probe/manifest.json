@@ -1,0 +1,91 @@
+{
+  "artifact_id": "eval_report-df36a94fc7fd367b",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "execution-probe",
+    "--checkpoint",
+    ".artifacts/v0_7/dl-short/codelewm-v0-7-short-execution-20260603-bcc581d-seed-42/checkpoints/last.pt",
+    "--pack",
+    ".artifacts/v0_7-build/pack-mbpp-v07",
+    "--targets",
+    "output_type,will_raise,output_magnitude_bucket,output_length_bucket,arithmetic_vs_string_vs_collection",
+    "--out",
+    "results/v0_7/seed-42/execution_probe",
+    "--device",
+    "mps",
+    "--max-examples-per-split",
+    "1000",
+    "--bootstrap-samples",
+    "200",
+    "--seed",
+    "42",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "45a2cb57ff2ad0c57d52e2b9bad0627b3caca11702e188db11357dfc272e3476",
+  "created_at": "2026-06-04T00:16:39Z",
+  "files": [
+    {
+      "bytes": 532,
+      "path": "config.json",
+      "sha256": "58287190a15edd2a7a617503cd34d9a865760aa5f1a723993f2ef3a07a87fea7"
+    },
+    {
+      "bytes": 101963,
+      "path": "reports/latent_probe_report.json",
+      "sha256": "1356acf2783d61ec6f47eeb24cd73591b225ac70b978f560dc78af2ba2490793"
+    }
+  ],
+  "metadata": {
+    "checkpoint_sha256": "5c5eb0a36181d466b910d8f691cb22ab6bd504452d94bc8d52922b98fd15e954",
+    "checkpoint_step": 15000,
+    "claim_boundary": {
+      "available_target_count": 5,
+      "available_targets": [
+        "output_type",
+        "will_raise",
+        "output_magnitude_bucket",
+        "output_length_bucket",
+        "arithmetic_vs_string_vs_collection"
+      ],
+      "dimension_claims_allowed": false,
+      "multiple_comparison_caveat": "Per-dimension associations are exploratory and cannot name semantic axes without stable dimensions across seeds and splits.",
+      "positive_representation_claim_allowed": false,
+      "reason": "latent probes do not consistently beat listed controls on available targets",
+      "required_targets": [
+        "output_type",
+        "will_raise",
+        "output_magnitude_bucket",
+        "output_length_bucket",
+        "arithmetic_vs_string_vs_collection"
+      ],
+      "semantic_structure_status": "unsupported"
+    },
+    "dataset_artifact_id": "codelewm-execution-pack-20260602T155511Z",
+    "report_path": "reports/latent_probe_report.json",
+    "report_schema_version": "codelewm.eval.latent_probe_report.v1",
+    "row_count": 1280,
+    "schema_version": "codelewm.eval.execution_probe_run.v1",
+    "split_counts": {
+      "test": 188,
+      "train": 1000,
+      "val": 92
+    },
+    "targets": [
+      "output_type",
+      "will_raise",
+      "output_magnitude_bucket",
+      "output_length_bucket",
+      "arithmetic_vs_string_vs_collection"
+    ],
+    "training_artifact_id": "training_run-d0764a9658fdbcfd"
+  },
+  "parent_artifacts": [
+    "training_run-d0764a9658fdbcfd",
+    "codelewm-execution-pack-20260602T155511Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "2a5a741025e7455a6e5714f40f2269623587e737"
+}

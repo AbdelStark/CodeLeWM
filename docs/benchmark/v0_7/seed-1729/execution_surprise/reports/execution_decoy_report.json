@@ -1,0 +1,108 @@
+{
+  "mutation_pair_count": 280,
+  "reports": [
+    {
+      "category": "same_code_different_input",
+      "eligible_query_count": 280,
+      "pair_count": 242,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "outputs_identical": 38
+      }
+    },
+    {
+      "category": "same_problem_different_submission",
+      "eligible_query_count": 0,
+      "pair_count": 0,
+      "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+      "skipped_reasons": {
+        "no_other_submission": 280
+      }
+    }
+  ],
+  "schema_version": "codelewm.eval.execution_surprise_decoy_summary.v1",
+  "semantic_decoy_pack": {
+    "artifact_id": "downstream_benchmark-a1f5a0e47d887172",
+    "manifest_path": ".artifacts/v0_7-build/semantic_decoy_pack/manifest.json",
+    "pair_count": 242,
+    "summary": {
+      "categories": [
+        "same_problem_different_submission",
+        "same_code_different_input"
+      ],
+      "category": "semantic_same_problem",
+      "claim_gate": {
+        "claim_allowed": true,
+        "claim_reason": "pair_and_problem_count_gates_pass",
+        "distinct_problem_count": 121,
+        "min_distinct_problems": 30,
+        "min_pairs": 100,
+        "name": "semantic_decoy_pair_count_gate.v1",
+        "pair_count": 242
+      },
+      "distinct_problem_count": 121,
+      "eligible_query_count": 280,
+      "filtering_summary": {
+        "leak_checks": {
+          "checked_pair_count": 242,
+          "kept_pair_count": 242,
+          "skipped_reasons": {},
+          "train_split_leak_count": 0
+        },
+        "split_policy": {
+          "excluded_split_counts": {
+            "train": 1579
+          },
+          "input_split_counts": {
+            "test": 188,
+            "train": 1579,
+            "val": 92
+          },
+          "selected_record_count": 280,
+          "selected_splits": [
+            "val",
+            "test"
+          ],
+          "split_by": "source_problem_id",
+          "train_rows_excluded": 1579
+        }
+      },
+      "generator_reports": [
+        {
+          "category": "same_problem_different_submission",
+          "eligible_query_count": 0,
+          "pair_count": 0,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "no_other_submission": 280
+          }
+        },
+        {
+          "category": "same_code_different_input",
+          "eligible_query_count": 280,
+          "pair_count": 242,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "outputs_identical": 38
+          }
+        }
+      ],
+      "pack_schema_version": "codelewm.eval.semantic_decoy_pack.v1",
+      "pair_count": 242,
+      "pair_count_by_category": {
+        "same_code_different_input": 242
+      },
+      "pair_schema_version": "codelewm.eval.semantic_decoy_pair.v1",
+      "schema_version": "codelewm.eval.semantic_decoy_summary.v1",
+      "source_license_policy": {
+        "derived_artifact_policy": "metadata_only: record IDs, category labels, rationales, and output fingerprints; no raw source code or provider secrets",
+        "license_breakdown": {
+          "CC-BY-4.0": 1859
+        },
+        "source_breakdown": {
+          "mbpp": 1859
+        }
+      }
+    }
+  }
+}

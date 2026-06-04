@@ -1,0 +1,69 @@
+{
+  "artifact_id": "eval_report-393a7951230d91cf",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "rerank-humaneval",
+    "--completion-manifest",
+    "docs/benchmark/v0_6/completion_labels_full/humaneval/manifest.json",
+    "--checkpoint",
+    ".artifacts/v0_7/dl-short/codelewm-v0-7-short-execution-20260603-bcc581d-seed-42/checkpoints/last.pt",
+    "--out",
+    "results/v0_7/seed-42/rerank/humaneval",
+    "--device",
+    "mps",
+    "--pass-at-k",
+    "5",
+    "--bootstrap-samples",
+    "2000",
+    "--seed",
+    "17",
+    "--min-lift-for-claim",
+    "3.0",
+    "--retrieval-prior-weight",
+    "0.0",
+    "--retrieval-prior-k",
+    "10",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "82abc70d9299b3afa25de7abefe093585a9f8c0fc8499a24f33187fdcab0f01c",
+  "created_at": "2026-06-04T00:26:55Z",
+  "files": [
+    {
+      "bytes": 2731,
+      "path": "reports/execution_rerank_report.json",
+      "sha256": "039379464355ac70693b3034b0cd43b308c6e5cc29b1e97459a9df0f5d0534f7"
+    },
+    {
+      "bytes": 178182,
+      "path": "reports/completion_scores.jsonl",
+      "sha256": "7e35c8e0b689406fe4511c874f915968e54c081705ea8187f51091ea6859fccd"
+    },
+    {
+      "bytes": 640,
+      "path": "config.json",
+      "sha256": "10649094979f1ceff361605f654a8f9ff3148456e266ec8f6140a2f916d36a4f"
+    },
+    {
+      "bytes": 449,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "527fd4c11a280029ac0029e44fe77035bf43b85cded89a0a1e0cedce6c85ab41"
+    }
+  ],
+  "metadata": {
+    "benchmark": "humaneval",
+    "claim_allowed": false,
+    "completion_count": 462,
+    "problem_count": 154,
+    "report_schema_version": "codelewm.eval.execution_rerank_report.v1",
+    "schema_version": "codelewm.eval.execution_rerank_eval_run.v1",
+    "score_schema_version": "codelewm.eval.completion_score.v1"
+  },
+  "parent_artifacts": [
+    "downstream_benchmark-62060bb55ca7c890"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "77e599515c51cead54d001131a7d58f6a4940303"
+}
