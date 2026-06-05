@@ -68,6 +68,7 @@ docs = [
 ]
 release = [
   "build>=1.2",
+  "pip>=26.1.2",
   "pip-audit>=2.7",
   "twine>=5"
 ]
@@ -108,6 +109,7 @@ docs = [
 ]
 release = [
   "build>=1.2",
+  "pip>=26.1.2",
   "pip-audit>=2.7",
   "twine>=5"
 ]

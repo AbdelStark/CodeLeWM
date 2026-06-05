@@ -53,6 +53,19 @@ def main(argv: list[str] | None = None) -> int:
         help="skip hf jobs ps status enrichment",
     )
     parser.add_argument(
+        "--retries",
+        type=int,
+        default=2,
+        help="retry failed live HF CLI reads this many times",
+    )
+    parser.add_argument(
+        "--retry-sleep",
+        type=float,
+        default=2.0,
+        metavar="SECONDS",
+        help="sleep between failed live HF CLI retry attempts",
+    )
+    parser.add_argument(
         "--watch",
         type=float,
         default=0.0,
@@ -66,6 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("provide at least one job ID or --from-file path")
     if args.tail <= 0:
         parser.error("--tail must be positive")
+    if args.retries < 0:
+        parser.error("--retries must be non-negative")
+    if args.retry_sleep < 0:
+        parser.error("--retry-sleep must be non-negative")
     if args.watch < 0:
         parser.error("--watch must be non-negative")
 
@@ -83,13 +100,22 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _read_once(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
-    statuses = {} if args.no_status else _load_hf_statuses()
+    statuses = (
+        {}
+        if args.no_status
+        else _load_hf_statuses(retries=args.retries, retry_sleep=args.retry_sleep)
+    )
     summaries: list[dict[str, Any]] = []
     exit_code = 0
 
     for job_id in args.job_id:
         status = statuses.get(job_id, {})
-        lines, error = _load_hf_log_lines(job_id, tail=args.tail)
+        lines, error = _load_hf_log_lines(
+            job_id,
+            tail=args.tail,
+            retries=args.retries,
+            retry_sleep=args.retry_sleep,
+        )
         events = parse_job_event_lines(lines)
         summary = summarize_job_events(
             events,
@@ -136,15 +162,15 @@ def _read_once(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return payload, exit_code
 
 
-def _load_hf_statuses() -> dict[str, dict[str, Any]]:
-    try:
-        completed = subprocess.run(
-            ["hf", "jobs", "ps", "--all", "--format", "json"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except (FileNotFoundError, subprocess.CalledProcessError):
+def _load_hf_statuses(
+    *, retries: int, retry_sleep: float
+) -> dict[str, dict[str, Any]]:
+    completed, _ = _run_hf_command(
+        ["hf", "jobs", "ps", "--all", "--format", "json"],
+        retries=retries,
+        retry_sleep=retry_sleep,
+    )
+    if completed is None:
         return {}
     try:
         rows = json.loads(completed.stdout)
@@ -160,28 +186,54 @@ def _load_hf_statuses() -> dict[str, dict[str, Any]]:
 
 
 def _load_hf_log_lines(
-    job_id: str, *, tail: int
+    job_id: str, *, tail: int, retries: int, retry_sleep: float
 ) -> tuple[list[str], dict[str, Any] | None]:
     command = ["hf", "jobs", "logs", "--tail", str(tail), job_id]
-    try:
-        completed = subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+    completed, error = _run_hf_command(
+        command,
+        retries=retries,
+        retry_sleep=retry_sleep,
+    )
+    if completed is not None:
         return completed.stdout.splitlines(), None
-    except FileNotFoundError as exc:
-        return [], {"command": command, "message": str(exc)}
-    except subprocess.CalledProcessError as exc:
-        return (
-            exc.stdout.splitlines() if exc.stdout else [],
-            {
+    return [], error
+
+
+def _run_hf_command(
+    command: list[str], *, retries: int, retry_sleep: float
+) -> tuple[subprocess.CompletedProcess[str] | None, dict[str, Any] | None]:
+    attempts = retries + 1
+    last_error: dict[str, Any] | None = None
+    for attempt in range(1, attempts + 1):
+        started_at = time.perf_counter()
+        try:
+            completed = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return completed, None
+        except FileNotFoundError as exc:
+            return None, {
                 "command": command,
+                "attempt": attempt,
+                "attempts": attempts,
+                "message": str(exc),
+            }
+        except subprocess.CalledProcessError as exc:
+            last_error = {
+                "command": command,
+                "attempt": attempt,
+                "attempts": attempts,
                 "returncode": exc.returncode,
                 "stderr_tail": (exc.stderr or "").splitlines()[-20:],
-            },
-        )
+                "stdout_tail": (exc.stdout or "").splitlines()[-20:],
+                "elapsed_seconds": round(time.perf_counter() - started_at, 3),
+            }
+        if attempt < attempts and retry_sleep > 0:
+            time.sleep(retry_sleep)
+    return None, last_error
 
 
 def _render_human(payload: dict[str, Any]) -> str:

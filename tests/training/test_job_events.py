@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -215,3 +216,57 @@ class JobEventStatusScriptTest(unittest.TestCase):
 
         self.assertIn("step=200/12000", completed.stdout)
         self.assertIn("loss_p_pass_bce=0.53", completed.stdout)
+
+    def test_script_accepts_retry_flags_for_saved_progress_jsonl(self) -> None:
+        event = _event(
+            "execution_training.progress",
+            {
+                "seed": 42,
+                "step": 200,
+                "max_steps": 12000,
+                "progress": 0.016667,
+                "elapsed_seconds": 782.0,
+                "eta_seconds": 46141.0,
+                "metrics": {"loss_total": 1.43},
+            },
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "job_progress.jsonl"
+            path.write_text(json.dumps(event, sort_keys=True), encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(STATUS_SCRIPT),
+                    "--from-file",
+                    str(path),
+                    "--retries",
+                    "0",
+                    "--retry-sleep",
+                    "0",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["summaries"][0]["latest_progress"]["step"], 200)
+
+    def test_retry_helper_reports_final_attempt(self) -> None:
+        script_globals = runpy.run_path(str(STATUS_SCRIPT))
+        run_hf_command = script_globals["_run_hf_command"]
+
+        completed, error = run_hf_command(
+            [sys.executable, "-c", "import sys; sys.exit(7)"],
+            retries=2,
+            retry_sleep=0,
+        )
+
+        self.assertIsNone(completed)
+        self.assertIsInstance(error, dict)
+        self.assertEqual(error["attempt"], 3)
+        self.assertEqual(error["attempts"], 3)
+        self.assertEqual(error["returncode"], 7)
