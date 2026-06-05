@@ -13,6 +13,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 
 try:
@@ -105,6 +107,7 @@ def _config(
     output_value_ce_weight: float = 0.0,
     enable_ema_target_encoder: bool = False,
     ema_target_decay: float = 0.99,
+    progress_log_every_n_steps: int = 100,
 ) -> "ExecutionTrainConfig":
     from codelewm.training import (
         ExecutionTrainClaimBoundaryConfig,
@@ -157,6 +160,7 @@ def _config(
             keep_best_by_metric="loss_prediction_mse",
             tensorboard_enabled=False,
             collapse_diagnostics_every_n_steps=collapse_every,
+            progress_log_every_n_steps=progress_log_every_n_steps,
         ),
         optimizer=ExecutionTrainOptimizerConfig(
             name="adamw",
@@ -225,15 +229,21 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             pack_dir = _build_pack(tmp)
             output_dir = tmp / "run-seed-42"
 
-            cfg = _config(max_steps=6, collapse_every=2)
-            result = train_execution_run(
-                cfg,
-                seed=42,
-                output_dir=output_dir,
-                root=tmp,
-                pack_local_dir=pack_dir,
-                command=("codelewm", "train", "--seed", "42"),
+            cfg = _config(
+                max_steps=6,
+                collapse_every=2,
+                progress_log_every_n_steps=2,
             )
+            stderr_buf = StringIO()
+            with redirect_stderr(stderr_buf):
+                result = train_execution_run(
+                    cfg,
+                    seed=42,
+                    output_dir=output_dir,
+                    root=tmp,
+                    pack_local_dir=pack_dir,
+                    command=("codelewm", "train", "--seed", "42"),
+                )
 
             # Artifact + training manifests exist and validate.
             self.assertTrue(result.artifact_manifest_path.is_file())
@@ -282,6 +292,35 @@ class ExecutionRunnerIntegrationTest(unittest.TestCase):
             self.assertTrue(
                 (output_dir / "checkpoints" / "last.pt.manifest.json").is_file()
             )
+
+            progress_log_path = output_dir / "reports" / "job_progress.jsonl"
+            self.assertTrue(progress_log_path.is_file())
+            progress_rows = [
+                json.loads(line)
+                for line in progress_log_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            progress_events = {row["event"] for row in progress_rows}
+            self.assertIn("execution_training.start", progress_events)
+            self.assertIn("execution_training.progress", progress_events)
+            self.assertIn("execution_training.collapse_diagnostics", progress_events)
+            self.assertIn("execution_training.checkpoint", progress_events)
+            self.assertIn("execution_training.complete", progress_events)
+
+            stderr_events = [
+                json.loads(line.removeprefix("CODELEWM_JOB_EVENT "))
+                for line in stderr_buf.getvalue().splitlines()
+                if line.startswith("CODELEWM_JOB_EVENT ")
+            ]
+            self.assertEqual(len(stderr_events), len(progress_rows))
+            first_progress = next(
+                row
+                for row in progress_rows
+                if row["event"] == "execution_training.progress"
+            )
+            self.assertIn("loss_total", first_progress["fields"]["metrics"])
+            self.assertIn("examples_per_second", first_progress["fields"]["metrics"])
+            self.assertIn("eta_seconds", first_progress["fields"])
 
             # Metrics JSONL has one row per optimizer step.
             metric_rows = [

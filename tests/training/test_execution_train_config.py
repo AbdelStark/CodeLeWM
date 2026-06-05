@@ -51,6 +51,7 @@ _VALID_CONFIG_DICT = {
         "keep_best_by_metric": "loss_prediction_mse",
         "tensorboard_enabled": False,
         "collapse_diagnostics_every_n_steps": 25,
+        "progress_log_every_n_steps": 25,
     },
     "optimizer": {
         "name": "adamw",
@@ -210,6 +211,7 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
             V0_8_PASSFAIL_POS_WEIGHT,
         )
         self.assertEqual(cfg.objective.output_value_ce_weight, 0.2)
+        self.assertEqual(cfg.trainer.progress_log_every_n_steps, 10)
         self.assertEqual(
             cfg.hf_jobs.runtime_image,
             "ghcr.io/abdelstark/codelewm-runtime:v0.8",
@@ -242,6 +244,7 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
         self.assertEqual(cfg.trainer.max_steps, 12000)
         self.assertLess(cfg.trainer.max_steps, full.trainer.max_steps)
         self.assertEqual(cfg.trainer.checkpoint_every_n_steps, 4000)
+        self.assertEqual(cfg.trainer.progress_log_every_n_steps, 10)
         self.assertIn("short", cfg.hf_jobs.run_name_template)
         self.assertIn("short", cfg.hf_jobs.checkpoint_revision_template)
 
@@ -489,6 +492,21 @@ class ExecutionTrainConfigRejectionTest(unittest.TestCase):
         payload = _config_payload()
         payload["trainer"]["collapse_diagnostics_every_n_steps"] = 0
         with self.assertRaisesRegex(self.Error, "collapse_diagnostics_every_n_steps"):
+            self._load_payload(payload)
+
+    def test_progress_log_cadence_defaults_and_round_trips(self) -> None:
+        payload = _config_payload()
+        payload["trainer"].pop("progress_log_every_n_steps")
+        cfg = self._load_payload(payload)
+
+        self.assertEqual(cfg.trainer.progress_log_every_n_steps, 100)
+        cfg2 = self._load_payload(cfg.to_dict())
+        self.assertEqual(cfg2.trainer.progress_log_every_n_steps, 100)
+
+    def test_zero_progress_log_cadence_rejected(self) -> None:
+        payload = _config_payload()
+        payload["trainer"]["progress_log_every_n_steps"] = 0
+        with self.assertRaisesRegex(self.Error, "progress_log_every_n_steps"):
             self._load_payload(payload)
 
     def test_unsupported_optimizer_rejected(self) -> None:

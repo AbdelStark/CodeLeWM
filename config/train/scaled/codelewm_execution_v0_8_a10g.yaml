@@ -54,6 +54,7 @@ trainer:
   keep_best_by_metric: val_mse
   tensorboard_enabled: true
   collapse_diagnostics_every_n_steps: 1000
+  progress_log_every_n_steps: 10
 
 optimizer:
   name: adamw

@@ -88,6 +88,7 @@ class ExecutionTrainTrainerConfig:
     keep_best_by_metric: str
     tensorboard_enabled: bool
     collapse_diagnostics_every_n_steps: int
+    progress_log_every_n_steps: int = 100
 
 
 @dataclass(frozen=True)
@@ -276,6 +277,10 @@ class ExecutionTrainConfig:
             raise ExecutionTrainConfigError(
                 "trainer.collapse_diagnostics_every_n_steps must be positive"
             )
+        if self.trainer.progress_log_every_n_steps <= 0:
+            raise ExecutionTrainConfigError(
+                "trainer.progress_log_every_n_steps must be positive"
+            )
         # Optimizer contract.
         if self.optimizer.name not in {"adamw", "AdamW"}:
             raise ExecutionTrainConfigError(
@@ -433,6 +438,9 @@ class ExecutionTrainConfig:
                 "tensorboard_enabled": self.trainer.tensorboard_enabled,
                 "collapse_diagnostics_every_n_steps": (
                     self.trainer.collapse_diagnostics_every_n_steps
+                ),
+                "progress_log_every_n_steps": (
+                    self.trainer.progress_log_every_n_steps
                 ),
             },
             "optimizer": {
@@ -660,6 +668,7 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
             "keep_best_by_metric",
             "tensorboard_enabled",
             "collapse_diagnostics_every_n_steps",
+            "progress_log_every_n_steps",
         },
         "config.trainer",
     )
@@ -782,6 +791,11 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         shuffle=_require_bool(loader_payload, "shuffle", "config.loader"),
     )
 
+    progress_log_every_n_steps = _optional_int(
+        trainer_payload,
+        "progress_log_every_n_steps",
+        "config.trainer",
+    )
     trainer = ExecutionTrainTrainerConfig(
         accelerator=_require_string(trainer_payload, "accelerator", "config.trainer"),
         devices=_require_int(trainer_payload, "devices", "config.trainer"),
@@ -808,6 +822,11 @@ def _from_payload(payload: Mapping[str, Any]) -> ExecutionTrainConfig:
         ),
         collapse_diagnostics_every_n_steps=_require_int(
             trainer_payload, "collapse_diagnostics_every_n_steps", "config.trainer"
+        ),
+        progress_log_every_n_steps=(
+            100
+            if progress_log_every_n_steps is None
+            else progress_log_every_n_steps
         ),
     )
 
