@@ -233,12 +233,25 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 ```
 
+For a compact status view, use the CodeLeWM event parser instead of reading the
+raw log stream by hand:
+
+```bash
+uv run scripts/hf-job-event-status <job-id> [<job-id> ...]
+uv run scripts/hf-job-event-status --watch 300 <job-id> [<job-id> ...]
+```
+
 For execution-substrate jobs, healthy training emits structured stderr lines
 with the prefix `CODELEWM_JOB_EVENT `. Filter for that prefix in `hf jobs logs`
 to see `execution_training.start`, `execution_training.progress`,
 `execution_training.collapse_diagnostics`, `execution_training.checkpoint`, and
 `execution_training.complete` events. The same stream is persisted after upload
-as `reports/job_progress.jsonl` in the run artifact.
+as `reports/job_progress.jsonl` in the run artifact. The same status parser can
+summarize a downloaded progress log without contacting HF:
+
+```bash
+uv run scripts/hf-job-event-status --from-file <run-dir>/reports/job_progress.jsonl
+```
 
 If the job fails, record the job ID, commit SHA, run ID, config paths, hardware
 flavor, timeout, failure phase, and a short log excerpt in the relevant issue

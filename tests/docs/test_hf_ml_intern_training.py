@@ -18,6 +18,7 @@ SCRIPTS = (
     ROOT / "scripts" / "hf-run-codelewm-pipeline",
     ROOT / "scripts" / "hf-publish-codelewm-artifacts",
     ROOT / "scripts" / "hf-verify-codelewm-run",
+    ROOT / "scripts" / "hf-job-event-status",
 )
 
 
@@ -71,6 +72,7 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
             "scripts/hf-run-codelewm-pipeline",
             "scripts/hf-publish-codelewm-artifacts",
             "scripts/hf-verify-codelewm-run",
+            "scripts/hf-job-event-status",
             "CODELEWM_HF_JOBS_DRY_RUN=0",
             "CODELEWM_HF_PUBLISH_DRY_RUN=0",
             "CODELEWM_HF_PIPELINE_MODE=scaled",
