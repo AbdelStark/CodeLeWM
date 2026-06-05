@@ -1,0 +1,88 @@
+{
+  "baselines": [
+    {
+      "baseline": "random",
+      "mrr": 0.48235294117647054,
+      "pass_at_1": 0.23529411764705882,
+      "pass_at_k": 0.8235294117647058,
+      "pass_at_k_value": 5,
+      "pass_count": 4,
+      "problem_count": 17
+    },
+    {
+      "baseline": "lexical",
+      "mrr": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 17,
+      "problem_count": 17
+    },
+    {
+      "baseline": "llm_order",
+      "mrr": 0.3813725490196078,
+      "pass_at_1": 0.17647058823529413,
+      "pass_at_k": 0.7647058823529411,
+      "pass_at_k_value": 5,
+      "pass_count": 3,
+      "problem_count": 17
+    },
+    {
+      "baseline": "no_action",
+      "mrr": 0.5431372549019607,
+      "pass_at_1": 0.29411764705882354,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 5,
+      "problem_count": 17
+    },
+    {
+      "baseline": "shuffled_action",
+      "mrr": 0.5656862745098039,
+      "pass_at_1": 0.35294117647058826,
+      "pass_at_k": 0.8823529411764706,
+      "pass_at_k_value": 5,
+      "pass_count": 6,
+      "problem_count": 17
+    },
+    {
+      "baseline": "codelewm",
+      "mrr": 0.5774509803921568,
+      "pass_at_1": 0.35294117647058826,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 6,
+      "problem_count": 17
+    }
+  ],
+  "benchmark": "mbpp_plus",
+  "bootstrap_lift_ci": [
+    -11.76470588235294,
+    47.05882352941176
+  ],
+  "bootstrap_lift_over_no_action_ci": [
+    -17.647058823529413,
+    29.411764705882355
+  ],
+  "bootstrap_seed": 17,
+  "claim_allowed": false,
+  "claim_reason": "llm_order_lift=17.65pts ci=(-11.76,47.06); requires lift>=3.0 and ci_lo>0; no_action_lift=5.88pts ci=(-17.65,29.41); requires lift>=3.0 and ci_lo>0",
+  "codelewm_lift_over_llm_order": 17.647058823529413,
+  "codelewm_lift_over_no_action": 5.882352941176472,
+  "completions_per_problem": 6,
+  "confidence_level": 0.95,
+  "pass_at_k": 5,
+  "problem_count": 17,
+  "schema_version": "codelewm.eval.execution_rerank_report.v1",
+  "scoring_summary": {
+    "checkpoint": ".artifacts/hf-download/v0_8_20260605_seed_1729/codelewm-v0-8-short-execution-20260605-1b737e4-seed-1729/checkpoints/last.pt",
+    "checkpoint_sha256": "dafc3bf8022d1f3a9560b63f63c620873a2f2b3922e4f773a350e3f88c15ecfe",
+    "completion_count": 102,
+    "completion_label_artifact_id": "downstream_benchmark-f8aaaa3b3c1eb910",
+    "completion_label_path": ".artifacts/wsd/mbpp_plus/mbpp_plus_completion_labels.jsonl",
+    "model_id": "codelewm.execution_torch_transition_scorer.v1",
+    "problem_count": 17,
+    "score_direction": "higher_is_better_after_negating_energy",
+    "score_error_count": 0
+  }
+}

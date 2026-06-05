@@ -1,0 +1,755 @@
+{
+  "axis_diagnostics": {
+    "output_magnitude_bucket": {
+      "available": false,
+      "claim_block_reason": "val and test splits must each contain target labels",
+      "dimension_claims_allowed": false,
+      "views": {}
+    },
+    "passed": {
+      "available": true,
+      "claim_block_reason": "axis names require stability across seeds; this report only checks split stability",
+      "dimension_claims_allowed": false,
+      "views": {
+        "z_after": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 21,
+                "dominant_label": "False",
+                "eta_squared": 0.09983431781025325
+              },
+              {
+                "dimension": 186,
+                "dominant_label": "False",
+                "eta_squared": 0.09259454017160135
+              },
+              {
+                "dimension": 116,
+                "dominant_label": "False",
+                "eta_squared": 0.08710370253572915
+              },
+              {
+                "dimension": 66,
+                "dominant_label": "True",
+                "eta_squared": 0.08324972061293733
+              },
+              {
+                "dimension": 39,
+                "dominant_label": "False",
+                "eta_squared": 0.08271340759023435
+              },
+              {
+                "dimension": 175,
+                "dominant_label": "True",
+                "eta_squared": 0.08093094251990866
+              },
+              {
+                "dimension": 185,
+                "dominant_label": "True",
+                "eta_squared": 0.08045962311665106
+              },
+              {
+                "dimension": 244,
+                "dominant_label": "False",
+                "eta_squared": 0.0687303059949807
+              }
+            ],
+            "train": [
+              {
+                "dimension": 80,
+                "dominant_label": "False",
+                "eta_squared": 0.07238278535829962
+              },
+              {
+                "dimension": 108,
+                "dominant_label": "False",
+                "eta_squared": 0.0657070491873858
+              },
+              {
+                "dimension": 36,
+                "dominant_label": "True",
+                "eta_squared": 0.06314530881196125
+              },
+              {
+                "dimension": 134,
+                "dominant_label": "True",
+                "eta_squared": 0.05527968916090364
+              },
+              {
+                "dimension": 182,
+                "dominant_label": "True",
+                "eta_squared": 0.052687326197722595
+              },
+              {
+                "dimension": 223,
+                "dominant_label": "True",
+                "eta_squared": 0.05158369742196369
+              },
+              {
+                "dimension": 34,
+                "dominant_label": "False",
+                "eta_squared": 0.04959283448265804
+              },
+              {
+                "dimension": 103,
+                "dominant_label": "True",
+                "eta_squared": 0.04506237601582141
+              }
+            ],
+            "val": [
+              {
+                "dimension": 104,
+                "dominant_label": "False",
+                "eta_squared": 0.22461980962552092
+              },
+              {
+                "dimension": 75,
+                "dominant_label": "False",
+                "eta_squared": 0.20691872338810025
+              },
+              {
+                "dimension": 38,
+                "dominant_label": "True",
+                "eta_squared": 0.1923245737152358
+              },
+              {
+                "dimension": 190,
+                "dominant_label": "False",
+                "eta_squared": 0.1659257662288036
+              },
+              {
+                "dimension": 122,
+                "dominant_label": "False",
+                "eta_squared": 0.1295249118128993
+              },
+              {
+                "dimension": 76,
+                "dominant_label": "True",
+                "eta_squared": 0.11725167714394043
+              },
+              {
+                "dimension": 229,
+                "dominant_label": "False",
+                "eta_squared": 0.11442543502247994
+              },
+              {
+                "dimension": 74,
+                "dominant_label": "False",
+                "eta_squared": 0.10878061636794774
+              }
+            ]
+          }
+        },
+        "z_before": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 34,
+                "dominant_label": "False",
+                "eta_squared": 0.3754458007995393
+              },
+              {
+                "dimension": 102,
+                "dominant_label": "True",
+                "eta_squared": 0.2979348538683074
+              },
+              {
+                "dimension": 242,
+                "dominant_label": "True",
+                "eta_squared": 0.2949748682759979
+              },
+              {
+                "dimension": 110,
+                "dominant_label": "False",
+                "eta_squared": 0.2904444939178908
+              },
+              {
+                "dimension": 67,
+                "dominant_label": "True",
+                "eta_squared": 0.28541470406754044
+              },
+              {
+                "dimension": 97,
+                "dominant_label": "False",
+                "eta_squared": 0.27143464658088406
+              },
+              {
+                "dimension": 246,
+                "dominant_label": "True",
+                "eta_squared": 0.26855667806653777
+              },
+              {
+                "dimension": 168,
+                "dominant_label": "False",
+                "eta_squared": 0.26636278739905334
+              }
+            ],
+            "train": [
+              {
+                "dimension": 134,
+                "dominant_label": "True",
+                "eta_squared": 0.1800965899587527
+              },
+              {
+                "dimension": 141,
+                "dominant_label": "False",
+                "eta_squared": 0.1681476018990077
+              },
+              {
+                "dimension": 242,
+                "dominant_label": "True",
+                "eta_squared": 0.1665615147624154
+              },
+              {
+                "dimension": 226,
+                "dominant_label": "True",
+                "eta_squared": 0.16103186351980894
+              },
+              {
+                "dimension": 80,
+                "dominant_label": "False",
+                "eta_squared": 0.1493986491660528
+              },
+              {
+                "dimension": 43,
+                "dominant_label": "False",
+                "eta_squared": 0.14053384312024894
+              },
+              {
+                "dimension": 75,
+                "dominant_label": "False",
+                "eta_squared": 0.13591049710816444
+              },
+              {
+                "dimension": 169,
+                "dominant_label": "True",
+                "eta_squared": 0.13504641920442698
+              }
+            ],
+            "val": [
+              {
+                "dimension": 8,
+                "dominant_label": "True",
+                "eta_squared": 0.1227040090732252
+              },
+              {
+                "dimension": 18,
+                "dominant_label": "False",
+                "eta_squared": 0.12210448680431892
+              },
+              {
+                "dimension": 231,
+                "dominant_label": "False",
+                "eta_squared": 0.11737388931740225
+              },
+              {
+                "dimension": 132,
+                "dominant_label": "True",
+                "eta_squared": 0.11620063024830274
+              },
+              {
+                "dimension": 34,
+                "dominant_label": "False",
+                "eta_squared": 0.11549794878558281
+              },
+              {
+                "dimension": 246,
+                "dominant_label": "True",
+                "eta_squared": 0.11342485585988411
+              },
+              {
+                "dimension": 177,
+                "dominant_label": "False",
+                "eta_squared": 0.10927458585225629
+              },
+              {
+                "dimension": 235,
+                "dominant_label": "True",
+                "eta_squared": 0.10760241303445067
+              }
+            ]
+          }
+        },
+        "z_pred_after": {
+          "stable_across_seeds": false,
+          "stable_across_splits": false,
+          "stable_dimensions_across_splits": [],
+          "top_dimensions_by_split": {
+            "test": [
+              {
+                "dimension": 21,
+                "dominant_label": "False",
+                "eta_squared": 0.10317578666467353
+              },
+              {
+                "dimension": 186,
+                "dominant_label": "False",
+                "eta_squared": 0.09547994092090911
+              },
+              {
+                "dimension": 116,
+                "dominant_label": "False",
+                "eta_squared": 0.08938560717740726
+              },
+              {
+                "dimension": 39,
+                "dominant_label": "False",
+                "eta_squared": 0.08476489831574978
+              },
+              {
+                "dimension": 66,
+                "dominant_label": "True",
+                "eta_squared": 0.08396539883204024
+              },
+              {
+                "dimension": 175,
+                "dominant_label": "True",
+                "eta_squared": 0.08341523524915916
+              },
+              {
+                "dimension": 185,
+                "dominant_label": "True",
+                "eta_squared": 0.07874031481666693
+              },
+              {
+                "dimension": 65,
+                "dominant_label": "False",
+                "eta_squared": 0.0693303254848097
+              }
+            ],
+            "train": [
+              {
+                "dimension": 80,
+                "dominant_label": "False",
+                "eta_squared": 0.0724794988058901
+              },
+              {
+                "dimension": 108,
+                "dominant_label": "False",
+                "eta_squared": 0.06579668216380914
+              },
+              {
+                "dimension": 36,
+                "dominant_label": "True",
+                "eta_squared": 0.06420525076737964
+              },
+              {
+                "dimension": 134,
+                "dominant_label": "True",
+                "eta_squared": 0.05660921894726882
+              },
+              {
+                "dimension": 223,
+                "dominant_label": "True",
+                "eta_squared": 0.05338437937030604
+              },
+              {
+                "dimension": 182,
+                "dominant_label": "True",
+                "eta_squared": 0.05307772162562115
+              },
+              {
+                "dimension": 34,
+                "dominant_label": "False",
+                "eta_squared": 0.04965988268641285
+              },
+              {
+                "dimension": 103,
+                "dominant_label": "True",
+                "eta_squared": 0.0461145596408158
+              }
+            ],
+            "val": [
+              {
+                "dimension": 104,
+                "dominant_label": "False",
+                "eta_squared": 0.2289384695862839
+              },
+              {
+                "dimension": 75,
+                "dominant_label": "False",
+                "eta_squared": 0.2088888097811963
+              },
+              {
+                "dimension": 38,
+                "dominant_label": "True",
+                "eta_squared": 0.1964020677682229
+              },
+              {
+                "dimension": 190,
+                "dominant_label": "False",
+                "eta_squared": 0.16129037161604415
+              },
+              {
+                "dimension": 76,
+                "dominant_label": "True",
+                "eta_squared": 0.12857762927781155
+              },
+              {
+                "dimension": 122,
+                "dominant_label": "False",
+                "eta_squared": 0.12500269930170108
+              },
+              {
+                "dimension": 229,
+                "dominant_label": "False",
+                "eta_squared": 0.10906714108388119
+              },
+              {
+                "dimension": 74,
+                "dominant_label": "False",
+                "eta_squared": 0.10636987424617254
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "claim_boundary": {
+    "available_target_count": 1,
+    "available_targets": [
+      "passed"
+    ],
+    "dimension_claims_allowed": false,
+    "multiple_comparison_caveat": "Per-dimension associations are exploratory and cannot name semantic axes without stable dimensions across seeds and splits.",
+    "positive_representation_claim_allowed": false,
+    "reason": "fewer than five predeclared probe targets have train/val/test labels",
+    "required_targets": [
+      "passed",
+      "output_magnitude_bucket"
+    ],
+    "semantic_structure_status": "not_evaluable"
+  },
+  "config": {
+    "bootstrap_samples": 2000,
+    "min_eval_rows": 1,
+    "min_train_classes": 2,
+    "seed": 42,
+    "targets": [
+      "passed",
+      "output_magnitude_bucket"
+    ],
+    "top_dimensions": 8,
+    "views": [
+      "z_before",
+      "z_after",
+      "z_pred_after"
+    ]
+  },
+  "metadata": {
+    "action_view": "text",
+    "checkpoint": {
+      "backend": "torch",
+      "model_class": "TorchCodeTransitionModel",
+      "path": ".artifacts/hf-download/v0_8_20260605_seed_42/codelewm-v0-8-short-execution-20260605-1b737e4-seed-42/checkpoints/last.pt",
+      "sha256": "03707bc09d1e60d74bdd94d649f4179632ea57fc06b6f0640d05083664aa7136",
+      "step": 12000
+    },
+    "dataset": {
+      "artifact_id": "codelewm-passfail-execution-pack-20260604T185716Z",
+      "path": "/private/tmp/codelewm-v0-8-pack",
+      "record_count": 1882,
+      "schema_version": "codelewm.execution_pack_manifest.v1"
+    },
+    "probe_target_schema_version": "codelewm.eval.execution_probe_target.v1",
+    "substrate": "execution_trace_v1",
+    "training_artifact_id": "training_run-e2a757caf75cbcf2"
+  },
+  "row_count": 1236,
+  "schema_version": "codelewm.eval.latent_probe_report.v1",
+  "split_counts": {
+    "test": 185,
+    "train": 1000,
+    "val": 51
+  },
+  "target_reports": {
+    "output_magnitude_bucket": {
+      "available": false,
+      "baselines": {},
+      "label_counts": {
+        "test": {
+          "medium": 14,
+          "small": 5,
+          "zero": 1
+        },
+        "train": {
+          "large": 20,
+          "medium": 77,
+          "negative": 28,
+          "small": 206,
+          "zero": 41
+        },
+        "val": {}
+      },
+      "split_counts": {
+        "test": 20,
+        "train": 372,
+        "val": 0
+      },
+      "unavailable_reason": "val and test splits must each contain target labels",
+      "views": {}
+    },
+    "passed": {
+      "available": true,
+      "baselines": {
+        "lexical": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5081081081081081,
+              "accuracy_ci95": [
+                0.43783783783783786,
+                0.5783783783783784
+              ],
+              "class_count": 2,
+              "macro_f1": 0.45849014120750103,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.5294117647058824,
+              "accuracy_ci95": [
+                0.39215686274509803,
+                0.6666666666666666
+              ],
+              "class_count": 2,
+              "macro_f1": 0.5277777777777778,
+              "sample_count": 51
+            }
+          }
+        },
+        "majority": {
+          "majority_label": "True",
+          "model": "train_majority",
+          "splits": {
+            "test": {
+              "accuracy": 0.5351351351351351,
+              "accuracy_ci95": [
+                0.4648648648648649,
+                0.6054054054054054
+              ],
+              "class_count": 2,
+              "macro_f1": 0.3485915492957747,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.6078431372549019,
+              "accuracy_ci95": [
+                0.47058823529411764,
+                0.7450980392156863
+              ],
+              "class_count": 2,
+              "macro_f1": 0.3780487804878048,
+              "sample_count": 51
+            }
+          }
+        },
+        "metadata_only": {
+          "default_label": "True",
+          "model": "metadata_lookup_majority",
+          "splits": {
+            "test": {
+              "accuracy": 0.5351351351351351,
+              "accuracy_ci95": [
+                0.4648648648648649,
+                0.6108108108108108
+              ],
+              "class_count": 2,
+              "macro_f1": 0.3485915492957747,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.6078431372549019,
+              "accuracy_ci95": [
+                0.49019607843137253,
+                0.7450980392156863
+              ],
+              "class_count": 2,
+              "macro_f1": 0.3780487804878048,
+              "sample_count": 51
+            }
+          }
+        },
+        "no_action": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.6162162162162163,
+              "accuracy_ci95": [
+                0.5459459459459459,
+                0.6864864864864865
+              ],
+              "class_count": 2,
+              "macro_f1": 0.6160367154842293,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.6274509803921569,
+              "accuracy_ci95": [
+                0.49019607843137253,
+                0.7647058823529411
+              ],
+              "class_count": 2,
+              "macro_f1": 0.6125549780087964,
+              "sample_count": 51
+            }
+          }
+        },
+        "random_latent": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.4864864864864865,
+              "accuracy_ci95": [
+                0.41621621621621624,
+                0.5567567567567567
+              ],
+              "class_count": 2,
+              "macro_f1": 0.48041389504804144,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.5686274509803921,
+              "accuracy_ci95": [
+                0.43137254901960786,
+                0.7058823529411765
+              ],
+              "class_count": 2,
+              "macro_f1": 0.5277777777777777,
+              "sample_count": 51
+            }
+          }
+        },
+        "shuffled_action": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.6216216216216216,
+              "accuracy_ci95": [
+                0.5513513513513514,
+                0.6864864864864865
+              ],
+              "class_count": 2,
+              "macro_f1": 0.6213450292397661,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.6274509803921569,
+              "accuracy_ci95": [
+                0.49019607843137253,
+                0.7647058823529411
+              ],
+              "class_count": 2,
+              "macro_f1": 0.5214814814814814,
+              "sample_count": 51
+            }
+          }
+        }
+      },
+      "label_counts": {
+        "test": {
+          "False": 86,
+          "True": 99
+        },
+        "train": {
+          "False": 486,
+          "True": 514
+        },
+        "val": {
+          "False": 20,
+          "True": 31
+        }
+      },
+      "split_counts": {
+        "test": 185,
+        "train": 1000,
+        "val": 51
+      },
+      "unavailable_reason": null,
+      "views": {
+        "z_after": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.4972972972972973,
+              "accuracy_ci95": [
+                0.42702702702702705,
+                0.572972972972973
+              ],
+              "class_count": 2,
+              "macro_f1": 0.49729729729729727,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.5490196078431373,
+              "accuracy_ci95": [
+                0.4117647058823529,
+                0.6862745098039216
+              ],
+              "class_count": 2,
+              "macro_f1": 0.42074074074074075,
+              "sample_count": 51
+            }
+          }
+        },
+        "z_before": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.6162162162162163,
+              "accuracy_ci95": [
+                0.5405405405405406,
+                0.6864864864864865
+              ],
+              "class_count": 2,
+              "macro_f1": 0.6160367154842293,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.6274509803921569,
+              "accuracy_ci95": [
+                0.49019607843137253,
+                0.7647058823529411
+              ],
+              "class_count": 2,
+              "macro_f1": 0.6125549780087964,
+              "sample_count": 51
+            }
+          }
+        },
+        "z_pred_after": {
+          "model": "nearest_centroid",
+          "splits": {
+            "test": {
+              "accuracy": 0.5081081081081081,
+              "accuracy_ci95": [
+                0.43783783783783786,
+                0.5783783783783784
+              ],
+              "class_count": 2,
+              "macro_f1": 0.5080506121971888,
+              "sample_count": 185
+            },
+            "val": {
+              "accuracy": 0.5490196078431373,
+              "accuracy_ci95": [
+                0.4117647058823529,
+                0.6862745098039216
+              ],
+              "class_count": 2,
+              "macro_f1": 0.42074074074074075,
+              "sample_count": 51
+            }
+          }
+        }
+      }
+    }
+  }
+}

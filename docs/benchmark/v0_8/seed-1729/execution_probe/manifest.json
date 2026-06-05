@@ -1,0 +1,81 @@
+{
+  "artifact_id": "eval_report-da9e8fcb14e4dc14",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "execution-probe",
+    "--checkpoint",
+    ".artifacts/hf-download/v0_8_20260605_seed_1729/codelewm-v0-8-short-execution-20260605-1b737e4-seed-1729/checkpoints/last.pt",
+    "--pack",
+    "/tmp/codelewm-v0-8-pack",
+    "--targets",
+    "passed,output_magnitude_bucket",
+    "--out",
+    ".artifacts/v0_8_20260605/eval/seed-1729/execution_probe",
+    "--device",
+    "cpu",
+    "--max-examples-per-split",
+    "1000",
+    "--bootstrap-samples",
+    "2000",
+    "--seed",
+    "1729",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "b1832afa4f9e85dce4e5ed718f8aaf310896b86d04231b4ca5f00c484af971fe",
+  "created_at": "2026-06-05T20:50:13Z",
+  "files": [
+    {
+      "bytes": 481,
+      "path": "config.json",
+      "sha256": "482f5f483e63c116d55f8c988b70fda69b93ec3e9144bca3bd53106c2a6685b4"
+    },
+    {
+      "bytes": 22570,
+      "path": "reports/latent_probe_report.json",
+      "sha256": "a687dfa595a1c8b8f1fcca94530b7e222b2e3ea99bd7e3f0454ce21909bdd86f"
+    }
+  ],
+  "metadata": {
+    "checkpoint_sha256": "dafc3bf8022d1f3a9560b63f63c620873a2f2b3922e4f773a350e3f88c15ecfe",
+    "checkpoint_step": 12000,
+    "claim_boundary": {
+      "available_target_count": 1,
+      "available_targets": [
+        "passed"
+      ],
+      "dimension_claims_allowed": false,
+      "multiple_comparison_caveat": "Per-dimension associations are exploratory and cannot name semantic axes without stable dimensions across seeds and splits.",
+      "positive_representation_claim_allowed": false,
+      "reason": "fewer than five predeclared probe targets have train/val/test labels",
+      "required_targets": [
+        "passed",
+        "output_magnitude_bucket"
+      ],
+      "semantic_structure_status": "not_evaluable"
+    },
+    "dataset_artifact_id": "codelewm-passfail-execution-pack-20260604T185716Z",
+    "report_path": "reports/latent_probe_report.json",
+    "report_schema_version": "codelewm.eval.latent_probe_report.v1",
+    "row_count": 1236,
+    "schema_version": "codelewm.eval.execution_probe_run.v1",
+    "split_counts": {
+      "test": 185,
+      "train": 1000,
+      "val": 51
+    },
+    "targets": [
+      "passed",
+      "output_magnitude_bucket"
+    ],
+    "training_artifact_id": "training_run-951983cbf59f6fa6"
+  },
+  "parent_artifacts": [
+    "training_run-951983cbf59f6fa6",
+    "codelewm-passfail-execution-pack-20260604T185716Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "cd99160d946191a6d5430ea1634dfa33ca3dd5e2"
+}

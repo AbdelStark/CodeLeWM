@@ -1,0 +1,160 @@
+{
+  "artifact_id": "eval_report-298fe49fe1efa80c",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "execution-surprise",
+    "--checkpoint",
+    ".artifacts/hf-download/v0_8_20260605_seed_1729/codelewm-v0-8-short-execution-20260605-1b737e4-seed-1729/checkpoints/last.pt",
+    "--pack",
+    "/tmp/codelewm-v0-8-pack",
+    "--decoys",
+    "mutation,same_problem_different_submission,same_code_different_input",
+    "--out",
+    ".artifacts/v0_8_20260605/eval/seed-1729/execution_surprise",
+    "--device",
+    "cpu",
+    "--max-examples",
+    "1000",
+    "--seed",
+    "0",
+    "--semantic-decoy-manifest",
+    "docs/benchmark/v0_6/semantic_decoy_pack/manifest.json",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "f3de798d62b04791a5823e4cc6bf946b755051d70cc59b349c5b5139e15e3725",
+  "created_at": "2026-06-05T20:49:02Z",
+  "files": [
+    {
+      "bytes": 615,
+      "path": "config.json",
+      "sha256": "1a0755c0d7be168db044d98abc14bfe6db321459ea2ad2ef7a39f64f30535270"
+    },
+    {
+      "bytes": 75867,
+      "path": "reports/surprise_report.json",
+      "sha256": "ccfabde899257e146527b0513ba22b5aedd4c9a6207c260f064f4e4fd876bdfe"
+    },
+    {
+      "bytes": 3542,
+      "path": "reports/execution_decoy_report.json",
+      "sha256": "62b090a76b4834fd2e722e604c5bc674b4fb5c7fbb6ffe38cc6b563465defcb7"
+    }
+  ],
+  "metadata": {
+    "checkpoint_sha256": "dafc3bf8022d1f3a9560b63f63c620873a2f2b3922e4f773a350e3f88c15ecfe",
+    "checkpoint_step": 12000,
+    "dataset_artifact_id": "codelewm-passfail-execution-pack-20260604T185716Z",
+    "example_count": 236,
+    "execution_decoy_report_path": "reports/execution_decoy_report.json",
+    "execution_surprise_claim_gates": {
+      "claim_allowed": false,
+      "claim_reason": "score_gate_failed:same_problem_different_submission:missing<0.600000;pair_count_gate_failed:same_problem_different_submission:0<30;score_gate_failed:same_code_different_input:missing<0.700000;pair_count_gate_failed:same_code_different_input:0<100",
+      "failure_reasons": [
+        "score_gate_failed:same_problem_different_submission:missing<0.600000",
+        "pair_count_gate_failed:same_problem_different_submission:0<30",
+        "score_gate_failed:same_code_different_input:missing<0.700000",
+        "pair_count_gate_failed:same_code_different_input:0<100"
+      ],
+      "pair_count_gates": [
+        {
+          "category": "mutation",
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 100,
+          "observed_pair_count": 236,
+          "passed": true
+        },
+        {
+          "category": "same_problem_different_submission",
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 30,
+          "observed_pair_count": 0,
+          "passed": false
+        },
+        {
+          "category": "same_code_different_input",
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 100,
+          "observed_pair_count": 0,
+          "passed": false
+        }
+      ],
+      "schema_version": "codelewm.eval.execution_surprise_claim_gates.v1",
+      "score_gates": [
+        {
+          "category": "mutation",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.65,
+          "observed_win_rate": 1.0,
+          "passed": true
+        },
+        {
+          "category": "same_problem_different_submission",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.6,
+          "observed_win_rate": null,
+          "passed": false
+        },
+        {
+          "category": "same_code_different_input",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.7,
+          "observed_win_rate": null,
+          "passed": false
+        }
+      ],
+      "semantic_decoy_category_counts": {
+        "pack_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "scored_decoy_counts": {
+          "mutation": 236,
+          "same_code_different_input": 0,
+          "same_problem_different_submission": 0
+        }
+      },
+      "semantic_decoy_pack_count_gate": {
+        "artifact_id": "downstream_benchmark-f3e0dc65fbf18825",
+        "metric": "semantic_decoy_pack_pair_count",
+        "observed_distinct_problem_count": 68,
+        "observed_pair_count": 358,
+        "pack_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "passed": true
+      }
+    },
+    "metrics": {
+      "decoy_counts": {
+        "action_cluster": 0,
+        "mutation": 236,
+        "random": 0,
+        "same_file": 0
+      },
+      "example_count": 236,
+      "mean_true_rank": 1.0,
+      "median_true_rank": 1.0,
+      "pairwise_auc_by_category": {
+        "mutation": 1.0
+      },
+      "pairwise_auc_overall": 1.0,
+      "recall_at_1": 1.0
+    },
+    "report_path": "reports/surprise_report.json",
+    "report_schema_version": "codelewm.eval.surprise_report.v1",
+    "schema_version": "codelewm.eval.execution_surprise_run.v1",
+    "semantic_decoy_pack_artifact_id": "downstream_benchmark-f3e0dc65fbf18825",
+    "training_artifact_id": "training_run-951983cbf59f6fa6"
+  },
+  "parent_artifacts": [
+    "training_run-951983cbf59f6fa6",
+    "codelewm-passfail-execution-pack-20260604T185716Z",
+    "downstream_benchmark-f3e0dc65fbf18825"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "cd99160d946191a6d5430ea1634dfa33ca3dd5e2"
+}

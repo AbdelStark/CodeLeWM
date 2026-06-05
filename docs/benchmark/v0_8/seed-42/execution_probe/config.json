@@ -1,0 +1,14 @@
+{
+  "bootstrap_samples": 2000,
+  "checkpoint": ".artifacts/hf-download/v0_8_20260605_seed_42/codelewm-v0-8-short-execution-20260605-1b737e4-seed-42/checkpoints/last.pt",
+  "device": "cpu",
+  "max_examples_per_split": 1000,
+  "out": ".artifacts/v0_8_20260605/eval/seed-42/execution_probe",
+  "pack": "/private/tmp/codelewm-v0-8-pack",
+  "schema_version": "codelewm.eval.execution_probe_run.v1",
+  "seed": 42,
+  "targets": [
+    "passed",
+    "output_magnitude_bucket"
+  ]
+}

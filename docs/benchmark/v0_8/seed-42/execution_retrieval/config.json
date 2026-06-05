@@ -1,0 +1,15 @@
+{
+  "baselines": [
+    "random",
+    "lexical",
+    "no_action",
+    "shuffled_action"
+  ],
+  "checkpoint": ".artifacts/hf-download/v0_8_20260605_seed_42/codelewm-v0-8-short-execution-20260605-1b737e4-seed-42/checkpoints/last.pt",
+  "device": "cpu",
+  "max_candidates": 1000,
+  "out": ".artifacts/v0_8_20260605/eval/seed-42/execution_retrieval",
+  "pack": "/private/tmp/codelewm-v0-8-pack",
+  "schema_version": "codelewm.eval.execution_retrieval_run.v1",
+  "seed": 0
+}
