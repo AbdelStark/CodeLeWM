@@ -213,7 +213,16 @@ class RuntimeImageV08DockerfileTest(unittest.TestCase):
             f"entrypoint {self.ENTRYPOINT} is not executable",
         )
         body = self.ENTRYPOINT.read_text(encoding="utf-8")
-        for marker in ("hf download", '"$@"', "hf upload", "codelewm v0.8 run"):
+        for marker in (
+            "CODELEWM_JOB_EVENT",
+            "runtime.pack_download_start",
+            "runtime.command_start",
+            "runtime.upload_start",
+            "hf download",
+            '"$@"',
+            "hf upload",
+            "codelewm v0.8 run",
+        ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, body)
 

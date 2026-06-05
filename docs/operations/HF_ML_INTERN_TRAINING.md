@@ -222,8 +222,11 @@ uv run scripts/hf-job-event-status --watch 300 <job-id> [<job-id> ...]
 ```
 
 For execution-substrate jobs, `hf jobs logs <job-id>` should show structured
-stderr events prefixed with `CODELEWM_JOB_EVENT `. Those events include start,
-progress, collapse-diagnostics, checkpoint, and completion records, and are
+stderr events prefixed with `CODELEWM_JOB_EVENT `. Runtime events cover the
+wrapper phases before and after training: startup, pack download or skip,
+training command start/finish/failure, artifact upload start/finish/failure,
+and upload skips with typed reasons. Training events include start, progress,
+collapse-diagnostics, checkpoint, and completion records. Training events are
 also persisted in the uploaded run artifact as `reports/job_progress.jsonl`.
 After download, run the same parser against that file with
 `uv run scripts/hf-job-event-status --from-file <run-dir>/reports/job_progress.jsonl`.
