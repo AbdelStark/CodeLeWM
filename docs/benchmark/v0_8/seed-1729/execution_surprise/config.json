@@ -1,0 +1,16 @@
+{
+  "checkpoint": ".artifacts/hf-download/v0_8_20260605_seed_1729/codelewm-v0-8-short-execution-20260605-1b737e4-seed-1729/checkpoints/last.pt",
+  "decoys": [
+    "mutation",
+    "same_problem_different_submission",
+    "same_code_different_input"
+  ],
+  "device": "cpu",
+  "max_examples": 1000,
+  "out": ".artifacts/v0_8_20260605/eval/seed-1729/execution_surprise",
+  "pack": "/private/tmp/codelewm-v0-8-pack",
+  "schema_version": "codelewm.eval.execution_surprise_run.v1",
+  "score_direction": "lower_is_better",
+  "seed": 0,
+  "semantic_decoy_manifest": "docs/benchmark/v0_6/semantic_decoy_pack/manifest.json"
+}

@@ -1,0 +1,70 @@
+{
+  "artifact_id": "eval_report-c6b95bc1d7074b86",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "rerank-humaneval",
+    "--completion-manifest",
+    ".artifacts/wsd/humaneval/manifest.json",
+    "--checkpoint",
+    ".artifacts/hf-download/v0_8_20260605_seed_42/codelewm-v0-8-short-execution-20260605-1b737e4-seed-42/checkpoints/last.pt",
+    "--out",
+    ".artifacts/v0_8_20260605/eval/seed-42/rerank/humaneval",
+    "--device",
+    "cpu",
+    "--pass-at-k",
+    "5",
+    "--bootstrap-samples",
+    "2000",
+    "--seed",
+    "17",
+    "--min-lift-for-claim",
+    "3.0",
+    "--retrieval-prior-weight",
+    "0.0",
+    "--retrieval-prior-k",
+    "10",
+    "--require-learned-scorer",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "c72aa6bccce229184b01206e6710ac8fc05a2dc5643fbe0f70e3c9656e18d056",
+  "created_at": "2026-06-05T20:52:54Z",
+  "files": [
+    {
+      "bytes": 2595,
+      "path": "reports/execution_rerank_report.json",
+      "sha256": "c6bc3b31bac0a1b3d8da30d8dcef7f2c18cc524820304286bd82e1cf17a9c00a"
+    },
+    {
+      "bytes": 105253,
+      "path": "reports/completion_scores.jsonl",
+      "sha256": "4944a73e4bc2af564c80d2727835a170439dafdfde663eed9a95a5d518fd73d9"
+    },
+    {
+      "bytes": 603,
+      "path": "config.json",
+      "sha256": "06f678473566c3ca56006cd70555688209f6e63aa26c636ef36af87f812c6152"
+    },
+    {
+      "bytes": 500,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "97fca61da744d1aebd8217d23a0bf3bc6445205a9ee6cb8403b27b089f9e57bd"
+    }
+  ],
+  "metadata": {
+    "benchmark": "humaneval",
+    "claim_allowed": true,
+    "completion_count": 282,
+    "problem_count": 47,
+    "report_schema_version": "codelewm.eval.execution_rerank_report.v1",
+    "schema_version": "codelewm.eval.execution_rerank_eval_run.v1",
+    "score_schema_version": "codelewm.eval.completion_score.v1"
+  },
+  "parent_artifacts": [
+    "downstream_benchmark-f015b6696b3e29e1"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "cd99160d946191a6d5430ea1634dfa33ca3dd5e2"
+}

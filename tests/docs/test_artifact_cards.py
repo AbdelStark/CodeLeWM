@@ -27,6 +27,11 @@ V0_2_ACTION_SWAP_DATASET_CARD = (
 )
 V0_2_ACTION_SWAP_MODEL_CARD = ROOT / "docs" / "cards" / "codelewm-v0-2-action-swap-model-2026-05-20.md"
 V0_2_ACTION_SWAP_RESULTS = ROOT / "docs" / "benchmark" / "V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md"
+V0_8_DATASET_CARD = ROOT / "docs" / "cards" / "codelewm-v0-8-execution-dataset-2026-06-05.md"
+V0_8_MODEL_CARD_SEED_42 = ROOT / "docs" / "cards" / "codelewm-v0-8-execution-model-seed-42-2026-06-05.md"
+V0_8_MODEL_CARD_SEED_1729 = ROOT / "docs" / "cards" / "codelewm-v0-8-execution-model-seed-1729-2026-06-05.md"
+V0_8_RESULTS = ROOT / "docs" / "benchmark" / "EXECUTION_V0_8_RESULTS_2026-06-05.md"
+V0_8_ARTIFACT_INDEX = ROOT / "docs" / "benchmark" / "PUBLIC_ARTIFACT_INDEX_2026-06-05.md"
 
 
 class FirstResultsArtifactCardTest(unittest.TestCase):
@@ -46,6 +51,11 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.v0_2_action_swap_dataset = V0_2_ACTION_SWAP_DATASET_CARD.read_text(encoding="utf-8")
         self.v0_2_action_swap_model = V0_2_ACTION_SWAP_MODEL_CARD.read_text(encoding="utf-8")
         self.v0_2_action_swap_report = V0_2_ACTION_SWAP_RESULTS.read_text(encoding="utf-8")
+        self.v0_8_dataset = V0_8_DATASET_CARD.read_text(encoding="utf-8")
+        self.v0_8_model_seed_42 = V0_8_MODEL_CARD_SEED_42.read_text(encoding="utf-8")
+        self.v0_8_model_seed_1729 = V0_8_MODEL_CARD_SEED_1729.read_text(encoding="utf-8")
+        self.v0_8_report = V0_8_RESULTS.read_text(encoding="utf-8")
+        self.v0_8_artifact_index = V0_8_ARTIFACT_INDEX.read_text(encoding="utf-8")
 
     def test_cards_exist_and_are_not_templates(self) -> None:
         for path, text in ((DATASET_CARD, self.dataset), (MODEL_CARD, self.model)):
@@ -69,6 +79,11 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
             (V0_2_ACTION_SWAP_DATASET_CARD, self.v0_2_action_swap_dataset),
             (V0_2_ACTION_SWAP_MODEL_CARD, self.v0_2_action_swap_model),
             (V0_2_ACTION_SWAP_RESULTS, self.v0_2_action_swap_report),
+            (V0_8_DATASET_CARD, self.v0_8_dataset),
+            (V0_8_MODEL_CARD_SEED_42, self.v0_8_model_seed_42),
+            (V0_8_MODEL_CARD_SEED_1729, self.v0_8_model_seed_1729),
+            (V0_8_RESULTS, self.v0_8_report),
+            (V0_8_ARTIFACT_INDEX, self.v0_8_artifact_index),
         ):
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file(), f"missing: {path}")
@@ -201,6 +216,30 @@ class FirstResultsArtifactCardTest(unittest.TestCase):
         self.assertIn("- [ ] Text action beats no-action on headline retrieval.", self.v0_2_action_swap_report)
         self.assertIn("Selected train rows | 0", self.v0_2_action_swap_dataset)
         self.assertIn("semantic_structure_status=unsupported", self.v0_2_action_swap_model)
+
+    def test_v0_8_cards_match_results_claim_boundary(self) -> None:
+        for marker in (
+            "codelewm-v0-8-short-execution-20260605-1b737e4-seed-42",
+            "codelewm-v0-8-short-execution-20260605-1b737e4-seed-1729",
+            "training_run-e2a757caf75cbcf2",
+            "training_run-951983cbf59f6fa6",
+            "HumanEval WS-D rerank | PASS",
+            "MBPP-Plus WS-D rerank | NOT MET",
+            "Overall v0.8 downstream claim | CLOSED",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.v0_8_report)
+
+        self.assertIn("Records | 1,882", self.v0_8_dataset)
+        self.assertIn("val / test | 1,646 / 51 / 185", self.v0_8_dataset)
+        self.assertIn("zero magnitude-labeled rows", self.v0_8_dataset)
+        self.assertIn("HumanEval WS-D positive", self.v0_8_model_seed_42)
+        self.assertIn("HumanEval WS-D positive", self.v0_8_model_seed_1729)
+        self.assertIn("overall downstream claim closed", self.v0_8_model_seed_42)
+        self.assertIn("overall downstream claim closed", self.v0_8_model_seed_1729)
+        self.assertIn("Completion-level ROC-AUC diagnostic | HumanEval `0.9622`; MBPP-Plus `0.5772`", self.v0_8_model_seed_42)
+        self.assertIn("Completion-level ROC-AUC diagnostic | HumanEval `0.9699`; MBPP-Plus `0.6941`", self.v0_8_model_seed_1729)
+        self.assertIn("benchmark-specific diagnostic result", self.v0_8_artifact_index)
 
 
 if __name__ == "__main__":
