@@ -214,6 +214,11 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 ```
 
+For execution-substrate jobs, `hf jobs logs <job-id>` should show structured
+stderr events prefixed with `CODELEWM_JOB_EVENT `. Those events include start,
+progress, collapse-diagnostics, checkpoint, and completion records, and are
+also persisted in the uploaded run artifact as `reports/job_progress.jsonl`.
+
 ## Remote Scaled Training And Publication
 
 The command below is the primary #154 follow-up profile already executed in run

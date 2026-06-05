@@ -233,6 +233,13 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 ```
 
+For execution-substrate jobs, healthy training emits structured stderr lines
+with the prefix `CODELEWM_JOB_EVENT `. Filter for that prefix in `hf jobs logs`
+to see `execution_training.start`, `execution_training.progress`,
+`execution_training.collapse_diagnostics`, `execution_training.checkpoint`, and
+`execution_training.complete` events. The same stream is persisted after upload
+as `reports/job_progress.jsonl` in the run artifact.
+
 If the job fails, record the job ID, commit SHA, run ID, config paths, hardware
 flavor, timeout, failure phase, and a short log excerpt in the relevant issue
 before patching or relaunching.

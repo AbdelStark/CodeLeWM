@@ -35,6 +35,7 @@ import json
 import math
 import os
 import random
+import sys
 import time
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -61,8 +62,10 @@ from codelewm.model import (
     write_checkpoint_manifest,
 )
 from codelewm.observability import (
+    LogEvent,
     build_artifact_manifest,
     build_manifest_file,
+    write_log_event_jsonl,
     write_artifact_manifest,
 )
 
@@ -104,6 +107,7 @@ EXECUTION_TRAIN_COLLAPSE_DIAGNOSTICS_SCHEMA_VERSION = (
 
 _PACK_LOCAL_DIR_ENV = "CODELEWM_EXECUTION_PACK_LOCAL_DIR"
 _DEFAULT_VOCAB_SIZE = 32768
+_STDERR_EVENT_PREFIX = "CODELEWM_JOB_EVENT "
 
 
 @dataclass(frozen=True)
@@ -306,6 +310,7 @@ def train_execution_run(
     reports_dir.mkdir(parents=True, exist_ok=True)
     config_path = output_path / "config.json"
     metrics_path = output_path / "metrics.jsonl"
+    progress_log_path = reports_dir / "job_progress.jsonl"
     collapse_diag_path = (
         reports_dir / "collapse_diagnostics.jsonl"
         if config.trainer.collapse_diagnostics_every_n_steps > 0
@@ -328,15 +333,48 @@ def train_execution_run(
     if metrics_path.exists():
         metrics_path.unlink()
     metrics_path.touch()
+    if progress_log_path.exists():
+        progress_log_path.unlink()
     if collapse_diag_path is not None and collapse_diag_path.exists():
         collapse_diag_path.unlink()
 
     batch_iter = _infinite_batch_iter(loader_config)
     accumulation_steps = max(1, config.loader.gradient_accumulation_steps)
     target_steps = config.trainer.max_steps
+    progress_log_every = config.trainer.progress_log_every_n_steps
     optimizer.zero_grad(set_to_none=True)
 
     started_at = time.perf_counter()
+    _emit_execution_job_log(
+        progress_log_path=progress_log_path,
+        run_id=config.name,
+        event="execution_training.start",
+        step=0,
+        message="execution-substrate training started",
+        fields={
+            "seed": seed,
+            "device": str(selected_device),
+            "precision": config.trainer.precision,
+            "max_steps": target_steps,
+            "warmup_steps": config.trainer.warmup_steps,
+            "pack_record_count": pack_record_count,
+            "batch_size": config.loader.batch_size,
+            "gradient_accumulation_steps": accumulation_steps,
+            "effective_batch_size": config.loader.effective_batch_size,
+            "progress_log_every_n_steps": progress_log_every,
+            "checkpoint_every_n_steps": config.trainer.checkpoint_every_n_steps,
+            "collapse_diagnostics_every_n_steps": (
+                config.trainer.collapse_diagnostics_every_n_steps
+            ),
+            "tensorboard_enabled": tensorboard_flag,
+            "state_encoder_type": config.wm.state_encoder_type,
+            "enable_ema_target_encoder": config.wm.enable_ema_target_encoder,
+            "enable_pass_head": config.objective.p_pass_bce_weight > 0.0,
+            "enable_output_value_head": (
+                config.objective.output_value_ce_weight > 0.0
+            ),
+        },
+    )
     initial_metrics: dict[str, float] | None = None
     last_metrics: dict[str, float] = {}
     last_checkpoint_metrics: dict[str, float] = {}
@@ -369,9 +407,15 @@ def train_execution_run(
         if micro_step % accumulation_steps != 0:
             continue
 
+        grad_norm: float | None = None
         if config.trainer.gradient_clip_val > 0.0:
-            torch.nn.utils.clip_grad_norm_(
+            grad_norm_raw = torch.nn.utils.clip_grad_norm_(
                 trainable_parameters, max_norm=config.trainer.gradient_clip_val
+            )
+            grad_norm = float(
+                grad_norm_raw.item()
+                if hasattr(grad_norm_raw, "item")
+                else grad_norm_raw
             )
         optimizer_step += 1
 
@@ -402,6 +446,8 @@ def train_execution_run(
             "margin_no_action_minus_pred": float(margin_val),
             "lr": float(lr_now),
         }
+        if grad_norm is not None:
+            metric_row["grad_norm"] = grad_norm
         if "loss/p_pass_bce" in scalar:
             metric_row["loss_p_pass_bce"] = float(scalar["loss/p_pass_bce"])
         if "loss/p_pass_bce_weighted" in scalar:
@@ -416,6 +462,14 @@ def train_execution_run(
             metric_row["loss_output_value_ce_weighted"] = float(
                 scalar["loss/output_value_ce_weighted"]
             )
+        elapsed = max(time.perf_counter() - started_at, 1e-12)
+        metric_row["steps_per_second"] = float(optimizer_step / elapsed)
+        metric_row["examples_per_second"] = float(
+            (optimizer_step * config.loader.effective_batch_size) / elapsed
+        )
+        metric_row.update(
+            _cuda_memory_metric_row(torch_=torch, device=selected_device)
+        )
         if initial_metrics is None:
             initial_metrics = dict(metric_row)
         last_metrics = dict(metric_row)
@@ -424,6 +478,32 @@ def train_execution_run(
             tail_metrics.pop(0)
 
         _append_metrics_row(metrics_path, step=optimizer_step, metrics=metric_row)
+
+        if (
+            optimizer_step == 1
+            or optimizer_step % progress_log_every == 0
+            or optimizer_step == target_steps
+        ):
+            _emit_execution_job_log(
+                progress_log_path=progress_log_path,
+                run_id=config.name,
+                event="execution_training.progress",
+                step=optimizer_step,
+                message="execution-substrate training progress",
+                fields={
+                    "seed": seed,
+                    "step": optimizer_step,
+                    "max_steps": target_steps,
+                    "progress": round(optimizer_step / target_steps, 6),
+                    "elapsed_seconds": round(elapsed, 3),
+                    "eta_seconds": _estimate_eta_seconds(
+                        step=optimizer_step,
+                        max_steps=target_steps,
+                        elapsed_seconds=elapsed,
+                    ),
+                    "metrics": _json_safe_mapping(metric_row),
+                },
+            )
 
         if (
             collapse_diag_path is not None
@@ -442,12 +522,24 @@ def train_execution_run(
                 step=optimizer_step,
                 output_path=collapse_diag_path,
             )
+            _emit_execution_job_log(
+                progress_log_path=progress_log_path,
+                run_id=config.name,
+                event="execution_training.collapse_diagnostics",
+                step=optimizer_step,
+                message="execution-substrate collapse diagnostics emitted",
+                fields={
+                    "seed": seed,
+                    "step": optimizer_step,
+                    "diagnostics": _json_safe_mapping(last_collapse_report),
+                },
+            )
 
         if (
             optimizer_step % config.trainer.checkpoint_every_n_steps == 0
             or optimizer_step == target_steps
         ):
-            _write_periodic_checkpoint(
+            checkpoint_path = _write_periodic_checkpoint(
                 model=model,
                 optimizer=optimizer,
                 config=config,
@@ -456,6 +548,19 @@ def train_execution_run(
                 metrics=metric_row,
                 checkpoint_dir=checkpoint_dir,
                 torch_=torch,
+            )
+            _emit_execution_job_log(
+                progress_log_path=progress_log_path,
+                run_id=config.name,
+                event="execution_training.checkpoint",
+                step=optimizer_step,
+                message="execution-substrate checkpoint written",
+                fields={
+                    "seed": seed,
+                    "step": optimizer_step,
+                    "checkpoint_name": checkpoint_path.name,
+                    "metrics": _json_safe_mapping(metric_row),
+                },
             )
             last_checkpoint_metrics = dict(metric_row)
             metric_value = metric_row.get(config.trainer.keep_best_by_metric)
@@ -595,9 +700,30 @@ def train_execution_run(
     report_payload["tensorboard_export"] = tensorboard_metadata
     _write_json(report_payload, report_path)
 
+    _emit_execution_job_log(
+        progress_log_path=progress_log_path,
+        run_id=config.name,
+        event="execution_training.complete",
+        step=optimizer_step,
+        message="execution-substrate training completed",
+        fields={
+            "seed": seed,
+            "step_count": optimizer_step,
+            "wall_time_seconds": report_payload["wall_time_seconds"],
+            "final_metrics": _json_safe_mapping(final_metrics),
+            "checkpoint_metrics": _json_safe_mapping(last_checkpoint_metrics),
+            "tensorboard_export": tensorboard_metadata,
+        },
+    )
+
     # Build the final artifact manifest. All paths must live under
     # output_path for the manifest contract to hold.
-    artifact_files: list[Path] = [config_path, metrics_path, report_path]
+    artifact_files: list[Path] = [
+        config_path,
+        metrics_path,
+        report_path,
+        progress_log_path,
+    ]
     if collapse_diag_path is not None and collapse_diag_path.is_file():
         artifact_files.append(collapse_diag_path)
     for ckpt_path in retained_checkpoints:
@@ -668,7 +794,7 @@ def train_execution_run(
     )
     report_manifest_files = tuple(
         build_manifest_file(path, root=output_path)
-        for path in (report_path, *tensorboard_report_paths)
+        for path in (report_path, progress_log_path, *tensorboard_report_paths)
         if path.is_file() and _is_under(path, output_path)
     )
     training_manifest = TrainingRunManifest(
@@ -841,6 +967,81 @@ def _append_metrics_row(
     }
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+def _emit_execution_job_log(
+    *,
+    progress_log_path: Path,
+    run_id: str,
+    event: str,
+    step: int,
+    message: str,
+    fields: Mapping[str, Any],
+) -> None:
+    """Write one redacted event to the artifact log and stderr.
+
+    ``codelewm train --json`` reserves stdout for the final command
+    payload. HF Jobs captures stderr, so live progress goes there with
+    a stable prefix operators can filter for.
+    """
+
+    log_event = LogEvent(
+        event=event,
+        level="info",
+        run_id=run_id,
+        step=str(step),
+        message=message,
+        fields=fields,
+    )
+    written = write_log_event_jsonl(log_event, progress_log_path)
+    payload = written.to_dict()
+    print(
+        f"{_STDERR_EVENT_PREFIX}{json.dumps(payload, sort_keys=True, allow_nan=False)}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+
+def _estimate_eta_seconds(
+    *, step: int, max_steps: int, elapsed_seconds: float
+) -> float:
+    if step <= 0:
+        return 0.0
+    remaining_steps = max(max_steps - step, 0)
+    return round((elapsed_seconds / step) * remaining_steps, 3)
+
+
+def _cuda_memory_metric_row(*, torch_: Any, device: Any) -> dict[str, float]:
+    if getattr(device, "type", str(device)) != "cuda":
+        return {}
+    if not hasattr(torch_, "cuda") or not torch_.cuda.is_available():
+        return {}
+    return {
+        "cuda_max_memory_allocated_mb": float(
+            torch_.cuda.max_memory_allocated(device) / (1024 * 1024)
+        ),
+        "cuda_memory_allocated_mb": float(
+            torch_.cuda.memory_allocated(device) / (1024 * 1024)
+        ),
+    }
+
+
+def _json_safe_mapping(payload: Mapping[str, Any]) -> dict[str, Any]:
+    return {str(key): _json_safe_value(value) for key, value in payload.items()}
+
+
+def _json_safe_value(value: Any) -> Any:
+    if isinstance(value, bool) or value is None or isinstance(value, str):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, Mapping):
+        return _json_safe_mapping(value)
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_value(item) for item in value]
+    return str(value)
 
 
 def _emit_collapse_diagnostics(
