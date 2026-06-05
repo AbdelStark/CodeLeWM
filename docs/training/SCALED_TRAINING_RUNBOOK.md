@@ -241,13 +241,17 @@ uv run scripts/hf-job-event-status <job-id> [<job-id> ...]
 uv run scripts/hf-job-event-status --watch 300 <job-id> [<job-id> ...]
 ```
 
-For execution-substrate jobs, healthy training emits structured stderr lines
-with the prefix `CODELEWM_JOB_EVENT `. Filter for that prefix in `hf jobs logs`
-to see `execution_training.start`, `execution_training.progress`,
-`execution_training.collapse_diagnostics`, `execution_training.checkpoint`, and
-`execution_training.complete` events. The same stream is persisted after upload
-as `reports/job_progress.jsonl` in the run artifact. The same status parser can
-summarize a downloaded progress log without contacting HF:
+For execution-substrate jobs, the runtime container and trainer emit structured
+stderr lines with the prefix `CODELEWM_JOB_EVENT `. Filter for that prefix in
+`hf jobs logs` to see runtime lifecycle events such as `runtime.start`,
+`runtime.pack_download_start`, `runtime.pack_download_complete`,
+`runtime.command_start`, `runtime.upload_start`, and `runtime.upload_complete`,
+plus training events such as `execution_training.start`,
+`execution_training.progress`, `execution_training.collapse_diagnostics`,
+`execution_training.checkpoint`, and `execution_training.complete`. The training
+stream is also persisted after upload as `reports/job_progress.jsonl` in the run
+artifact. The same status parser can summarize a downloaded progress log without
+contacting HF:
 
 ```bash
 uv run scripts/hf-job-event-status --from-file <run-dir>/reports/job_progress.jsonl

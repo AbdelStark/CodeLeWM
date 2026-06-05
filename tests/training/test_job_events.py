@@ -77,6 +77,13 @@ class JobEventParserTest(unittest.TestCase):
         events = [
             _event("execution_training.start", {"seed": 1729, "max_steps": 12000}),
             _event(
+                "runtime.command_start",
+                {
+                    "command_name": "codelewm",
+                    "command_arg_count": 8,
+                },
+            ),
+            _event(
                 "execution_training.progress",
                 {
                     "seed": 1729,
@@ -126,7 +133,38 @@ class JobEventParserTest(unittest.TestCase):
             summary["latest_checkpoint"]["checkpoint_name"],
             "checkpoint_step_00004000.pt",
         )
+        self.assertEqual(summary["latest_runtime"]["event"], "runtime.command_start")
+        self.assertEqual(
+            summary["latest_runtime"]["fields"]["command_name"], "codelewm"
+        )
         self.assertEqual(summary["event_counts"]["execution_training.progress"], 1)
+
+    def test_summary_reports_latest_runtime_phase(self) -> None:
+        events = [
+            _event(
+                "runtime.pack_download_start",
+                {
+                    "pack_repo_id": "abdelstark/codelewm-execution-pack",
+                    "pack_revision": "v0.8.0-rc1",
+                    "pack_local_dir": "/workspace/pack",
+                },
+            ),
+            _event(
+                "runtime.pack_download_complete",
+                {
+                    "pack_local_dir": "/workspace/pack",
+                    "elapsed_seconds": 71,
+                },
+            ),
+        ]
+
+        summary = summarize_job_events(events, job_id="6a-test", job_stage="RUNNING")
+
+        self.assertEqual(
+            summary["latest_runtime"]["event"], "runtime.pack_download_complete"
+        )
+        self.assertEqual(summary["latest_runtime"]["phase"], "pack_download_complete")
+        self.assertEqual(summary["latest_runtime"]["fields"]["elapsed_seconds"], 71)
 
 
 class JobEventStatusScriptTest(unittest.TestCase):
@@ -216,6 +254,29 @@ class JobEventStatusScriptTest(unittest.TestCase):
 
         self.assertIn("step=200/12000", completed.stdout)
         self.assertIn("loss_p_pass_bce=0.53", completed.stdout)
+
+    def test_script_human_output_includes_runtime_phase(self) -> None:
+        event = _event(
+            "runtime.upload_start",
+            {
+                "upload_path_in_repo": "codelewm-v0-8-short-seed-42",
+                "elapsed_seconds": 10,
+            },
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "runtime.jsonl"
+            path.write_text(json.dumps(event, sort_keys=True), encoding="utf-8")
+
+            completed = subprocess.run(
+                [sys.executable, str(STATUS_SCRIPT), "--from-file", str(path)],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+        self.assertIn("runtime.upload_start", completed.stdout)
+        self.assertIn("upload_path_in_repo=codelewm-v0-8-short-seed-42", completed.stdout)
 
     def test_script_accepts_retry_flags_for_saved_progress_jsonl(self) -> None:
         event = _event(

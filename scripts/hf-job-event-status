@@ -252,6 +252,10 @@ def _render_human(payload: dict[str, Any]) -> str:
             header = f"{header} {name}"
         lines.append(header)
 
+        runtime = summary.get("latest_runtime")
+        if isinstance(runtime, dict):
+            lines.append("  " + _runtime_line(runtime))
+
         progress = summary.get("latest_progress")
         if isinstance(progress, dict):
             lines.append("  " + _progress_line(progress))
@@ -304,6 +308,28 @@ def _progress_line(progress: dict[str, Any]) -> str:
         f"progress: seed={seed} step={step}/{max_steps} "
         f"percent={percent}% elapsed={elapsed} eta={eta}"
     )
+
+
+def _runtime_line(runtime: dict[str, Any]) -> str:
+    fields = runtime.get("fields")
+    if not isinstance(fields, dict):
+        fields = {}
+    parts = [f"runtime: event={runtime.get('event')}"]
+    for key in (
+        "reason",
+        "command_name",
+        "exit_code",
+        "elapsed_seconds",
+        "pack_revision",
+        "upload_path_in_repo",
+    ):
+        if key not in fields or fields[key] is None:
+            continue
+        value = fields[key]
+        if key == "elapsed_seconds":
+            value = _format_seconds(value)
+        parts.append(f"{key}={value}")
+    return " ".join(parts)
 
 
 def _metrics_line(metrics: dict[str, Any]) -> str:

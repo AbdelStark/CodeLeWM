@@ -77,6 +77,7 @@ def summarize_job_events(
     latest_collapse = _latest_collapse(event_list, collapse_threshold)
     latest_checkpoint = _latest_fields(event_list, "execution_training.checkpoint")
     completion = _latest_fields(event_list, "execution_training.complete")
+    latest_runtime = _latest_runtime(event_list)
 
     summary = {
         "schema_version": JOB_EVENT_SUMMARY_SCHEMA_VERSION,
@@ -95,6 +96,7 @@ def summarize_job_events(
         "latest_progress": latest_progress,
         "latest_collapse": latest_collapse,
         "latest_checkpoint": latest_checkpoint,
+        "latest_runtime": latest_runtime,
         "completion": completion,
         "health": {
             "has_events": bool(event_list),
@@ -143,6 +145,24 @@ def _latest_progress(events: list[dict[str, Any]]) -> dict[str, Any] | None:
         ),
     }
     return _json_safe_mapping(payload)
+
+
+def _latest_runtime(events: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for event in reversed(events):
+        name = _event_name(event)
+        if name is None or not name.startswith("runtime."):
+            continue
+        fields = event.get("fields")
+        if not isinstance(fields, Mapping):
+            fields = {}
+        return _json_safe_mapping(
+            {
+                "event": name,
+                "phase": name.removeprefix("runtime."),
+                "fields": dict(fields),
+            }
+        )
+    return None
 
 
 def _latest_collapse(
