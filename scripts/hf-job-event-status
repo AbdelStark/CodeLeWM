@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""Summarize CodeLeWM execution-training HF Jobs event logs."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
+from codelewm.training.job_events import (  # noqa: E402
+    JOB_EVENT_SUMMARY_SCHEMA_VERSION,
+    parse_job_event_lines,
+    summarize_job_events,
+)
+
+
+STATUS_SCHEMA_VERSION = "codelewm.hf_job_event_status.v1"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("job_id", nargs="*", help="HF Job IDs to inspect")
+    parser.add_argument(
+        "--from-file",
+        type=Path,
+        action="append",
+        default=[],
+        help="read events from a saved HF log or reports/job_progress.jsonl",
+    )
+    parser.add_argument(
+        "--tail",
+        type=int,
+        default=1000,
+        help="number of HF log lines to request per live job",
+    )
+    parser.add_argument(
+        "--collapse-threshold",
+        type=float,
+        default=0.20,
+        help="minimum z_pred effective-rank ratio for the no-collapse gate",
+    )
+    parser.add_argument(
+        "--no-status",
+        action="store_true",
+        help="skip hf jobs ps status enrichment",
+    )
+    parser.add_argument(
+        "--watch",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help="repeat the status readout at this interval",
+    )
+    parser.add_argument("--json", action="store_true", help="emit JSON")
+    args = parser.parse_args(argv)
+
+    if not args.job_id and not args.from_file:
+        parser.error("provide at least one job ID or --from-file path")
+    if args.tail <= 0:
+        parser.error("--tail must be positive")
+    if args.watch < 0:
+        parser.error("--watch must be non-negative")
+
+    exit_code = 0
+    while True:
+        payload, iteration_code = _read_once(args)
+        exit_code = max(exit_code, iteration_code)
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(_render_human(payload))
+        if args.watch <= 0:
+            return exit_code
+        time.sleep(args.watch)
+
+
+def _read_once(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    statuses = {} if args.no_status else _load_hf_statuses()
+    summaries: list[dict[str, Any]] = []
+    exit_code = 0
+
+    for job_id in args.job_id:
+        status = statuses.get(job_id, {})
+        lines, error = _load_hf_log_lines(job_id, tail=args.tail)
+        events = parse_job_event_lines(lines)
+        summary = summarize_job_events(
+            events,
+            job_id=job_id,
+            job_stage=_job_stage(status),
+            job_name=_job_name(status),
+            job_created_at=_job_created_at(status),
+            job_message=_job_message(status),
+            collapse_threshold=args.collapse_threshold,
+        )
+        if error is not None:
+            summary["error"] = error
+            exit_code = 1
+        summaries.append(summary)
+
+    for path in args.from_file:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            events = parse_job_event_lines(lines)
+            summary = summarize_job_events(
+                events,
+                job_id=path.stem,
+                job_name=path.as_posix(),
+                collapse_threshold=args.collapse_threshold,
+            )
+        except OSError as exc:
+            summary = summarize_job_events(
+                (),
+                job_id=path.stem,
+                job_name=path.as_posix(),
+                collapse_threshold=args.collapse_threshold,
+            )
+            summary["error"] = {"message": str(exc)}
+            exit_code = 1
+        summaries.append(summary)
+
+    payload = {
+        "schema_version": STATUS_SCHEMA_VERSION,
+        "summary_schema_version": JOB_EVENT_SUMMARY_SCHEMA_VERSION,
+        "generated_at": _utc_now(),
+        "tail": args.tail,
+        "summaries": summaries,
+    }
+    return payload, exit_code
+
+
+def _load_hf_statuses() -> dict[str, dict[str, Any]]:
+    try:
+        completed = subprocess.run(
+            ["hf", "jobs", "ps", "--all", "--format", "json"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return {}
+    try:
+        rows = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(rows, list):
+        return {}
+    return {
+        str(row["id"]): row
+        for row in rows
+        if isinstance(row, dict) and row.get("id") is not None
+    }
+
+
+def _load_hf_log_lines(
+    job_id: str, *, tail: int
+) -> tuple[list[str], dict[str, Any] | None]:
+    command = ["hf", "jobs", "logs", "--tail", str(tail), job_id]
+    try:
+        completed = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return completed.stdout.splitlines(), None
+    except FileNotFoundError as exc:
+        return [], {"command": command, "message": str(exc)}
+    except subprocess.CalledProcessError as exc:
+        return (
+            exc.stdout.splitlines() if exc.stdout else [],
+            {
+                "command": command,
+                "returncode": exc.returncode,
+                "stderr_tail": (exc.stderr or "").splitlines()[-20:],
+            },
+        )
+
+
+def _render_human(payload: dict[str, Any]) -> str:
+    lines = [
+        f"generated_at={payload.get('generated_at')} tail={payload.get('tail')}"
+    ]
+    for summary in payload.get("summaries", []):
+        if not isinstance(summary, dict):
+            continue
+        job = summary.get("job") if isinstance(summary.get("job"), dict) else {}
+        job_id = job.get("id") or "unknown"
+        stage = job.get("stage") or "stage=unknown"
+        name = job.get("name") or ""
+        header = f"{job_id} {stage}"
+        if name:
+            header = f"{header} {name}"
+        lines.append(header)
+
+        progress = summary.get("latest_progress")
+        if isinstance(progress, dict):
+            lines.append("  " + _progress_line(progress))
+            metrics = progress.get("metrics")
+            if isinstance(metrics, dict):
+                lines.append("  " + _metrics_line(metrics))
+        else:
+            lines.append("  no progress event found")
+
+        collapse = summary.get("latest_collapse")
+        if isinstance(collapse, dict):
+            lines.append("  " + _collapse_line(collapse))
+        else:
+            threshold = summary.get("health", {}).get("collapse_threshold")
+            lines.append(f"  collapse: no diagnostic yet threshold={threshold}")
+
+        checkpoint = summary.get("latest_checkpoint")
+        if isinstance(checkpoint, dict):
+            step = checkpoint.get("step")
+            name = checkpoint.get("checkpoint_name")
+            lines.append(f"  checkpoint: step={step} file={name}")
+        else:
+            lines.append("  checkpoint: none yet")
+
+        completion = summary.get("completion")
+        if isinstance(completion, dict):
+            lines.append(
+                "  complete: "
+                f"step_count={completion.get('step_count')} "
+                f"wall_time={_format_seconds(completion.get('wall_time_seconds'))}"
+            )
+
+        counts = summary.get("event_counts")
+        if isinstance(counts, dict):
+            count_bits = [f"{key}={counts[key]}" for key in sorted(counts)]
+            lines.append("  events: " + " ".join(count_bits))
+        if summary.get("error"):
+            lines.append(f"  error: {summary['error']}")
+    return "\n".join(lines)
+
+
+def _progress_line(progress: dict[str, Any]) -> str:
+    step = progress.get("step")
+    max_steps = progress.get("max_steps")
+    percent = _format_float(progress.get("progress_percent"), digits=2)
+    elapsed = _format_seconds(progress.get("elapsed_seconds"))
+    eta = _format_seconds(progress.get("eta_seconds"))
+    seed = progress.get("seed")
+    return (
+        f"progress: seed={seed} step={step}/{max_steps} "
+        f"percent={percent}% elapsed={elapsed} eta={eta}"
+    )
+
+
+def _metrics_line(metrics: dict[str, Any]) -> str:
+    keys = (
+        "loss_total",
+        "loss_p_pass_bce",
+        "loss_prediction_mse",
+        "margin_no_action_minus_pred",
+        "lr",
+        "steps_per_second",
+        "examples_per_second",
+        "cuda_memory_allocated_mb",
+        "cuda_max_memory_allocated_mb",
+    )
+    parts = [
+        f"{key}={_format_float(metrics[key])}"
+        for key in keys
+        if key in metrics and metrics[key] is not None
+    ]
+    return "metrics: " + " ".join(parts)
+
+
+def _collapse_line(collapse: dict[str, Any]) -> str:
+    passed = collapse.get("passed")
+    state = "ok" if passed is True else "fail" if passed is False else "unknown"
+    return (
+        "collapse: "
+        f"{state} step={collapse.get('step')} "
+        "z_pred_effective_rank_ratio="
+        f"{_format_float(collapse.get('z_pred_effective_rank_ratio'), digits=4)} "
+        f"threshold={collapse.get('threshold')}"
+    )
+
+
+def _job_stage(status: dict[str, Any]) -> str | None:
+    nested = status.get("status")
+    if isinstance(nested, dict) and isinstance(nested.get("stage"), str):
+        return nested["stage"]
+    stage = status.get("stage")
+    return stage if isinstance(stage, str) else None
+
+
+def _job_name(status: dict[str, Any]) -> str | None:
+    environment = status.get("environment")
+    if isinstance(environment, dict):
+        run_name = environment.get("CODELEWM_HF_RUN_NAME")
+        if isinstance(run_name, str):
+            return run_name
+    name = status.get("name")
+    return name if isinstance(name, str) else None
+
+
+def _job_created_at(status: dict[str, Any]) -> str | None:
+    created_at = status.get("created_at")
+    return created_at if isinstance(created_at, str) else None
+
+
+def _job_message(status: dict[str, Any]) -> str | None:
+    nested = status.get("status")
+    if isinstance(nested, dict) and isinstance(nested.get("message"), str):
+        return nested["message"]
+    message = status.get("message")
+    return message if isinstance(message, str) else None
+
+
+def _format_float(value: Any, *, digits: int = 6) -> str:
+    if not isinstance(value, int | float):
+        return "n/a"
+    return f"{float(value):.{digits}g}"
+
+
+def _format_seconds(value: Any) -> str:
+    if not isinstance(value, int | float):
+        return "n/a"
+    seconds = int(round(float(value)))
+    if seconds < 0:
+        return "n/a"
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"{hours}h{minutes:02d}m{seconds:02d}s"
+    if minutes:
+        return f"{minutes}m{seconds:02d}s"
+    return f"{seconds}s"
+
+
+def _utc_now() -> str:
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z")
+    )
+
+
+if __name__ == "__main__":
+    sys.exit(main())

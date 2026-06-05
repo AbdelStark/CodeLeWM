@@ -40,6 +40,7 @@ class ScaledTrainingRunbookTest(unittest.TestCase):
             "codelewm manifest verify",
             "CODELEWM_HF_JOBS_TIMEOUT=24h",
             "hf jobs inspect <job-id>",
+            "uv run scripts/hf-job-event-status <job-id>",
             "hf download",
             "bigcode/commitpackft",
             "data/python/data.jsonl",

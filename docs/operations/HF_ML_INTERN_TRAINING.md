@@ -214,10 +214,19 @@ hf jobs logs <job-id>
 hf jobs stats <job-id>
 ```
 
+Use the CodeLeWM event parser for routine health checks:
+
+```bash
+uv run scripts/hf-job-event-status <job-id> [<job-id> ...]
+uv run scripts/hf-job-event-status --watch 300 <job-id> [<job-id> ...]
+```
+
 For execution-substrate jobs, `hf jobs logs <job-id>` should show structured
 stderr events prefixed with `CODELEWM_JOB_EVENT `. Those events include start,
 progress, collapse-diagnostics, checkpoint, and completion records, and are
 also persisted in the uploaded run artifact as `reports/job_progress.jsonl`.
+After download, run the same parser against that file with
+`uv run scripts/hf-job-event-status --from-file <run-dir>/reports/job_progress.jsonl`.
 
 ## Remote Scaled Training And Publication
 
