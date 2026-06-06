@@ -176,6 +176,22 @@ class ExecutionEvalCliTest(unittest.TestCase):
                     self.assertIn(case.report_path.name, {path.name for path in checked_files})
                     self.assertEqual(verify.returncode, 0, verify.stderr)
                     self.assertTrue(verify_payload["ok"])
+                    if case.name == "execution-surprise":
+                        decoy_report = json.loads(
+                            (out_dir / "reports" / "execution_decoy_report.json")
+                            .read_text(encoding="utf-8")
+                        )
+                        self.assertIn("pair_count_summary", decoy_report)
+                        self.assertEqual(
+                            decoy_report["pair_count_summary"]["schema_version"],
+                            "codelewm.eval.execution_decoy_coverage_summary.v1",
+                        )
+                        gates = report["metadata"]["execution_surprise_claim_gates"]
+                        self.assertIn("coverage_blockers", gates)
+                        self.assertIn(
+                            "scorable_pair_count_by_category",
+                            gates["semantic_decoy_category_counts"],
+                        )
 
     def test_execution_eval_loader_accepts_pass_head_checkpoint(self) -> None:
         import torch

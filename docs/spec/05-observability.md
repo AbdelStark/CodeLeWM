@@ -141,6 +141,15 @@ by category, record per-example true ranks, and include category caveats in
 metadata when the held-out data cannot support random, same-file, mutation, or
 action-cluster decoys.
 
+Execution-surprise decoy reports include
+`codelewm.eval.execution_decoy_coverage_summary.v1` under
+`reports/execution_decoy_report.json`. The summary records generated,
+pack-level, candidate, scorable, missing-query, and missing-decoy pair counts by
+category before score gates are evaluated. Semantic same-problem categories
+that fall below configured scorable-pair minimums emit typed
+`semantic_decoy_pair_count_blocker` entries and block the corresponding score
+gate.
+
 Scorer/reranker quality reports use
 `schema_version=codelewm.harness.scorer_quality_report.v1` and
 `artifact_kind=score_report`. They store the labeled candidate rows used for

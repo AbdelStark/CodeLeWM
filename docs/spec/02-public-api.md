@@ -338,7 +338,10 @@ codelewm eval execution-surprise \
 It writes `reports/surprise_report.json` with schema
 `codelewm.eval.surprise_report.v1` and
 `reports/execution_decoy_report.json` with deterministic decoy-generation
-counts. The surprise report metadata includes
+counts plus `codelewm.eval.execution_decoy_coverage_summary.v1`, which records
+generated, pack-level, candidate, scorable, missing-query, and missing-decoy
+pair counts by category before score gates are evaluated. The surprise report
+metadata includes
 `codelewm.eval.execution_surprise_claim_gates.v1`, which records separate
 score gates and pair-count gates for the execution-specific decoy categories.
 The command emits `codelewm.eval.execution_surprise_run.v1` on JSON
@@ -347,7 +350,11 @@ decoys use same-problem/different-submission and same-code/different-input
 records when the pack contains output-distinguishing candidates. Pass
 `--semantic-decoy-manifest <manifest.json>` to consume a prebuilt strengthened
 semantic decoy pack for same-problem categories instead of relying only on
-on-the-fly pair generation.
+on-the-fly pair generation. If same-problem/different-submission or
+same-code/different-input categories do not meet their configured scorable pair
+minimums after record-id alignment with the selected execution pack, score
+gates for those categories are marked `blocked_by_pair_count` with a typed
+`semantic_decoy_pair_count_blocker`.
 
 `codelewm eval semantic-decoy-pack` builds a manifest-backed same-problem
 semantic decoy pack from an execution pack:
@@ -369,10 +376,11 @@ and writes `semantic_decoy_pairs.jsonl` with schema
 `reports/secret_scan_report.json`, and a parent-linked
 `codelewm.artifact_manifest.v1` with artifact kind `downstream_benchmark`.
 Rows store record IDs, category labels, rationales, output fingerprints,
-split/leakage checks, and source/license summaries; they do not store raw code
-or execute candidate code. The pack has its own count gate, but it does not
-support a semantic model claim until `execution-surprise` reruns over it and
-passes the score gates.
+split/leakage checks, same-source-dataset/problem alignment, source/license
+summaries, and record schema versions; they do not store raw code or execute
+candidate code. The pack has its own count gate, but it does not support a
+semantic model claim until `execution-surprise` reruns over it, aligns the pack
+to the scored execution rows, and passes the category count and score gates.
 
 `codelewm eval execution-probe` is the v0.6 frozen-latent probe path:
 

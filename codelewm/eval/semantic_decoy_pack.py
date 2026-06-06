@@ -218,6 +218,12 @@ def build_semantic_decoy_pack(
         ),
         "distinct_problem_count": distinct_problem_count,
         "eligible_query_count": sum(report.eligible_query_count for report in generator_reports),
+        "benchmark_counts": dict(
+            sorted(Counter(str(row.get("source_dataset", "unknown")) for row in selected).items())
+        ),
+        "record_schema_versions": dict(
+            sorted(Counter(str(row.get("schema_version", "unknown")) for row in selected).items())
+        ),
         "generator_reports": [report.as_dict() for report in generator_reports],
         "filtering_summary": {
             "split_policy": split_summary,
@@ -269,6 +275,12 @@ def build_semantic_decoy_pack(
             "summary_path": "reports/semantic_decoy_summary.json",
             "category": "semantic_same_problem",
             "categories": [report.category for report in generator_reports],
+            "benchmark_counts": dict(
+                sorted(Counter(str(row.get("source_dataset", "unknown")) for row in selected).items())
+            ),
+            "record_schema_versions": dict(
+                sorted(Counter(str(row.get("schema_version", "unknown")) for row in selected).items())
+            ),
             "pair_count": len(pair_rows),
             "pair_count_by_category": dict(
                 sorted(Counter(str(row["category"]) for row in pair_rows).items())
@@ -455,6 +467,9 @@ def _pair_rows(
         if query.get("split") == "train" or decoy.get("split") == "train":
             skipped["train_split_leak"] += 1
             continue
+        if query.get("source_dataset") != decoy.get("source_dataset"):
+            skipped["source_dataset_mismatch"] += 1
+            continue
         if query.get("source_problem_id") != decoy.get("source_problem_id"):
             skipped["problem_mismatch"] += 1
             continue
@@ -491,9 +506,14 @@ def _pair_rows(
                 "decoy_id": _pair_id(pair.category, pair.query_record_id, pair.decoy_record_id),
                 "category": pair.category,
                 "control_category": "semantic_same_problem",
+                "source_dataset": str(query["source_dataset"]),
                 "source_problem_id": str(query["source_problem_id"]),
                 "query_record_id": pair.query_record_id,
                 "decoy_record_id": pair.decoy_record_id,
+                "query_record_schema_version": str(query.get("schema_version", "unknown")),
+                "decoy_record_schema_version": str(decoy.get("schema_version", "unknown")),
+                "query_source_dataset": str(query["source_dataset"]),
+                "decoy_source_dataset": str(decoy["source_dataset"]),
                 "query_source_submission_id": str(query["source_submission_id"]),
                 "decoy_source_submission_id": str(decoy["source_submission_id"]),
                 "query_input_id": str(query["input_id"]),
