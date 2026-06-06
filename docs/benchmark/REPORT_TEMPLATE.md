@@ -126,11 +126,29 @@ artifacts, not local-only scratch runs.
 | edit_size_bucket | | | | | `<supported|unsupported|not_evaluable>` |
 | action_cluster | | | | | `<supported|unsupported|not_evaluable>` |
 | source_family | | | | | `<supported|unsupported|not_evaluable>` |
+| passed | | | | | `<supported|unsupported|not_evaluable>` |
+| output_magnitude_bucket | | | | | `<supported|unsupported|not_evaluable>` |
 
 Per-dimension associations are diagnostic only. Do not name semantic axes unless
 the report shows stable dimensions across seeds and splits and records
 `dimension_claims_allowed=true`. State the report-level
 `semantic_structure_status` exactly as emitted.
+
+For execution probes, attach
+`reports/execution_probe_label_coverage.json` with schema
+`codelewm.eval.execution_probe_label_coverage.v1` before quoting accuracy. A
+blocked `passed` or `output_magnitude_bucket` target means the split/data
+coverage is insufficient; it is not a model-quality result.
+
+| Seed | Target | Coverage status | Probe test accuracy | Best control test accuracy | Lift | Claim-boundary status |
+| ---- | ------ | --------------- | ------------------: | -------------------------: | ---: | --------------------- |
+| `<seed>` | passed | | | | | |
+| `<seed>` | output_magnitude_bucket | | | | | |
+
+Multi-seed summaries should use
+`codelewm.eval.execution_probe_representation_gate_table.v1` or the equivalent
+fields from each seed report to keep pass/fail, magnitude, controls, and
+claim-boundary status separate.
 
 ### Slices
 

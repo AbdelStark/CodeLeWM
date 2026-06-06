@@ -47,6 +47,7 @@ from .crash_prediction import (
     evaluate_crash_prediction,
 )
 from .execution_probe_targets import EXECUTION_PROBE_TARGETS, extract_labels
+from .execution_probe_coverage import build_execution_probe_label_coverage
 from .execution_surprise_decoys import (
     DecoyGenerationReport,
     DecoyPair,
@@ -58,6 +59,7 @@ from .latent_probe import (
     LATENT_PROBE_VIEWS,
     LatentProbeConfig,
     LatentProbeError,
+    LatentProbeReport,
     LatentProbeRow,
     build_latent_probe_report,
     write_latent_probe_report,
@@ -536,7 +538,16 @@ def run_execution_probe_evaluation(
     selected_targets = _parse_targets(targets)
     context = _prepare_context(checkpoint=checkpoint, pack=pack, device=device)
     out_dir = Path(out).resolve()
-    _reject_existing(out_dir, ("config.json", "reports/latent_probe_report.json", "manifest.json"), overwrite=overwrite)
+    _reject_existing(
+        out_dir,
+        (
+            "config.json",
+            "reports/latent_probe_report.json",
+            "reports/execution_probe_label_coverage.json",
+            "manifest.json",
+        ),
+        overwrite=overwrite,
+    )
     rows = _select_rows_per_split(
         context.rows,
         max_examples_per_split=max_examples_per_split,
@@ -544,6 +555,66 @@ def run_execution_probe_evaluation(
     )
     if not rows:
         raise LatentProbeError("execution probe requires at least one packed row")
+    probe_config = LatentProbeConfig(
+        bootstrap_samples=bootstrap_samples,
+        seed=seed,
+        targets=tuple(selected_targets),
+        views=LATENT_PROBE_VIEWS,
+    )
+    coverage_report = build_execution_probe_label_coverage(
+        [row.record for row in rows],
+        targets=selected_targets,
+        min_train_classes=probe_config.min_train_classes,
+        min_eval_rows=probe_config.min_eval_rows,
+    )
+    probe_rows = _execution_probe_rows(rows, selected_targets=selected_targets)
+    config_payload = {
+        "schema_version": EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION,
+        "checkpoint": _display_path(context.checkpoint_path),
+        "pack": _display_path(context.pack_paths.root),
+        "out": _display_path(out_dir),
+        "device": str(context.device),
+        "max_examples_per_split": max_examples_per_split,
+        "bootstrap_samples": bootstrap_samples,
+        "targets": list(selected_targets),
+        "seed": seed,
+    }
+    config_path = out_dir / "config.json"
+    report_path = out_dir / "reports" / "latent_probe_report.json"
+    coverage_path = out_dir / "reports" / "execution_probe_label_coverage.json"
+    if not bool(coverage_report["coverage_ready"]):
+        report = _blocked_execution_probe_report(
+            rows=probe_rows,
+            config=probe_config,
+            coverage_report=coverage_report,
+            metadata=_base_report_metadata(context, checkpoint_path=context.checkpoint_path),
+        )
+        _write_json(config_payload, config_path)
+        _write_json(coverage_report, coverage_path)
+        write_latent_probe_report(report, report_path)
+        return _write_eval_artifact(
+            out_dir=out_dir,
+            files=(config_path, report_path, coverage_path),
+            command=command,
+            config=config_payload,
+            context=context,
+            result_schema_version=EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION,
+            report_path="reports/latent_probe_report.json",
+            report_schema_version=report.schema_version,
+            metadata={
+                "row_count": report.row_count,
+                "split_counts": dict(report.split_counts),
+                "claim_boundary": dict(report.claim_boundary),
+                "targets": list(selected_targets),
+                "probe_label_coverage_report_path": (
+                    "reports/execution_probe_label_coverage.json"
+                ),
+                "probe_label_coverage_ready": False,
+                "probe_label_coverage_blockers": list(coverage_report["blockers"]),
+            },
+            source_git_sha=source_git_sha,
+            created_at=created_at,
+        )
     z_before, z_pred_after, z_after = _embed_rows(
         rows,
         model=context.model,
@@ -558,7 +629,6 @@ def run_execution_probe_evaluation(
         device=context.device,
         seed=seed,
     )
-    probe_rows = _execution_probe_rows(rows, selected_targets=selected_targets)
     z_pred_np = _to_numpy(z_pred_after)
     report = build_latent_probe_report(
         probe_rows,
@@ -572,34 +642,20 @@ def run_execution_probe_evaluation(
             "no_action": _to_numpy(z_before),
             "shuffled_action": _to_numpy(shuffled),
         },
-        config=LatentProbeConfig(
-            bootstrap_samples=bootstrap_samples,
-            seed=seed,
-            targets=tuple(selected_targets),
-            views=LATENT_PROBE_VIEWS,
-        ),
+        config=probe_config,
         metadata=_base_report_metadata(context, checkpoint_path=context.checkpoint_path)
-        | {"probe_target_schema_version": "codelewm.eval.execution_probe_target.v1"},
+        | {
+            "probe_target_schema_version": "codelewm.eval.execution_probe_target.v1",
+            "probe_label_coverage": coverage_report,
+        },
     )
 
-    config_payload = {
-        "schema_version": EXECUTION_PROBE_EVAL_RUN_SCHEMA_VERSION,
-        "checkpoint": _display_path(context.checkpoint_path),
-        "pack": _display_path(context.pack_paths.root),
-        "out": _display_path(out_dir),
-        "device": str(context.device),
-        "max_examples_per_split": max_examples_per_split,
-        "bootstrap_samples": bootstrap_samples,
-        "targets": list(selected_targets),
-        "seed": seed,
-    }
-    config_path = out_dir / "config.json"
-    report_path = out_dir / "reports" / "latent_probe_report.json"
     _write_json(config_payload, config_path)
+    _write_json(coverage_report, coverage_path)
     write_latent_probe_report(report, report_path)
     return _write_eval_artifact(
         out_dir=out_dir,
-        files=(config_path, report_path),
+        files=(config_path, report_path, coverage_path),
         command=command,
         config=config_payload,
         context=context,
@@ -611,6 +667,10 @@ def run_execution_probe_evaluation(
             "split_counts": dict(report.split_counts),
             "claim_boundary": dict(report.claim_boundary),
             "targets": list(selected_targets),
+            "probe_label_coverage_report_path": (
+                "reports/execution_probe_label_coverage.json"
+            ),
+            "probe_label_coverage_ready": True,
         },
         source_git_sha=source_git_sha,
         created_at=created_at,
@@ -1385,6 +1445,79 @@ def _crash_samples(
             },
         )
         for index, row in enumerate(rows)
+    )
+
+
+def _blocked_execution_probe_report(
+    *,
+    rows: Sequence[LatentProbeRow],
+    config: LatentProbeConfig,
+    coverage_report: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> LatentProbeReport:
+    target_coverage = coverage_report.get("target_coverage")
+    if not isinstance(target_coverage, Mapping):
+        target_coverage = {}
+    target_reports: dict[str, Any] = {}
+    axis_diagnostics: dict[str, Any] = {}
+    for target in config.targets:
+        coverage = target_coverage.get(target)
+        if not isinstance(coverage, Mapping):
+            coverage = {}
+        blockers = [
+            dict(blocker)
+            for blocker in coverage.get("blockers", ())
+            if isinstance(blocker, Mapping)
+        ]
+        reason = (
+            ";".join(str(blocker.get("reason")) for blocker in blockers)
+            if blockers
+            else "probe_label_coverage_preflight_blocked"
+        )
+        target_reports[target] = {
+            "available": False,
+            "label_counts": dict(coverage.get("split_label_counts", {}))
+            if isinstance(coverage.get("split_label_counts"), Mapping)
+            else {},
+            "split_counts": dict(coverage.get("split_applicable_counts", {}))
+            if isinstance(coverage.get("split_applicable_counts"), Mapping)
+            else {},
+            "views": {},
+            "baselines": {},
+            "unavailable_reason": reason,
+            "coverage_status": coverage.get("status", "blocked"),
+            "coverage_blockers": blockers,
+        }
+        axis_diagnostics[target] = {
+            "available": False,
+            "dimension_claims_allowed": False,
+            "claim_block_reason": reason,
+            "views": {},
+        }
+    claim_boundary = {
+        "positive_representation_claim_allowed": False,
+        "semantic_structure_status": "not_evaluable",
+        "reason": "probe_label_coverage_preflight_blocked",
+        "available_target_count": 0,
+        "dimension_claims_allowed": False,
+        "probe_label_coverage_ready": False,
+        "probe_label_coverage_blockers": list(coverage_report.get("blockers", ())),
+    }
+    return LatentProbeReport(
+        row_count=len(rows),
+        split_counts={
+            split: sum(1 for row in rows if row.split == split)
+            for split in ("train", "val", "test")
+        },
+        target_reports=target_reports,
+        axis_diagnostics=axis_diagnostics,
+        claim_boundary=claim_boundary,
+        config=config,
+        metadata=dict(metadata)
+        | {
+            "probe_target_schema_version": "codelewm.eval.execution_probe_target.v1",
+            "probe_label_coverage": dict(coverage_report),
+        },
     )
 
 

@@ -209,6 +209,13 @@ from .execution_probe_targets import (
     extract_labels,
     label_record,
 )
+from .execution_probe_coverage import (
+    EXECUTION_PROBE_LABEL_BLOCKER_SCHEMA_VERSION,
+    EXECUTION_PROBE_LABEL_COVERAGE_SCHEMA_VERSION,
+    EXECUTION_PROBE_REPRESENTATION_GATE_TABLE_SCHEMA_VERSION,
+    build_execution_probe_label_coverage,
+    build_execution_probe_representation_gate_table,
+)
 from .execution_surprise_decoys import (
     EXECUTION_SURPRISE_DECOY_CATEGORIES,
     EXECUTION_SURPRISE_DECOY_SCHEMA_VERSION,
@@ -333,9 +340,14 @@ __all__ = [
     "load_semantic_decoy_pack",
     "ACTION_ABLATION_RUN_SCHEMA_VERSION",
     "EXECUTION_PROBE_TARGETS",
+    "EXECUTION_PROBE_LABEL_BLOCKER_SCHEMA_VERSION",
+    "EXECUTION_PROBE_LABEL_COVERAGE_SCHEMA_VERSION",
+    "EXECUTION_PROBE_REPRESENTATION_GATE_TABLE_SCHEMA_VERSION",
     "EXECUTION_PROBE_TARGET_SCHEMA_VERSION",
     "ExecutionProbeTargetError",
     "LabelExtraction",
+    "build_execution_probe_label_coverage",
+    "build_execution_probe_representation_gate_table",
     "extract_labels",
     "label_record",
     "LATENT_PROBE_BASELINES",

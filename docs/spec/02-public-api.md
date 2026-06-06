@@ -394,13 +394,21 @@ codelewm eval execution-probe \
 ```
 
 It writes `reports/latent_probe_report.json` with schema
-`codelewm.eval.latent_probe_report.v1` and emits
+`codelewm.eval.latent_probe_report.v1`,
+`reports/execution_probe_label_coverage.json` with schema
+`codelewm.eval.execution_probe_label_coverage.v1`, and emits
 `codelewm.eval.execution_probe_run.v1` on JSON stdout. The execution target
 set includes `output_type`, `will_raise`, `output_magnitude_bucket`,
 `output_length_bucket`, `arithmetic_vs_string_vs_collection`, `judge_verdict`,
 and `passed`. The `passed` target is applicable only to v0.8 pass/fail
 execution-pack records that carry an explicit boolean completion-level
 correctness label; legacy rows without that field are excluded for that target.
+The label-coverage preflight runs before latent extraction. If any requested
+target lacks at least two train classes or has no val/test labels, the command
+writes a not-evaluable latent-probe report, records typed
+`codelewm.eval.execution_probe_label_blocker.v1` reasons in the coverage report
+and artifact metadata, and does not interpret probe accuracy. Probe
+availability is a data/split property, not model-quality evidence.
 Positive semantic-axis claims remain gated by the existing latent-probe report
 claim boundary.
 

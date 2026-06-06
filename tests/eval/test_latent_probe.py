@@ -110,6 +110,56 @@ class LatentProbeReportTest(unittest.TestCase):
         self.assertIn("fewer than two train labels", report.target_reports["edit_class"]["unavailable_reason"])
         self.assertEqual(report.claim_boundary["semantic_structure_status"], "not_evaluable")
 
+    def test_boolean_false_labels_are_not_treated_as_missing(self) -> None:
+        rows = (
+            _passed_row("train-a", "train", True),
+            _passed_row("train-b", "train", False),
+            _passed_row("val-a", "val", True),
+            _passed_row("val-b", "val", False),
+            _passed_row("test-a", "test", True),
+            _passed_row("test-b", "test", False),
+        )
+        matrix = np.asarray(
+            [
+                [1.0, 0.0],
+                [-1.0, 0.0],
+                [1.0, 0.1],
+                [-1.0, 0.1],
+                [1.0, 0.2],
+                [-1.0, 0.2],
+            ],
+            dtype=np.float64,
+        )
+
+        report = build_latent_probe_report(
+            rows,
+            embeddings={view: matrix for view in LATENT_PROBE_VIEWS},
+            baselines={
+                "random_latent": matrix,
+                "no_action": np.zeros_like(matrix),
+                "shuffled_action": np.roll(matrix, shift=1, axis=0),
+            },
+            config=LatentProbeConfig(
+                bootstrap_samples=0,
+                targets=("passed",),
+            ),
+        )
+
+        passed_report = report.target_reports["passed"]
+        self.assertTrue(passed_report["available"])
+        self.assertEqual(
+            passed_report["label_counts"],
+            {
+                "test": {"False": 1, "True": 1},
+                "train": {"False": 1, "True": 1},
+                "val": {"False": 1, "True": 1},
+            },
+        )
+        self.assertEqual(
+            passed_report["split_counts"],
+            {"test": 2, "train": 2, "val": 2},
+        )
+
     def test_report_rejects_matrix_row_mismatch(self) -> None:
         rows = _fixture_rows()
         matrix = np.zeros((len(rows) - 1, 2), dtype=np.float64)
@@ -149,6 +199,19 @@ def _row(transition_id: str, split: str, label: str) -> LatentProbeRow:
             "action_cluster": label,
         },
         lexical_tokens=(1 if label == "left" else 2, 10),
+    )
+
+
+def _passed_row(transition_id: str, split: str, passed: bool) -> LatentProbeRow:
+    return LatentProbeRow(
+        transition_id=transition_id,
+        split=split,
+        labels={"passed": passed},
+        metadata_features={
+            "source": "synthetic",
+            "output_type": "bool",
+        },
+        lexical_tokens=(1 if passed else 2, 10),
     )
 
 
