@@ -1,4 +1,4 @@
-"""Build v0.8 pass/fail execution packs from completion-label artifacts."""
+"""Build pass/fail execution packs from completion-label artifacts."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import random
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -62,6 +63,23 @@ class PassFailPackBuilderError(ExecutionPackBuilderError):
 
 
 @dataclass(frozen=True)
+class PassFailPackSource:
+    """One completion-label/source pair consumed by the pass/fail pack builder."""
+
+    benchmark: str
+    source_path: Path
+    completion_label_paths: tuple[Path, ...]
+
+    def normalized(self) -> "PassFailPackSource":
+        benchmark = _normalize_benchmark_id(self.benchmark)
+        return PassFailPackSource(
+            benchmark=benchmark,
+            source_path=Path(self.source_path),
+            completion_label_paths=tuple(Path(path) for path in self.completion_label_paths),
+        )
+
+
+@dataclass(frozen=True)
 class PassFailPackResult:
     """Summary returned by :func:`build_passfail_pack`."""
 
@@ -89,9 +107,10 @@ class PassFailPackResult:
 
 def build_passfail_pack(
     *,
-    completion_label_paths: Iterable[Path],
-    source_path: Path,
-    benchmark: str,
+    completion_label_paths: Iterable[Path] | None = None,
+    source_path: Path | None = None,
+    benchmark: str | None = None,
+    sources: Iterable[PassFailPackSource] | None = None,
     output_dir: Path,
     sandbox_policy: SandboxPolicy = DEFAULT_SANDBOX_POLICY,
     seed: int = 42,
@@ -99,6 +118,8 @@ def build_passfail_pack(
     val_frac: float = 0.05,
     max_completion_rows: int | None = None,
     max_records: int | None = None,
+    require_split_coverage: bool = False,
+    required_probe_targets: Sequence[str] = (),
     pack_id: str | None = None,
     overwrite: bool = False,
     allow_secret_findings: bool = False,
@@ -113,14 +134,13 @@ def build_passfail_pack(
     hash stored in the completion-label row.
     """
 
-    label_paths = tuple(Path(path) for path in completion_label_paths)
-    if not label_paths:
-        raise PassFailPackBuilderError("at least one completion-label path is required")
-    for path in label_paths:
-        if not path.is_file():
-            raise PassFailPackBuilderError(f"completion-label file missing: {path}")
-    if not source_path.is_file():
-        raise PassFailPackBuilderError(f"source file missing: {source_path}")
+    source_specs = _normalize_source_specs(
+        sources=sources,
+        completion_label_paths=completion_label_paths,
+        source_path=source_path,
+        benchmark=benchmark,
+    )
+    required_probe_targets = _normalize_required_probe_targets(required_probe_targets)
     _validate_split_fracs(train_frac=train_frac, val_frac=val_frac)
     if max_completion_rows is not None:
         _positive_int(max_completion_rows, "max_completion_rows")
@@ -134,36 +154,44 @@ def build_passfail_pack(
         )
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    benchmark_id = benchmark.strip().lower().replace("-", "_")
-    submissions = _load_source_submissions(benchmark_id, source_path)
-    rows = _load_completion_label_rows(
-        label_paths,
-        benchmark_id=benchmark_id,
-        max_rows=max_completion_rows,
-    )
-    if not rows:
+    all_submissions: dict[str, dict[str, SourceSubmission]] = {}
+    rows_by_benchmark: dict[str, list[dict[str, Any]]] = {}
+    for source_spec in source_specs:
+        all_submissions[source_spec.benchmark] = _load_source_submissions(
+            source_spec.benchmark, source_spec.source_path
+        )
+        rows_by_benchmark[source_spec.benchmark] = _load_completion_label_rows(
+            source_spec.completion_label_paths,
+            benchmark_id=source_spec.benchmark,
+            max_rows=max_completion_rows,
+        )
+    if not any(rows_by_benchmark.values()):
         raise PassFailPackBuilderError("completion-label inputs yielded zero rows")
 
     audit = Counter()
     records: list[PackedExecutionRecord] = []
     completion_label_mismatch_count = 0
-    for row in rows:
-        problem_id = str(row["problem_id"])
-        submission = submissions.get(problem_id)
-        if submission is None:
-            audit["missing_source_problem"] += 1
-            continue
-        built, completion_pass_matches = _records_from_completion_row(
-            row=row,
-            submission=submission,
-            sandbox_policy=sandbox_policy,
-            audit=audit,
-        )
-        records.extend(built)
-        if not completion_pass_matches:
-            completion_label_mismatch_count += 1
+    for benchmark_id, rows in rows_by_benchmark.items():
+        submissions = all_submissions[benchmark_id]
+        for row in rows:
+            problem_id = str(row["problem_id"])
+            submission = submissions.get(problem_id)
+            if submission is None:
+                audit[f"{benchmark_id}:missing_source_problem"] += 1
+                continue
+            built, completion_pass_matches = _records_from_completion_row(
+                row=row,
+                submission=submission,
+                sandbox_policy=sandbox_policy,
+                audit=audit,
+            )
+            records.extend(built)
+            if not completion_pass_matches:
+                completion_label_mismatch_count += 1
+            if max_records is not None and len(records) >= max_records:
+                records = records[:max_records]
+                break
         if max_records is not None and len(records) >= max_records:
-            records = records[:max_records]
             break
 
     if not records:
@@ -176,6 +204,8 @@ def build_passfail_pack(
         seed=seed,
         train_frac=train_frac,
         val_frac=val_frac,
+        require_split_coverage=require_split_coverage,
+        required_probe_targets=required_probe_targets,
     )
     records = [_attach_split(record, split) for record, split in zip(records, splits, strict=True)]
 
@@ -193,15 +223,22 @@ def build_passfail_pack(
         for record in records:
             payload = record.as_dict()
             payload["schema_version"] = EXECUTION_PACK_RECORD_SCHEMA_VERSION
+            payload["benchmark_id"] = record.source_dataset
             handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True))
             handle.write("\n")
 
+    submissions_flat = [
+        submission
+        for submissions in all_submissions.values()
+        for submission in submissions.values()
+    ]
     attribution = {
         submission.source_dataset: submission.license_attribution_url
-        for submission in submissions.values()
+        for submission in submissions_flat
         if submission.license_attribution_url
     }
     split_counts = Counter(record.split for record in records)
+    parent_artifacts = _parent_artifacts_for_sources(source_specs)
     manifest = ExecutionPackManifest(
         schema_version=EXECUTION_PACK_MANIFEST_SCHEMA_VERSION,
         created_at=datetime.now(timezone.utc).isoformat(),
@@ -209,7 +246,11 @@ def build_passfail_pack(
         pack_dir=str(output_dir),
         record_count=len(records),
         split_counts=dict(split_counts),
-        split_by="source_problem_id",
+        split_by=(
+            "source_dataset/source_problem_id"
+            if len(source_specs) > 1
+            else "source_problem_id"
+        ),
         output_type_distribution=dict(Counter(record.output_type for record in records)),
         output_kind_distribution=dict(Counter(record.output_kind for record in records)),
         execution_status_distribution=dict(
@@ -219,21 +260,7 @@ def build_passfail_pack(
         license_breakdown=dict(Counter(record.license for record in records)),
         sandbox_policy=sandbox_policy.as_dict(),
         sandbox_reject_counts=dict(audit),
-        parent_artifacts=(
-            {
-                "path": str(source_path),
-                "sha256": sha256_file(source_path),
-                "schema_version": "codelewm.execution_source_record.v1",
-            },
-            *(
-                {
-                    "path": str(path),
-                    "sha256": sha256_file(path),
-                    "schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
-                }
-                for path in label_paths
-            ),
-        ),
+        parent_artifacts=parent_artifacts,
         held_out_eval_excluded_count=0,
         claim_boundary={
             "name": CLAIM_BOUNDARY_NAME,
@@ -258,14 +285,25 @@ def build_passfail_pack(
     output_dir.joinpath("reports").mkdir(parents=True, exist_ok=True)
     config_payload = {
         "schema_version": PASSFAIL_PACK_CONFIG_SCHEMA_VERSION,
-        "benchmark": benchmark_id,
-        "completion_label_paths": [str(path) for path in label_paths],
-        "source_path": str(source_path),
+        "benchmark": source_specs[0].benchmark if len(source_specs) == 1 else "mixed",
+        "benchmarks": [source.benchmark for source in source_specs],
+        "inputs": [
+            {
+                "benchmark": source.benchmark,
+                "source_path": str(source.source_path),
+                "completion_label_paths": [
+                    str(path) for path in source.completion_label_paths
+                ],
+            }
+            for source in source_specs
+        ],
         "seed": seed,
         "train_frac": train_frac,
         "val_frac": val_frac,
         "max_completion_rows": max_completion_rows,
         "max_records": max_records,
+        "require_split_coverage": require_split_coverage,
+        "required_probe_targets": list(required_probe_targets),
         "sandbox_policy": sandbox_policy.as_dict(),
         "pass_label_granularity": "per_problem_completion_input",
     }
@@ -287,20 +325,51 @@ def build_passfail_pack(
     )
 
     split_pass_counts = _split_pass_counts(records)
+    benchmark_counts = _benchmark_counts(records)
+    benchmark_pass_counts = _benchmark_pass_counts(records)
+    output_magnitude_counts = Counter(
+        record.output_magnitude_bucket
+        for record in records
+        if record.output_magnitude_bucket
+    )
+    split_output_magnitude_counts = _split_probe_counts(
+        records, target="output_magnitude_bucket"
+    )
+    split_label_coverage = _split_label_coverage(records, required_probe_targets)
+    readiness_gates = _readiness_gates(
+        records=records,
+        required_probe_targets=required_probe_targets,
+        require_split_coverage=require_split_coverage,
+    )
     report_payload = {
         "schema_version": PASSFAIL_PACK_REPORT_SCHEMA_VERSION,
         "record_schema_version": EXECUTION_PACK_RECORD_SCHEMA_VERSION,
         "record_count": len(records),
-        "completion_label_row_count": len(rows),
+        "completion_label_row_count": sum(
+            len(rows) for rows in rows_by_benchmark.values()
+        ),
+        "completion_label_row_counts_by_benchmark": {
+            benchmark_id: len(rows)
+            for benchmark_id, rows in sorted(rows_by_benchmark.items())
+        },
         "completion_label_mismatch_count": completion_label_mismatch_count,
         "pass_label_granularity": "per_problem_completion_input",
+        "benchmark_counts": benchmark_counts,
+        "benchmark_pass_label_counts": benchmark_pass_counts,
         "pass_label_counts": dict(sorted(pass_counts.items())),
         "pass_label_rate": pass_counts["true"] / len(records),
         "pos_weight": pos_weight,
         "split_counts": dict(sorted(split_counts.items())),
         "split_pass_label_counts": split_pass_counts,
+        "output_magnitude_bucket_counts": dict(
+            sorted(output_magnitude_counts.items())
+        ),
+        "split_output_magnitude_bucket_counts": split_output_magnitude_counts,
+        "split_label_coverage": split_label_coverage,
+        "held_out_coverage": _held_out_coverage(records),
         "sandbox_reject_counts": dict(sorted(audit.items())),
         "class_balance_ok": bool(pass_counts["true"] and pass_counts["false"]),
+        "readiness_gates": readiness_gates,
         "claim_allowed": False,
         "claim_reason": "passfail_training_pack_only_model_not_trained",
     }
@@ -350,7 +419,9 @@ def build_passfail_pack(
             "execution_pack_manifest_schema": manifest.schema_version,
             "record_schema_version": EXECUTION_PACK_RECORD_SCHEMA_VERSION,
             "record_count": len(records),
+            "benchmarks": [source.benchmark for source in source_specs],
             "pass_label_counts": dict(sorted(pass_counts.items())),
+            "readiness_gates": readiness_gates,
             "pos_weight": pos_weight,
             "secret_scan_ok": bool(scan_payload["ok"]),
         },
@@ -368,6 +439,106 @@ def build_passfail_pack(
         secret_scan_report_path=_relative_to_root(secret_scan_report_path, output_dir),
         artifact_manifest_path=_relative_to_root(artifact_manifest_path, output_dir),
     )
+
+
+def _normalize_source_specs(
+    *,
+    sources: Iterable[PassFailPackSource] | None,
+    completion_label_paths: Iterable[Path] | None,
+    source_path: Path | None,
+    benchmark: str | None,
+) -> tuple[PassFailPackSource, ...]:
+    if sources is not None:
+        if completion_label_paths is not None or source_path is not None or benchmark is not None:
+            raise PassFailPackBuilderError(
+                "use either sources=... or the legacy benchmark/source/"
+                "completion_label_paths arguments, not both"
+            )
+        source_specs = tuple(source.normalized() for source in sources)
+    else:
+        if benchmark is None or source_path is None or completion_label_paths is None:
+            raise PassFailPackBuilderError(
+                "benchmark, source_path, and completion_label_paths are required"
+            )
+        source_specs = (
+            PassFailPackSource(
+                benchmark=benchmark,
+                source_path=source_path,
+                completion_label_paths=tuple(Path(path) for path in completion_label_paths),
+            ).normalized(),
+        )
+    if not source_specs:
+        raise PassFailPackBuilderError("at least one pass/fail source is required")
+    seen: set[str] = set()
+    for source_spec in source_specs:
+        if source_spec.benchmark in seen:
+            raise PassFailPackBuilderError(
+                f"duplicate pass/fail source benchmark: {source_spec.benchmark}"
+            )
+        seen.add(source_spec.benchmark)
+        if not source_spec.source_path.is_file():
+            raise PassFailPackBuilderError(
+                f"source file missing for {source_spec.benchmark}: {source_spec.source_path}"
+            )
+        if not source_spec.completion_label_paths:
+            raise PassFailPackBuilderError(
+                f"at least one completion-label path is required for {source_spec.benchmark}"
+            )
+        for path in source_spec.completion_label_paths:
+            if not path.is_file():
+                raise PassFailPackBuilderError(
+                    f"completion-label file missing for {source_spec.benchmark}: {path}"
+                )
+    return source_specs
+
+
+def _normalize_benchmark_id(value: str) -> str:
+    benchmark_id = value.strip().lower().replace("-", "_")
+    if not benchmark_id:
+        raise PassFailPackBuilderError("benchmark id must be non-empty")
+    return benchmark_id
+
+
+def _normalize_required_probe_targets(targets: Sequence[str]) -> tuple[str, ...]:
+    normalized: list[str] = []
+    supported = {"output_magnitude_bucket", "output_length_bucket"}
+    for target in targets:
+        value = str(target).strip()
+        if not value:
+            continue
+        if value not in supported:
+            raise PassFailPackBuilderError(
+                f"unsupported required probe target {value!r}; "
+                f"supported targets are {sorted(supported)}"
+            )
+        if value not in normalized:
+            normalized.append(value)
+    return tuple(normalized)
+
+
+def _parent_artifacts_for_sources(
+    sources: Sequence[PassFailPackSource],
+) -> tuple[dict[str, str], ...]:
+    artifacts: list[dict[str, str]] = []
+    for source in sources:
+        artifacts.append(
+            {
+                "benchmark": source.benchmark,
+                "path": str(source.source_path),
+                "sha256": sha256_file(source.source_path),
+                "schema_version": "codelewm.execution_source_record.v1",
+            }
+        )
+        for path in source.completion_label_paths:
+            artifacts.append(
+                {
+                    "benchmark": source.benchmark,
+                    "path": str(path),
+                    "sha256": sha256_file(path),
+                    "schema_version": COMPLETION_LABEL_SCHEMA_VERSION,
+                }
+            )
+    return tuple(artifacts)
 
 
 def _load_source_submissions(
@@ -585,12 +756,53 @@ def _assign_splits(
     seed: int,
     train_frac: float,
     val_frac: float,
+    require_split_coverage: bool = False,
+    required_probe_targets: Sequence[str] = (),
 ) -> list[SplitName]:
     by_problem: dict[str, list[int]] = {}
     for idx, record in enumerate(records):
-        by_problem.setdefault(record.source_problem_id, []).append(idx)
+        by_problem.setdefault(_split_group_key(record), []).append(idx)
     problem_ids = sorted(by_problem)
-    random.Random(seed).shuffle(problem_ids)
+    if require_split_coverage and len(problem_ids) < 3:
+        raise PassFailPackBuilderError(
+            "split_coverage_blocker: at least three problem groups are required "
+            "to populate train, val, and test"
+        )
+    attempts = 256 if require_split_coverage else 1
+    last_missing: list[str] = []
+    for attempt in range(attempts):
+        shuffled = list(problem_ids)
+        random.Random(seed + attempt).shuffle(shuffled)
+        splits = _assign_splits_for_problem_order(
+            records=records,
+            by_problem=by_problem,
+            problem_ids=shuffled,
+            train_frac=train_frac,
+            val_frac=val_frac,
+        )
+        if not require_split_coverage:
+            return splits
+        last_missing = _split_coverage_blockers(
+            records=records,
+            splits=splits,
+            required_probe_targets=required_probe_targets,
+        )
+        if not last_missing:
+            return splits
+    raise PassFailPackBuilderError(
+        "split_coverage_blocker: "
+        + "; ".join(last_missing or ["no coverage-preserving split found"])
+    )
+
+
+def _assign_splits_for_problem_order(
+    *,
+    records: Sequence[PackedExecutionRecord],
+    by_problem: Mapping[str, Sequence[int]],
+    problem_ids: Sequence[str],
+    train_frac: float,
+    val_frac: float,
+) -> list[SplitName]:
     n = len(problem_ids)
     if n == 1:
         train_ids = set(problem_ids)
@@ -620,9 +832,52 @@ def _assign_splits(
 
 
 def _attach_split(record: PackedExecutionRecord, split: SplitName) -> PackedExecutionRecord:
-    from dataclasses import replace
-
     return replace(record, split=split)
+
+
+def _split_group_key(record: PackedExecutionRecord) -> str:
+    return f"{record.source_dataset}::{record.source_problem_id}"
+
+
+def _split_coverage_blockers(
+    *,
+    records: Sequence[PackedExecutionRecord],
+    splits: Sequence[SplitName],
+    required_probe_targets: Sequence[str],
+) -> list[str]:
+    by_split: dict[SplitName, list[PackedExecutionRecord]] = {
+        "train": [],
+        "val": [],
+        "test": [],
+    }
+    problem_splits: dict[str, set[SplitName]] = {}
+    for record, split in zip(records, splits, strict=True):
+        by_split.setdefault(split, []).append(record)
+        problem_splits.setdefault(_split_group_key(record), set()).add(split)
+    missing: list[str] = []
+    leaked = sorted(
+        problem_id for problem_id, seen_splits in problem_splits.items() if len(seen_splits) > 1
+    )
+    if leaked:
+        missing.append(f"problem_leakage:{','.join(leaked[:5])}")
+    for split in ("val", "test"):
+        split_records = by_split.get(split, [])
+        if not any(record.passed is True for record in split_records):
+            missing.append(f"{split}:passed=true")
+        if not any(record.passed is False for record in split_records):
+            missing.append(f"{split}:passed=false")
+        for target in required_probe_targets:
+            if not any(_probe_target_value(record, target) is not None for record in split_records):
+                missing.append(f"{split}:{target}")
+    return missing
+
+
+def _probe_target_value(record: PackedExecutionRecord, target: str) -> str | bool | None:
+    if target == "output_magnitude_bucket":
+        return record.output_magnitude_bucket
+    if target == "output_length_bucket":
+        return record.output_length_bucket
+    raise PassFailPackBuilderError(f"unsupported probe target: {target}")
 
 
 def _split_pass_counts(records: Sequence[PackedExecutionRecord]) -> dict[str, dict[str, int]]:
@@ -631,6 +886,97 @@ def _split_pass_counts(records: Sequence[PackedExecutionRecord]) -> dict[str, di
         label = "true" if record.passed else "false"
         counts.setdefault(record.split, Counter())[label] += 1
     return {split: dict(sorted(counter.items())) for split, counter in sorted(counts.items())}
+
+
+def _benchmark_counts(records: Sequence[PackedExecutionRecord]) -> dict[str, int]:
+    return dict(sorted(Counter(record.source_dataset for record in records).items()))
+
+
+def _benchmark_pass_counts(
+    records: Sequence[PackedExecutionRecord],
+) -> dict[str, dict[str, int]]:
+    counts: dict[str, Counter[str]] = {}
+    for record in records:
+        label = "true" if record.passed else "false"
+        counts.setdefault(record.source_dataset, Counter())[label] += 1
+    return {
+        benchmark: dict(sorted(counter.items()))
+        for benchmark, counter in sorted(counts.items())
+    }
+
+
+def _split_probe_counts(
+    records: Sequence[PackedExecutionRecord], *, target: str
+) -> dict[str, dict[str, int]]:
+    counts: dict[str, Counter[str]] = {}
+    for record in records:
+        value = _probe_target_value(record, target)
+        if isinstance(value, str) and value:
+            counts.setdefault(record.split, Counter())[value] += 1
+    return {split: dict(sorted(counter.items())) for split, counter in sorted(counts.items())}
+
+
+def _split_label_coverage(
+    records: Sequence[PackedExecutionRecord],
+    required_probe_targets: Sequence[str],
+) -> dict[str, dict[str, Any]]:
+    coverage: dict[str, dict[str, Any]] = {}
+    for split in ("train", "val", "test"):
+        split_records = [record for record in records if record.split == split]
+        payload: dict[str, Any] = {
+            "record_count": len(split_records),
+            "passed_true_count": sum(record.passed is True for record in split_records),
+            "passed_false_count": sum(record.passed is False for record in split_records),
+        }
+        for target in required_probe_targets:
+            payload[f"{target}_labeled_count"] = sum(
+                _probe_target_value(record, target) is not None for record in split_records
+            )
+            if target in {"output_magnitude_bucket", "output_length_bucket"}:
+                payload[f"{target}_counts"] = _split_probe_counts(
+                    split_records, target=target
+                ).get(split, {})
+        coverage[split] = payload
+    return coverage
+
+
+def _held_out_coverage(records: Sequence[PackedExecutionRecord]) -> dict[str, dict[str, int]]:
+    counts: dict[str, Counter[str]] = {}
+    for record in records:
+        label = "true" if record.held_out_for_eval else "false"
+        counts.setdefault(record.split, Counter())[label] += 1
+    return {split: dict(sorted(counter.items())) for split, counter in sorted(counts.items())}
+
+
+def _readiness_gates(
+    *,
+    records: Sequence[PackedExecutionRecord],
+    required_probe_targets: Sequence[str],
+    require_split_coverage: bool,
+) -> dict[str, dict[str, Any]]:
+    splits = [record.split for record in records]
+    blockers = _split_coverage_blockers(
+        records=records,
+        splits=splits,
+        required_probe_targets=required_probe_targets,
+    )
+    return {
+        "pass_fail_classes_present": {
+            "passed": any(record.passed is True for record in records)
+            and any(record.passed is False for record in records),
+            "required": True,
+        },
+        "problem_leakage_absent": {
+            "passed": not any(blocker.startswith("problem_leakage:") for blocker in blockers),
+            "required": True,
+        },
+        "held_out_split_label_coverage": {
+            "passed": not blockers,
+            "required": bool(require_split_coverage),
+            "required_probe_targets": list(required_probe_targets),
+            "missing": blockers,
+        },
+    }
 
 
 def _relative_secret_scan_payload(

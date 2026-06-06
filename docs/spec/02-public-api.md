@@ -443,8 +443,8 @@ claim gate. Positive downstream claims require both the LLM-order and no-action
 lift gates to pass; otherwise the report remains diagnostic.
 
 `scripts/build-passfail-pack` converts one or more
-`codelewm.eval.completion_label.v1` JSONL files into a v0.8 supervised execution
-pack for correctness co-training:
+`codelewm.eval.completion_label.v1` JSONL files into a supervised execution pack
+for correctness co-training. The legacy single-source mode remains:
 
 ```bash
 scripts/build-passfail-pack \
@@ -455,14 +455,31 @@ scripts/build-passfail-pack \
   --json
 ```
 
+The v0.9 multi-source mode uses explicit benchmark/source pairs and can require
+held-out split coverage before any GPU run:
+
+```bash
+scripts/build-passfail-pack \
+  --benchmark-source humaneval=data/humaneval.jsonl \
+  --benchmark-source mbpp_plus=data/mbpp_plus.jsonl \
+  --benchmark-completion-labels humaneval=results/v0_9/humaneval_labels.jsonl \
+  --benchmark-completion-labels mbpp_plus=results/v0_9/mbpp_plus_labels.jsonl \
+  --require-split-coverage \
+  --required-probe-target output_magnitude_bucket \
+  --out results/v0_9/passfail_pack \
+  --json
+```
+
 The script re-executes each completion in the data-prep sandbox to recover the
 model target output, writes `pack.jsonl` records with
 `schema_version=codelewm.execution_pack_record.v2` and per-record `passed`
-labels, reports class balance and `pos_weight` in
-`reports/passfail_pack_report.json`, emits a redacted secret-scan report, and
-writes a `codelewm.artifact_manifest.v1` dataset manifest. This is a data-build
-surface only; training, scoring, indexing, and evaluation consumers continue to
-load the JSONL pack without importing the sandbox.
+labels, reports benchmark counts, class balance, split label coverage, readiness
+gates, and `pos_weight` in `reports/passfail_pack_report.json`, emits a redacted
+secret-scan report, and writes a `codelewm.artifact_manifest.v1` dataset
+manifest. If required val/test labels are not evaluable, the builder fails with
+a typed `split_coverage_blocker` instead of launching a training run. This is a
+data-build surface only; training, scoring, indexing, and evaluation consumers
+continue to load the JSONL pack without importing the sandbox.
 
 `codelewm eval ablation` consolidates a retrieval artifact and training artifact
 into an action-view ablation report:
