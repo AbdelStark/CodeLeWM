@@ -180,16 +180,22 @@ the execution-substrate pack. It keeps the v1 tokenized `(code, input, output)`
 fields and adds:
 
 ```python
+benchmark_id: str | None
 passed: bool | None
 ```
 
-Structure-only v1-compatible packs omit the field or set it to `None`. Pass/fail
-training packs must set it on every row. The label granularity is one
+Structure-only v1-compatible packs omit the pass/fail field or set it to `None`.
+Pass/fail training packs must set it on every row. v0.9 cross-benchmark packs
+also write `benchmark_id` as an explicit alias of `source_dataset`, so
+HumanEval and MBPP-Plus rows can be counted without inferring benchmark identity
+from source paths. The label granularity is one
 `(problem, completion, input)` record: the data-prep adapter re-executes a
 manifested `codelewm.eval.completion_label.v1` completion against its persisted
 scoring input, recovers `output_repr` for the model target, and sets `passed`
 by comparing the recovered output hash with the expected-output hash stored in
-the completion-label artifact. Splits remain grouped by `source_problem_id`.
+the completion-label artifact. Splits remain grouped by `source_problem_id` for
+single-source packs and by `(source_dataset, source_problem_id)` for
+cross-benchmark packs.
 
 `codelewm.execution_pack_batch.v2` exposes `output_type_index`,
 `output_magnitude_bucket_index`, and `output_length_bucket_index` as stable

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build a v0.8 pass/fail execution pack from completion-label artifacts."""
+"""Build a pass/fail execution pack from completion-label artifacts."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from codelewm.data.execution_pack.build_passfail_pack import (
     PassFailPackBuilderError,
+    PassFailPackSource,
     build_passfail_pack,
 )
 from codelewm.data.execution_rerank_sampler import policy_from_args
@@ -21,19 +22,36 @@ def main(argv: list[str] | None = None) -> int:
         "--completion-labels",
         type=Path,
         action="append",
-        required=True,
         help="completion_label.v1 JSONL path; repeatable",
     )
     parser.add_argument(
         "--source",
         type=Path,
-        required=True,
         help="raw benchmark source JSONL used to build the completion labels",
     )
     parser.add_argument(
         "--benchmark",
-        required=True,
         help="source adapter name, e.g. mbpp, humaneval, or mbpp-plus",
+    )
+    parser.add_argument(
+        "--benchmark-source",
+        action="append",
+        default=[],
+        metavar="BENCHMARK=PATH",
+        help=(
+            "multi-source mode: raw benchmark source JSONL for BENCHMARK; "
+            "repeat once per benchmark"
+        ),
+    )
+    parser.add_argument(
+        "--benchmark-completion-labels",
+        action="append",
+        default=[],
+        metavar="BENCHMARK=PATH",
+        help=(
+            "multi-source mode: completion_label.v1 JSONL for BENCHMARK; "
+            "repeatable"
+        ),
     )
     parser.add_argument("--out", type=Path, required=True, help="output pack directory")
     parser.add_argument("--seed", type=int, default=42)
@@ -41,6 +59,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--val-frac", type=float, default=0.05)
     parser.add_argument("--max-completion-rows", type=int, default=None)
     parser.add_argument("--max-records", type=int, default=None)
+    parser.add_argument(
+        "--require-split-coverage",
+        action="store_true",
+        help=(
+            "require val/test coverage for passed true/false and required "
+            "probe targets; fails with split_coverage_blocker otherwise"
+        ),
+    )
+    parser.add_argument(
+        "--required-probe-target",
+        action="append",
+        default=[],
+        help=(
+            "probe target that must be labeled in val/test when split coverage "
+            "is required; repeatable"
+        ),
+    )
     parser.add_argument("--timeout-ms", type=int, default=5000)
     parser.add_argument("--memory-mb", type=int, default=256)
     parser.add_argument("--cpu-seconds", type=int, default=10)
@@ -55,10 +90,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        sources = _sources_from_args(args)
+        required_probe_targets = tuple(args.required_probe_target)
+        if args.require_split_coverage and not required_probe_targets:
+            required_probe_targets = ("output_magnitude_bucket",)
         result = build_passfail_pack(
-            completion_label_paths=tuple(args.completion_labels),
+            completion_label_paths=tuple(args.completion_labels or ()),
             source_path=args.source,
             benchmark=args.benchmark,
+            sources=sources,
             output_dir=args.out,
             sandbox_policy=policy_from_args(
                 timeout_ms=args.timeout_ms,
@@ -71,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
             val_frac=args.val_frac,
             max_completion_rows=args.max_completion_rows,
             max_records=args.max_records,
+            require_split_coverage=args.require_split_coverage,
+            required_probe_targets=required_probe_targets,
             overwrite=args.overwrite,
             allow_secret_findings=args.allow_secret_findings,
             command=("scripts/build-passfail-pack", *(argv or sys.argv[1:])),
@@ -88,6 +130,61 @@ def main(argv: list[str] | None = None) -> int:
         print(f"pos_weight: {result.pos_weight:.6f}")
         print(f"manifest: {result.output_dir / 'manifest.json'}")
     return 0
+
+
+def _sources_from_args(args: argparse.Namespace) -> tuple[PassFailPackSource, ...] | None:
+    if not args.benchmark_source and not args.benchmark_completion_labels:
+        if args.benchmark is None or args.source is None or not args.completion_labels:
+            raise PassFailPackBuilderError(
+                "--benchmark, --source, and --completion-labels are required "
+                "unless using --benchmark-source/--benchmark-completion-labels"
+            )
+        return None
+    if args.benchmark is not None or args.source is not None or args.completion_labels:
+        raise PassFailPackBuilderError(
+            "multi-source mode cannot be combined with --benchmark, --source, "
+            "or --completion-labels"
+        )
+    source_paths: dict[str, Path] = {}
+    for item in args.benchmark_source:
+        benchmark, path = _parse_benchmark_path(item, "--benchmark-source")
+        if benchmark in source_paths:
+            raise PassFailPackBuilderError(f"duplicate benchmark source: {benchmark}")
+        source_paths[benchmark] = path
+    label_paths: dict[str, list[Path]] = {}
+    for item in args.benchmark_completion_labels:
+        benchmark, path = _parse_benchmark_path(
+            item, "--benchmark-completion-labels"
+        )
+        label_paths.setdefault(benchmark, []).append(path)
+    if set(source_paths) != set(label_paths):
+        raise PassFailPackBuilderError(
+            "multi-source benchmarks must match between --benchmark-source and "
+            f"--benchmark-completion-labels; sources={sorted(source_paths)}, "
+            f"labels={sorted(label_paths)}"
+        )
+    return tuple(
+        PassFailPackSource(
+            benchmark=benchmark,
+            source_path=source_paths[benchmark],
+            completion_label_paths=tuple(label_paths[benchmark]),
+        )
+        for benchmark in sorted(source_paths)
+    )
+
+
+def _parse_benchmark_path(value: str, flag: str) -> tuple[str, Path]:
+    if "=" not in value:
+        raise PassFailPackBuilderError(
+            f"{flag} must be formatted as BENCHMARK=PATH, got {value!r}"
+        )
+    benchmark, raw_path = value.split("=", 1)
+    benchmark = benchmark.strip().lower().replace("-", "_")
+    if not benchmark or not raw_path:
+        raise PassFailPackBuilderError(
+            f"{flag} must be formatted as BENCHMARK=PATH, got {value!r}"
+        )
+    return benchmark, Path(raw_path)
 
 
 if __name__ == "__main__":
