@@ -365,6 +365,13 @@ def run_execution_surprise_evaluation(
         seed=seed,
         semantic_decoy_pack=semantic_decoy_pack,
     )
+    decoy_coverage_summary = _build_execution_decoy_coverage_summary(
+        decoy_pairs=decoy_pairs,
+        decoy_reports=decoy_reports,
+        row_index=row_index,
+        selected_decoys=selected_decoys,
+        semantic_decoy_pack=semantic_decoy_pack,
+    )
     pairs_by_query: dict[str, list[DecoyPair]] = {}
     for pair in decoy_pairs:
         pairs_by_query.setdefault(pair.query_record_id, []).append(pair)
@@ -428,6 +435,7 @@ def run_execution_surprise_evaluation(
     decoy_report_payload = {
         "schema_version": "codelewm.eval.execution_surprise_decoy_summary.v1",
         "mutation_pair_count": mutation_count,
+        "pair_count_summary": decoy_coverage_summary,
         "reports": [report.as_dict() for report in decoy_reports],
     }
     if semantic_decoy_pack is not None:
@@ -446,6 +454,7 @@ def run_execution_surprise_evaluation(
         metrics=draft_report.metrics,
         selected_decoys=selected_decoys,
         semantic_decoy_pack_metadata=decoy_report_payload.get("semantic_decoy_pack"),
+        decoy_coverage_summary=decoy_coverage_summary,
     )
     report = build_surprise_report(
         results,
@@ -1173,6 +1182,105 @@ def _build_execution_decoy_pairs(
     return pairs, reports
 
 
+def _build_execution_decoy_coverage_summary(
+    *,
+    decoy_pairs: Sequence[DecoyPair],
+    decoy_reports: Sequence[DecoyGenerationReport],
+    row_index: Mapping[str, int],
+    selected_decoys: Sequence[str],
+    semantic_decoy_pack: LoadedSemanticDecoyPack | None,
+) -> dict[str, Any]:
+    pair_counts: dict[str, int] = {}
+    scorable_counts: dict[str, int] = {}
+    missing_query_counts: dict[str, int] = {}
+    missing_decoy_counts: dict[str, int] = {}
+    for pair in decoy_pairs:
+        category = str(pair.category)
+        pair_counts[category] = pair_counts.get(category, 0) + 1
+        query_present = pair.query_record_id in row_index
+        decoy_present = pair.decoy_record_id in row_index
+        if query_present and decoy_present:
+            scorable_counts[category] = scorable_counts.get(category, 0) + 1
+            continue
+        if not query_present:
+            missing_query_counts[category] = missing_query_counts.get(category, 0) + 1
+        if not decoy_present:
+            missing_decoy_counts[category] = missing_decoy_counts.get(category, 0) + 1
+
+    generated_counts = {
+        str(report.category): int(report.pair_count) for report in decoy_reports
+    }
+    pack_counts: dict[str, int] = {}
+    semantic_pack_artifact_id = None
+    if semantic_decoy_pack is not None:
+        semantic_pack_metadata = semantic_decoy_pack.metadata()
+        semantic_pack_artifact_id = semantic_decoy_pack.artifact_manifest.artifact_id
+        summary = semantic_pack_metadata.get("summary")
+        if not isinstance(summary, Mapping):
+            summary = {}
+        raw_counts = (
+            semantic_pack_metadata.get("pair_count_by_category")
+            or summary.get("pair_count_by_category")
+            or {}
+        )
+        if isinstance(raw_counts, Mapping):
+            pack_counts = {
+                str(category): int(count)
+                for category, count in raw_counts.items()
+            }
+
+    blockers: list[dict[str, Any]] = []
+    for category in selected_decoys:
+        if category not in {
+            "same_problem_different_submission",
+            "same_code_different_input",
+        }:
+            continue
+        min_pairs = EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS[category]
+        scorable = int(scorable_counts.get(category, 0))
+        if scorable >= min_pairs:
+            continue
+        blockers.append(
+            {
+                "type": "semantic_decoy_pair_count_blocker",
+                "category": category,
+                "observed_scorable_pair_count": scorable,
+                "min_pair_count_for_claim": min_pairs,
+                "candidate_pair_count": int(pair_counts.get(category, 0)),
+                "pack_pair_count": int(pack_counts.get(category, 0)),
+                "generated_pair_count": int(generated_counts.get(category, 0)),
+                "missing_query_record_count": int(missing_query_counts.get(category, 0)),
+                "missing_decoy_record_count": int(missing_decoy_counts.get(category, 0)),
+                "reason": (
+                    "semantic_decoy_pair_count_blocker:"
+                    f"{category}:{scorable}<{min_pairs}"
+                ),
+            }
+        )
+
+    return {
+        "schema_version": "codelewm.eval.execution_decoy_coverage_summary.v1",
+        "selected_decoys": list(selected_decoys),
+        "semantic_decoy_pack_artifact_id": semantic_pack_artifact_id,
+        "generated_pair_count_by_category": dict(sorted(generated_counts.items())),
+        "pack_pair_count_by_category": dict(sorted(pack_counts.items())),
+        "candidate_pair_count_by_category": dict(sorted(pair_counts.items())),
+        "scorable_pair_count_by_category": dict(sorted(scorable_counts.items())),
+        "missing_query_record_count_by_category": dict(
+            sorted(missing_query_counts.items())
+        ),
+        "missing_decoy_record_count_by_category": dict(
+            sorted(missing_decoy_counts.items())
+        ),
+        "min_pair_count_by_category": {
+            category: int(EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS[category])
+            for category in sorted(EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS)
+            if category in selected_decoys
+        },
+        "blockers": blockers,
+    }
+
+
 def _mutated_state_after(state: Mapping[str, np.ndarray], *, seed: int) -> Mapping[str, np.ndarray]:
     mutated = {key: np.asarray(value).copy() for key, value in state.items()}
     input_ids = mutated["input_ids"].copy()
@@ -1381,23 +1489,127 @@ def _build_execution_surprise_claim_gates(
     metrics: SurpriseMetrics,
     selected_decoys: Sequence[str],
     semantic_decoy_pack_metadata: Any = None,
+    decoy_coverage_summary: Any = None,
 ) -> dict[str, Any]:
     requested = tuple(dict.fromkeys(selected_decoys))
     score_gates: list[dict[str, Any]] = []
     pair_count_gates: list[dict[str, Any]] = []
+    coverage_blockers: list[dict[str, Any]] = []
     failures: list[str] = []
+    coverage_by_category: dict[str, dict[str, int]] = {}
+    if isinstance(decoy_coverage_summary, Mapping):
+        coverage_blockers = [
+            dict(blocker)
+            for blocker in decoy_coverage_summary.get("blockers", ())
+            if isinstance(blocker, Mapping)
+        ]
+        for key in (
+            "pack_pair_count_by_category",
+            "generated_pair_count_by_category",
+            "candidate_pair_count_by_category",
+            "scorable_pair_count_by_category",
+            "missing_query_record_count_by_category",
+            "missing_decoy_record_count_by_category",
+        ):
+            raw = decoy_coverage_summary.get(key, {})
+            if not isinstance(raw, Mapping):
+                continue
+            short_key = key.removesuffix("_by_category")
+            for category, value in raw.items():
+                coverage_by_category.setdefault(str(category), {})[short_key] = int(value)
+    blocker_reason_by_category = {
+        str(blocker.get("category")): str(blocker.get("reason"))
+        for blocker in coverage_blockers
+        if blocker.get("category") is not None and blocker.get("reason") is not None
+    }
 
     for category in requested:
         min_auc = EXECUTION_SURPRISE_SCORE_THRESHOLDS.get(category)
+        min_pairs = EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS.get(category)
+        observed_pairs = int(metrics.decoy_counts.get(category, 0))
+        count_blocker_reason = None
+        if min_pairs is not None:
+            count_passed = observed_pairs >= min_pairs
+            if not count_passed:
+                count_blocker_reason = blocker_reason_by_category.get(category)
+                if count_blocker_reason is None:
+                    blocker_type = (
+                        "semantic_decoy_pair_count_blocker"
+                        if category in {
+                            "same_problem_different_submission",
+                            "same_code_different_input",
+                        }
+                        else "execution_surprise_pair_count_blocker"
+                    )
+                    count_blocker_reason = f"{blocker_type}:{category}:{observed_pairs}<{min_pairs}"
+            coverage = coverage_by_category.get(category, {})
+            pair_gate = {
+                "category": category,
+                "metric": "scored_decoy_pair_count",
+                "observed_pair_count": observed_pairs,
+                "min_pair_count_for_claim": min_pairs,
+                "passed": bool(count_passed),
+                "blocker_type": None
+                if count_passed
+                else (
+                    "semantic_decoy_pair_count_blocker"
+                    if category in {
+                        "same_problem_different_submission",
+                        "same_code_different_input",
+                    }
+                    else "execution_surprise_pair_count_blocker"
+                ),
+                "blocker_reason": count_blocker_reason,
+            }
+            pair_gate.update(
+                {
+                    "pack_pair_count": int(coverage.get("pack_pair_count", 0)),
+                    "generated_pair_count": int(
+                        coverage.get("generated_pair_count", 0)
+                    ),
+                    "candidate_pair_count": int(
+                        coverage.get("candidate_pair_count", 0)
+                    ),
+                    "scorable_pair_count": int(
+                        coverage.get("scorable_pair_count", observed_pairs)
+                    ),
+                    "missing_query_record_count": int(
+                        coverage.get("missing_query_record_count", 0)
+                    ),
+                    "missing_decoy_record_count": int(
+                        coverage.get("missing_decoy_record_count", 0)
+                    ),
+                }
+            )
+            pair_count_gates.append(pair_gate)
+            if not count_passed and count_blocker_reason is not None:
+                failures.append(count_blocker_reason)
+
         if min_auc is None:
             continue
         observed_auc = metrics.pairwise_auc_by_category.get(category)
+        if count_blocker_reason is not None:
+            score_gates.append(
+                {
+                    "category": category,
+                    "metric": "pairwise_auc_true_beats_decoy",
+                    "observed_win_rate": None
+                    if observed_auc is None
+                    else float(observed_auc),
+                    "min_win_rate_for_claim": float(min_auc),
+                    "status": "blocked_by_pair_count",
+                    "blocked_by": count_blocker_reason,
+                    "passed": False,
+                }
+            )
+            continue
         score_passed = observed_auc is not None and observed_auc >= min_auc
         score_gate = {
             "category": category,
             "metric": "pairwise_auc_true_beats_decoy",
             "observed_win_rate": None if observed_auc is None else float(observed_auc),
             "min_win_rate_for_claim": float(min_auc),
+            "status": "passed" if score_passed else "failed",
             "passed": bool(score_passed),
         }
         if not score_passed:
@@ -1407,26 +1619,6 @@ def _build_execution_surprise_claim_gates(
                 f"{min_auc:.6f}"
             )
         score_gates.append(score_gate)
-
-        min_pairs = EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS.get(category)
-        if min_pairs is None:
-            continue
-        observed_pairs = int(metrics.decoy_counts.get(category, 0))
-        count_passed = observed_pairs >= min_pairs
-        pair_count_gates.append(
-            {
-                "category": category,
-                "metric": "scored_decoy_pair_count",
-                "observed_pair_count": observed_pairs,
-                "min_pair_count_for_claim": min_pairs,
-                "passed": bool(count_passed),
-            }
-        )
-        if not count_passed:
-            failures.append(
-                f"pair_count_gate_failed:{category}:{observed_pairs}<"
-                f"{min_pairs}"
-            )
 
     semantic_pack_gate = None
     pack_pair_counts: dict[str, int] = {}
@@ -1478,6 +1670,7 @@ def _build_execution_surprise_claim_gates(
         "failure_reasons": failures,
         "score_gates": score_gates,
         "pair_count_gates": pair_count_gates,
+        "coverage_blockers": coverage_blockers,
         "semantic_decoy_pack_count_gate": semantic_pack_gate,
         "semantic_decoy_category_counts": {
             "scored_decoy_counts": {
@@ -1485,6 +1678,61 @@ def _build_execution_surprise_claim_gates(
                 for category in sorted(EXECUTION_SURPRISE_PAIR_COUNT_THRESHOLDS)
             },
             "pack_pair_count_by_category": pack_pair_counts,
+            "generated_pair_count_by_category": {}
+            if not isinstance(decoy_coverage_summary, Mapping)
+            else dict(
+                sorted(
+                    dict(
+                        decoy_coverage_summary.get(
+                            "generated_pair_count_by_category", {}
+                        )
+                    ).items()
+                )
+            ),
+            "candidate_pair_count_by_category": {}
+            if not isinstance(decoy_coverage_summary, Mapping)
+            else dict(
+                sorted(
+                    dict(
+                        decoy_coverage_summary.get(
+                            "candidate_pair_count_by_category", {}
+                        )
+                    ).items()
+                )
+            ),
+            "scorable_pair_count_by_category": {}
+            if not isinstance(decoy_coverage_summary, Mapping)
+            else dict(
+                sorted(
+                    dict(
+                        decoy_coverage_summary.get(
+                            "scorable_pair_count_by_category", {}
+                        )
+                    ).items()
+                )
+            ),
+            "missing_query_record_count_by_category": {}
+            if not isinstance(decoy_coverage_summary, Mapping)
+            else dict(
+                sorted(
+                    dict(
+                        decoy_coverage_summary.get(
+                            "missing_query_record_count_by_category", {}
+                        )
+                    ).items()
+                )
+            ),
+            "missing_decoy_record_count_by_category": {}
+            if not isinstance(decoy_coverage_summary, Mapping)
+            else dict(
+                sorted(
+                    dict(
+                        decoy_coverage_summary.get(
+                            "missing_decoy_record_count_by_category", {}
+                        )
+                    ).items()
+                )
+            ),
         },
     }
 

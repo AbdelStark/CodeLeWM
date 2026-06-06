@@ -215,13 +215,24 @@ decoys for that category. State the reason in the comments section.
 
 When execution-specific semantic decoys are used, quote
 `metadata.execution_surprise_claim_gates` and keep score gates separate from
-pair-count gates.
+pair-count gates. Also quote
+`metadata.execution_decoy_generation.pair_count_summary` before interpreting
+any AUC.
+
+| Category | Pack pairs | Candidate pairs | Scorable pairs | Missing query | Missing decoy | Blocker |
+| -------- | ---------: | --------------: | -------------: | ------------: | ------------: | ------- |
+| same_code_different_input | | | | | | |
+| same_problem_different_submission | | | | | | |
 
 | Gate category | Score gate | Pair-count gate | Claim status |
 | ------------- | ---------- | --------------- | ------------ |
 | mutation | `<AUC> / <threshold>` | `<count> / <threshold>` | |
 | same_code_different_input | `<AUC> / <threshold>` | `<count> / <threshold>` | |
 | same_problem_different_submission | `<AUC> / <threshold>` | `<count> / <threshold>` | |
+
+If the pre-score table contains a `semantic_decoy_pair_count_blocker`, the
+corresponding score gate must be reported as `blocked_by_pair_count`; do not
+use its AUC as model-quality evidence.
 
 ## Scorer And Reranker Quality
 

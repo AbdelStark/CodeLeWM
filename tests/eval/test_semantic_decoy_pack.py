@@ -123,6 +123,30 @@ class SemanticDecoyPackTest(unittest.TestCase):
                 },
                 {row["category"] for row in pair_rows},
             )
+            self.assertEqual(
+                {row["source_dataset"] for row in pair_rows},
+                {"fixture"},
+            )
+            self.assertEqual(
+                {row["query_source_dataset"] for row in pair_rows},
+                {"fixture"},
+            )
+            self.assertEqual(
+                {row["decoy_source_dataset"] for row in pair_rows},
+                {"fixture"},
+            )
+            self.assertEqual(
+                {row["query_record_schema_version"] for row in pair_rows},
+                {EXECUTION_PACK_RECORD_SCHEMA_VERSION},
+            )
+            self.assertEqual(
+                summary["benchmark_counts"],
+                {"fixture": 8},
+            )
+            self.assertEqual(
+                summary["record_schema_versions"],
+                {EXECUTION_PACK_RECORD_SCHEMA_VERSION: 8},
+            )
 
             loaded = load_semantic_decoy_pack(out / result.artifact_manifest_path)
             self.assertEqual(len(loaded.pairs), result.pair_count)
