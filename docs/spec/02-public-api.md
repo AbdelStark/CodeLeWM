@@ -442,6 +442,39 @@ CodeLeWM lift over no-action, bootstrap confidence intervals, and an explicit
 claim gate. Positive downstream claims require both the LLM-order and no-action
 lift gates to pass; otherwise the report remains diagnostic.
 
+`codelewm eval p-pass-calibration` consumes one or more persisted
+completion-score JSONL files and writes a manifest-backed held-out correctness
+calibration report:
+
+```bash
+codelewm eval p-pass-calibration \
+  --scores results/v0_9/rerank/humaneval/reports/completion_scores.jsonl \
+  --parent-manifest results/v0_9/rerank/humaneval/manifest.json \
+  --dataset-kind downstream_completion \
+  --baseline p_pass \
+  --baseline codelewm \
+  --baseline no_action \
+  --baseline lexical \
+  --out results/v0_9/p_pass_calibration/humaneval \
+  --json
+```
+
+Use `--dataset-kind training_pack_held_out` for held-out rows scored from a
+supervised pass/fail training pack and `--dataset-kind downstream_completion`
+for downstream completion-label rows. The command verifies every
+`--parent-manifest`, writes
+`reports/p_pass_calibration_report.json` with schema
+`codelewm.eval.p_pass_calibration_report.v1`, `config.json`,
+`reports/secret_scan_report.json`, and a parent-linked
+`codelewm.artifact_manifest.v1`. The report includes ROC-AUC, average
+precision, Brier score, expected calibration error, equal-width calibration
+bins, thresholded summaries at `0.5`, and per-benchmark and per-split slices
+for every selected baseline. Score rows keep the existing higher-is-better
+convention; probability calibration uses identity for scores already in
+`[0, 1]` and sigmoid otherwise. The report is diagnostic evidence: positive
+p-pass or coding-usefulness claims still require the full v0.9 gate suite,
+parent lineage, per-benchmark coverage, and declared controls.
+
 `scripts/build-passfail-pack` converts one or more
 `codelewm.eval.completion_label.v1` JSONL files into a supervised execution pack
 for correctness co-training. The legacy single-source mode remains:

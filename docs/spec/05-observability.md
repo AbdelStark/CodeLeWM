@@ -151,6 +151,17 @@ non-execution policy. Any training or index manifests passed through
 `--parent-manifest` are verified before the report is written and recorded in
 the artifact manifest's `parent_artifacts`.
 
+Held-out pass-probability calibration reports use
+`schema_version=codelewm.eval.p_pass_calibration_report.v1` and
+`artifact_kind=eval_report`. They consume persisted completion-level score rows,
+verify declared parent manifests before writing, and record ROC-AUC, average
+precision, Brier score, expected calibration error, equal-width calibration
+bins, thresholded summaries, and per-benchmark/per-split slices for the selected
+`p_pass`, CodeLeWM, no-action, shuffled-action, lexical, random, or LLM-order
+score keys. Missing, nonfinite, and single-class slices remain visible as typed
+statuses instead of being silently dropped. These reports are diagnostic until
+the full v0.9 gate suite passes.
+
 Transition indexes use `schema_version=codelewm.transition_index.v1` in
 `index.json`, store train-split `state_after` vectors in `vectors.npy`, and
 store one JSONL metadata record per vector in `entries.jsonl`. The index artifact

@@ -129,6 +129,7 @@ Current landed CLI commands:
 - `codelewm eval scorer-quality`
 - `codelewm eval downstream-pack`
 - `codelewm eval downstream-rerank`
+- `codelewm eval p-pass-calibration`
 - `codelewm index`
 - `codelewm score`
 - `codelewm rerank`
