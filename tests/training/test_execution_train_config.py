@@ -268,7 +268,10 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
         self.assertEqual(cfg.data.pack_revision, "v0.9.0-rc1")
         self.assertEqual(cfg.data.ingestion_sources, ("humaneval", "mbpp_plus"))
         self.assertEqual(cfg.objective.p_pass_bce_weight, 0.5)
-        self.assertEqual(cfg.objective.p_pass_bce_pos_weight, 1.0)
+        self.assertEqual(
+            cfg.objective.p_pass_bce_pos_weight,
+            1.0240518038852915,
+        )
         self.assertEqual(cfg.objective.output_value_ce_weight, 0.2)
         self.assertEqual(cfg.trainer.max_steps, 12000)
         self.assertEqual(

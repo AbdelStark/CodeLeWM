@@ -5,6 +5,8 @@ from __future__ import annotations
 import ast
 import json
 import random
+import sys
+import time
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -30,6 +32,7 @@ from codelewm.data.sandbox import (
     run_one,
 )
 from codelewm.observability import build_artifact_manifest, write_artifact_manifest
+from codelewm.observability.logging import LogEvent, write_log_event_jsonl
 from codelewm.security.claim_boundaries import (
     claim_boundary_fingerprint,
     load_claim_boundary,
@@ -56,6 +59,8 @@ from .record import (
 
 PASSFAIL_PACK_REPORT_SCHEMA_VERSION = "codelewm.execution_passfail_pack_report.v1"
 PASSFAIL_PACK_CONFIG_SCHEMA_VERSION = "codelewm.execution_passfail_pack_config.v1"
+PASSFAIL_PACK_PROGRESS_LOG_PATH = "reports/passfail_pack_progress.jsonl"
+_STDERR_EVENT_PREFIX = "CODELEWM_JOB_EVENT "
 
 
 class PassFailPackBuilderError(ExecutionPackBuilderError):
@@ -91,6 +96,7 @@ class PassFailPackResult:
     report_path: str
     secret_scan_report_path: str
     artifact_manifest_path: str
+    progress_log_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -102,7 +108,221 @@ class PassFailPackResult:
             "report_path": self.report_path,
             "secret_scan_report_path": self.secret_scan_report_path,
             "artifact_manifest_path": self.artifact_manifest_path,
+            "progress_log_path": self.progress_log_path,
         }
+
+
+class _PassFailBuildProgress:
+    """Emit bounded, redacted progress for long sandbox-backed pack builds."""
+
+    def __init__(
+        self,
+        *,
+        run_id: str,
+        progress_log_path: Path | None,
+        emit_to_stderr: bool,
+        every_inputs: int,
+        total_rows: int,
+        total_inputs: int,
+    ) -> None:
+        self.run_id = run_id
+        self.progress_log_path = progress_log_path
+        self.emit_to_stderr = emit_to_stderr
+        self.every_inputs = every_inputs
+        self.total_rows = total_rows
+        self.total_inputs = total_inputs
+        self.rows_processed = 0
+        self.inputs_processed = 0
+        self.records_produced = 0
+        self._last_emitted_input = 0
+        self._started_at = time.monotonic()
+        if self.progress_log_path is not None and self.progress_log_path.exists():
+            self.progress_log_path.unlink()
+
+    @property
+    def enabled(self) -> bool:
+        return self.progress_log_path is not None or self.emit_to_stderr
+
+    def start(
+        self,
+        *,
+        benchmarks: Sequence[str],
+        row_counts_by_benchmark: Mapping[str, int],
+        sandbox_policy: Mapping[str, Any],
+    ) -> None:
+        self.phase(
+            event="execution_passfail_pack.start",
+            message="pass/fail pack build started",
+            fields={
+                "benchmarks": list(benchmarks),
+                "row_counts_by_benchmark": dict(row_counts_by_benchmark),
+                "total_rows": self.total_rows,
+                "total_inputs": self.total_inputs,
+                "sandbox_policy": dict(sandbox_policy),
+            },
+        )
+
+    def input_processed(
+        self,
+        *,
+        benchmark_id: str,
+        problem_id: str,
+        completion_id: str,
+        input_id: str,
+        input_kind: str,
+        record_produced: bool,
+        audit: Counter[str],
+    ) -> None:
+        self.inputs_processed += 1
+        if record_produced:
+            self.records_produced += 1
+        should_emit = (
+            self.inputs_processed == 1
+            or self.inputs_processed == self.total_inputs
+            or self.inputs_processed - self._last_emitted_input >= self.every_inputs
+        )
+        if not should_emit:
+            return
+        self._last_emitted_input = self.inputs_processed
+        self._emit_progress(
+            benchmark_id=benchmark_id,
+            problem_id=problem_id,
+            completion_id=completion_id,
+            input_id=input_id,
+            input_kind=input_kind,
+            record_produced=record_produced,
+            audit=audit,
+        )
+
+    def row_processed(
+        self,
+        *,
+        benchmark_id: str,
+        problem_id: str,
+        completion_id: str,
+        records_produced: int,
+        audit: Counter[str],
+    ) -> None:
+        self.rows_processed += 1
+        if self.inputs_processed == 0 or self.rows_processed == self.total_rows:
+            self._emit_progress(
+                benchmark_id=benchmark_id,
+                problem_id=problem_id,
+                completion_id=completion_id,
+                input_id=None,
+                input_kind=None,
+                record_produced=records_produced > 0,
+                audit=audit,
+            )
+
+    def phase(
+        self,
+        *,
+        event: str,
+        message: str,
+        fields: Mapping[str, Any],
+    ) -> None:
+        self._emit(
+            event=event,
+            step=max(self.inputs_processed, self.rows_processed),
+            message=message,
+            fields={
+                "elapsed_seconds": self._elapsed_seconds(),
+                **dict(fields),
+            },
+        )
+
+    def error(self, *, message: str, fields: Mapping[str, Any]) -> None:
+        self._emit(
+            event="execution_passfail_pack.error",
+            step=max(self.inputs_processed, self.rows_processed),
+            message=message,
+            fields={
+                "elapsed_seconds": self._elapsed_seconds(),
+                **dict(fields),
+            },
+            level="error",
+        )
+
+    def _emit_progress(
+        self,
+        *,
+        benchmark_id: str,
+        problem_id: str,
+        completion_id: str,
+        input_id: str | None,
+        input_kind: str | None,
+        record_produced: bool,
+        audit: Counter[str],
+    ) -> None:
+        step = self.inputs_processed if self.total_inputs else self.rows_processed
+        max_steps = self.total_inputs if self.total_inputs else self.total_rows
+        progress = None if max_steps <= 0 else step / max_steps
+        elapsed = self._elapsed_seconds()
+        eta = (
+            None
+            if step <= 0 or max_steps <= 0
+            else round((elapsed / step) * max(max_steps - step, 0), 3)
+        )
+        self._emit(
+            event="execution_passfail_pack.progress",
+            step=step,
+            message="pass/fail pack build progress",
+            fields={
+                "phase": "records",
+                "step": step,
+                "max_steps": max_steps,
+                "progress": progress,
+                "elapsed_seconds": elapsed,
+                "eta_seconds": eta,
+                "remaining_steps": max(max_steps - step, 0),
+                "rows_processed": self.rows_processed,
+                "total_rows": self.total_rows,
+                "inputs_processed": self.inputs_processed,
+                "total_inputs": self.total_inputs,
+                "records_produced": self.records_produced,
+                "benchmark_id": benchmark_id,
+                "problem_id": problem_id,
+                "completion_id": completion_id,
+                "input_id": input_id,
+                "input_kind": input_kind,
+                "record_produced": record_produced,
+                "sandbox_reject_counts": dict(sorted(audit.items())),
+            },
+        )
+
+    def _emit(
+        self,
+        *,
+        event: str,
+        step: int,
+        message: str,
+        fields: Mapping[str, Any],
+        level: str = "info",
+    ) -> None:
+        if not self.enabled:
+            return
+        log_event = LogEvent(
+            event=event,
+            level=level,  # type: ignore[arg-type]
+            run_id=self.run_id,
+            step=str(step),
+            message=message,
+            fields=fields,
+        )
+        if self.progress_log_path is not None:
+            log_event = write_log_event_jsonl(log_event, self.progress_log_path)
+        payload = log_event.to_dict()
+        if self.emit_to_stderr:
+            print(
+                f"{_STDERR_EVENT_PREFIX}"
+                f"{json.dumps(payload, sort_keys=True, allow_nan=False)}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    def _elapsed_seconds(self) -> float:
+        return round(time.monotonic() - self._started_at, 3)
 
 
 def build_passfail_pack(
@@ -124,6 +344,9 @@ def build_passfail_pack(
     overwrite: bool = False,
     allow_secret_findings: bool = False,
     command: Sequence[str] = ("scripts/build-passfail-pack",),
+    progress_log_path: Path | None = None,
+    progress_log_every_inputs: int = 25,
+    emit_progress_to_stderr: bool = False,
 ) -> PassFailPackResult:
     """Convert completion-label rows into a supervised execution pack.
 
@@ -146,6 +369,8 @@ def build_passfail_pack(
         _positive_int(max_completion_rows, "max_completion_rows")
     if max_records is not None:
         _positive_int(max_records, "max_records")
+    if progress_log_path is not None or emit_progress_to_stderr:
+        _positive_int(progress_log_every_inputs, "progress_log_every_inputs")
 
     output_dir = Path(output_dir).expanduser().resolve()
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
@@ -153,6 +378,12 @@ def build_passfail_pack(
             f"output_dir must be empty or --overwrite must be set: {output_dir}"
         )
     output_dir.mkdir(parents=True, exist_ok=True)
+    pack_id = pack_id or _default_passfail_pack_id()
+    resolved_progress_log_path = (
+        None
+        if progress_log_path is None
+        else Path(progress_log_path).expanduser().resolve()
+    )
 
     all_submissions: dict[str, dict[str, SourceSubmission]] = {}
     rows_by_benchmark: dict[str, list[dict[str, Any]]] = {}
@@ -167,6 +398,23 @@ def build_passfail_pack(
         )
     if not any(rows_by_benchmark.values()):
         raise PassFailPackBuilderError("completion-label inputs yielded zero rows")
+
+    progress = _PassFailBuildProgress(
+        run_id=pack_id,
+        progress_log_path=resolved_progress_log_path,
+        emit_to_stderr=emit_progress_to_stderr,
+        every_inputs=progress_log_every_inputs,
+        total_rows=sum(len(rows) for rows in rows_by_benchmark.values()),
+        total_inputs=_count_scoring_inputs(rows_by_benchmark),
+    )
+    progress.start(
+        benchmarks=[source.benchmark for source in source_specs],
+        row_counts_by_benchmark={
+            benchmark_id: len(rows)
+            for benchmark_id, rows in sorted(rows_by_benchmark.items())
+        },
+        sandbox_policy=sandbox_policy.as_dict(),
+    )
 
     audit = Counter()
     records: list[PackedExecutionRecord] = []
@@ -184,10 +432,19 @@ def build_passfail_pack(
                 submission=submission,
                 sandbox_policy=sandbox_policy,
                 audit=audit,
+                progress=progress,
+                benchmark_id=benchmark_id,
             )
             records.extend(built)
             if not completion_pass_matches:
                 completion_label_mismatch_count += 1
+            progress.row_processed(
+                benchmark_id=benchmark_id,
+                problem_id=problem_id,
+                completion_id=_completion_id_from_row(row),
+                records_produced=len(built),
+                audit=audit,
+            )
             if max_records is not None and len(records) >= max_records:
                 records = records[:max_records]
                 break
@@ -195,9 +452,25 @@ def build_passfail_pack(
             break
 
     if not records:
+        progress.error(
+            message="no pass/fail records were produced",
+            fields={"sandbox_reject_counts": dict(sorted(audit.items()))},
+        )
         raise PassFailPackBuilderError(
             "no pass/fail records were produced; inspect sandbox reject counts"
         )
+    progress.phase(
+        event="execution_passfail_pack.records_built",
+        message="pass/fail pack records built",
+        fields={
+            "record_count": len(records),
+            "completion_label_row_count": sum(
+                len(rows) for rows in rows_by_benchmark.values()
+            ),
+            "completion_label_mismatch_count": completion_label_mismatch_count,
+            "sandbox_reject_counts": dict(sorted(audit.items())),
+        },
+    )
 
     splits = _assign_splits(
         records=records,
@@ -211,12 +484,25 @@ def build_passfail_pack(
 
     pass_counts = Counter("true" if record.passed else "false" for record in records)
     if not pass_counts["true"] or not pass_counts["false"]:
+        progress.error(
+            message="pass/fail pack did not contain both classes",
+            fields={"pass_label_counts": dict(sorted(pass_counts.items()))},
+        )
         raise PassFailPackBuilderError(
             "pass/fail pack must contain both classes; "
             f"got {dict(sorted(pass_counts.items()))}"
         )
     pos_weight = pass_counts["false"] / pass_counts["true"]
-    pack_id = pack_id or _default_passfail_pack_id()
+    progress.phase(
+        event="execution_passfail_pack.split_assigned",
+        message="pass/fail pack splits assigned",
+        fields={
+            "record_count": len(records),
+            "split_counts": dict(sorted(Counter(splits).items())),
+            "pass_label_counts": dict(sorted(pass_counts.items())),
+            "pos_weight": pos_weight,
+        },
+    )
 
     pack_jsonl_path = output_dir / "pack.jsonl"
     with pack_jsonl_path.open("w", encoding="utf-8") as handle:
@@ -378,40 +664,92 @@ def build_passfail_pack(
         encoding="utf-8",
     )
 
+    progress.phase(
+        event="execution_passfail_pack.validation_start",
+        message="pass/fail pack artifact validation started",
+        fields={
+            "record_count": len(records),
+            "readiness_gates": readiness_gates,
+            "report_path": _relative_to_root(report_path, output_dir),
+        },
+    )
+    scan_input_paths = _pack_scan_paths(
+        pack_jsonl_path=pack_jsonl_path,
+        config_path=config_path,
+        manifest_path=output_dir / "manifest.json",
+        attribution_path=output_dir / "attribution.json",
+        audit_path=output_dir / "sandbox_audit_summary.json",
+        report_path=report_path,
+        progress_log_path=resolved_progress_log_path,
+    )
     scan_report = scan_paths(
-        (
-            pack_jsonl_path,
-            config_path,
-            output_dir / "manifest.json",
-            output_dir / "attribution.json",
-            output_dir / "sandbox_audit_summary.json",
-            report_path,
-        ),
+        scan_input_paths,
         include_suffixes=(),
         recursive=False,
     )
     scan_payload = _relative_secret_scan_payload(scan_report.to_dict(), output_dir)
+    if scan_payload["findings"] and not allow_secret_findings:
+        secret_scan_report_path.write_text(
+            json.dumps(scan_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        progress.error(
+            message="pass/fail pack secret scan found findings",
+            fields={"finding_count": len(scan_payload["findings"])},
+        )
+        raise PassFailPackBuilderError(
+            "pass/fail pack contains secret-scan findings; refusing to publish"
+        )
+    progress.phase(
+        event="execution_passfail_pack.complete",
+        message="pass/fail pack build completed",
+        fields={
+            "record_count": len(records),
+            "pass_label_counts": dict(sorted(pass_counts.items())),
+            "pos_weight": pos_weight,
+            "artifact_scan_ok": bool(scan_payload["ok"]),
+            "progress_log_path": (
+                None
+                if resolved_progress_log_path is None
+                else _relative_to_root(resolved_progress_log_path, output_dir)
+            ),
+        },
+    )
+    if resolved_progress_log_path is not None and resolved_progress_log_path.is_file():
+        scan_report = scan_paths(
+            scan_input_paths,
+            include_suffixes=(),
+            recursive=False,
+        )
+        scan_payload = _relative_secret_scan_payload(scan_report.to_dict(), output_dir)
+        if scan_payload["findings"] and not allow_secret_findings:
+            secret_scan_report_path.write_text(
+                json.dumps(scan_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+                encoding="utf-8",
+            )
+            raise PassFailPackBuilderError(
+                "pass/fail pack contains secret-scan findings; refusing to publish"
+            )
     secret_scan_report_path.write_text(
         json.dumps(scan_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
-    if scan_payload["findings"] and not allow_secret_findings:
-        raise PassFailPackBuilderError(
-            "pass/fail pack contains secret-scan findings; refusing to publish"
-        )
 
     artifact_manifest = build_artifact_manifest(
         artifact_kind="dataset",
         root=output_dir,
-        files=(
-            pack_jsonl_path,
-            output_dir / "manifest.json",
-            output_dir / "attribution.json",
-            output_dir / "sandbox_audit_summary.json",
-            output_dir / "claim_boundary.md",
-            config_path,
-            report_path,
-            secret_scan_report_path,
+        files=tuple(
+            _pack_artifact_paths(
+                pack_jsonl_path=pack_jsonl_path,
+                manifest_path=output_dir / "manifest.json",
+                attribution_path=output_dir / "attribution.json",
+                audit_path=output_dir / "sandbox_audit_summary.json",
+                claim_boundary_path=output_dir / "claim_boundary.md",
+                config_path=config_path,
+                report_path=report_path,
+                secret_scan_report_path=secret_scan_report_path,
+                progress_log_path=resolved_progress_log_path,
+            )
         ),
         command=command,
         config=config_payload,
@@ -438,6 +776,11 @@ def build_passfail_pack(
         report_path=_relative_to_root(report_path, output_dir),
         secret_scan_report_path=_relative_to_root(secret_scan_report_path, output_dir),
         artifact_manifest_path=_relative_to_root(artifact_manifest_path, output_dir),
+        progress_log_path=(
+            None
+            if resolved_progress_log_path is None
+            else _relative_to_root(resolved_progress_log_path, output_dir)
+        ),
     )
 
 
@@ -595,12 +938,14 @@ def _records_from_completion_row(
     submission: SourceSubmission,
     sandbox_policy: SandboxPolicy,
     audit: Counter[str],
+    progress: _PassFailBuildProgress,
+    benchmark_id: str,
 ) -> tuple[list[PackedExecutionRecord], bool]:
     code = str(row.get("completion_text") or row.get("code") or "")
     if not code.strip():
         audit["missing_completion_text"] += 1
         return [], True
-    completion_id = str(row.get("completion_id") or row.get("completion_sha256") or "")
+    completion_id = _completion_id_from_row(row)
     if not completion_id:
         audit["missing_completion_id"] += 1
         return [], True
@@ -633,12 +978,37 @@ def _records_from_completion_row(
             sandbox_policy=sandbox_policy,
             audit=audit,
         )
+        progress.input_processed(
+            benchmark_id=benchmark_id,
+            problem_id=submission.source_problem_id,
+            completion_id=completion_id,
+            input_id=input_id,
+            input_kind=str(input_row.get("input_kind") or ""),
+            record_produced=record is not None,
+            audit=audit,
+        )
         if record is None:
             row_all_passed = False
             continue
         records.append(record)
         row_all_passed = row_all_passed and bool(record.passed)
     return records, row_all_passed == bool(row.get("passed"))
+
+
+def _completion_id_from_row(row: Mapping[str, Any]) -> str:
+    return str(row.get("completion_id") or row.get("completion_sha256") or "")
+
+
+def _count_scoring_inputs(
+    rows_by_benchmark: Mapping[str, Sequence[Mapping[str, Any]]]
+) -> int:
+    total = 0
+    for rows in rows_by_benchmark.values():
+        for row in rows:
+            scoring_inputs = row.get("scoring_inputs")
+            if isinstance(scoring_inputs, list):
+                total += len(scoring_inputs)
+    return total
 
 
 def _expected_hashes_by_input(row: Mapping[str, Any]) -> dict[str, str]:
@@ -995,6 +1365,69 @@ def _relative_secret_scan_payload(
     payload = dict(payload)
     payload["findings"] = findings
     return payload
+
+
+def _pack_scan_paths(
+    *,
+    pack_jsonl_path: Path,
+    config_path: Path,
+    manifest_path: Path,
+    attribution_path: Path,
+    audit_path: Path,
+    report_path: Path,
+    progress_log_path: Path | None,
+) -> tuple[Path, ...]:
+    paths: list[Path] = [
+        pack_jsonl_path,
+        config_path,
+        manifest_path,
+        attribution_path,
+        audit_path,
+        report_path,
+    ]
+    if progress_log_path is not None and progress_log_path.is_file():
+        paths.append(progress_log_path)
+    return tuple(paths)
+
+
+def _pack_artifact_paths(
+    *,
+    pack_jsonl_path: Path,
+    manifest_path: Path,
+    attribution_path: Path,
+    audit_path: Path,
+    claim_boundary_path: Path,
+    config_path: Path,
+    report_path: Path,
+    secret_scan_report_path: Path,
+    progress_log_path: Path | None,
+) -> tuple[Path, ...]:
+    paths: list[Path] = [
+        pack_jsonl_path,
+        manifest_path,
+        attribution_path,
+        audit_path,
+        claim_boundary_path,
+        config_path,
+        report_path,
+        secret_scan_report_path,
+    ]
+    artifact_root = pack_jsonl_path.parent.resolve()
+    if (
+        progress_log_path is not None
+        and progress_log_path.is_file()
+        and _path_is_relative_to(progress_log_path, artifact_root)
+    ):
+        paths.append(progress_log_path)
+    return tuple(paths)
+
+
+def _path_is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
 
 
 def _relative_to_root(path: Path, root: Path) -> str:

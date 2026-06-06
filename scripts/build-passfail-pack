@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from codelewm.data.execution_pack.build_passfail_pack import (
+    PASSFAIL_PACK_PROGRESS_LOG_PATH,
     PassFailPackBuilderError,
     PassFailPackSource,
     build_passfail_pack,
@@ -86,6 +87,30 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--allow-secret-findings", action="store_true")
+    parser.add_argument(
+        "--progress-log",
+        type=Path,
+        help=(
+            "write structured pack-build progress JSONL here "
+            f"(default: OUT/{PASSFAIL_PACK_PROGRESS_LOG_PATH})"
+        ),
+    )
+    parser.add_argument(
+        "--no-progress-log",
+        action="store_true",
+        help="disable persisted pack-build progress JSONL",
+    )
+    parser.add_argument(
+        "--progress-log-every-inputs",
+        type=int,
+        default=25,
+        help="emit progress every N sandboxed scoring inputs",
+    )
+    parser.add_argument(
+        "--no-progress-stderr",
+        action="store_true",
+        help="do not mirror progress events to stderr",
+    )
     parser.add_argument("--json", action="store_true", help="emit JSON summary")
     args = parser.parse_args(argv)
 
@@ -118,6 +143,9 @@ def main(argv: list[str] | None = None) -> int:
             overwrite=args.overwrite,
             allow_secret_findings=args.allow_secret_findings,
             command=("scripts/build-passfail-pack", *(argv or sys.argv[1:])),
+            progress_log_path=_progress_log_path_from_args(args),
+            progress_log_every_inputs=args.progress_log_every_inputs,
+            emit_progress_to_stderr=not args.no_progress_stderr,
         )
     except PassFailPackBuilderError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -131,7 +159,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"pass_label_counts: {result.pass_label_counts}")
         print(f"pos_weight: {result.pos_weight:.6f}")
         print(f"manifest: {result.output_dir / 'manifest.json'}")
+        if result.progress_log_path is not None:
+            print(f"progress_log: {result.output_dir / result.progress_log_path}")
     return 0
+
+
+def _progress_log_path_from_args(args: argparse.Namespace) -> Path | None:
+    if args.no_progress_log:
+        return None
+    if args.progress_log is not None:
+        return args.progress_log
+    return args.out / PASSFAIL_PACK_PROGRESS_LOG_PATH
 
 
 def _sources_from_args(args: argparse.Namespace) -> tuple[PassFailPackSource, ...] | None:

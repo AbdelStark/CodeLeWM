@@ -232,6 +232,13 @@ the v0.9 pack must be published to
 from `containers/v0_9/Dockerfile`, and the launch plan must pin that image with
 `--runtime-image-digest sha256:<digest> --require-runtime-image-digest`:
 
+Pack-build preflight is observable: `scripts/build-passfail-pack` writes
+`reports/passfail_pack_progress.jsonl` by default and mirrors
+`CODELEWM_JOB_EVENT` progress to stderr. Use
+`uv run scripts/hf-job-event-status --from-file <pack-dir>/reports/passfail_pack_progress.jsonl`
+to check rows, sandboxed inputs, ETA, reject counts, and completion status
+without reading raw JSONL.
+
 ```bash
 uv run scripts/hf-launch-execution-run \
   --config config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml \

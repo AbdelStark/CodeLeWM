@@ -82,7 +82,8 @@ objective:
   inverse_action_reconstruction_weight: 0.05
   retrieval_weight: 0.05
   p_pass_bce_weight: 0.5
-  p_pass_bce_pos_weight: 1.0
+  # Measured from the v0.9 cross-benchmark preflight pack report.
+  p_pass_bce_pos_weight: 1.0240518038852915
   output_value_ce_weight: 0.2
 
 seeds:

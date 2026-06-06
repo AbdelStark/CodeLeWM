@@ -282,11 +282,18 @@ def _render_human(payload: dict[str, Any]) -> str:
 
         completion = summary.get("completion")
         if isinstance(completion, dict):
-            lines.append(
-                "  complete: "
-                f"step_count={completion.get('step_count')} "
-                f"wall_time={_format_seconds(completion.get('wall_time_seconds'))}"
-            )
+            if completion.get("event") == "execution_passfail_pack.complete":
+                lines.append(
+                    "  complete: "
+                    f"record_count={completion.get('record_count')} "
+                    f"elapsed={_format_seconds(completion.get('elapsed_seconds'))}"
+                )
+            else:
+                lines.append(
+                    "  complete: "
+                    f"step_count={completion.get('step_count')} "
+                    f"wall_time={_format_seconds(completion.get('wall_time_seconds'))}"
+                )
 
         counts = summary.get("event_counts")
         if isinstance(counts, dict):
@@ -298,14 +305,17 @@ def _render_human(payload: dict[str, Any]) -> str:
 
 
 def _progress_line(progress: dict[str, Any]) -> str:
+    event = progress.get("event") or "progress"
+    phase = progress.get("phase")
     step = progress.get("step")
     max_steps = progress.get("max_steps")
     percent = _format_float(progress.get("progress_percent"), digits=2)
     elapsed = _format_seconds(progress.get("elapsed_seconds"))
     eta = _format_seconds(progress.get("eta_seconds"))
     seed = progress.get("seed")
+    phase_text = "" if phase is None else f" phase={phase}"
     return (
-        f"progress: seed={seed} step={step}/{max_steps} "
+        f"progress: event={event}{phase_text} seed={seed} step={step}/{max_steps} "
         f"percent={percent}% elapsed={elapsed} eta={eta}"
     )
 

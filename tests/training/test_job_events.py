@@ -166,6 +166,53 @@ class JobEventParserTest(unittest.TestCase):
         self.assertEqual(summary["latest_runtime"]["phase"], "pack_download_complete")
         self.assertEqual(summary["latest_runtime"]["fields"]["elapsed_seconds"], 71)
 
+    def test_summary_reports_pack_build_progress(self) -> None:
+        events = [
+            _event(
+                "execution_passfail_pack.start",
+                {
+                    "total_rows": 384,
+                    "total_inputs": 2214,
+                },
+            ),
+            _event(
+                "execution_passfail_pack.progress",
+                {
+                    "phase": "records",
+                    "step": 50,
+                    "max_steps": 200,
+                    "progress": 0.25,
+                    "elapsed_seconds": 30.0,
+                    "eta_seconds": 90.0,
+                    "records_produced": 42,
+                    "sandbox_reject_counts": {"sandbox_timeout": 2},
+                },
+            ),
+            _event(
+                "execution_passfail_pack.complete",
+                {
+                    "record_count": 2188,
+                    "elapsed_seconds": 2164.454,
+                },
+            ),
+        ]
+
+        summary = summarize_job_events(events, job_id="pack-build", job_stage="RUNNING")
+
+        self.assertEqual(
+            summary["latest_progress"]["event"],
+            "execution_passfail_pack.progress",
+        )
+        self.assertEqual(summary["latest_progress"]["phase"], "records")
+        self.assertEqual(summary["latest_progress"]["step"], 50)
+        self.assertEqual(summary["latest_progress"]["remaining_steps"], 150)
+        self.assertEqual(
+            summary["completion"]["event"],
+            "execution_passfail_pack.complete",
+        )
+        self.assertTrue(summary["health"]["complete"])
+        self.assertEqual(summary["latest_start"]["total_rows"], 384)
+
 
 class JobEventStatusScriptTest(unittest.TestCase):
     def test_script_summarizes_saved_progress_jsonl(self) -> None:
@@ -277,6 +324,47 @@ class JobEventStatusScriptTest(unittest.TestCase):
 
         self.assertIn("runtime.upload_start", completed.stdout)
         self.assertIn("upload_path_in_repo=codelewm-v0-8-short-seed-42", completed.stdout)
+
+    def test_script_human_output_labels_pack_build_progress(self) -> None:
+        events = [
+            _event(
+                "execution_passfail_pack.progress",
+                {
+                    "phase": "records",
+                    "step": 50,
+                    "max_steps": 200,
+                    "progress": 0.25,
+                    "elapsed_seconds": 30.0,
+                    "eta_seconds": 90.0,
+                },
+            ),
+            _event(
+                "execution_passfail_pack.complete",
+                {
+                    "record_count": 2188,
+                    "elapsed_seconds": 2164.454,
+                },
+            ),
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "passfail_pack_progress.jsonl"
+            path.write_text(
+                "\n".join(json.dumps(event, sort_keys=True) for event in events),
+                encoding="utf-8",
+            )
+
+            completed = subprocess.run(
+                [sys.executable, str(STATUS_SCRIPT), "--from-file", str(path)],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+        self.assertIn("event=execution_passfail_pack.progress", completed.stdout)
+        self.assertIn("phase=records", completed.stdout)
+        self.assertIn("step=50/200", completed.stdout)
+        self.assertIn("complete: record_count=2188", completed.stdout)
 
     def test_script_accepts_retry_flags_for_saved_progress_jsonl(self) -> None:
         event = _event(
