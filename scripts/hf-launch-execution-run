@@ -49,7 +49,7 @@ def main() -> int:
         default=Path(
             "config/train/scaled/codelewm_execution_v0_6_a10g.yaml"
         ),
-        help="path to the v0.6 execution training config",
+        help="path to the execution training config",
     )
     parser.add_argument(
         "--git-sha",
@@ -69,6 +69,16 @@ def main() -> int:
         help="restrict to one or more seeds (default: all configured seeds)",
     )
     parser.add_argument(
+        "--runtime-image-digest",
+        default=os.getenv("CODELEWM_RUNTIME_IMAGE_DIGEST"),
+        help="pin the runtime image with a sha256 digest in the launch plan",
+    )
+    parser.add_argument(
+        "--require-runtime-image-digest",
+        action="store_true",
+        help="fail if no runtime image digest is supplied",
+    )
+    parser.add_argument(
         "--json", action="store_true", help="emit JSON plan list"
     )
     args = parser.parse_args()
@@ -79,12 +89,25 @@ def main() -> int:
         print(f"config invalid: {exc}", file=sys.stderr)
         return 2
 
-    plans = build_launch_plans(
-        config=config,
-        config_path=args.config,
-        git_sha=args.git_sha,
-        date=args.date,
-    )
+    if args.require_runtime_image_digest and not args.runtime_image_digest:
+        print(
+            "--runtime-image-digest is required when "
+            "--require-runtime-image-digest is set",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        plans = build_launch_plans(
+            config=config,
+            config_path=args.config,
+            git_sha=args.git_sha,
+            date=args.date,
+            runtime_image_digest=args.runtime_image_digest,
+        )
+    except ExecutionLaunchPlanError as exc:
+        print(f"config invalid: {exc}", file=sys.stderr)
+        return 2
 
     if args.seed is not None:
         wanted = set(args.seed)
@@ -101,6 +124,11 @@ def main() -> int:
             print(f"--- seed {plan.seed} ---")
             print(f"run_name: {plan.run_name}")
             print(f"pack: {plan.pack_repo_id}@{plan.pack_revision}")
+            print(f"image: {plan.runtime_image_reference}")
+            if plan.runtime_image_digest is None:
+                print("image_digest: <unresolved>")
+            else:
+                print(f"image_digest: {plan.runtime_image_digest}")
             print(f"flavor: {plan.flavor}")
             print(f"timeout: {plan.timeout_hours}h")
             print("command:")

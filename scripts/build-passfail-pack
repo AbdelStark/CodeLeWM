@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.require_split_coverage and not required_probe_targets:
             required_probe_targets = ("output_magnitude_bucket",)
         result = build_passfail_pack(
-            completion_label_paths=tuple(args.completion_labels or ()),
+            completion_label_paths=(
+                None if sources is not None else tuple(args.completion_labels or ())
+            ),
             source_path=args.source,
             benchmark=args.benchmark,
             sources=sources,

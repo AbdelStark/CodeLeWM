@@ -248,6 +248,39 @@ class ExecutionTrainConfigLoadTest(unittest.TestCase):
         self.assertIn("short", cfg.hf_jobs.run_name_template)
         self.assertIn("short", cfg.hf_jobs.checkpoint_revision_template)
 
+    def test_loads_checked_in_v0_9_short_yaml(self) -> None:
+        """The v0.9 profile points at the cross-benchmark pass/fail pack."""
+        from codelewm.training import (
+            EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION,
+            load_execution_train_config,
+        )
+
+        path = (
+            REPO_ROOT
+            / "config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml"
+        )
+        cfg = load_execution_train_config(path)
+        self.assertEqual(cfg.schema_version, EXECUTION_TRAIN_CONFIG_SCHEMA_VERSION)
+        self.assertEqual(cfg.name, "codelewm_execution_v0_9_short_a10g")
+        self.assertEqual(cfg.parent_issue, 385)
+        self.assertEqual(cfg.implementing_issue, 391)
+        self.assertEqual(cfg.seeds, (42, 1729))
+        self.assertEqual(cfg.data.pack_revision, "v0.9.0-rc1")
+        self.assertEqual(cfg.data.ingestion_sources, ("humaneval", "mbpp_plus"))
+        self.assertEqual(cfg.objective.p_pass_bce_weight, 0.5)
+        self.assertEqual(cfg.objective.p_pass_bce_pos_weight, 1.0)
+        self.assertEqual(cfg.objective.output_value_ce_weight, 0.2)
+        self.assertEqual(cfg.trainer.max_steps, 12000)
+        self.assertEqual(
+            cfg.hf_jobs.runtime_image,
+            "ghcr.io/abdelstark/codelewm-runtime:v0.9",
+        )
+        self.assertEqual(cfg.claim_gates.required_seeds, 2)
+        self.assertEqual(
+            cfg.claim_boundary.scope,
+            "v0_9_cross_benchmark_correctness_co_training_short",
+        )
+
     def test_loads_json_round_trip(self) -> None:
         from codelewm.training import (
             ExecutionTrainConfig,

@@ -38,7 +38,15 @@ V0_8_SHORT_CONFIG_PATH = (
     / "scaled"
     / "codelewm_execution_v0_8_short_a10g.yaml"
 )
+V0_9_SHORT_CONFIG_PATH = (
+    REPO_ROOT
+    / "config"
+    / "train"
+    / "scaled"
+    / "codelewm_execution_v0_9_short_a10g.yaml"
+)
 LAUNCHER = REPO_ROOT / "scripts" / "hf-launch-execution-run"
+DIGEST = "sha256:" + "a" * 64
 
 
 class V0_6ConfigTest(unittest.TestCase):
@@ -200,6 +208,44 @@ class LaunchPlanBuilderTest(unittest.TestCase):
             self.assertEqual(
                 plan.runtime_image,
                 "ghcr.io/abdelstark/codelewm-runtime:v0.8",
+            )
+
+    def test_checked_in_v0_9_launch_plan_requires_digest_pin_for_live_use(self) -> None:
+        config = load_v0_6_config(V0_9_SHORT_CONFIG_PATH)
+        plans = build_launch_plans(
+            config=config,
+            config_path=V0_9_SHORT_CONFIG_PATH,
+            git_sha="feed123",
+            date="20260606",
+            runtime_image_digest=DIGEST,
+        )
+
+        self.assertEqual(len(plans), 2)
+        for plan in plans:
+            self.assertEqual(plan.pack_revision, "v0.9.0-rc1")
+            self.assertEqual(plan.runtime_image, "ghcr.io/abdelstark/codelewm-runtime:v0.9")
+            self.assertEqual(plan.runtime_image_digest, DIGEST)
+            self.assertEqual(
+                plan.runtime_image_reference,
+                f"ghcr.io/abdelstark/codelewm-runtime:v0.9@{DIGEST}",
+            )
+            self.assertIn("feed123", plan.run_name)
+            self.assertIn("20260606", plan.run_name)
+            self.assertIn("codelewm_execution_v0_9_short_a10g.yaml", plan.config_path)
+            command_str = " ".join(plan.command)
+            self.assertIn(plan.runtime_image_reference, command_str)
+            self.assertIn("CODELEWM_EXECUTION_PACK_REVISION=v0.9.0-rc1", command_str)
+            self.assertIn("CODELEWM_UPLOAD_PATH_IN_REPO=" + plan.run_name, command_str)
+
+    def test_runtime_image_digest_format_is_validated(self) -> None:
+        config = load_v0_6_config(V0_9_SHORT_CONFIG_PATH)
+        with self.assertRaisesRegex(ExecutionLaunchPlanError, "runtime image digest"):
+            build_launch_plans(
+                config=config,
+                config_path=V0_9_SHORT_CONFIG_PATH,
+                git_sha="x",
+                date="y",
+                runtime_image_digest="latest",
             )
 
     def test_command_invokes_entrypoint_then_codelewm(self) -> None:
@@ -386,6 +432,59 @@ class LauncherCLITest(unittest.TestCase):
         payload = json.loads(completed.stdout)
         self.assertEqual(len(payload), 1)
         self.assertEqual(payload[0]["seed"], 42)
+
+    def test_digest_pin_is_emitted_by_cli_plan(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(LAUNCHER),
+                "--config",
+                str(V0_9_SHORT_CONFIG_PATH),
+                "--git-sha",
+                "feed123",
+                "--date",
+                "20260606",
+                "--runtime-image-digest",
+                DIGEST,
+                "--require-runtime-image-digest",
+                "--json",
+            ],
+            env={
+                "PYTHONPATH": str(REPO_ROOT),
+                "PATH": "/usr/bin:/bin:/usr/local/bin",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, msg=completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(len(payload), 2)
+        for plan in payload:
+            self.assertEqual(plan["runtime_image_digest"], DIGEST)
+            self.assertIn("@sha256:", plan["runtime_image_reference"])
+            self.assertIn(plan["runtime_image_reference"], " ".join(plan["command"]))
+
+    def test_required_digest_cli_fails_closed(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(LAUNCHER),
+                "--config",
+                str(V0_9_SHORT_CONFIG_PATH),
+                "--require-runtime-image-digest",
+                "--json",
+            ],
+            env={
+                "PYTHONPATH": str(REPO_ROOT),
+                "PATH": "/usr/bin:/bin:/usr/local/bin",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("--runtime-image-digest is required", completed.stderr)
 
 
 class V0_6RunbookTest(unittest.TestCase):

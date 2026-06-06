@@ -1,0 +1,116 @@
+# CodeLeWM v0.9 correctness-aware execution-substrate training profile
+# (A10G, SHORT).
+#
+# v0.9 reuses the v0.8 correctness-aware objective and fixes the data/eval
+# boundary: the training pack must be cross-benchmark, label-stratified, and
+# preflighted for the p_pass, semantic-decoy, and probe-coverage gates before
+# this config is launched.
+#
+# Launch only with a digest-pinned runtime image:
+#
+#   uv run scripts/hf-launch-execution-run \
+#     --config config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml \
+#     --runtime-image-digest sha256:<published-image-digest> \
+#     --require-runtime-image-digest --json
+
+schema_version: codelewm.execution_train_config.v1
+name: codelewm_execution_v0_9_short_a10g
+substrate: execution_trace_v1
+parent_issue: 385
+implementing_issue: 391
+target_substrate_run: v0.9.0
+
+data:
+  pack_repo_id: abdelstark/codelewm-execution-pack
+  pack_revision: v0.9.0-rc1
+  pack_jsonl: pack.jsonl
+  manifest_filename: manifest.json
+  claim_boundary_filename: claim_boundary.md
+  ingestion_sources:
+    - humaneval
+    - mbpp_plus
+  held_out_for_eval:
+    - humaneval_wsd_test_split
+    - mbpp_plus_wsd_test_split
+    - humaneval
+    - mbpp_plus
+
+loader:
+  code_sequence_length: 1024
+  action_sequence_length: 256
+  output_sequence_length: 256
+  batch_size: 64
+  gradient_accumulation_steps: 4
+  effective_batch_size: 256
+  shuffle: true
+
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: bf16-mixed
+  max_steps: 12000
+  warmup_steps: 500
+  cosine_decay_to: 0.0
+  gradient_clip_val: 1.0
+  checkpoint_every_n_steps: 4000
+  keep_last_n_checkpoints: 3
+  keep_best_by_metric: val_mse
+  tensorboard_enabled: true
+  collapse_diagnostics_every_n_steps: 1000
+  progress_log_every_n_steps: 10
+
+optimizer:
+  name: adamw
+  lr: 0.0003
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+
+wm:
+  history_size: 1
+  num_preds: 1
+  embed_dim: 256
+  state_encoder_type: transformer
+  state_encoder_layers: 4
+  state_encoder_heads: 8
+  enable_ema_target_encoder: true
+  ema_target_decay: 0.99
+
+objective:
+  prediction_mse_weight: 1.0
+  sigreg_weight: 0.09
+  action_swap_contrastive_weight: 0.1
+  inverse_action_reconstruction_weight: 0.05
+  retrieval_weight: 0.05
+  p_pass_bce_weight: 0.5
+  p_pass_bce_pos_weight: 1.0
+  output_value_ce_weight: 0.2
+
+seeds:
+  - 42
+  - 1729
+
+hf_jobs:
+  flavor: a10g-small
+  region: us-east-1
+  timeout_hours: 24
+  run_name_template: codelewm-v0-9-short-execution-{date}-{sha}-seed-{seed}
+  artifact_repo_id: abdelstark/codelewm-runs
+  checkpoint_repo_id: abdelstark/codelewm-transition-model
+  checkpoint_revision_template: v0.9.0-short-seed-{seed}
+  runtime_image: ghcr.io/abdelstark/codelewm-runtime:v0.9
+
+claim_gates:
+  retrieval_min_recall_at_1_lift_over_no_action: 0.05
+  retrieval_min_mrr_lift_over_no_action: 0.05
+  collapse_effective_rank_ratio_min: 0.20
+  collapse_per_dim_variance_median_min: 1.0e-8
+  collapse_nearest_neighbor_entropy_min: 0.10
+  surprise_mutation_auc_min: 0.65
+  surprise_same_problem_different_submission_auc_min: 0.60
+  surprise_same_code_different_input_auc_min: 0.70
+  downstream_rerank_pass_at_1_lift_min: 3.0
+  required_seeds: 2
+
+claim_boundary:
+  name: execution_substrate.v1
+  scope: v0_9_cross_benchmark_correctness_co_training_short

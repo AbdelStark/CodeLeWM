@@ -231,6 +231,46 @@ also persisted in the uploaded run artifact as `reports/job_progress.jsonl`.
 After download, run the same parser against that file with
 `uv run scripts/hf-job-event-status --from-file <run-dir>/reports/job_progress.jsonl`.
 
+## v0.9 Guarded Two-Seed Run
+
+Issue #391 must fail closed until the v0.9 data/eval preflight artifacts exist.
+The launch order is:
+
+1. Build the v0.9 pass/fail pack from the HumanEval and MBPP-Plus completion
+   labels with `scripts/build-passfail-pack --require-split-coverage` and
+   required probe target `output_magnitude_bucket`.
+2. Verify the local pack manifest and run `codelewm secret-scan` on the pack.
+3. Publish the pack to `abdelstark/codelewm-execution-pack@v0.9.0-rc1` with
+   `scripts/hf-publish-execution-pack --public --no-dry-run`.
+4. Build and push the v0.9 runtime image from `containers/v0_9/Dockerfile`,
+   then capture the published `sha256:<digest>`.
+5. Generate a dry-run launch plan for
+   `config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml` with
+   `--runtime-image-digest sha256:<digest> --require-runtime-image-digest`.
+   The plan must record the image digest, pack revision, config path, seeds,
+   output repositories, and upload paths for both seeds before either command is
+   launched.
+6. Launch exactly the two seed commands from that plan. If one fails, preserve
+   the typed failure, job ID, source SHA, image digest, config path, pack
+   revision, and latest `scripts/hf-job-event-status` summary before deciding
+   whether any relaunch is justified.
+
+Routine status should use:
+
+```bash
+uv run scripts/hf-job-event-status <seed-42-job-id> <seed-1729-job-id>
+hf jobs inspect <job-id>
+hf jobs logs <job-id>
+hf jobs stats <job-id>
+```
+
+Downloaded artifacts must verify against the v0.9 pack parent manifest, pass
+checkpoint trust inspection, and secret-scan clean before any eval or
+publication claim. The training health table must be filled from
+`reports/job_progress.jsonl` and `reports/execution_train_run_report.json`,
+including loss, `loss_p_pass_bce`, `margin_no_action_minus_pred`, collapse
+diagnostics, throughput, and checkpoint IDs.
+
 ## Remote Scaled Training And Publication
 
 The command below is the primary #154 follow-up profile already executed in run
