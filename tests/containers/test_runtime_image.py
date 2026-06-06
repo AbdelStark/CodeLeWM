@@ -232,6 +232,53 @@ class RuntimeImageV08DockerfileTest(unittest.TestCase):
         self.assertIn("ghcr.io/abdelstark/codelewm-runtime:v0.8", content)
 
 
+class RuntimeImageV09DockerfileTest(unittest.TestCase):
+    """Static checks for the v0.9 correctness-aware runtime image."""
+
+    DOCKERFILE = REPO_ROOT / "containers" / "v0_9" / "Dockerfile"
+    ENTRYPOINT = REPO_ROOT / "containers" / "v0_9" / "entrypoint.sh"
+
+    def test_dockerfile_exists_and_is_v0_9(self) -> None:
+        self.assertTrue(self.DOCKERFILE.is_file())
+        content = self.DOCKERFILE.read_text(encoding="utf-8")
+        for marker in (
+            "FROM ${BASE_IMAGE}",
+            "useradd -m -u 1000 codelewm",
+            "USER codelewm",
+            "uv pip install --system",
+            'org.opencontainers.image.version="v0.9"',
+            "containers/v0_9/entrypoint.sh",
+            "codelewm_execution_v0_9_short_a10g.yaml",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+
+    def test_entrypoint_script_exists_and_is_executable(self) -> None:
+        self.assertTrue(self.ENTRYPOINT.is_file(), f"missing {self.ENTRYPOINT}")
+        self.assertTrue(
+            os.access(self.ENTRYPOINT, os.X_OK),
+            f"entrypoint {self.ENTRYPOINT} is not executable",
+        )
+        body = self.ENTRYPOINT.read_text(encoding="utf-8")
+        for marker in (
+            "CODELEWM_JOB_EVENT",
+            "runtime.pack_download_start",
+            "runtime.command_start",
+            "runtime.upload_start",
+            "hf download",
+            '"$@"',
+            "hf upload",
+            "codelewm v0.9 run",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
+    def test_build_script_mentions_v0_9_dockerfile(self) -> None:
+        content = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("containers/v0_9/Dockerfile", content)
+        self.assertIn("ghcr.io/abdelstark/codelewm-runtime:v0.9", content)
+
+
 @unittest.skipUnless(
     _DOCKER_AVAILABLE and _RUN_CONTAINER_TESTS,
     "docker not available or CODELEWM_TEST_CONTAINER_BUILD not set",

@@ -32,6 +32,7 @@ auxiliaries behind explicit config gates.
 | HF A10G primary action-use | `config/train/scaled/codelewm_scaled_action_use_margin_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #154; negative claim gate |
 | HF A10G margin+retrieval fallback | `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #159; negative claim gate |
 | HF A10G v0.2 action-swap+inverse | `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml` | `240119` | `60000` | `64` | `bf16-mixed` | Completed in #172; negative action-use, representation, and downstream gates |
+| HF A10G v0.9 correctness short | `config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml` | `42`, `1729` | `12000` | `64` | `bf16-mixed` | #391 guarded run; launch only after v0.9 pack publication and digest-pinned runtime dry run |
 
 The primary follow-up candidate was
 `codelewm_scaled_action_use_margin_gpu_a10g.yaml`. It directly targeted the
@@ -223,6 +224,28 @@ margin+retrieval escalation with
 `config/train/scaled/codelewm_scaled_action_use_margin_retrieval_gpu_a10g.yaml`.
 #172 records the v0.2 intervention launch with
 `config/train/scaled/codelewm_scaled_v0_2_action_swap_inverse_gpu_a10g.yaml`.
+
+The v0.9 #391 execution-substrate run uses
+`config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml`. Before launch,
+the v0.9 pack must be published to
+`abdelstark/codelewm-execution-pack@v0.9.0-rc1`, the runtime image must be built
+from `containers/v0_9/Dockerfile`, and the launch plan must pin that image with
+`--runtime-image-digest sha256:<digest> --require-runtime-image-digest`:
+
+```bash
+uv run scripts/hf-launch-execution-run \
+  --config config/train/scaled/codelewm_execution_v0_9_short_a10g.yaml \
+  --git-sha <merged-sha> \
+  --date <YYYYMMDD> \
+  --runtime-image-digest sha256:<published-image-digest> \
+  --require-runtime-image-digest \
+  --json
+```
+
+Review the emitted per-seed commands before running them. Each plan must include
+`CODELEWM_EXECUTION_PACK_REVISION=v0.9.0-rc1`, the config path, seed, digest
+pinned image reference, `CODELEWM_UPLOAD_REPO_ID`, and
+`CODELEWM_UPLOAD_PATH_IN_REPO`.
 
 Monitor and inspect only through the HF CLI:
 

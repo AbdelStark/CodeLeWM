@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -393,6 +395,78 @@ class PassFailExecutionPackTest(unittest.TestCase):
             )
             self.assertTrue(batches)
             self.assertTrue(all(batch.passed is not None for batch in batches))
+
+    def test_cli_builds_cross_benchmark_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            humaneval_source = tmp / "humaneval.jsonl"
+            mbpp_plus_source = tmp / "mbpp_plus.jsonl"
+            _write_humaneval_source(humaneval_source)
+            _write_mbpp_plus_source(mbpp_plus_source)
+            humaneval_labels = _write_completion_labels_from_source(
+                benchmark="humaneval",
+                source_path=humaneval_source,
+                labels_path=tmp / "labels" / "humaneval_completion_labels.jsonl",
+            )
+            mbpp_plus_labels = _write_completion_labels_from_source(
+                benchmark="mbpp_plus",
+                source_path=mbpp_plus_source,
+                labels_path=tmp / "labels" / "mbpp_plus_completion_labels.jsonl",
+            )
+            pack_dir = tmp / "v0_9_pack_cli"
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(Path("scripts/build-passfail-pack")),
+                    "--benchmark-source",
+                    f"humaneval={humaneval_source}",
+                    "--benchmark-source",
+                    f"mbpp_plus={mbpp_plus_source}",
+                    "--benchmark-completion-labels",
+                    f"humaneval={humaneval_labels}",
+                    "--benchmark-completion-labels",
+                    f"mbpp_plus={mbpp_plus_labels}",
+                    "--out",
+                    str(pack_dir),
+                    "--train-frac",
+                    "0.5",
+                    "--val-frac",
+                    "0.25",
+                    "--require-split-coverage",
+                    "--required-probe-target",
+                    "output_magnitude_bucket",
+                    "--timeout-ms",
+                    "3000",
+                    "--memory-mb",
+                    "1024",
+                    "--cpu-seconds",
+                    "2",
+                    "--json",
+                ],
+                cwd=Path(__file__).resolve().parents[3],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, msg=completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertGreater(payload["record_count"], 0)
+            report = json.loads(
+                (pack_dir / "reports" / "passfail_pack_report.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertTrue(
+                report["readiness_gates"]["held_out_split_label_coverage"][
+                    "passed"
+                ]
+            )
+            self.assertEqual(
+                set(report["benchmark_counts"]),
+                {"humaneval", "mbpp_plus"},
+            )
 
     def test_split_coverage_failure_is_typed(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

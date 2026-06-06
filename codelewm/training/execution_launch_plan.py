@@ -1,8 +1,8 @@
-"""Launch-plan generator for the v0.6 execution-substrate HF Jobs run.
+"""Launch-plan generator for execution-substrate HF Jobs runs.
 
 The launcher is intentionally a *plan* generator, not a live launcher.
-It reads the v0.6 config, validates the required fields, and emits one
-launch plan per configured seed. An operator then runs the plans via
+It reads an execution training config, validates the required fields, and emits
+one launch plan per configured seed. An operator then runs the plans via
 ``hf jobs run`` (or via the existing ``scripts/hf-launch-codelewm-job``
 shell pipeline).
 
@@ -94,6 +94,8 @@ class LaunchPlan:
     checkpoint_repo_id: str
     checkpoint_revision: str
     runtime_image: str
+    runtime_image_digest: str | None
+    runtime_image_reference: str
     objective: dict[str, float]
     loader: dict[str, Any]
     trainer: dict[str, Any]
@@ -117,6 +119,8 @@ class LaunchPlan:
             "checkpoint_repo_id": self.checkpoint_repo_id,
             "checkpoint_revision": self.checkpoint_revision,
             "runtime_image": self.runtime_image,
+            "runtime_image_digest": self.runtime_image_digest,
+            "runtime_image_reference": self.runtime_image_reference,
             "objective": dict(self.objective),
             "loader": dict(self.loader),
             "trainer": dict(self.trainer),
@@ -162,6 +166,7 @@ def build_launch_plans(
     config_path: Path,
     git_sha: str = "unset",
     date: str | None = None,
+    runtime_image_digest: str | None = None,
 ) -> tuple[LaunchPlan, ...]:
     """Build one :class:`LaunchPlan` per seed in the config.
 
@@ -193,6 +198,14 @@ def build_launch_plans(
         checkpoint_revision = rev_template.format(seed=seed)
         runtime_image = str(
             config["hf_jobs"].get("runtime_image") or DEFAULT_RUNTIME_IMAGE
+        )
+        resolved_digest = _runtime_image_digest(
+            cli_digest=runtime_image_digest,
+            config_digest=config["hf_jobs"].get("runtime_image_digest"),
+        )
+        runtime_image_reference = _runtime_image_reference(
+            image=runtime_image,
+            digest=resolved_digest,
         )
         # HF Jobs overrides the image's ENTRYPOINT when COMMAND is
         # supplied, so the entrypoint script that pre-downloads the
@@ -234,7 +247,7 @@ def build_launch_plans(
             f"CODELEWM_UPLOAD_REPO_ID={config['hf_jobs']['artifact_repo_id']}",
             "--env",
             f"CODELEWM_UPLOAD_PATH_IN_REPO={run_name}",
-            runtime_image,
+            runtime_image_reference,
             "/usr/local/bin/codelewm-runtime-entrypoint",
             "codelewm",
             "train",
@@ -260,6 +273,8 @@ def build_launch_plans(
                 checkpoint_repo_id=str(config["hf_jobs"]["checkpoint_repo_id"]),
                 checkpoint_revision=checkpoint_revision,
                 runtime_image=runtime_image,
+                runtime_image_digest=resolved_digest,
+                runtime_image_reference=runtime_image_reference,
                 objective=dict(config["objective"]),
                 loader=dict(config["loader"]),
                 trainer=dict(config["trainer"]),
@@ -295,6 +310,34 @@ def _reject_unknown_keys(payload: Any, allowed: frozenset[str], where: str) -> N
         raise ExecutionLaunchPlanError(
             f"{where} has unknown key(s): {unknown}"
         )
+
+
+def _runtime_image_digest(*, cli_digest: str | None, config_digest: Any) -> str | None:
+    digest = cli_digest if cli_digest is not None else config_digest
+    if digest is None:
+        return None
+    if not isinstance(digest, str):
+        raise ExecutionLaunchPlanError("runtime image digest must be a string")
+    digest = digest.strip()
+    if not digest:
+        return None
+    if not digest.startswith("sha256:") or len(digest) != len("sha256:") + 64:
+        raise ExecutionLaunchPlanError(
+            "runtime image digest must be formatted as sha256:<64 hex chars>"
+        )
+    hex_part = digest.removeprefix("sha256:")
+    if any(char not in "0123456789abcdefABCDEF" for char in hex_part):
+        raise ExecutionLaunchPlanError(
+            "runtime image digest must be formatted as sha256:<64 hex chars>"
+        )
+    return "sha256:" + hex_part.lower()
+
+
+def _runtime_image_reference(*, image: str, digest: str | None) -> str:
+    if digest is None:
+        return image
+    base_image = image.split("@sha256:", 1)[0]
+    return f"{base_image}@{digest}"
 
 
 def _load_yaml_via_safe_loader(text: str) -> Any:
