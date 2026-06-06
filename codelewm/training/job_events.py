@@ -76,8 +76,11 @@ def summarize_job_events(
     latest_progress = _latest_progress(event_list)
     latest_collapse = _latest_collapse(event_list, collapse_threshold)
     latest_checkpoint = _latest_fields(event_list, "execution_training.checkpoint")
-    completion = _latest_fields(event_list, "execution_training.complete")
+    completion = _latest_completion(event_list)
     latest_runtime = _latest_runtime(event_list)
+    latest_start = _latest_fields(event_list, "execution_training.start")
+    if latest_start is None:
+        latest_start = _latest_fields(event_list, "execution_passfail_pack.start")
 
     summary = {
         "schema_version": JOB_EVENT_SUMMARY_SCHEMA_VERSION,
@@ -92,7 +95,7 @@ def summarize_job_events(
         "event_counts": dict(sorted(counts.items())),
         "first_event": _event_name(event_list[0]) if event_list else None,
         "latest_event": _event_name(event_list[-1]) if event_list else None,
-        "latest_start": _latest_fields(event_list, "execution_training.start"),
+        "latest_start": latest_start,
         "latest_progress": latest_progress,
         "latest_collapse": latest_collapse,
         "latest_checkpoint": latest_checkpoint,
@@ -117,7 +120,11 @@ def summarize_job_events(
 
 
 def _latest_progress(events: list[dict[str, Any]]) -> dict[str, Any] | None:
-    fields = _latest_fields(events, "execution_training.progress")
+    progress_event = "execution_training.progress"
+    fields = _latest_fields(events, progress_event)
+    if fields is None:
+        progress_event = "execution_passfail_pack.progress"
+        fields = _latest_fields(events, progress_event)
     if fields is None:
         return None
     step = _as_int(fields.get("step"))
@@ -126,6 +133,8 @@ def _latest_progress(events: list[dict[str, Any]]) -> dict[str, Any] | None:
     if progress is None and step is not None and max_steps:
         progress = step / max_steps
     payload = {
+        "event": progress_event,
+        "phase": fields.get("phase"),
         "seed": fields.get("seed"),
         "step": step,
         "max_steps": max_steps,
@@ -145,6 +154,18 @@ def _latest_progress(events: list[dict[str, Any]]) -> dict[str, Any] | None:
         ),
     }
     return _json_safe_mapping(payload)
+
+
+def _latest_completion(events: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for event_name in (
+        "execution_training.complete",
+        "execution_passfail_pack.complete",
+    ):
+        fields = _latest_fields(events, event_name)
+        if fields is None:
+            continue
+        return _json_safe_mapping({"event": event_name, **fields})
+    return None
 
 
 def _latest_runtime(events: list[dict[str, Any]]) -> dict[str, Any] | None:

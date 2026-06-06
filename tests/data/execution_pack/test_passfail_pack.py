@@ -396,6 +396,70 @@ class PassFailExecutionPackTest(unittest.TestCase):
             self.assertTrue(batches)
             self.assertTrue(all(batch.passed is not None for batch in batches))
 
+    def test_progress_log_records_pack_build_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            humaneval_source = tmp / "humaneval.jsonl"
+            _write_humaneval_source(humaneval_source)
+            labels = _write_completion_labels_from_source(
+                benchmark="humaneval",
+                source_path=humaneval_source,
+                labels_path=tmp / "labels" / "humaneval_completion_labels.jsonl",
+            )
+            pack_dir = tmp / "progress_pack"
+            progress_path = pack_dir / "reports" / "passfail_pack_progress.jsonl"
+
+            result = build_passfail_pack(
+                sources=(
+                    PassFailPackSource(
+                        benchmark="humaneval",
+                        source_path=humaneval_source,
+                        completion_label_paths=(labels,),
+                    ),
+                ),
+                output_dir=pack_dir,
+                sandbox_policy=_fast_policy(),
+                train_frac=0.5,
+                val_frac=0.25,
+                progress_log_path=progress_path,
+                progress_log_every_inputs=1,
+            )
+
+            self.assertEqual(
+                result.progress_log_path,
+                "reports/passfail_pack_progress.jsonl",
+            )
+            events = [
+                json.loads(line)
+                for line in progress_path.read_text(encoding="utf-8").splitlines()
+            ]
+            event_names = [event["event"] for event in events]
+            self.assertIn("execution_passfail_pack.start", event_names)
+            self.assertIn("execution_passfail_pack.progress", event_names)
+            self.assertIn("execution_passfail_pack.complete", event_names)
+            complete_event = next(
+                event
+                for event in events
+                if event["event"] == "execution_passfail_pack.complete"
+            )
+            self.assertIs(complete_event["fields"]["artifact_scan_ok"], True)
+            self.assertNotIn("secret_scan_ok", complete_event["fields"])
+            progress_event = next(
+                event
+                for event in events
+                if event["event"] == "execution_passfail_pack.progress"
+            )
+            fields = progress_event["fields"]
+            self.assertEqual(fields["step"], 1)
+            self.assertGreater(fields["max_steps"], 1)
+            self.assertIn("records_produced", fields)
+            self.assertIn("sandbox_reject_counts", fields)
+
+            artifact = read_artifact_manifest(pack_dir / "artifact_manifest.json")
+            artifact_paths = {file.path for file in artifact.files}
+            self.assertIn("reports/passfail_pack_progress.jsonl", artifact_paths)
+            validate_artifact_checksums(artifact, root=pack_dir)
+
     def test_cli_builds_cross_benchmark_pack(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
@@ -453,6 +517,20 @@ class PassFailExecutionPackTest(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, msg=completed.stderr)
             payload = json.loads(completed.stdout)
             self.assertGreater(payload["record_count"], 0)
+            self.assertEqual(
+                payload["progress_log_path"],
+                "reports/passfail_pack_progress.jsonl",
+            )
+            stderr_events = [
+                json.loads(line.removeprefix("CODELEWM_JOB_EVENT "))
+                for line in completed.stderr.splitlines()
+                if line.startswith("CODELEWM_JOB_EVENT ")
+            ]
+            self.assertTrue(stderr_events)
+            self.assertIn(
+                "execution_passfail_pack.progress",
+                {event["event"] for event in stderr_events},
+            )
             report = json.loads(
                 (pack_dir / "reports" / "passfail_pack_report.json").read_text(
                     encoding="utf-8"

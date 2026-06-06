@@ -238,7 +238,10 @@ The launch order is:
 
 1. Build the v0.9 pass/fail pack from the HumanEval and MBPP-Plus completion
    labels with `scripts/build-passfail-pack --require-split-coverage` and
-   required probe target `output_magnitude_bucket`.
+   required probe target `output_magnitude_bucket`. The builder writes
+   `reports/passfail_pack_progress.jsonl` by default and mirrors
+   `CODELEWM_JOB_EVENT` progress to stderr; summarize either stream with
+   `uv run scripts/hf-job-event-status --from-file <pack-dir>/reports/passfail_pack_progress.jsonl`.
 2. Verify the local pack manifest and run `codelewm secret-scan` on the pack.
 3. Publish the pack to `abdelstark/codelewm-execution-pack@v0.9.0-rc1` with
    `scripts/hf-publish-execution-pack --public --no-dry-run`.
