@@ -264,7 +264,11 @@ def _build_target_report(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     labels = [_label_for(row, target) for row in rows]
     split_indices = {
-        split: tuple(index for index, row in enumerate(rows) if row.split == split and labels[index])
+        split: tuple(
+            index
+            for index, row in enumerate(rows)
+            if row.split == split and labels[index] is not None
+        )
         for split in ("train", "val", "test")
     }
     label_counts = {
@@ -470,7 +474,9 @@ def _axis_diagnostics_for_target(
         per_split: dict[str, Any] = {}
         top_sets: list[set[int]] = []
         for split, indices in split_indices.items():
-            split_labels = tuple(str(labels[index]) for index in indices if labels[index])
+            split_labels = tuple(
+                str(labels[index]) for index in indices if labels[index] is not None
+            )
             if not split_labels:
                 per_split[split] = []
                 continue

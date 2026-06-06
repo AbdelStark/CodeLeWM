@@ -110,6 +110,16 @@ random-latent, no-action, and shuffled-action controls; bootstrap confidence
 intervals; and per-dimension association diagnostics. Dimension-level semantic
 claims remain blocked unless stable axes are demonstrated across seeds and
 splits.
+Execution-probe label coverage reports use
+`schema_version=codelewm.eval.execution_probe_label_coverage.v1` and are written
+as `reports/execution_probe_label_coverage.json`. They run before latent
+extraction, count requested probe labels across train/val/test, and emit typed
+`codelewm.eval.execution_probe_label_blocker.v1` entries for missing val/test
+labels or single-class train labels. Blocked targets are data/split coverage
+failures, not model-quality results. Multi-seed representation summaries use
+`codelewm.eval.execution_probe_representation_gate_table.v1` to keep pass/fail
+accuracy, magnitude accuracy, best controls, and claim-boundary status separate
+for each seed.
 Latent matrix reports use
 `schema_version=codelewm.eval.latent_matrix_report.v1` and are written by
 `codelewm eval latent-matrix` as `reports/latent_matrix_report.json`. They

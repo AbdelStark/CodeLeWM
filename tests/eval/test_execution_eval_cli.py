@@ -173,7 +173,8 @@ class ExecutionEvalCliTest(unittest.TestCase):
                     self.assertEqual(payload["report_path"], case.report_path.as_posix())
                     self.assertEqual(report["schema_version"], case.report_schema)
                     self.assertEqual(artifact_manifest.artifact_kind, "eval_report")
-                    self.assertIn(case.report_path.name, {path.name for path in checked_files})
+                    checked_file_names = {path.name for path in checked_files}
+                    self.assertIn(case.report_path.name, checked_file_names)
                     self.assertEqual(verify.returncode, 0, verify.stderr)
                     self.assertTrue(verify_payload["ok"])
                     if case.name == "execution-surprise":
@@ -191,6 +192,26 @@ class ExecutionEvalCliTest(unittest.TestCase):
                         self.assertIn(
                             "scorable_pair_count_by_category",
                             gates["semantic_decoy_category_counts"],
+                        )
+                    if case.name == "execution-probe":
+                        self.assertIn(
+                            "execution_probe_label_coverage.json",
+                            checked_file_names,
+                        )
+                        coverage = json.loads(
+                            (
+                                out_dir
+                                / "reports"
+                                / "execution_probe_label_coverage.json"
+                            ).read_text(encoding="utf-8")
+                        )
+                        self.assertEqual(
+                            coverage["schema_version"],
+                            "codelewm.eval.execution_probe_label_coverage.v1",
+                        )
+                        self.assertIn(
+                            "probe_label_coverage",
+                            report["metadata"],
                         )
 
     def test_execution_eval_loader_accepts_pass_head_checkpoint(self) -> None:
