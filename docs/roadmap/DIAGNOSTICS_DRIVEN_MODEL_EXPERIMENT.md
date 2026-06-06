@@ -1,9 +1,11 @@
 # Diagnostics-Driven Model Experiment
 
-Last updated: 2026-05-21
+Last updated: 2026-06-06
 
 Issue: #244. Tracker: #235. Status: specification complete; no training run
-launched by this issue.
+launched by this issue. The implementation queue is now the v0.9 epic #385,
+with #386 through #392 covering roadmap hygiene, cross-benchmark data/eval
+repair, guarded HF Jobs execution, and final claim audit.
 
 This document defines the next model-improvement experiment after the v1.4
 visual observability work. It turns the `bugfix-edge-case` harness failure into
@@ -241,10 +243,15 @@ Allowed language remains:
 
 ## Implementation Issues To Open Next
 
-This issue only defines the experiment. A future implementation should split
-into separate issues:
+This issue only defines the experiment. The implementation has been split into
+the v0.9 tracker and child issues:
 
-- data: build candidate-contrast packs;
-- train: add candidate-contrast energy objective and A10G config;
-- eval: add candidate-contrast and downstream claim reports;
-- run: execute HF Jobs candidate-contrast experiment and verify artifacts.
+- #385: v0.9 data/eval repair epic tracker;
+- #386: reconcile stale trackers and roadmap queue state;
+- #387: build the cross-benchmark pass/fail execution pack with stratified
+  labels;
+- #388: emit held-out `p_pass` ROC-AUC and calibration reports;
+- #389: repair semantic-decoy alignment and coverage gates;
+- #390: enforce probe-label coverage and representation gates;
+- #391: execute guarded two-seed HF Jobs only after data/eval preflight;
+- #392: run the final gate suite and publish the claim audit.

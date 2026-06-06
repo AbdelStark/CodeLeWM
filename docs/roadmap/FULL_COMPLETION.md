@@ -18,6 +18,14 @@ utility claims remain unsupported. The #306 paper draft and arXiv source
 package live at `docs/papers/two_substrate_paper.tex` and
 `docs/papers/ARXIV_SUBMISSION.md`; the arXiv URL is pending operator upload.
 
+Update 2026-06-06: the v0.8 execution-trace epic #364 is complete and published
+as diagnostic evidence. Its child work #370 and #371 landed the evaluation and
+publication surfaces, and the final report is
+`docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md`. The next active queue is
+the v0.9 data/eval repair epic #385, starting with #386 and continuing through
+#392. Live GitHub state shows the older #178, #209, #210, #211, and #212 queue
+closed; roadmap language should treat those as historical, not active.
+
 The next research-planning `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md`. The v0.2 HF/ml-intern prompt in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
@@ -102,10 +110,13 @@ Current blocker:
   complete as a claim-safe diagnostic workflow: #183, #184, and #185 tracked
   the streams, with child issues #186 through #194. Issue #206 adds the
   public BYOK/local-demo usability pass.
-- The next open streams are the meaningful harness demo (#224 through #231),
-  scaled downstream benchmark evidence (#209/#210/#211), and a future
-  positive-model research hypothesis (#212, related to #178). The earlier
-  comment-style live artifact direction (#207/#208) is closed as superseded.
+- The next active research stream is v0.9 data/eval repair under tracker #385.
+  It reconciles stale roadmap state (#386), builds a cross-benchmark pass/fail
+  execution pack (#387), emits held-out correctness and calibration diagnostics
+  (#388), repairs semantic-decoy and probe-label coverage gates (#389/#390),
+  launches a guarded two-seed HF Jobs run only after preflight (#391), and
+  publishes the final gate-suite claim audit (#392). The older #178,
+  #209/#210/#211, and #212 queue is closed in GitHub.
 
 Current landed CLI commands:
 
@@ -342,8 +353,8 @@ Deliverables:
 - downstream task schema, baselines, metrics, and claim gates (#190)
 - public-safe labeled candidate reranking set (#191, complete)
 - downstream reranking comparison and claim gate (#192, complete)
-- scaled public-safe 100-example reranking set (#210, open)
-- scaled downstream comparison and claim gate (#211, open)
+- scaled public-safe 100-example reranking set (#210, closed historical)
+- scaled downstream comparison and claim gate (#211, closed historical)
 
 Minimum success bar: at least 100 labeled examples and CodeLeWM improvement
 over no-action and LLM-order baselines on the agreed headline metrics.
@@ -368,7 +379,7 @@ Publication artifacts:
 
 ### Phase 12: Meaningful Harness Demo
 
-Status: planned under tracker #224.
+Status: complete as diagnostic workflow evidence under tracker #224.
 
 Goal: make the public harness demo useful to inspect as a code task. The current
 demo proves the workflow, but the default instruction is too close to a
@@ -380,11 +391,11 @@ Deliverables:
 
 - roadmap, backlog, and agent-context lock (#225)
 - meaningful scenario fixtures and selector (#226, complete)
-- task-solving prompt path for unified-diff candidates (#227)
-- static patch analysis in candidate packs and demo reports (#228)
-- terminal/HTML scorer traces and compact diff previews (#229)
-- opt-in sandbox checks behind the security boundary (#230)
-- published meaningful live OpenRouter/BYOK demo artifacts (#231)
+- task-solving prompt path for unified-diff candidates (#227, complete)
+- static patch analysis in candidate packs and demo reports (#228, complete)
+- terminal/HTML scorer traces and compact diff previews (#229, complete)
+- opt-in sandbox checks behind the security boundary (#230, complete)
+- published meaningful live OpenRouter/BYOK demo artifacts (#231, complete)
 
 Claim boundary: this can make the workflow tangible, but it still cannot prove
 CodeLeWM improves coding. That claim remains blocked until the scaled
@@ -437,15 +448,15 @@ Keep this table in implementation order and update it when issue scope changes.
 | 11 | #220 | harness: use learned world-model inference in LLM demo | Live Harness Evidence | complete |
 | 12 | #222 | harness: make LLM demo terminal output visual by default | Live Harness Evidence | complete |
 | 13 | #207/#208 | live comment-style harness artifact path | Live Harness Evidence | superseded by #224/#231 |
-| 14 | #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | Meaningful Harness Demo | open |
+| 14 | #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | Meaningful Harness Demo | complete |
 | 15 | #225 | docs: lock meaningful harness demo roadmap and backlog | Meaningful Harness Demo | complete |
 | 16 | #226 | harness: add meaningful demo scenarios and selector | Meaningful Harness Demo | complete |
-| 17 | #227 | harness: upgrade demo prompt for task-solving patches | Meaningful Harness Demo | #226 |
-| 18 | #228 | harness: add static patch analysis to demo candidates | Meaningful Harness Demo | #227 |
-| 19 | #229 | harness: show scorer traces and diff previews in the demo | Meaningful Harness Demo | #228 |
-| 20 | #230 | security: add opt-in sandbox checks for harness demos | Meaningful Harness Demo | #229 |
-| 21 | #231 | run: publish meaningful live harness demo artifacts | Meaningful Harness Demo | #230 |
-| 22 | #235 | [Tracking] v1.4 visual model observability and TUI harness | Visual Observability/TUI | open |
+| 17 | #227 | harness: upgrade demo prompt for task-solving patches | Meaningful Harness Demo | complete |
+| 18 | #228 | harness: add static patch analysis to demo candidates | Meaningful Harness Demo | complete |
+| 19 | #229 | harness: show scorer traces and diff previews in the demo | Meaningful Harness Demo | complete |
+| 20 | #230 | security: add opt-in sandbox checks for harness demos | Meaningful Harness Demo | complete |
+| 21 | #231 | run: publish meaningful live harness demo artifacts | Meaningful Harness Demo | complete |
+| 22 | #235 | [Tracking] v1.4 visual model observability and TUI harness | Visual Observability/TUI | complete |
 | 23 | #236 | docs: lock visual model observability and TUI roadmap | Visual Observability/TUI | complete |
 | 24 | #237 | observability: add TensorBoard event export for training and checkpoints | Visual Observability/TUI | complete |
 | 25 | #238 | model: add checkpoint tensor and layer inspection reports | Visual Observability/TUI | complete |
@@ -456,9 +467,17 @@ Keep this table in implementation order and update it when issue scope changes.
 | 30 | #243 | harness: connect model and latent diagnostics to demo reports | Visual Observability/TUI | complete |
 | 31 | #244 | research: define diagnostics-driven code model improvement experiment | Visual Observability/TUI | complete |
 | 32 | #245 | run: publish visual observability harness artifact set | Visual Observability/TUI | complete |
-| 33 | #210 | data: build public-safe 100-example downstream reranking set | Scaled Downstream Benchmark | #209 |
-| 34 | #211 | eval: run scaled downstream reranking comparison and claim gate | Scaled Downstream Benchmark | #210 |
-| 35 | #178/#212 | evaluate CWM reuse and define next positive-model hypothesis | Research | open |
+| 33 | #364 | [TRACKER] v0.8 execution-trace world-model results | Execution Trace | complete |
+| 34 | #370 | eval: run v0.8 execution-trace gate suite | Execution Trace | complete |
+| 35 | #371 | docs: publish v0.8 execution-trace results and artifacts | Execution Trace | complete |
+| 36 | #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | v0.9 Data/Eval Repair | open |
+| 37 | #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | v0.9 Data/Eval Repair | #385 |
+| 38 | #387 | v0.9 data: build cross-benchmark pass/fail execution pack | v0.9 Data/Eval Repair | #386 |
+| 39 | #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | v0.9 Data/Eval Repair | #387 |
+| 40 | #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | v0.9 Data/Eval Repair | #387 |
+| 41 | #390 | v0.9 eval: enforce probe-label coverage and representation gates | v0.9 Data/Eval Repair | #387 |
+| 42 | #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | v0.9 Data/Eval Repair | #388/#389/#390 |
+| 43 | #392 | v0.9 eval/report: run full gate suite and publish claim audit | v0.9 Data/Eval Repair | #391 |
 
 Completed backlog base:
 
@@ -528,13 +547,17 @@ instead of creating duplicate trackers.
 - #207 Live LLM plus world-model harness evidence: closed as superseded; #208
   is also closed as superseded by the meaningful harness demo tracker #224 and
   live artifact issue #231.
-- #224 Meaningful LLM plus world-model harness demo: open; #226 is complete,
-  and children #227 through #231 remain.
+- #224 Meaningful LLM plus world-model harness demo: closed; children #225
+  through #231 are complete.
 - #235 Visual model observability and TUI harness: complete through #245.
-- #209 Scaled downstream reranking benchmark: open; children #210 and #211
-  remain.
-- #212 Next positive-model research hypothesis: open; related issue #178
-  remains.
+- #209 Scaled downstream reranking benchmark: closed historical; children #210
+  and #211 are also closed.
+- #212 Next positive-model research hypothesis: closed historical; related
+  issue #178 is closed.
+- #364 v0.8 execution-trace results: complete through #370 and #371, with
+  diagnostic artifacts published in the v0.8 benchmark report.
+- #385 v0.9 data/eval repair: open and current; children #386 through #392 are
+  the active dependency chain.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

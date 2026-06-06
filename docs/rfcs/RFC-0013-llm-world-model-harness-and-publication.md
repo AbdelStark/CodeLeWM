@@ -213,7 +213,9 @@ Stream B, downstream candidate-reranking benchmark:
 - #191 builds the public-safe labeled candidate set and claim-blocked fixture
   benchmark pack.
 - #192 runs the downstream comparison and claim gate.
-- #209/#210/#211 track the scaled 100-example benchmark and claim gate.
+- #209/#210/#211 tracked the scaled 100-example benchmark and claim gate; they
+  are closed historical work. Current cross-benchmark repair is tracked by the
+  v0.9 epic #385.
 
 Stream C, preliminary results publication:
 
@@ -223,9 +225,10 @@ Stream C, preliminary results publication:
 
 Stream D, next model hypothesis:
 
-- #212 tracks the next positive-model research hypothesis.
-- #178 remains the CWM comparison spike that can feed that hypothesis only if it
-  yields reusable baselines, datasets, or evaluation criteria.
+- #212 tracked the next positive-model research hypothesis and is closed
+  historical work.
+- #178 was the CWM comparison spike that could feed that hypothesis only if it
+  yielded reusable baselines, datasets, or evaluation criteria; it is closed.
 
 ## Testing Strategy
 

@@ -1,13 +1,14 @@
 # Meaningful Harness Demo Roadmap
 
-Last updated: 2026-05-21
+Last updated: 2026-06-06
 
-Tracker: #224.
+Tracker: #224. Status: closed.
 
 Related follow-up tracker: #235 for visual model observability, latent matrix
-diagnostics, TensorBoard/checkpoint inspection, and optional Textual TUI work.
+diagnostics, TensorBoard/checkpoint inspection, and optional Textual TUI work;
+that follow-up tracker is also closed.
 
-This roadmap defines the v1.3 harness-demo upgrade. The current demo proves the
+This roadmap records the completed v1.3 harness-demo upgrade. The demo proves the
 system path: OpenRouter candidate generation, candidate-pack capture, learned
 CodeLeWM scoring, manifest verification, secret scanning, terminal output, and
 HTML reporting. Its weakness is the task itself: adding or preserving comments
@@ -63,13 +64,13 @@ repository context.
 
 | Order | Issue | Slice | Acceptance summary |
 | --- | --- | --- | --- |
-| 0 | #225 | Roadmap and agent context | Specs, roadmap, tracker, prompt, and AGENTS.md point at this stream. |
+| 0 | #225 | Roadmap and agent context | Closed: specs, roadmap, tracker, prompt, and AGENTS.md point at this stream. |
 | 1 | #226 | Scenarios and selector | Closed: demo supports scenario ids and defaults to `bugfix-edge-case`. |
-| 2 | #227 | Task-solving prompts | Prompt template asks for diverse unified diffs that solve the scenario. |
-| 3 | #228 | Static patch analysis | Candidate packs and reports summarize changed files, hunks, symbols, parse/apply status, and risk flags. |
-| 4 | #229 | Scorer traces and previews | Terminal and HTML reports show scenario summary, compact diff previews, score/no-action deltas, and scorer metadata. |
-| 5 | #230 | Opt-in sandbox checks | Scenario-owned allowlisted checks can run in disposable environments with timeout, redaction, manifests, and secret scans. |
-| 6 | #231 | Live artifact publication | A live OpenRouter/BYOK meaningful demo artifact set is verified and published as diagnostic evidence. |
+| 2 | #227 | Task-solving prompts | Closed: prompt template asks for diverse unified diffs that solve the scenario. |
+| 3 | #228 | Static patch analysis | Closed: candidate packs and reports summarize changed files, hunks, symbols, parse/apply status, and risk flags. |
+| 4 | #229 | Scorer traces and previews | Closed: terminal and HTML reports show scenario summary, compact diff previews, score/no-action deltas, and scorer metadata. |
+| 5 | #230 | Opt-in sandbox checks | Closed: scenario-owned allowlisted checks can run in disposable environments with timeout, redaction, manifests, and secret scans. |
+| 6 | #231 | Live artifact publication | Closed: a live OpenRouter/BYOK meaningful demo artifact set is verified and published as diagnostic evidence. |
 
 ## Scenario Contract
 
@@ -115,7 +116,7 @@ They must:
 
 ## Success Signal
 
-The stream is complete when #231 publishes one live artifact set whose terminal
+The stream completed when #231 published one live artifact set whose terminal
 and HTML reports let a reader answer:
 
 - What code task was attempted?
@@ -126,6 +127,6 @@ and HTML reports let a reader answer:
 - Which artifacts and manifests prove the run?
 - Why does the claim gate remain closed?
 
-The broader visual observability work in #235 begins after this scenario-driven
-path and should reuse its candidate packs, static summaries, scorer traces, and
-claim gates rather than creating a second incompatible demo surface.
+The broader visual observability work in #235 reused this scenario-driven path's
+candidate packs, static summaries, scorer traces, and claim gates rather than
+creating a second incompatible demo surface.

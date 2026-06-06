@@ -127,13 +127,13 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
         self.assertIn("docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md", text)
         self.assertIn("docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md", text)
         self.assertIn("docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md", text)
-        self.assertIn("Open or select a new issue", text)
+        self.assertIn("Use the active v0.9 epic tracker #385", text)
         self.assertIn("OpenRouter Python SDK", text)
         self.assertIn("downstream rerank report", text)
         self.assertIn("#207/#208", text)
-        self.assertIn("#209/#210/#211", text)
-        self.assertIn("#212", text)
-        self.assertIn("No active completion issue remains", text)
+        self.assertIn("#385", text)
+        self.assertIn("#386 through #392", text)
+        self.assertIn("Live issue state as of 2026-06-06", text)
 
     def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:
         self.assertTrue(V0_2_PLAN.is_file(), f"missing: {V0_2_PLAN}")
