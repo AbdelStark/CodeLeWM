@@ -22,11 +22,11 @@ The post-v0.2 work is split into three streams:
 
 The public usability pass for BYOK and the local demo task is #206. The first
 live artifact direction (#207/#208) was superseded after the terminal demo
-proved the toy comment task was too weak for a public showcase. The current
-open follow-up streams are the meaningful harness demo (#224 through #231),
-visual model observability and TUI harness (#235 through #245), scaled
-downstream benchmarking (#209/#210/#211), and the next positive-model research
-hypothesis (#212, with CWM comparison in #178).
+proved the toy comment task was too weak for a public showcase. Later follow-up
+streams include the meaningful harness demo (#224 through #231), visual model
+observability and TUI harness (#235 through #245), and the v0.9 data/eval
+repair epic (#385 through #392). The older #178, #209/#210/#211, and #212 queue
+is closed in live GitHub state and should be treated as historical.
 
 Each stream must land as one issue per branch and PR. The demo stream may run
 before the benchmark stream proves usefulness, but it must emit claim-safe

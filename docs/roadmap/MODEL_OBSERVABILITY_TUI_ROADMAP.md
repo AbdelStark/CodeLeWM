@@ -1,11 +1,11 @@
 # Model Observability And TUI Roadmap
 
-Last updated: 2026-05-21
+Last updated: 2026-06-06
 
-Tracker: #235.
+Tracker: #235. Status: closed.
 
-This roadmap defines the v1.4 visual model observability and TUI harness
-stream. It follows the meaningful harness demo work in #224 and answers the
+This roadmap records the completed v1.4 visual model observability and TUI
+harness stream. It follows the meaningful harness demo work in #224 and answers the
 main gap exposed by the first live `bugfix-edge-case` demo: the workflow ran
 end to end, but the learned scorer ranked an incomplete candidate above more
 semantically complete patches. The next step is to make the model, latent space,
@@ -230,9 +230,9 @@ lets a reader answer:
 ## `/goal` Prompt
 
 ```text
-/goal Continue CodeLeWM from the completed #236 roadmap lock. Work one GitHub
-issue per branch and PR. Use #235 as the tracker for the v1.4 visual model
-observability and TUI harness stream.
+/goal Continue CodeLeWM from the completed v1.4 visual observability stream.
+Issue #235 and children #236 through #245 are closed. Use the active v0.9 epic
+tracker #385 for new data/eval repair work.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/05-observability.md,
 docs/spec/06-security.md, docs/spec/11-llm-world-model-harness.md,
@@ -247,10 +247,10 @@ end to end, but the learned scorer ranked an incomplete candidate above more
 semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
-Recommended order: finish or account for the v1.3 meaningful-demo prerequisites
-(#227-#231) when the selected issue depends on them. Issues #237, #238, #239,
-#240, #241, #242, #243, #244, and #245 are
-closed and provide the optional TensorBoard-compatible export, trusted
+Recommended order: start from #385/#386-#392 for the current v0.9 queue. The
+v1.3 meaningful-demo prerequisites (#227-#231) and issues #237, #238, #239,
+#240, #241, #242, #243, #244, and #245 are closed and provide the optional
+TensorBoard-compatible export, trusted
 checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces,
 run-timeline artifacts, optional Textual TUI, schema-versioned visual view
 model with manifest-backed diagnostic links, and candidate-contrast experiment

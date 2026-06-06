@@ -80,10 +80,9 @@ class LLMWorldModelHarnessDocsTest(unittest.TestCase):
             "#206",
             "#207",
             "#208",
-            "#209",
-            "#210",
-            "#211",
-            "#212",
+            "#385",
+            "#386",
+            "#392",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)

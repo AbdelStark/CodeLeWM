@@ -141,17 +141,17 @@ negative-results publication.
 
 ## Milestone: v1.2
 
-Post-demo evidence streams. These are open follow-ups, not prerequisites for
-the current negative/diagnostic public boundary.
+Post-demo evidence streams. These are historical follow-ups, not prerequisites
+for the current v0.9 data/eval repair epic.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
 | #207 | [Tracking] v1.2 live LLM plus world-model harness evidence | harness/results | p1 | l | RFC-0013 | Closed |
 | #208 | run: execute live OpenRouter BYOK harness demo and publish diagnostic artifacts | harness/results | p1 | m | RFC-0013 | Closed |
-| #209 | [Tracking] v1.2 scaled downstream reranking benchmark | evaluation/data | p1 | l | RFC-0013 | Open |
-| #210 | data: build public-safe 100-example downstream reranking set | data/evaluation | p1 | l | RFC-0013 | Open |
-| #211 | eval: run scaled downstream reranking comparison and claim gate | evaluation/harness | p1 | m | RFC-0013 | Open |
-| #212 | [Tracking] v1.2 next positive-model research hypothesis | model/evaluation | p2 | l | follow-up | Open |
+| #209 | [Tracking] v1.2 scaled downstream reranking benchmark | evaluation/data | p1 | l | RFC-0013 | Closed |
+| #210 | data: build public-safe 100-example downstream reranking set | data/evaluation | p1 | l | RFC-0013 | Closed |
+| #211 | eval: run scaled downstream reranking comparison and claim gate | evaluation/harness | p1 | m | RFC-0013 | Closed |
+| #212 | [Tracking] v1.2 next positive-model research hypothesis | model/evaluation | p2 | l | follow-up | Closed |
 | #214 | harness: render visual LLM world-model demo report | harness/docs | p1 | m | RFC-0013 | Closed |
 | #216 | harness: require OpenRouter management key for BYOK registration | harness | p1 | s | RFC-0013 | Closed |
 | #218 | harness: surface OpenRouter provider errors and accept fenced live diffs | harness | p1 | s | RFC-0013 | Closed |
@@ -167,14 +167,14 @@ boundary.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
-| #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | harness/evaluation/results | p1 | l | RFC-0013 | Open |
+| #224 | [Tracking] v1.3 meaningful LLM plus world-model harness demo | harness/evaluation/results | p1 | l | RFC-0013 | Closed |
 | #225 | docs: lock meaningful harness demo roadmap and backlog | docs/harness | p1 | s | RFC-0013 | Closed |
 | #226 | harness: add meaningful demo scenarios and selector | harness | p1 | m | RFC-0013 | Closed |
-| #227 | harness: upgrade demo prompt for task-solving patches | harness | p1 | m | RFC-0013 | Open |
-| #228 | harness: add static patch analysis to demo candidates | harness/security | p1 | l | RFC-0013 | Open |
-| #229 | harness: show scorer traces and diff previews in the demo | harness/docs | p1 | m | RFC-0013 | Open |
-| #230 | security: add opt-in sandbox checks for harness demos | security/harness | p1 | l | RFC-0013 | Open |
-| #231 | run: publish meaningful live harness demo artifacts | results/harness | p1 | m | RFC-0013 | Open |
+| #227 | harness: upgrade demo prompt for task-solving patches | harness | p1 | m | RFC-0013 | Closed |
+| #228 | harness: add static patch analysis to demo candidates | harness/security | p1 | l | RFC-0013 | Closed |
+| #229 | harness: show scorer traces and diff previews in the demo | harness/docs | p1 | m | RFC-0013 | Closed |
+| #230 | security: add opt-in sandbox checks for harness demos | security/harness | p1 | l | RFC-0013 | Closed |
+| #231 | run: publish meaningful live harness demo artifacts | results/harness | p1 | m | RFC-0013 | Closed |
 
 ## Milestone: v1.4
 
@@ -187,7 +187,7 @@ claims by itself.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
-| #235 | [Tracking] v1.4 visual model observability and TUI harness | observability/harness/model/evaluation | p1 | l | RFC-0009 | Open |
+| #235 | [Tracking] v1.4 visual model observability and TUI harness | observability/harness/model/evaluation | p1 | l | RFC-0009 | Closed |
 | #236 | docs: lock visual model observability and TUI roadmap | docs/observability/harness | p1 | s | RFC-0009 | Closed |
 | #237 | observability: add TensorBoard event export for training and checkpoints | observability/model/runtime | p1 | m | RFC-0009 | Closed |
 | #238 | model: add checkpoint tensor and layer inspection reports | model/observability | p1 | m | RFC-0009 | Closed |
@@ -200,6 +200,23 @@ claims by itself.
 | #245 | run: publish visual observability harness artifact set | results/harness/observability | p1 | m | RFC-0013 | Closed |
 | #256 | [Tracking] production cleanup and optimization pass | core/docs | p1 | m | RFC-0012 | Closed |
 | #257 | core: fix audit-backed cleanup findings | core/evaluation/observability/docs | p1 | m | RFC-0009 | Closed |
+
+## Milestone: v0.9
+
+Data/eval repair for cross-benchmark correctness claims. This milestone starts
+from the completed v0.8 diagnostic result and fixes the data, calibration,
+semantic-decoy, and representation-coverage gaps before any new GPU run.
+
+| # | Title | Area | Priority | Effort | RFC | Status |
+|---|-------|------|----------|--------|-----|--------|
+| #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | data/evaluation/model/results | p1 | l | RFC-0015 | Open |
+| #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | docs/results | p1 | s | RFC-0015 | Open |
+| #387 | v0.9 data: build cross-benchmark pass/fail execution pack with stratified labels | data/evaluation | p1 | l | RFC-0015 | Open |
+| #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | evaluation/model/results | p1 | m | RFC-0015 | Open |
+| #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | evaluation/data/results | p1 | m | RFC-0015 | Open |
+| #390 | v0.9 eval: enforce probe-label coverage and representation gates | evaluation/data/results | p1 | m | RFC-0015 | Open |
+| #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | model/runtime/observability | p1 | l | RFC-0015 | Open |
+| #392 | v0.9 eval/report: run full gate suite and publish claim audit | evaluation/results/release | p1 | l | RFC-0015 | Open |
 
 ## Tracking Issues
 
@@ -227,7 +244,9 @@ intervention, closed with the negative/diagnostic #172 boundary; #183
 downstream candidate-reranking benchmark; #185 [Tracking] preliminary results
 publication package; #224 [Tracking] v1.3 meaningful LLM plus world-model
 harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness;
-#256 [Tracking] production cleanup and optimization pass.
+#256 [Tracking] production cleanup and optimization pass; #364 [Tracking] v0.8
+execution-trace world-model results; #385 [Tracking] v0.9 data/eval repair for
+cross-benchmark correctness claims.
 
 ## Cross-Cutting Dependencies
 
@@ -326,9 +345,12 @@ harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness;
   static-dead-code cleanup, warning-free collapse diagnostics, and stale
   architecture/roadmap context refresh without removing legacy compatibility
   surfaces outside the deprecation policy.
-- #209/#210/#211 track the scaled downstream gate; #212 tracks the next model
-  hypothesis and should use #178 only if CWM comparison yields reusable
-  baselines or criteria.
+- #364 completed the v0.8 execution-trace result publication. The final
+  diagnostic boundary is recorded in
+  `docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md`.
+- #385/#386-#392 define the active v0.9 dependency chain. #391 must wait until
+  #387 through #390 produce manifest-backed data/eval preflight evidence or
+  typed blockers.
 
 ## Cross-Reference Map
 

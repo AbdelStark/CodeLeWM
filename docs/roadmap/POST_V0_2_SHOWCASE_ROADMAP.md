@@ -1,13 +1,13 @@
 # Post-v0.2 Showcase Roadmap
 
-Last updated: 2026-05-21
+Last updated: 2026-06-06
 
 This roadmap turns the completed negative v0.2 result into the next public
 milestone: a claim-safe LLM + world-model harness, a real downstream reranking
 benchmark, and a preliminary publication package. As of the terminal-demo pass,
-it also defines the next open streams: a meaningful harness demo, visual model
-observability plus TUI tooling, scaled downstream benchmarking, and the next
-positive-model research hypothesis.
+it also records the later meaningful harness demo and visual observability
+streams. The current active research queue has moved to v0.9 data/eval repair
+under tracker #385 after the v0.8 diagnostic result.
 
 The current evidence boundary is explicit:
 
@@ -17,9 +17,8 @@ The current evidence boundary is explicit:
   claims;
 - unsupported: named semantic latent axes and scaled downstream
   coding-usefulness claims;
-- next: test whether CodeLeWM adds value when an LLM supplies candidate
-  patches, while improving diagnostics enough to understand why a scorer ranks
-  one candidate over another.
+- next: repair the cross-benchmark data/eval gaps that kept the v0.8
+  correctness-aware execution claim closed.
 
 ## Stream A: LLM + World-Model Harness Demo
 
@@ -88,7 +87,7 @@ Success for the stream:
 
 ## Stream F: Meaningful Harness Demo
 
-Tracker: #224. Status: Open.
+Tracker: #224. Status: Closed.
 Dedicated roadmap: `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`.
 
 Purpose: make the public harness demo meaningful to inspect as code. The
@@ -103,11 +102,11 @@ Issues:
 | --- | --- | --- | --- |
 | F0 | #225 | docs: lock meaningful harness demo roadmap and backlog | Closed |
 | F1 | #226 | harness: add meaningful demo scenarios and selector | Closed |
-| F2 | #227 | harness: upgrade demo prompt for task-solving patches | Open |
-| F3 | #228 | harness: add static patch analysis to demo candidates | Open |
-| F4 | #229 | harness: show scorer traces and diff previews in the demo | Open |
-| F5 | #230 | security: add opt-in sandbox checks for harness demos | Open |
-| F6 | #231 | run: publish meaningful live harness demo artifacts | Open |
+| F2 | #227 | harness: upgrade demo prompt for task-solving patches | Closed |
+| F3 | #228 | harness: add static patch analysis to demo candidates | Closed |
+| F4 | #229 | harness: show scorer traces and diff previews in the demo | Closed |
+| F5 | #230 | security: add opt-in sandbox checks for harness demos | Closed |
+| F6 | #231 | run: publish meaningful live harness demo artifacts | Closed |
 
 Success for the stream:
 
@@ -127,8 +126,9 @@ Success for the stream:
 
 ## Stream B: Downstream Candidate-Reranking Benchmark
 
-Tracker: #184 for the initial fixture. New scaled tracker: #209. Status: Open
-for scaled work.
+Tracker: #184 for the initial fixture. Scaled tracker #209 and children
+#210/#211 are closed historical work. Current cross-benchmark repair is tracked
+by #385.
 
 Purpose: decide whether the harness is useful beyond a demo. The benchmark must
 compare CodeLeWM against LLM order, random, lexical, no-action, retrieval-prior,
@@ -141,8 +141,8 @@ Issues:
 | B1 | #190 | benchmark: define downstream task schema and claim gates | Closed |
 | B2 | #191 | benchmark: build public-safe labeled candidate reranking set | Closed |
 | B3 | #192 | eval: run downstream reranking comparison and claim gate | Closed |
-| B4 | #210 | data: build public-safe 100-example downstream reranking set | Open |
-| B5 | #211 | eval: run scaled downstream reranking comparison and claim gate | Open |
+| B4 | #210 | data: build public-safe 100-example downstream reranking set | Closed |
+| B5 | #211 | eval: run scaled downstream reranking comparison and claim gate | Closed |
 
 Minimum scaled benchmark gate:
 
@@ -153,7 +153,7 @@ Minimum scaled benchmark gate:
 
 ## Stream G: Visual Model Observability And TUI Harness
 
-Tracker: #235. Status: Open.
+Tracker: #235. Status: Closed.
 Dedicated roadmap: `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`.
 
 Purpose: make model behavior, latent representations, candidate ranking, and
@@ -192,7 +192,8 @@ Success for the stream:
 
 ## Stream E: Next Positive-Model Research Hypothesis
 
-Tracker: #212. Status: Open.
+Tracker: #212. Status: Closed historical. Current follow-up research execution
+is under #385.
 
 Purpose: prevent another blind training sweep. Any future positive model-quality
 claim needs a falsifiable hypothesis, an explicit config/data intervention, and
@@ -203,7 +204,7 @@ Related issue:
 
 | Order | Issue | Title | Status |
 | --- | --- | --- | --- |
-| E1 | #178 | Spike: Evaluate Meta AI's CWM for comparison and benchmark reuse | Open |
+| E1 | #178 | Spike: Evaluate Meta AI's CWM for comparison and benchmark reuse | Closed |
 
 Success for the stream:
 
@@ -275,30 +276,28 @@ Recommended order:
 26. #243
 27. #244
 28. #245
-29. #210
-30. #211
-31. #178 / #212
+29. #364 / #370 / #371
+30. #385 / #386
+31. #387
+32. #388 / #389 / #390
+33. #391
+34. #392
 
 Rationale: lock the contract first, publish the current result honestly, build
 the demo, make the public demo meaningful, add enough visual observability to
-understand model and latent failure modes, and only then spend effort on scaled
-downstream labels or a new model hypothesis.
+understand model and latent failure modes, publish the v0.8 diagnostic result,
+and then repair the cross-benchmark data/eval gaps before any new GPU run.
 
 ## `/goal` Prompt
 
 ```text
-/goal Continue CodeLeWM from the completed negative v0.2 evidence boundary.
-The #186 through #194 stream is complete, and #206 added the public BYOK/local
-demo/readme polish. #220 and #222 proved learned scoring and terminal-first
-demo UX, but #207/#208 were superseded because the comment-style toy task is
-not the right public artifact. #239 closed the latent-matrix diagnostic surface,
-#240 closed run-timeline reports, #242 closed the shared visual view-model
-surface for JSON/rich/HTML parity, and #241 closed optional Textual TUI mode.
-Select one open stream before making changes:
-#227 through #231 for the meaningful harness demo, #210/#211 for scaled
-downstream reranking, or #178/#212 for the next positive-model research
-hypothesis. The #235 visual model observability stream is complete through
-#245.
+/goal Continue CodeLeWM from the completed v0.8 execution-trace evidence
+boundary. The #186 through #194 stream is complete, #206 added the public
+BYOK/local demo/readme polish, #220 and #222 proved learned scoring and
+terminal-first demo UX, and #207/#208 were superseded because the comment-style
+toy task is not the right public artifact. The #235 visual model observability
+stream is complete through #245. Use the active v0.9 epic tracker #385 and work
+#386 through #392 in dependency order.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
@@ -309,11 +308,16 @@ docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
 
+For current v0.9 work, also ground in
+docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md,
+docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md, and
+docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-05.md.
+
 The harness and downstream benchmark stream is complete through #206. The
 meaningful harness demo tracker is #224: #226 added scenario fixtures and
-selection, #227 upgrades the prompt for task-solving patches, #228 adds static
-patch analysis, #229 adds scorer traces and compact diff previews, #230 adds
-opt-in sandbox checks, and #231 publishes the live diagnostic artifact. The
+selection, #227 upgraded the prompt for task-solving patches, #228 added static
+patch analysis, #229 added scorer traces and compact diff previews, #230 added
+opt-in sandbox checks, and #231 published the live diagnostic artifact. The
 public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
 model slugs such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit:
 only `codelewm openrouter byok-register` or
@@ -333,9 +337,11 @@ visual diagnostic artifact set documented in
 `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`.
 
 Keep the claim boundary explicit: the current v0.2 checkpoint and downstream
-fixture report are public negative/diagnostic evidence. The harness demo can
-show workflow value, but it must not claim CodeLeWM improves coding until a
-future scaled downstream benchmark gate passes from manifest-backed artifacts.
+fixture report are public negative/diagnostic evidence, and the v0.8
+correctness-aware execution result remains benchmark-specific diagnostic
+evidence. The harness demo can show workflow value, but it must not claim
+CodeLeWM improves coding until a future scaled downstream benchmark gate passes
+from manifest-backed artifacts.
 
 Run the strongest local validation for any future issue, commit, push, open a
 PR, wait for checks, merge when clean, return to main, and pull latest main.
