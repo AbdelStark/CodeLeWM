@@ -8,6 +8,8 @@
 - Schema version: `codelewm.eval.retrieval_report.v1` for retrieval
   tables; `codelewm.eval.action_ablation_report.v1` for action-view
   ablations; `codelewm.eval.surprise_report.v1` for surprise tables;
+  `codelewm.eval.p_pass_calibration_report.v1` for held-out correctness
+  calibration;
   `codelewm.harness.scorer_quality_report.v1` for scorer/reranker quality;
   `codelewm.public_license_gate.v1` for license claims.
 - Release: `<v0.1 | v1.0 | other>`
@@ -30,6 +32,7 @@
 | Retrieval report | `codelewm.eval.retrieval_report.v1` | `<path>` | `<id>` |
 | Action ablation report | `codelewm.eval.action_ablation_report.v1` | `<path>` | `<id>` |
 | Surprise report | `codelewm.eval.surprise_report.v1` | `<path>` | `<id>` |
+| p_pass calibration report | `codelewm.eval.p_pass_calibration_report.v1` | `<path>` | `<id>` |
 | Scorer quality report | `codelewm.harness.scorer_quality_report.v1` | `<path>` | `<id>` |
 | License gate | `codelewm.public_license_gate.v1` | `<path>` | `<id>` |
 
@@ -272,6 +275,40 @@ do not silently drop a control from the report.
 | syntax_failure | | | | | |
 | patch_failure | | | | | |
 
+## p_pass Calibration
+
+Fill this section from `reports/p_pass_calibration_report.json` with schema
+`codelewm.eval.p_pass_calibration_report.v1`. State whether the rows are
+`training_pack_held_out` or `downstream_completion`; do not mix those row kinds
+in one table without separate reports. A high ROC-AUC is threshold-free
+correctness-ranking evidence, not by itself a calibrated-probability or
+coding-usefulness claim.
+
+| Field | Value | Report field |
+| ----- | ----- | ------------ |
+| Dataset kind | `<training_pack_held_out | downstream_completion>` | `dataset_kind` |
+| Row count | `<int>` | `row_count` |
+| Positive / failed labels | `<passed> / <failed>` | `label_counts` |
+| Benchmark coverage | `<benchmark -> count>` | `benchmark_counts` |
+| Split coverage | `<split -> count>` | `split_counts` |
+| Claim allowed | `false` unless full gate suite passes | `claim_gate.allowed` |
+| Claim reason | `<string>` | `claim_gate.reason` |
+
+| Baseline | Status | ROC-AUC | Average precision | Brier | ECE | Usable rows | Nonfinite | Missing |
+| -------- | ------ | ------: | ----------------: | ----: | --: | ----------: | --------: | ------: |
+| p_pass | | | | | | | | |
+| codelewm | | | | | | | | |
+| no_action | | | | | | | | |
+| shuffled_action | | | | | | | | |
+| lexical | | | | | | | | |
+| random | | | | | | | | |
+
+Per-benchmark slices must be quoted when any benchmark is missing pass/fail
+coverage, has `single_class` status, or reverses the overall conclusion.
+Calibration bins and thresholded metrics may support operating-point
+discussion, but positive claims still require parent lineage, declared controls,
+per-benchmark coverage, and the full v0.9 gate-suite claim audit.
+
 ## License And Source Policy
 
 | Field | Value |
@@ -323,6 +360,10 @@ README, or external communication.
       metrics, calibration slices, parse/patch failure counts, and
       `candidate code is parsed and diff-applied as text but never
       executed`.
+- [ ] **p_pass calibration evidence is claim-scoped.** Evidence:
+      `codelewm.eval.p_pass_calibration_report.v1` records dataset kind,
+      per-benchmark slices, controls, and `claim_gate.allowed`; raw
+      ROC-AUC is not used as a standalone coding-usefulness claim.
 - [ ] **No secret-pattern leakage in published artifacts.** Evidence:
       `codelewm secret-scan <reports_dir>` returns exit 0.
 - [ ] **License gate passed before publication.** Evidence: license

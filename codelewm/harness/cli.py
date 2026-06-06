@@ -29,6 +29,9 @@ from codelewm.eval import (
     ExecutionEvalError,
     LatentMatrixError,
     LatentProbeError,
+    P_PASS_DATASET_KINDS,
+    P_PASS_DEFAULT_BASELINES,
+    PPassCalibrationError,
     RetrievalEvalError,
     SurpriseEvalError,
     DownstreamBenchmarkPackError,
@@ -39,6 +42,7 @@ from codelewm.eval import (
     build_semantic_decoy_pack,
     run_downstream_rerank_evaluation,
     run_action_ablation_suite,
+    run_p_pass_calibration_evaluation,
     run_crash_prediction_evaluation,
     run_execution_rerank_evaluation,
     run_execution_probe_evaluation,
@@ -1155,6 +1159,65 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     downstream_rerank.set_defaults(func=_eval_downstream_rerank_command)
+    p_pass_calibration = eval_subcommands.add_parser(
+        "p-pass-calibration",
+        help="build a held-out p_pass correctness calibration report",
+    )
+    p_pass_calibration.add_argument(
+        "--scores",
+        action="append",
+        type=Path,
+        required=True,
+        help="completion score JSONL path; repeatable",
+    )
+    p_pass_calibration.add_argument(
+        "--parent-manifest",
+        action="append",
+        type=Path,
+        required=True,
+        help="verified parent artifact manifest for score-row lineage; repeatable",
+    )
+    p_pass_calibration.add_argument(
+        "--dataset-kind",
+        required=True,
+        choices=P_PASS_DATASET_KINDS,
+        help="kind of held-out rows represented by the score file",
+    )
+    p_pass_calibration.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="p_pass calibration report artifact directory",
+    )
+    p_pass_calibration.add_argument(
+        "--baseline",
+        action="append",
+        default=[],
+        help=(
+            "score key to evaluate; repeatable. Defaults to "
+            + ",".join(P_PASS_DEFAULT_BASELINES)
+        ),
+    )
+    p_pass_calibration.add_argument(
+        "--benchmark",
+        help="default benchmark id for score rows that omit benchmark metadata",
+    )
+    p_pass_calibration.add_argument(
+        "--calibration-bin-count",
+        type=int,
+        default=10,
+        help="number of equal-width probability bins used for ECE",
+    )
+    p_pass_calibration.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing p_pass calibration output files",
+    )
+    p_pass_calibration.add_argument("--json", action="store_true", help="emit JSON output")
+    p_pass_calibration.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    p_pass_calibration.set_defaults(func=_eval_p_pass_calibration_command)
     _add_execution_completion_rerank_parser(
         eval_subcommands,
         name="rerank-humaneval",
@@ -3944,6 +4007,114 @@ def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_p_pass_calibration_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_p_pass_calibration_command_tuple(args)
+    baselines = args.baseline or P_PASS_DEFAULT_BASELINES
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.p_pass_calibration.start",
+                level="info",
+                run_id=run_id,
+                step="eval.p_pass_calibration",
+                message="p_pass calibration evaluation started",
+                fields={
+                    "scores": [str(path) for path in args.scores],
+                    "parent_manifests": [
+                        str(path) for path in args.parent_manifest
+                    ],
+                    "dataset_kind": args.dataset_kind,
+                    "out": str(args.out),
+                    "baselines": list(baselines),
+                    "benchmark": args.benchmark,
+                    "calibration_bin_count": args.calibration_bin_count,
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = run_p_pass_calibration_evaluation(
+            scores=args.scores,
+            out=args.out,
+            dataset_kind=args.dataset_kind,
+            parent_manifests=args.parent_manifest,
+            baselines=baselines,
+            benchmark=args.benchmark,
+            calibration_bin_count=args.calibration_bin_count,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.p_pass_calibration.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.p_pass_calibration",
+                message="p_pass calibration evaluation completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "report_path": result.report_path,
+                    "parent_artifacts": list(result.parent_artifacts),
+                    "dataset_kind": result.dataset_kind,
+                    "row_count": result.row_count,
+                    "claim_allowed": result.claim_allowed,
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        PPassCalibrationError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"p_pass calibration evaluation failed: {exc}",
+            error_type="scoring_error",
+            remediation="verify the score rows and parent manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.p_pass_calibration",
+            event="evaluation.p_pass_calibration.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"p_pass calibration evaluation failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the p_pass calibration inputs and retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.p_pass_calibration",
+            event="evaluation.p_pass_calibration.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"p_pass_calibration_report: {args.out / result.report_path}")
+        print(f"dataset_kind: {result.dataset_kind}")
+        print(f"row_count: {result.row_count}")
+        print(f"claim_allowed: {result.claim_allowed}")
+    return 0
+
+
 def _eval_execution_completion_rerank_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _eval_execution_completion_rerank_command_tuple(args)
@@ -5055,6 +5226,34 @@ def _eval_downstream_rerank_command_tuple(args: argparse.Namespace) -> tuple[str
     command.extend(("--seed", str(args.seed)))
     if args.allow_unsafe_checkpoint:
         command.append("--allow-unsafe-checkpoint")
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_p_pass_calibration_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "p-pass-calibration",
+        "--dataset-kind",
+        args.dataset_kind,
+        "--out",
+        str(args.out),
+    ]
+    for score_path in args.scores:
+        command.extend(("--scores", str(score_path)))
+    for manifest in args.parent_manifest:
+        command.extend(("--parent-manifest", str(manifest)))
+    for baseline in args.baseline:
+        command.extend(("--baseline", str(baseline)))
+    if args.benchmark is not None:
+        command.extend(("--benchmark", str(args.benchmark)))
+    command.extend(("--calibration-bin-count", str(args.calibration_bin_count)))
     if args.overwrite:
         command.append("--overwrite")
     if args.json:
