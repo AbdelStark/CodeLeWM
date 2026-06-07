@@ -1,6 +1,6 @@
 # Full Completion Roadmap
 
-Last updated: 2026-05-21
+Last updated: 2026-06-07
 
 This roadmap tracks the current completion boundary for CodeLeWM's first
 meaningful scaled training and evaluation artifacts. GitHub issues remain the
@@ -18,15 +18,20 @@ utility claims remain unsupported. The #306 paper draft and arXiv source
 package live at `docs/papers/two_substrate_paper.tex` and
 `docs/papers/ARXIV_SUBMISSION.md`; the arXiv URL is pending operator upload.
 
-Update 2026-06-06: the v0.8 execution-trace epic #364 is complete and published
-as diagnostic evidence. Its child work #370 and #371 landed the evaluation and
-publication surfaces, and the final report is
-`docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md`. The next active queue is
-the v0.9 data/eval repair epic #385, starting with #386 and continuing through
-#392. Live GitHub state shows the older #178, #209, #210, #211, and #212 queue
-closed; roadmap language should treat those as historical, not active.
+Update 2026-06-07: the v0.9 data/eval repair epic #385 is complete through
+#392. The stream resolved the v0.8 evaluability blockers, added
+cross-benchmark pass/fail pack and held-out `p_pass` calibration surfaces,
+improved HF Jobs progress observability in #391, ran two guarded A10G HF Jobs,
+and published the final claim audit in
+`docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` plus
+`docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md`. The result remains
+overall claim-closed: HumanEval WS-D reranking clears for both seeds, MBPP-Plus
+shows zero lift over no-action, and broad semantic and representation gates
+remain closed. Live GitHub state shows the older #178, #209, #210, #211, and
+#212 queue closed; roadmap language should treat those as historical, not
+active.
 
-The next research-planning `/goal` prompt lives in
+The historical v0.9 `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md`. The v0.2 HF/ml-intern prompt in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
 completed #172 run. The v0.2 research intervention spec lives in
@@ -41,7 +46,7 @@ The repository is past pure specification and past local smoke evidence. The
 package contains data contracts, model components, manifest-backed training,
 evaluation contracts, scoring/reranking harness commands, HF Jobs automation,
 observability, security gates, CI, release templates, a local first-results
-smoke loop, and four completed scaled HF Jobs runs.
+smoke loop, and multiple completed scaled or diagnostic HF Jobs runs.
 
 Completed evidence:
 
@@ -83,6 +88,11 @@ Completed evidence:
   then the artifacts were downloaded with `hf download` and verified locally.
 - `docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md` and the paired
   v0.2 dataset/model cards are the artifact-backed report for #172.
+- The v0.8 execution-trace epic #364 completed through #370 and #371; its final
+  diagnostic report is `docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md`.
+- The v0.9 data/eval repair epic #385 completed through #392; its final claim
+  audit is `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`, with artifact
+  links in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md`.
 
 Current blocker:
 
@@ -110,13 +120,14 @@ Current blocker:
   complete as a claim-safe diagnostic workflow: #183, #184, and #185 tracked
   the streams, with child issues #186 through #194. Issue #206 adds the
   public BYOK/local-demo usability pass.
-- The next active research stream is v0.9 data/eval repair under tracker #385.
-  It reconciles stale roadmap state (#386), builds a cross-benchmark pass/fail
-  execution pack (#387), emits held-out correctness and calibration diagnostics
-  (#388), repairs semantic-decoy and probe-label coverage gates (#389/#390),
-  launches a guarded two-seed HF Jobs run only after preflight (#391), and
-  publishes the final gate-suite claim audit (#392). The older #178,
-  #209/#210/#211, and #212 queue is closed in GitHub.
+- The v0.9 data/eval repair stream under tracker #385 is complete. It
+  reconciled stale roadmap state (#386), built a cross-benchmark pass/fail
+  execution pack (#387), emitted held-out correctness and calibration
+  diagnostics (#388), repaired semantic-decoy and probe-label coverage gates
+  (#389/#390), launched a guarded two-seed HF Jobs run after preflight (#391),
+  and published the final gate-suite claim audit (#392). The older #178,
+  #209/#210/#211, and #212 queue is closed in GitHub. Any future positive-model
+  claim requires a new tracker and falsifiable hypothesis.
 
 Current landed CLI commands:
 
@@ -471,14 +482,14 @@ Keep this table in implementation order and update it when issue scope changes.
 | 33 | #364 | [TRACKER] v0.8 execution-trace world-model results | Execution Trace | complete |
 | 34 | #370 | eval: run v0.8 execution-trace gate suite | Execution Trace | complete |
 | 35 | #371 | docs: publish v0.8 execution-trace results and artifacts | Execution Trace | complete |
-| 36 | #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | v0.9 Data/Eval Repair | open |
-| 37 | #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | v0.9 Data/Eval Repair | #385 |
-| 38 | #387 | v0.9 data: build cross-benchmark pass/fail execution pack | v0.9 Data/Eval Repair | #386 |
-| 39 | #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | v0.9 Data/Eval Repair | #387 |
-| 40 | #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | v0.9 Data/Eval Repair | #387 |
-| 41 | #390 | v0.9 eval: enforce probe-label coverage and representation gates | v0.9 Data/Eval Repair | #387 |
-| 42 | #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | v0.9 Data/Eval Repair | #388/#389/#390 |
-| 43 | #392 | v0.9 eval/report: run full gate suite and publish claim audit | v0.9 Data/Eval Repair | #391 |
+| 36 | #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | v0.9 Data/Eval Repair | complete |
+| 37 | #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | v0.9 Data/Eval Repair | complete |
+| 38 | #387 | v0.9 data: build cross-benchmark pass/fail execution pack | v0.9 Data/Eval Repair | complete |
+| 39 | #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | v0.9 Data/Eval Repair | complete |
+| 40 | #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | v0.9 Data/Eval Repair | complete |
+| 41 | #390 | v0.9 eval: enforce probe-label coverage and representation gates | v0.9 Data/Eval Repair | complete |
+| 42 | #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | v0.9 Data/Eval Repair | complete |
+| 43 | #392 | v0.9 eval/report: run full gate suite and publish claim audit | v0.9 Data/Eval Repair | complete |
 
 Completed backlog base:
 
@@ -557,8 +568,8 @@ instead of creating duplicate trackers.
   issue #178 is closed.
 - #364 v0.8 execution-trace results: complete through #370 and #371, with
   diagnostic artifacts published in the v0.8 benchmark report.
-- #385 v0.9 data/eval repair: open and current; children #386 through #392 are
-  the active dependency chain.
+- #385 v0.9 data/eval repair: complete through #392, with final diagnostic
+  evidence in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

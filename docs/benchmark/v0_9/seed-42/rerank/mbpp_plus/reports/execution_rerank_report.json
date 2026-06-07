@@ -1,0 +1,88 @@
+{
+  "baselines": [
+    {
+      "baseline": "random",
+      "mrr": 0.48235294117647054,
+      "pass_at_1": 0.23529411764705882,
+      "pass_at_k": 0.8235294117647058,
+      "pass_at_k_value": 5,
+      "pass_count": 4,
+      "problem_count": 17
+    },
+    {
+      "baseline": "lexical",
+      "mrr": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 17,
+      "problem_count": 17
+    },
+    {
+      "baseline": "llm_order",
+      "mrr": 0.3813725490196078,
+      "pass_at_1": 0.17647058823529413,
+      "pass_at_k": 0.7647058823529411,
+      "pass_at_k_value": 5,
+      "pass_count": 3,
+      "problem_count": 17
+    },
+    {
+      "baseline": "no_action",
+      "mrr": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 17,
+      "problem_count": 17
+    },
+    {
+      "baseline": "shuffled_action",
+      "mrr": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 17,
+      "problem_count": 17
+    },
+    {
+      "baseline": "codelewm",
+      "mrr": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_at_k_value": 5,
+      "pass_count": 17,
+      "problem_count": 17
+    }
+  ],
+  "benchmark": "mbpp_plus",
+  "bootstrap_lift_ci": [
+    64.70588235294117,
+    100.0
+  ],
+  "bootstrap_lift_over_no_action_ci": [
+    0.0,
+    0.0
+  ],
+  "bootstrap_seed": 17,
+  "claim_allowed": false,
+  "claim_reason": "no_action_lift=0.00pts ci=(0.00,0.00); requires lift>=3.0 and ci_lo>0",
+  "codelewm_lift_over_llm_order": 82.35294117647058,
+  "codelewm_lift_over_no_action": 0.0,
+  "completions_per_problem": 6,
+  "confidence_level": 0.95,
+  "pass_at_k": 5,
+  "problem_count": 17,
+  "schema_version": "codelewm.eval.execution_rerank_report.v1",
+  "scoring_summary": {
+    "checkpoint": ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-42/checkpoints/checkpoint_step_00012000.pt",
+    "checkpoint_sha256": "c783fa0dbe5da6bd072ff0b2f2753bdbac9fe684b49bf82e70ab6a2f69d513da",
+    "completion_count": 102,
+    "completion_label_artifact_id": "downstream_benchmark-f8aaaa3b3c1eb910",
+    "completion_label_path": ".artifacts/wsd/mbpp_plus/mbpp_plus_completion_labels.jsonl",
+    "model_id": "codelewm.execution_torch_transition_scorer.v1",
+    "problem_count": 17,
+    "score_direction": "higher_is_better_after_negating_energy",
+    "score_error_count": 0
+  }
+}

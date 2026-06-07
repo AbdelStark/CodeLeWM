@@ -231,8 +231,9 @@ lets a reader answer:
 
 ```text
 /goal Continue CodeLeWM from the completed v1.4 visual observability stream.
-Issue #235 and children #236 through #245 are closed. Use the active v0.9 epic
-tracker #385 for new data/eval repair work.
+Issue #235 and children #236 through #245 are closed. The v0.9 data/eval repair
+epic #385 is complete through #392 as diagnostic evidence; do not restart it
+without a new tracker and hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/05-observability.md,
 docs/spec/06-security.md, docs/spec/11-llm-world-model-harness.md,
@@ -247,9 +248,10 @@ end to end, but the learned scorer ranked an incomplete candidate above more
 semantically complete patches. Do not claim semantic latent axes, coding
 usefulness, or action-conditioned quality from demo artifacts.
 
-Recommended order: start from #385/#386-#392 for the current v0.9 queue. The
-v1.3 meaningful-demo prerequisites (#227-#231) and issues #237, #238, #239,
-#240, #241, #242, #243, #244, and #245 are closed and provide the optional
+Recommended order: do not restart the completed #385/#386-#392 v0.9 stream. The
+v1.3 meaningful-demo prerequisites (#227-#231), issues #237, #238, #239, #240,
+#241, #242, #243, #244, and #245, and the completed v0.9 diagnostic artifacts
+provide the optional
 TensorBoard-compatible export, trusted
 checkpoint tensor/layer inspection, latent-matrix diagnostic surfaces,
 run-timeline artifacts, optional Textual TUI, schema-versioned visual view

@@ -1,0 +1,64 @@
+{
+  "artifact_id": "eval_report-9c92eb76a900e4be",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "p-pass-calibration",
+    "--dataset-kind",
+    "downstream_completion",
+    "--out",
+    "docs/benchmark/v0_9/seed-1729/p_pass_calibration/downstream_completion",
+    "--scores",
+    "docs/benchmark/v0_9/seed-1729/rerank/humaneval/reports/completion_scores.jsonl",
+    "--scores",
+    "docs/benchmark/v0_9/seed-1729/rerank/mbpp_plus/reports/completion_scores.jsonl",
+    "--parent-manifest",
+    "docs/benchmark/v0_9/seed-1729/rerank/humaneval/manifest.json",
+    "--parent-manifest",
+    "docs/benchmark/v0_9/seed-1729/rerank/mbpp_plus/manifest.json",
+    "--calibration-bin-count",
+    "10",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "e7e7c56487ac218cd1a0ba9a4baeeb27e8b6dafbe37eb0626a6b3a375c0db4eb",
+  "created_at": "2026-06-07T02:37:19Z",
+  "files": [
+    {
+      "bytes": 100183,
+      "path": "reports/p_pass_calibration_report.json",
+      "sha256": "d44faae51f95c7cf9cbf21ad54b2969d5bcf94f11389129ba9600a27c28e1438"
+    },
+    {
+      "bytes": 652,
+      "path": "config.json",
+      "sha256": "6dfe5a4210ec5f33729f9cbaaa061f343d2b8a40445c0289d1b59dce3aff9b5a"
+    },
+    {
+      "bytes": 398,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "bc65f1fe57fae801adbd793c9ec5e38d1dff70754a8820deddae328833e23a50"
+    }
+  ],
+  "metadata": {
+    "benchmark_counts": {
+      "humaneval": 282,
+      "mbpp_plus": 102
+    },
+    "claim_allowed": false,
+    "dataset_kind": "downstream_completion",
+    "report_schema_version": "codelewm.eval.p_pass_calibration_report.v1",
+    "row_count": 384,
+    "schema_version": "codelewm.eval.p_pass_calibration_run.v1",
+    "split_counts": {
+      "test": 384
+    }
+  },
+  "parent_artifacts": [
+    "eval_report-3cd1cfeeb2fe2c09",
+    "eval_report-570bdbfeac5928ef"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "69f798a620fdf8e50c1773228428e80ffee1a6ef"
+}

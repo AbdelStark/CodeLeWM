@@ -617,6 +617,7 @@ def run_execution_rerank_evaluation(
     )
     scored, score_rows = _score_completion_labels(
         labels,
+        benchmark_id=benchmark_id,
         prompts=prompts,
         scorer=scorer,
     )
@@ -782,6 +783,7 @@ def _load_sampling_prompts(root: Path) -> dict[str, str]:
 def _score_completion_labels(
     labels: Sequence[CompletionLabel],
     *,
+    benchmark_id: str,
     prompts: dict[str, str],
     scorer: Any,
 ) -> tuple[tuple[ScoredCompletion, ...], list[dict[str, Any]]]:
@@ -817,6 +819,8 @@ def _score_completion_labels(
         rows.append(
             {
                 "schema_version": COMPLETION_SCORE_SCHEMA_VERSION,
+                "benchmark_id": benchmark_id,
+                "split": "test",
                 "problem_id": label.problem_id,
                 "completion_id": label.completion_id,
                 "passed": label.passed,
