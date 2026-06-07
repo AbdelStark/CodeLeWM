@@ -1,0 +1,15 @@
+{
+  "baselines": [
+    "random",
+    "lexical",
+    "no_action",
+    "shuffled_action"
+  ],
+  "checkpoint": ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-1729/checkpoints/checkpoint_step_00012000.pt",
+  "device": "cpu",
+  "max_candidates": 1000,
+  "out": "docs/benchmark/v0_9/seed-1729/execution_retrieval",
+  "pack": ".artifacts/v0_9/hf-pack-download",
+  "schema_version": "codelewm.eval.execution_retrieval_run.v1",
+  "seed": 0
+}

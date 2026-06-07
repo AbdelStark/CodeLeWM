@@ -1,0 +1,72 @@
+{
+  "artifact_id": "eval_report-0bc9a04d4a6bfa86",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "rerank-humaneval",
+    "--completion-manifest",
+    ".artifacts/wsd/humaneval/manifest.json",
+    "--checkpoint",
+    ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-42/checkpoints/checkpoint_step_00012000.pt",
+    "--out",
+    "docs/benchmark/v0_9/seed-42/rerank/humaneval",
+    "--device",
+    "cpu",
+    "--pass-at-k",
+    "5",
+    "--bootstrap-samples",
+    "2000",
+    "--seed",
+    "17",
+    "--min-lift-for-claim",
+    "3.0",
+    "--checkpoint-manifest",
+    ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-42/checkpoints/checkpoint_step_00012000.pt.manifest.json",
+    "--retrieval-prior-weight",
+    "0.0",
+    "--retrieval-prior-k",
+    "10",
+    "--require-learned-scorer",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "2102ce25c94c50276f8d769a33c375295338839aca2ec3cf9532cd77ff6ab558",
+  "created_at": "2026-06-07T02:35:12Z",
+  "files": [
+    {
+      "bytes": 2602,
+      "path": "reports/execution_rerank_report.json",
+      "sha256": "ead0a18edce4cf5646e2cbf6ec6899752fa09c5970b32a1840b9a7a6d3970b86"
+    },
+    {
+      "bytes": 118157,
+      "path": "reports/completion_scores.jsonl",
+      "sha256": "3321e9eb051e18ded9249dc3ce7206244af9d4c6ec2107e09dd884b625549af3"
+    },
+    {
+      "bytes": 750,
+      "path": "config.json",
+      "sha256": "659235780fcd87f0b545a4251a9ae62967049490cbe2a6ce7105c2da64e26414"
+    },
+    {
+      "bytes": 470,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "975a33893d4e31aa17aa59b1d544f9c151f38cf6e52b5e6f085f669898823850"
+    }
+  ],
+  "metadata": {
+    "benchmark": "humaneval",
+    "claim_allowed": true,
+    "completion_count": 282,
+    "problem_count": 47,
+    "report_schema_version": "codelewm.eval.execution_rerank_report.v1",
+    "schema_version": "codelewm.eval.execution_rerank_eval_run.v1",
+    "score_schema_version": "codelewm.eval.completion_score.v1"
+  },
+  "parent_artifacts": [
+    "downstream_benchmark-f015b6696b3e29e1"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "69f798a620fdf8e50c1773228428e80ffee1a6ef"
+}

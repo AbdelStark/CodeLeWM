@@ -1,11 +1,11 @@
 # Diagnostics-Driven Model Experiment
 
-Last updated: 2026-06-06
+Last updated: 2026-06-07
 
 Issue: #244. Tracker: #235. Status: specification complete; no training run
-launched by this issue. The implementation queue is now the v0.9 epic #385,
-with #386 through #392 covering roadmap hygiene, cross-benchmark data/eval
-repair, guarded HF Jobs execution, and final claim audit.
+launched by this issue. The follow-up v0.9 epic #385 is complete through #392,
+covering roadmap hygiene, cross-benchmark data/eval repair, guarded HF Jobs
+execution, and the final diagnostic claim audit.
 
 This document defines the next model-improvement experiment after the v1.4
 visual observability work. It turns the `bugfix-edge-case` harness failure into
@@ -241,10 +241,10 @@ Allowed language remains:
 - diagnostics show where the current model fails;
 - the result is negative or diagnostic evidence.
 
-## Implementation Issues To Open Next
+## Completed Follow-Up Issues
 
 This issue only defines the experiment. The implementation has been split into
-the v0.9 tracker and child issues:
+the completed v0.9 tracker and child issues:
 
 - #385: v0.9 data/eval repair epic tracker;
 - #386: reconcile stale trackers and roadmap queue state;

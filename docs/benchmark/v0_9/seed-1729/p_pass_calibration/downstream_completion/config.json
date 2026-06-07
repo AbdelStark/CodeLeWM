@@ -1,0 +1,23 @@
+{
+  "baselines": [
+    "p_pass",
+    "codelewm",
+    "no_action",
+    "shuffled_action",
+    "lexical",
+    "random",
+    "llm_order"
+  ],
+  "benchmark": null,
+  "calibration_bin_count": 10,
+  "dataset_kind": "downstream_completion",
+  "parent_manifests": [
+    "docs/benchmark/v0_9/seed-1729/rerank/humaneval/manifest.json",
+    "docs/benchmark/v0_9/seed-1729/rerank/mbpp_plus/manifest.json"
+  ],
+  "schema_version": "codelewm.eval.p_pass_calibration_run.v1",
+  "scores": [
+    "docs/benchmark/v0_9/seed-1729/rerank/humaneval/reports/completion_scores.jsonl",
+    "docs/benchmark/v0_9/seed-1729/rerank/mbpp_plus/reports/completion_scores.jsonl"
+  ]
+}

@@ -121,19 +121,21 @@ class HFMLInternTrainingDocsTest(unittest.TestCase):
 
     def test_next_goal_points_to_hf_goal_prompt(self) -> None:
         text = NEXT_GOAL.read_text(encoding="utf-8")
+        normalized = " ".join(text.split())
 
         self.assertIn("docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md", text)
         self.assertIn("docs/spec/11-llm-world-model-harness.md", text)
         self.assertIn("docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md", text)
         self.assertIn("docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md", text)
         self.assertIn("docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md", text)
-        self.assertIn("Use the active v0.9 epic tracker #385", text)
+        self.assertIn("historical prompt for the completed v0.9 data/eval repair epic", text)
         self.assertIn("OpenRouter Python SDK", text)
         self.assertIn("downstream rerank report", text)
         self.assertIn("#207/#208", text)
         self.assertIn("#385", text)
         self.assertIn("#386 through #392", text)
-        self.assertIn("Live issue state as of 2026-06-06", text)
+        self.assertIn("Live issue state as of 2026-06-07", text)
+        self.assertIn("A future positive claim must start from a new issue tracker", normalized)
 
     def test_v0_2_plan_records_research_gates_and_public_hf_policy(self) -> None:
         self.assertTrue(V0_2_PLAN.is_file(), f"missing: {V0_2_PLAN}")

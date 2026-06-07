@@ -203,20 +203,22 @@ claims by itself.
 
 ## Milestone: v0.9
 
-Data/eval repair for cross-benchmark correctness claims. This milestone starts
-from the completed v0.8 diagnostic result and fixes the data, calibration,
-semantic-decoy, and representation-coverage gaps before any new GPU run.
+Data/eval repair for cross-benchmark correctness claims. This milestone is
+complete: it started from the v0.8 diagnostic result, fixed the data,
+calibration, semantic-decoy, and representation-coverage evaluability gaps,
+ran guarded two-seed A10G HF Jobs, and published a final claim audit that keeps
+the overall public model-quality claim closed.
 
 | # | Title | Area | Priority | Effort | RFC | Status |
 |---|-------|------|----------|--------|-----|--------|
-| #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | data/evaluation/model/results | p1 | l | RFC-0015 | Open |
-| #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | docs/results | p1 | s | RFC-0015 | Open |
-| #387 | v0.9 data: build cross-benchmark pass/fail execution pack with stratified labels | data/evaluation | p1 | l | RFC-0015 | Open |
-| #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | evaluation/model/results | p1 | m | RFC-0015 | Open |
-| #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | evaluation/data/results | p1 | m | RFC-0015 | Open |
-| #390 | v0.9 eval: enforce probe-label coverage and representation gates | evaluation/data/results | p1 | m | RFC-0015 | Open |
-| #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | model/runtime/observability | p1 | l | RFC-0015 | Open |
-| #392 | v0.9 eval/report: run full gate suite and publish claim audit | evaluation/results/release | p1 | l | RFC-0015 | Open |
+| #385 | [TRACKER] v0.9 data/eval repair for cross-benchmark correctness claims | data/evaluation/model/results | p1 | l | RFC-0015 | Closed |
+| #386 | v0.9 hygiene: reconcile stale trackers and roadmap queue state | docs/results | p1 | s | RFC-0015 | Closed |
+| #387 | v0.9 data: build cross-benchmark pass/fail execution pack with stratified labels | data/evaluation | p1 | l | RFC-0015 | Closed |
+| #388 | v0.9 eval: emit held-out p_pass ROC-AUC and calibration reports | evaluation/model/results | p1 | m | RFC-0015 | Closed |
+| #389 | v0.9 eval: repair semantic-decoy alignment and coverage gates | evaluation/data/results | p1 | m | RFC-0015 | Closed |
+| #390 | v0.9 eval: enforce probe-label coverage and representation gates | evaluation/data/results | p1 | m | RFC-0015 | Closed |
+| #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | model/runtime/observability | p1 | l | RFC-0015 | Closed |
+| #392 | v0.9 eval/report: run full gate suite and publish claim audit | evaluation/results/release | p1 | l | RFC-0015 | Closed |
 
 ## Tracking Issues
 
@@ -348,9 +350,10 @@ cross-benchmark correctness claims.
 - #364 completed the v0.8 execution-trace result publication. The final
   diagnostic boundary is recorded in
   `docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md`.
-- #385/#386-#392 define the active v0.9 dependency chain. #391 must wait until
-  #387 through #390 produce manifest-backed data/eval preflight evidence or
-  typed blockers.
+- #385/#386-#392 completed the v0.9 dependency chain. The final claim boundary
+  is recorded in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`: both
+  seeds clear HumanEval WS-D reranking, MBPP-Plus has zero lift over no-action,
+  and the overall public claim remains closed.
 
 ## Cross-Reference Map
 

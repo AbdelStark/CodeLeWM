@@ -296,8 +296,9 @@ boundary. The #186 through #194 stream is complete, #206 added the public
 BYOK/local demo/readme polish, #220 and #222 proved learned scoring and
 terminal-first demo UX, and #207/#208 were superseded because the comment-style
 toy task is not the right public artifact. The #235 visual model observability
-stream is complete through #245. Use the active v0.9 epic tracker #385 and work
-#386 through #392 in dependency order.
+stream is complete through #245. The v0.9 data/eval repair epic #385 is complete
+through #392 as diagnostic evidence; any future positive-model work needs a new
+tracker and hypothesis.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
@@ -308,10 +309,12 @@ docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
 docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md,
 docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md.
 
-For current v0.9 work, also ground in
+For historical v0.9 context, also ground in
 docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md,
 docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md, and
-docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-05.md.
+docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-05.md,
+docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md, and
+docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md.
 
 The harness and downstream benchmark stream is complete through #206. The
 meaningful harness demo tracker is #224: #226 added scenario fixtures and

@@ -1,0 +1,112 @@
+{
+  "artifact_id": "eval_report-0e49571dcb2fc373",
+  "artifact_kind": "eval_report",
+  "command": [
+    "codelewm",
+    "eval",
+    "execution-retrieval",
+    "--checkpoint",
+    ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-1729/checkpoints/checkpoint_step_00012000.pt",
+    "--pack",
+    ".artifacts/v0_9/hf-pack-download/artifact_manifest.json",
+    "--baselines",
+    "random,lexical,no_action,shuffled_action",
+    "--out",
+    "docs/benchmark/v0_9/seed-1729/execution_retrieval",
+    "--device",
+    "cpu",
+    "--max-candidates",
+    "1000",
+    "--seed",
+    "0",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "ff83f7b9f2d1a51f6f088ce6e87adfcb8c8560074a55737ddeb2c96de0b2f338",
+  "created_at": "2026-06-07T02:24:04Z",
+  "files": [
+    {
+      "bytes": 472,
+      "path": "config.json",
+      "sha256": "d67d0547a027cdb9013a7903f89b537cd64983f9133012c9d0f8b368a8172ad2"
+    },
+    {
+      "bytes": 214657,
+      "path": "reports/retrieval_report.json",
+      "sha256": "88e4c0d178096788061b352117e38e3628f2f4690f2094e952a3830c2c01fde0"
+    }
+  ],
+  "metadata": {
+    "baselines": {
+      "lexical": {
+        "candidate_count_max": 260,
+        "candidate_count_min": 260,
+        "median_rank": 45.0,
+        "mrr": 0.053305724762588255,
+        "query_count": 260,
+        "recall_at_1": 0.011538461538461539,
+        "recall_at_10": 0.09230769230769231,
+        "recall_at_5": 0.05384615384615385,
+        "schema_version": "codelewm.eval.retrieval_metrics.v1"
+      },
+      "no_action": {
+        "candidate_count_max": 260,
+        "candidate_count_min": 260,
+        "median_rank": 54.0,
+        "mrr": 0.07252959717122938,
+        "query_count": 260,
+        "recall_at_1": 0.019230769230769232,
+        "recall_at_10": 0.14615384615384616,
+        "recall_at_5": 0.08846153846153847,
+        "schema_version": "codelewm.eval.retrieval_metrics.v1"
+      },
+      "random": {
+        "candidate_count_max": 260,
+        "candidate_count_min": 260,
+        "median_rank": 131.0,
+        "mrr": 0.01715990656297352,
+        "query_count": 260,
+        "recall_at_1": 0.0,
+        "recall_at_10": 0.026923076923076925,
+        "recall_at_5": 0.011538461538461539,
+        "schema_version": "codelewm.eval.retrieval_metrics.v1"
+      },
+      "shuffled_action": {
+        "candidate_count_max": 260,
+        "candidate_count_min": 260,
+        "median_rank": 66.0,
+        "mrr": 0.07424856455091174,
+        "query_count": 260,
+        "recall_at_1": 0.023076923076923078,
+        "recall_at_10": 0.13846153846153847,
+        "recall_at_5": 0.09615384615384616,
+        "schema_version": "codelewm.eval.retrieval_metrics.v1"
+      }
+    },
+    "checkpoint_sha256": "34ebb282b284580dd123c781ae77c93cc36bbffc4eeeee9f0bd4cdf8042001eb",
+    "checkpoint_step": 12000,
+    "dataset_artifact_id": "codelewm-passfail-execution-pack-20260606T122240Z",
+    "metrics": {
+      "candidate_count_max": 260,
+      "candidate_count_min": 260,
+      "median_rank": 4.0,
+      "mrr": 0.39817020001381254,
+      "query_count": 260,
+      "recall_at_1": 0.27307692307692305,
+      "recall_at_10": 0.5923076923076923,
+      "recall_at_5": 0.5346153846153846,
+      "schema_version": "codelewm.eval.retrieval_metrics.v1"
+    },
+    "query_count": 260,
+    "report_path": "reports/retrieval_report.json",
+    "report_schema_version": "codelewm.eval.retrieval_report.v1",
+    "schema_version": "codelewm.eval.execution_retrieval_run.v1",
+    "training_artifact_id": "training_run-91e9cf7c645379b3"
+  },
+  "parent_artifacts": [
+    "training_run-91e9cf7c645379b3",
+    "codelewm-passfail-execution-pack-20260606T122240Z"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "69f798a620fdf8e50c1773228428e80ffee1a6ef"
+}

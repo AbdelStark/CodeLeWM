@@ -1,0 +1,3233 @@
+{
+  "decoy_seed": 0,
+  "examples": [
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.4774169921875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.09413176029920578
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.8761749267578
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.21177002787590027
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.7440490722656
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.2310096025466919
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.3165283203125
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.21926580369472504
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.72479248046875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.25404009222984314
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.31634521484375
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::3::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2456042468547821
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.70999145507812
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.08392277359962463
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.79055786132812
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.05406128242611885
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.59666442871094
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.058053094893693924
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.2603759765625
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.06145365163683891
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.34567260742188
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.041573867201805115
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.05828857421875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::1::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.04008161649107933
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.61355590820312
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.10086384415626526
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.31158447265625
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.052786074578762054
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.057373046875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.21547237038612366
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.00360107421875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.06931783258914948
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.18121337890625
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.21290189027786255
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.5374755859375
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::0::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2120606005191803
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.14291381835938
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.08729977905750275
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          256.5297546386719
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.21845924854278564
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.5080261230469
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.23285534977912903
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.6677551269531
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.23344480991363525
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.7310485839844
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.26197028160095215
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.372314453125
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::4::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2497718781232834
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.50816345214844
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.1120544970035553
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.52906799316406
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.2122785747051239
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.85650634765625
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.2350398451089859
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          256.7581787109375
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.22157832980155945
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.7967224121094
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.26107069849967957
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.3182678222656
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::2::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.25057774782180786
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.92684936523438
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.08351172506809235
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.28012084960938
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.05716154724359512
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.20492553710938
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.050904057919979095
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.64404296875
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.06019669026136398
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.8746337890625
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.042173534631729126
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.52757263183594
+        ]
+      },
+      "transition_id": "HumanEval/3::HumanEval/3::wsd::5::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.04238259047269821
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.13934326171875
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5174534320831299
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          383.16693115234375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.3800835609436035
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          47.537086486816406
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::2::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.7099084854125977
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          228.3483123779297
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::2::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 2.6444358825683594
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.3881530761719
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.47465312480926514
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          38.43444061279297
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.2611594200134277
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          124.19195556640625
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.0143852233886719
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          298.20404052734375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.9675648212432861
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          293.2734375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::5::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.737375020980835
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          331.9993591308594
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.4842168390750885
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          38.38941955566406
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.252802848815918
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          125.34255981445312
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.0371263027191162
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          295.097900390625
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 2.0059540271759033
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.7060852050781
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::1::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.71925950050354
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.8253173828125
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.4949546456336975
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.472900390625
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.9075076580047607
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          347.22845458984375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.7627185583114624
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          329.36016845703125
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::3::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.763511598110199
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          331.10150146484375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::3::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.9236762523651123
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          331.4898681640625
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.47899970412254333
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          273.02081298828125
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.0107743740081787
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          125.48263549804688
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.0846531391143799
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          296.3343505859375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.9422258138656616
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          288.81536865234375
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::4::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.8195553421974182
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          330.9958190917969
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5057065486907959
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          38.64647674560547
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.2258052825927734
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          124.00834655761719
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.1108453273773193
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          173.7800750732422
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.0308302640914917
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          290.42303466796875
+        ]
+      },
+      "transition_id": "HumanEval/10::HumanEval/10::wsd::0::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.7608211040496826
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          46.06785583496094
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 9.590648651123047
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          360.046875
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.7604103684425354
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          36.29682922363281
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.4828566312789917
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          47.25245666503906
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 9.583789825439453
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          358.6338806152344
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::2::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.7730025053024292
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          36.843711853027344
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.41213446855545044
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          46.75358963012695
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 9.600433349609375
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          19.96854591369629
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 3.309053897857666
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          34.6132926940918
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.4892332553863525
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          50.36546325683594
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 9.696932792663574
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          265.4911193847656
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 1.659379005432129
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          36.07119369506836
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.5922218561172485
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          44.723052978515625
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 9.668938636779785
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.20535278320312
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 1.6962908506393433
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          89.5511474609375
+        ]
+      },
+      "transition_id": "HumanEval/25::HumanEval/25::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.7434930801391602
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.35137939453125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.05942295491695404
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.3874206542969
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.23242799937725067
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.138671875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.05094233900308609
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.1824645996094
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.23006044328212738
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.43167114257812
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.05364218354225159
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.08203125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2640118896961212
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          262.496826171875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.3621591329574585
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.94342041015625
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.24674510955810547
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.225830078125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::5::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.24409618973731995
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          262.11572265625
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.3386586904525757
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.07562255859375
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.05552851781249046
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.15298461914062
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.059633463621139526
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.92849731445312
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.21432596445083618
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.53018188476562
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.06543406844139099
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          254.20599365234375
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2200777232646942
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.3434143066406
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.2262171506881714
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.94102478027344
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.043902985751628876
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.52796936035156
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::1::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.04810262843966484
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.1381530761719
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.2577168643474579
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          256.2012023925781
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.23047274351119995
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.28546142578125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.04995088651776314
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.44679260253906
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.07017123699188232
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.96737670898438
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.07959577441215515
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          255.0672607421875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.2193729281425476
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.51007080078125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.22716602683067322
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.5277099609375
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.24042657017707825
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          257.66473388671875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::4::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.22856110334396362
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          261.7003479003906
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.32375413179397583
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.213134765625
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.05958825722336769
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.1945343017578
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.06086796149611473
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          254.5423126220703
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.22022980451583862
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.84242248535156
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.0695924311876297
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          252.90289306640625
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.23978017270565033
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          256.9805908203125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.2190837860107422
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.92799377441406
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.04416453093290329
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.52200317382812
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::2::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.047624148428440094
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.1221923828125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.05992327630519867
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          264.4930419921875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.5757806301116943
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.76547241210938
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.054394982755184174
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          246.17965698242188
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.10973326861858368
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.8076934814453
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.054104238748550415
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.81967163085938
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.06178322434425354
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.7066192626953
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.054572947323322296
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.06375122070312
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.05985996872186661
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.868896484375
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::3::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.07695485651493073
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.2185821533203
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.06087079271674156
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          243.93817138671875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.06058192253112793
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.61651611328125
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.05430880934000015
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          256.7016296386719
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.2292088270187378
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          245.07196044921875
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.06643542647361755
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          254.42132568359375
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.23437602818012238
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.5483703613281
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-6",
+      "true_rank": 1,
+      "true_score": 0.23441538214683533
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.16879272460938
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-7",
+      "true_rank": 1,
+      "true_score": 0.057788118720054626
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.91366577148438
+        ]
+      },
+      "transition_id": "HumanEval/43::HumanEval/43::wsd::0::humaneval/case-8",
+      "true_rank": 1,
+      "true_score": 0.07440753281116486
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.68438720703125
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.7051258087158203
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          326.1975402832031
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.6276214718818665
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          337.11944580078125
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.7991113662719727
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          330.7234191894531
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.6484930515289307
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          330.02471923828125
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.7186840176582336
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          337.19384765625
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::4::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.668915867805481
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          332.6522216796875
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.7125702500343323
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          330.9588623046875
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.6729340553283691
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          337.35137939453125
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.763099193572998
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          335.59686279296875
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.7259600162506104
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          331.5533752441406
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.7075139284133911
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          338.1292419433594
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::5::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.7319843173027039
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          175.56918334960938
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5405349731445312
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          247.14566040039062
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.1807503700256348
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          213.83172607421875
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.722372055053711
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          132.34295654296875
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.6871153116226196
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          150.59239196777344
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 0.8668937683105469
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          51.89491653442383
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::1::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 0.5543586015701294
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          175.84571838378906
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5283297300338745
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          259.5518798828125
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 1.2976348400115967
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          21.19649887084961
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.4666357040405273
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          233.9149932861328
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.3542747497558594
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          249.65716552734375
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-4",
+      "true_rank": 1,
+      "true_score": 1.3691010475158691
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          235.56930541992188
+        ]
+      },
+      "transition_id": "HumanEval/44::HumanEval/44::wsd::0::humaneval/case-5",
+      "true_rank": 1,
+      "true_score": 1.889037013053894
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          341.22674560546875
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.8771601915359497
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          571.8756713867188
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 5.659707069396973
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          396.7706298828125
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.6486901640892029
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          593.5050048828125
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.8852820992469788
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          341.195556640625
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.9025788307189941
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          467.3297424316406
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.587200164794922
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          688.8134765625
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 14.199015617370605
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          427.7689208984375
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.2757079601287842
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          344.22137451171875
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.8384220004081726
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          548.5272216796875
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 1.8367608785629272
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          387.16790771484375
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 1.2803664207458496
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          266.48248291015625
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 2.1113619804382324
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          230.86062622070312
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.441179096698761
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          597.341552734375
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.8492037057876587
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          392.33233642578125
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.6550304889678955
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          390.2090148925781
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::3::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 5.038223743438721
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          360.82891845703125
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.6417537927627563
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          394.0344543457031
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 1.0857840776443481
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          389.16375732421875
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 5.00870943069458
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          506.7793273925781
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.2280782461166382
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          29.057937622070312
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.33941155672073364
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          28.971220016479492
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::2::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.31498703360557556
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          29.023841857910156
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.2921009957790375
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          28.086734771728516
+        ]
+      },
+      "transition_id": "HumanEval/46::HumanEval/46::wsd::2::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.4190914034843445
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          500.0270690917969
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::0::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 1.7827249765396118
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          514.4656372070312
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::0::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 2.8971757888793945
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          227.6308135986328
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::0::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.250577449798584
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          560.5656127929688
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::0::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 5.442897796630859
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          501.08624267578125
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::4::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 1.8481252193450928
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          471.83953857421875
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::4::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 3.062251091003418
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          619.6249389648438
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::4::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.8276749849319458
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          345.32257080078125
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::4::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 1.0072567462921143
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          229.41891479492188
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::1::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5481539964675903
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          597.56591796875
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::1::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.9438931941986084
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          623.095458984375
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::1::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.7920955419540405
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          617.2959594726562
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::1::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.9239863157272339
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          231.58322143554688
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::5::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.5027733445167542
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          229.936279296875
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::5::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.4590175151824951
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          226.04275512695312
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::5::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.21357503533363342
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          223.0616912841797
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::5::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.3346024751663208
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          358.74285888671875
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::2::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 0.698828399181366
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          559.1396484375
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::2::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 5.462664604187012
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          470.5530090332031
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::2::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 10.672714233398438
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          472.298583984375
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::2::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 10.783252716064453
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          501.13629150390625
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::3::humaneval/case-0",
+      "true_rank": 1,
+      "true_score": 1.8335217237472534
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          349.1086120605469
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::3::humaneval/case-1",
+      "true_rank": 1,
+      "true_score": 0.9317708015441895
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          230.83294677734375
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::3::humaneval/case-2",
+      "true_rank": 1,
+      "true_score": 0.33730095624923706
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          353.5001220703125
+        ]
+      },
+      "transition_id": "HumanEval/85::HumanEval/85::wsd::3::humaneval/case-3",
+      "true_rank": 1,
+      "true_score": 0.6092262268066406
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          71.50516510009766
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::0::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 2.9037156105041504
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          186.59449768066406
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::0::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 0.4771076738834381
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          223.47412109375
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::0::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 0.8632290959358215
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          629.4583129882812
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::2::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 2.1796770095825195
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          225.197265625
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::2::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 1.2142369747161865
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          388.6629638671875
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::2::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 2.835599899291992
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          305.1429138183594
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::1::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 1.2705610990524292
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          31.58084487915039
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::1::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 3.6286840438842773
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          122.60308074951172
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::1::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 5.152947425842285
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          146.05865478515625
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::3::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 3.957392930984497
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          389.1938781738281
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::3::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 4.448582649230957
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          416.7034912109375
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::3::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 1.831974983215332
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          159.7938690185547
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::5::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 4.33725643157959
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          335.5025634765625
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::5::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 2.923447370529175
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          326.8328857421875
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::5::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 2.6816091537475586
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          66.13504791259766
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::4::Mbpp/85/case-0",
+      "true_rank": 1,
+      "true_score": 1.1821361780166626
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          65.96746826171875
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::4::Mbpp/85/case-1",
+      "true_rank": 1,
+      "true_score": 1.5329139232635498
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          67.4042739868164
+        ]
+      },
+      "transition_id": "Mbpp/85::Mbpp/85::wsd::4::Mbpp/85/case-2",
+      "true_rank": 1,
+      "true_score": 1.5922150611877441
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.3885498046875
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::3::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.08283855766057968
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.3272705078125
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::3::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.057434678077697754
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.72096252441406
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::3::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.060138557106256485
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.41537475585938
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::2::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.08205804228782654
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.28945922851562
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::2::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.05694139003753662
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.750244140625
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::2::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.05949629843235016
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          239.73007202148438
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::5::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.11721265316009521
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.05726623535156
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::5::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.07367417216300964
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          241.9080352783203
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::5::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.09238134324550629
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          258.099609375
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::0::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.2654372453689575
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.87033081054688
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::0::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.07271197438240051
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          246.5291748046875
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::0::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.5953413248062134
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.4535675048828
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::1::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.08132004737854004
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.27487182617188
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::1::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.05549207329750061
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.8519744873047
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::1::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.05845512077212334
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          240.14208984375
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::4::Mbpp/92/case-0",
+      "true_rank": 1,
+      "true_score": 0.09671293944120407
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          252.97348022460938
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::4::Mbpp/92/case-1",
+      "true_rank": 1,
+      "true_score": 0.2679511308670044
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          242.90725708007812
+        ]
+      },
+      "transition_id": "Mbpp/92::Mbpp/92::wsd::4::Mbpp/92/case-2",
+      "true_rank": 1,
+      "true_score": 0.07079055160284042
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          702.8199462890625
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::4::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 1.5798064470291138
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          349.8197021484375
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::4::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 0.9553287029266357
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          244.6721649169922
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::4::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 1.1161032915115356
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          278.3440856933594
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::1::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 0.18822941184043884
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          280.3621826171875
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::1::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 0.2804719805717468
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          265.1912841796875
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::1::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 0.7120156288146973
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          351.3191833496094
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::5::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 0.639366865158081
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          691.6425170898438
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::5::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 1.4400663375854492
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          597.682861328125
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::5::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 0.8866114616394043
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          226.16441345214844
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::3::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 0.13589410483837128
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          227.29266357421875
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::3::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 0.22002236545085907
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          231.31875610351562
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::3::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 0.46823850274086
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          360.0346984863281
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::0::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 0.4587646424770355
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          411.92340087890625
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::0::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 1.0631895065307617
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          550.6043701171875
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::0::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 1.7082953453063965
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          227.03741455078125
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::2::Mbpp/103/case-0",
+      "true_rank": 1,
+      "true_score": 0.14249637722969055
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          227.8416748046875
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::2::Mbpp/103/case-1",
+      "true_rank": 1,
+      "true_score": 0.2727319002151489
+    },
+    {
+      "candidate_count": 2,
+      "decoy_scores_by_category": {
+        "mutation": [
+          231.12744140625
+        ]
+      },
+      "transition_id": "Mbpp/103::Mbpp/103::wsd::2::Mbpp/103/case-2",
+      "true_rank": 1,
+      "true_score": 0.4548104703426361
+    }
+  ],
+  "metadata": {
+    "action_view": "text",
+    "checkpoint": {
+      "backend": "torch",
+      "model_class": "TorchCodeTransitionModel",
+      "path": ".artifacts/v0_9/hf-runs-download/codelewm-v0-9-short-execution-20260606-69f798a-seed-1729/checkpoints/checkpoint_step_00012000.pt",
+      "sha256": "34ebb282b284580dd123c781ae77c93cc36bbffc4eeeee9f0bd4cdf8042001eb",
+      "step": 12000
+    },
+    "dataset": {
+      "artifact_id": "codelewm-passfail-execution-pack-20260606T122240Z",
+      "path": ".artifacts/v0_9/hf-pack-download",
+      "record_count": 2188,
+      "schema_version": "codelewm.execution_pack_manifest.v1"
+    },
+    "decoy_policy": {
+      "requested": [
+        "mutation",
+        "same_problem_different_submission",
+        "same_code_different_input"
+      ]
+    },
+    "execution_decoy_generation": {
+      "mutation_pair_count": 260,
+      "pair_count_summary": {
+        "blockers": [
+          {
+            "candidate_pair_count": 6,
+            "category": "same_problem_different_submission",
+            "generated_pair_count": 6,
+            "min_pair_count_for_claim": 30,
+            "missing_decoy_record_count": 6,
+            "missing_query_record_count": 6,
+            "observed_scorable_pair_count": 0,
+            "pack_pair_count": 6,
+            "reason": "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30",
+            "type": "semantic_decoy_pair_count_blocker"
+          },
+          {
+            "candidate_pair_count": 352,
+            "category": "same_code_different_input",
+            "generated_pair_count": 352,
+            "min_pair_count_for_claim": 100,
+            "missing_decoy_record_count": 352,
+            "missing_query_record_count": 352,
+            "observed_scorable_pair_count": 0,
+            "pack_pair_count": 352,
+            "reason": "semantic_decoy_pair_count_blocker:same_code_different_input:0<100",
+            "type": "semantic_decoy_pair_count_blocker"
+          }
+        ],
+        "candidate_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "generated_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "min_pair_count_by_category": {
+          "mutation": 100,
+          "same_code_different_input": 100,
+          "same_problem_different_submission": 30
+        },
+        "missing_decoy_record_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "missing_query_record_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "pack_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "schema_version": "codelewm.eval.execution_decoy_coverage_summary.v1",
+        "scorable_pair_count_by_category": {},
+        "selected_decoys": [
+          "mutation",
+          "same_problem_different_submission",
+          "same_code_different_input"
+        ],
+        "semantic_decoy_pack_artifact_id": "downstream_benchmark-f3e0dc65fbf18825"
+      },
+      "reports": [
+        {
+          "category": "same_code_different_input",
+          "eligible_query_count": 201,
+          "pair_count": 352,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "no_other_input": 35,
+            "outputs_identical": 6
+          }
+        },
+        {
+          "category": "same_problem_different_submission",
+          "eligible_query_count": 32,
+          "pair_count": 6,
+          "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+          "skipped_reasons": {
+            "no_other_submission": 204,
+            "outputs_identical": 26
+          }
+        }
+      ],
+      "schema_version": "codelewm.eval.execution_surprise_decoy_summary.v1",
+      "semantic_decoy_pack": {
+        "artifact_id": "downstream_benchmark-f3e0dc65fbf18825",
+        "manifest_path": "docs/benchmark/v0_6/semantic_decoy_pack/manifest.json",
+        "pair_count": 358,
+        "summary": {
+          "categories": [
+            "same_problem_different_submission",
+            "same_code_different_input"
+          ],
+          "category": "semantic_same_problem",
+          "claim_gate": {
+            "claim_allowed": true,
+            "claim_reason": "pair_and_problem_count_gates_pass",
+            "distinct_problem_count": 68,
+            "min_distinct_problems": 30,
+            "min_pairs": 100,
+            "name": "semantic_decoy_pair_count_gate.v1",
+            "pair_count": 358
+          },
+          "distinct_problem_count": 68,
+          "eligible_query_count": 233,
+          "filtering_summary": {
+            "leak_checks": {
+              "checked_pair_count": 358,
+              "kept_pair_count": 358,
+              "skipped_reasons": {},
+              "train_split_leak_count": 0
+            },
+            "split_policy": {
+              "excluded_split_counts": {
+                "train": 1369
+              },
+              "input_split_counts": {
+                "test": 157,
+                "train": 1369,
+                "val": 79
+              },
+              "selected_record_count": 236,
+              "selected_splits": [
+                "val",
+                "test"
+              ],
+              "split_by": "source_problem_id",
+              "train_rows_excluded": 1369
+            }
+          },
+          "generator_reports": [
+            {
+              "category": "same_problem_different_submission",
+              "eligible_query_count": 32,
+              "pair_count": 6,
+              "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+              "skipped_reasons": {
+                "no_other_submission": 204,
+                "outputs_identical": 26
+              }
+            },
+            {
+              "category": "same_code_different_input",
+              "eligible_query_count": 201,
+              "pair_count": 352,
+              "schema_version": "codelewm.eval.execution_surprise_decoy.v1",
+              "skipped_reasons": {
+                "no_other_input": 35,
+                "outputs_identical": 6
+              }
+            }
+          ],
+          "pack_schema_version": "codelewm.eval.semantic_decoy_pack.v1",
+          "pair_count": 358,
+          "pair_count_by_category": {
+            "same_code_different_input": 352,
+            "same_problem_different_submission": 6
+          },
+          "pair_schema_version": "codelewm.eval.semantic_decoy_pair.v1",
+          "schema_version": "codelewm.eval.semantic_decoy_summary.v1",
+          "source_license_policy": {
+            "derived_artifact_policy": "metadata_only: record IDs, category labels, rationales, and output fingerprints; no raw source code or provider secrets",
+            "license_breakdown": {
+              "CC-BY-4.0": 1419,
+              "MIT": 186
+            },
+            "source_breakdown": {
+              "apps": 186,
+              "mbpp": 1419
+            }
+          }
+        }
+      }
+    },
+    "execution_surprise_claim_gates": {
+      "claim_allowed": false,
+      "claim_reason": "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30;semantic_decoy_pair_count_blocker:same_code_different_input:0<100",
+      "coverage_blockers": [
+        {
+          "candidate_pair_count": 6,
+          "category": "same_problem_different_submission",
+          "generated_pair_count": 6,
+          "min_pair_count_for_claim": 30,
+          "missing_decoy_record_count": 6,
+          "missing_query_record_count": 6,
+          "observed_scorable_pair_count": 0,
+          "pack_pair_count": 6,
+          "reason": "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30",
+          "type": "semantic_decoy_pair_count_blocker"
+        },
+        {
+          "candidate_pair_count": 352,
+          "category": "same_code_different_input",
+          "generated_pair_count": 352,
+          "min_pair_count_for_claim": 100,
+          "missing_decoy_record_count": 352,
+          "missing_query_record_count": 352,
+          "observed_scorable_pair_count": 0,
+          "pack_pair_count": 352,
+          "reason": "semantic_decoy_pair_count_blocker:same_code_different_input:0<100",
+          "type": "semantic_decoy_pair_count_blocker"
+        }
+      ],
+      "failure_reasons": [
+        "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30",
+        "semantic_decoy_pair_count_blocker:same_code_different_input:0<100"
+      ],
+      "pair_count_gates": [
+        {
+          "blocker_reason": null,
+          "blocker_type": null,
+          "candidate_pair_count": 0,
+          "category": "mutation",
+          "generated_pair_count": 0,
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 100,
+          "missing_decoy_record_count": 0,
+          "missing_query_record_count": 0,
+          "observed_pair_count": 260,
+          "pack_pair_count": 0,
+          "passed": true,
+          "scorable_pair_count": 260
+        },
+        {
+          "blocker_reason": "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30",
+          "blocker_type": "semantic_decoy_pair_count_blocker",
+          "candidate_pair_count": 6,
+          "category": "same_problem_different_submission",
+          "generated_pair_count": 6,
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 30,
+          "missing_decoy_record_count": 6,
+          "missing_query_record_count": 6,
+          "observed_pair_count": 0,
+          "pack_pair_count": 6,
+          "passed": false,
+          "scorable_pair_count": 0
+        },
+        {
+          "blocker_reason": "semantic_decoy_pair_count_blocker:same_code_different_input:0<100",
+          "blocker_type": "semantic_decoy_pair_count_blocker",
+          "candidate_pair_count": 352,
+          "category": "same_code_different_input",
+          "generated_pair_count": 352,
+          "metric": "scored_decoy_pair_count",
+          "min_pair_count_for_claim": 100,
+          "missing_decoy_record_count": 352,
+          "missing_query_record_count": 352,
+          "observed_pair_count": 0,
+          "pack_pair_count": 352,
+          "passed": false,
+          "scorable_pair_count": 0
+        }
+      ],
+      "schema_version": "codelewm.eval.execution_surprise_claim_gates.v1",
+      "score_gates": [
+        {
+          "category": "mutation",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.65,
+          "observed_win_rate": 1.0,
+          "passed": true,
+          "status": "passed"
+        },
+        {
+          "blocked_by": "semantic_decoy_pair_count_blocker:same_problem_different_submission:0<30",
+          "category": "same_problem_different_submission",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.6,
+          "observed_win_rate": null,
+          "passed": false,
+          "status": "blocked_by_pair_count"
+        },
+        {
+          "blocked_by": "semantic_decoy_pair_count_blocker:same_code_different_input:0<100",
+          "category": "same_code_different_input",
+          "metric": "pairwise_auc_true_beats_decoy",
+          "min_win_rate_for_claim": 0.7,
+          "observed_win_rate": null,
+          "passed": false,
+          "status": "blocked_by_pair_count"
+        }
+      ],
+      "semantic_decoy_category_counts": {
+        "candidate_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "generated_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "missing_decoy_record_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "missing_query_record_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "pack_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "scorable_pair_count_by_category": {},
+        "scored_decoy_counts": {
+          "mutation": 260,
+          "same_code_different_input": 0,
+          "same_problem_different_submission": 0
+        }
+      },
+      "semantic_decoy_pack_count_gate": {
+        "artifact_id": "downstream_benchmark-f3e0dc65fbf18825",
+        "metric": "semantic_decoy_pack_pair_count",
+        "observed_distinct_problem_count": 68,
+        "observed_pair_count": 358,
+        "pack_pair_count_by_category": {
+          "same_code_different_input": 352,
+          "same_problem_different_submission": 6
+        },
+        "passed": true
+      }
+    },
+    "substrate": "execution_trace_v1",
+    "training_artifact_id": "training_run-91e9cf7c645379b3"
+  },
+  "metrics": {
+    "decoy_counts": {
+      "action_cluster": 0,
+      "mutation": 260,
+      "random": 0,
+      "same_file": 0
+    },
+    "example_count": 260,
+    "mean_true_rank": 1.0,
+    "median_true_rank": 1.0,
+    "pairwise_auc_by_category": {
+      "mutation": 1.0
+    },
+    "pairwise_auc_overall": 1.0,
+    "recall_at_1": 1.0
+  },
+  "schema_version": "codelewm.eval.surprise_report.v1",
+  "score_direction": "lower_is_better"
+}

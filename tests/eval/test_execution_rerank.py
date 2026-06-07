@@ -322,6 +322,8 @@ class CompletionRerankEvaluationTest(unittest.TestCase):
                 {row["schema_version"] for row in score_rows},
                 {COMPLETION_SCORE_SCHEMA_VERSION},
             )
+            self.assertEqual({row["benchmark_id"] for row in score_rows}, {"humaneval"})
+            self.assertEqual({row["split"] for row in score_rows}, {"test"})
             self.assertTrue(
                 all(
                     {
@@ -511,6 +513,8 @@ class CompletionRerankEvaluationTest(unittest.TestCase):
             report["scoring_summary"]["model_id"],
             "codelewm.execution_torch_transition_scorer.v1",
         )
+        self.assertEqual({row["benchmark_id"] for row in score_rows}, {"humaneval"})
+        self.assertEqual({row["split"] for row in score_rows}, {"test"})
         self.assertTrue(all("codelewm" in row["scores"] for row in score_rows))
 
 

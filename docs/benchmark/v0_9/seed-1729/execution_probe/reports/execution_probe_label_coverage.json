@@ -1,0 +1,82 @@
+{
+  "blockers": [],
+  "coverage_ready": true,
+  "interpretation": "Probe availability is a data/split property. A blocked target is not model-quality evidence and must be fixed in the pack or split before latent probe scores are interpreted.",
+  "min_eval_rows": 1,
+  "min_train_classes": 2,
+  "row_count": 1260,
+  "schema_version": "codelewm.eval.execution_probe_label_coverage.v1",
+  "split_counts": {
+    "test": 203,
+    "train": 1000,
+    "val": 57
+  },
+  "target_coverage": {
+    "output_magnitude_bucket": {
+      "available": true,
+      "blockers": [],
+      "min_eval_rows": 1,
+      "min_train_classes": 2,
+      "split_applicable_counts": {
+        "test": 38,
+        "train": 409,
+        "val": 42
+      },
+      "split_label_counts": {
+        "test": {
+          "medium": 18,
+          "small": 13,
+          "zero": 7
+        },
+        "train": {
+          "large": 19,
+          "medium": 86,
+          "negative": 29,
+          "small": 226,
+          "zero": 49
+        },
+        "val": {
+          "large": 6,
+          "medium": 17,
+          "small": 9,
+          "zero": 10
+        }
+      },
+      "status": "available",
+      "target": "output_magnitude_bucket",
+      "train_class_count": 5
+    },
+    "passed": {
+      "available": true,
+      "blockers": [],
+      "min_eval_rows": 1,
+      "min_train_classes": 2,
+      "split_applicable_counts": {
+        "test": 203,
+        "train": 1000,
+        "val": 57
+      },
+      "split_label_counts": {
+        "test": {
+          "False": 100,
+          "True": 103
+        },
+        "train": {
+          "False": 496,
+          "True": 504
+        },
+        "val": {
+          "False": 39,
+          "True": 18
+        }
+      },
+      "status": "available",
+      "target": "passed",
+      "train_class_count": 2
+    }
+  },
+  "targets": [
+    "passed",
+    "output_magnitude_bucket"
+  ]
+}
