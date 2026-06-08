@@ -35,6 +35,11 @@ from .hard_negative_pool import (
     build_label_construction_report,
     generate_hard_negative_pool,
 )
+from .llm_candidate_ingest import (
+    LLMCandidateIngestResult,
+    build_llm_candidate_ingest_report,
+    ingest_llm_candidate_pack,
+)
 
 
 DOWNSTREAM_BENCHMARK_CONFIG_SCHEMA_VERSION = "codelewm.downstream_rerank_benchmark_config.v1"
@@ -69,6 +74,8 @@ class DownstreamBenchmarkPackResult:
     anti_saturation_report_path: str | None = None
     anti_saturation_eligible: bool | None = None
     label_construction_report_path: str | None = None
+    llm_candidate_ingest_report_path: str | None = None
+    ingested_llm_candidate_count: int = 0
     schema_version: str = DOWNSTREAM_BENCHMARK_PACK_RUN_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -88,6 +95,8 @@ class DownstreamBenchmarkPackResult:
             "anti_saturation_report_path": self.anti_saturation_report_path,
             "anti_saturation_eligible": self.anti_saturation_eligible,
             "label_construction_report_path": self.label_construction_report_path,
+            "llm_candidate_ingest_report_path": self.llm_candidate_ingest_report_path,
+            "ingested_llm_candidate_count": self.ingested_llm_candidate_count,
         }
 
 
@@ -172,6 +181,7 @@ class DownstreamTaskConfig:
     candidates: tuple[DownstreamCandidateConfig, ...]
     repo_id: str | None = None
     generated_pool: Mapping[str, Any] | None = None
+    llm_candidate_packs: tuple[str, ...] = ()
     source: Mapping[str, Any] = field(default_factory=dict)
     provenance: Mapping[str, Any] = field(default_factory=dict)
 
@@ -187,6 +197,7 @@ class DownstreamTaskConfig:
                 "split",
                 "repo_id",
                 "generated_pool",
+                "llm_candidate_packs",
                 "source",
                 "provenance",
                 "candidates",
@@ -205,13 +216,18 @@ class DownstreamTaskConfig:
             split=_optional_string(payload, "split", "task", default="test"),
             repo_id=_optional_string(payload, "repo_id", "task"),
             generated_pool=_parse_generated_pool(payload),
+            llm_candidate_packs=_parse_llm_candidate_packs(payload),
             source=_optional_mapping(payload, "source", "task"),
             provenance=_optional_mapping(payload, "provenance", "task"),
             candidates=candidates,
         )
 
     def __post_init__(self) -> None:
-        if self.generated_pool is None and len(self.candidates) < 2:
+        if (
+            self.generated_pool is None
+            and not self.llm_candidate_packs
+            and len(self.candidates) < 2
+        ):
             raise DownstreamBenchmarkPackError(f"task {self.task_id} must have at least two candidates")
         candidate_ids = [candidate.candidate_id for candidate in self.candidates]
         if len(candidate_ids) != len(set(candidate_ids)):
@@ -375,13 +391,15 @@ def build_downstream_benchmark_pack(
     materialized_tasks: list[DownstreamTask] = []
     artifact_files: list[Path] = [config_copy_path]
     generated_candidates_all: list[Any] = []
+    ingest_results_all: list[LLMCandidateIngestResult] = []
     for task in config.tasks:
-        materialized_task, task_files, generated = _materialize_task(
+        materialized_task, task_files, generated, ingest_results = _materialize_task(
             task, config_file.parent, tasks_dir
         )
         materialized_tasks.append(materialized_task)
         artifact_files.extend(task_files)
         generated_candidates_all.extend(generated)
+        ingest_results_all.extend(ingest_results)
 
     benchmark = DownstreamRerankBenchmark(
         benchmark_id=config.benchmark_id,
@@ -448,6 +466,20 @@ def build_downstream_benchmark_pack(
         artifact_files.append(label_construction_report_file)
         label_construction_report_path_rel = "reports/label_construction_report.json"
 
+    llm_candidate_ingest_report_path_rel: str | None = None
+    llm_candidate_ingest_report: dict[str, Any] | None = None
+    llm_pack_parent_artifacts: tuple[str, ...] = ()
+    if ingest_results_all:
+        llm_candidate_ingest_report = build_llm_candidate_ingest_report(ingest_results_all)
+        llm_candidate_ingest_report_file = reports_dir / "llm_candidate_ingest_report.json"
+        llm_candidate_ingest_report_file.write_text(
+            json.dumps(llm_candidate_ingest_report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        artifact_files.append(llm_candidate_ingest_report_file)
+        llm_candidate_ingest_report_path_rel = "reports/llm_candidate_ingest_report.json"
+        llm_pack_parent_artifacts = tuple(llm_candidate_ingest_report["source_manifest_ids"])
+
     readiness_report = _build_readiness_report(
         config, split_leakage_report, anti_saturation_report=anti_saturation_report
     )
@@ -477,6 +509,7 @@ def build_downstream_benchmark_pack(
         files=artifact_files,
         command=command,
         config=config.to_dict(),
+        parent_artifacts=llm_pack_parent_artifacts,
         metadata={
             "schema_version": benchmark.schema_version,
             "benchmark_id": benchmark.benchmark_id,
@@ -501,6 +534,17 @@ def build_downstream_benchmark_pack(
                 if label_construction_report_path_rel is not None
                 else {}
             ),
+            **(
+                {
+                    "llm_candidate_ingest_report": llm_candidate_ingest_report_path_rel,
+                    "llm_candidate_ingest_ok": llm_candidate_ingest_report["ok"],
+                    "ingested_llm_candidate_count": llm_candidate_ingest_report[
+                        "ingested_candidate_count"
+                    ],
+                }
+                if llm_candidate_ingest_report is not None
+                else {}
+            ),
         },
     )
     write_artifact_manifest(artifact_manifest, manifest_path)
@@ -521,6 +565,12 @@ def build_downstream_benchmark_pack(
             None if anti_saturation_report is None else bool(anti_saturation_report["eligible"])
         ),
         label_construction_report_path=label_construction_report_path_rel,
+        llm_candidate_ingest_report_path=llm_candidate_ingest_report_path_rel,
+        ingested_llm_candidate_count=(
+            0
+            if llm_candidate_ingest_report is None
+            else int(llm_candidate_ingest_report["ingested_candidate_count"])
+        ),
     )
 
 
@@ -642,6 +692,18 @@ def _materialize_task(
             materialized_candidates=materialized_candidates,
         )
 
+    ingest_results: tuple[LLMCandidateIngestResult, ...] = ()
+    if task.llm_candidate_packs:
+        ingest_results = _materialize_llm_candidate_packs(
+            task,
+            config_root=config_root,
+            tasks_dir=tasks_dir,
+            candidates_dir=candidates_dir,
+            base_llm_rank=len(materialized_candidates),
+            files=files,
+            materialized_candidates=materialized_candidates,
+        )
+
     materialized_task = DownstreamTask(
         task_id=task.task_id,
         task_type=task.task_type,
@@ -659,9 +721,60 @@ def _materialize_task(
                 if task.generated_pool is not None
                 else {}
             ),
+            **(
+                {"llm_candidate_packs": list(task.llm_candidate_packs)}
+                if task.llm_candidate_packs
+                else {}
+            ),
         },
     )
-    return materialized_task, tuple(files), generated_candidates
+    return materialized_task, tuple(files), generated_candidates, ingest_results
+
+
+def _materialize_llm_candidate_packs(
+    task: DownstreamTaskConfig,
+    *,
+    config_root: Path,
+    tasks_dir: Path,
+    candidates_dir: Path,
+    base_llm_rank: int,
+    files: list[Path],
+    materialized_candidates: list[DownstreamCandidate],
+) -> tuple[LLMCandidateIngestResult, ...]:
+    results: list[LLMCandidateIngestResult] = []
+    existing_ids = {candidate.candidate_id for candidate in materialized_candidates}
+    next_rank = base_llm_rank
+    for pack_path in task.llm_candidate_packs:
+        manifest = _resolve_config_path(
+            config_root, pack_path, field_name="llm_candidate_pack manifest"
+        )
+        result = ingest_llm_candidate_pack(manifest, base_llm_rank=next_rank)
+        results.append(result)
+        for ingested in result.candidates:
+            if ingested.candidate_id in existing_ids:
+                raise DownstreamBenchmarkPackError(
+                    f"task {task.task_id} ingested candidate id collides: {ingested.candidate_id}"
+                )
+            existing_ids.add(ingested.candidate_id)
+            next_rank += 1
+            candidate_dest = candidates_dir / f"{ingested.candidate_id}.patch"
+            candidate_dest.write_text(ingested.patch_text, encoding="utf-8")
+            files.append(candidate_dest)
+            candidate_relative = _relative_to_root(candidate_dest, tasks_dir.parent)
+            materialized_candidates.append(
+                DownstreamCandidate(
+                    candidate_id=ingested.candidate_id,
+                    llm_rank=next_rank,
+                    label=ingested.label,  # type: ignore[arg-type]
+                    patch_path=candidate_relative,
+                    after_state_path=None,
+                    static_check="not_run",
+                    test_check="not_run",
+                    source=dict(ingested.source),
+                    provenance=dict(ingested.provenance),
+                )
+            )
+    return tuple(results)
 
 
 def _materialize_generated_pool(
@@ -851,6 +964,8 @@ def _task_config_to_dict(task: DownstreamTaskConfig) -> dict[str, Any]:
     }
     if task.generated_pool is not None:
         payload["generated_pool"] = dict(task.generated_pool)
+    if task.llm_candidate_packs:
+        payload["llm_candidate_packs"] = list(task.llm_candidate_packs)
     return payload
 
 
@@ -880,6 +995,24 @@ def _parse_generated_pool(payload: Mapping[str, Any]) -> Mapping[str, Any] | Non
         "seed": seed,
         "pool_size": pool_size,
     }
+
+
+def _parse_llm_candidate_packs(payload: Mapping[str, Any]) -> tuple[str, ...]:
+    value = payload.get("llm_candidate_packs", ())
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise DownstreamBenchmarkPackError("task.llm_candidate_packs must be a JSON array")
+    packs: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item:
+            raise DownstreamBenchmarkPackError(
+                "task.llm_candidate_packs entries must be non-empty relative paths"
+            )
+        if Path(item).is_absolute():
+            raise DownstreamBenchmarkPackError(
+                "task.llm_candidate_packs entries must be relative to the config file"
+            )
+        packs.append(item)
+    return tuple(packs)
 
 
 def _candidate_config_to_dict(candidate: DownstreamCandidateConfig) -> dict[str, Any]:
