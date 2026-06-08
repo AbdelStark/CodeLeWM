@@ -185,6 +185,16 @@ from .hard_negative_pool import (
     build_label_construction_report,
     generate_hard_negative_pool,
 )
+from .llm_candidate_ingest import (
+    LLM_CANDIDATE_INGEST_REPORT_SCHEMA_VERSION,
+    LLM_CANDIDATE_PACK_SCHEMA_VERSION,
+    IngestedLLMCandidate,
+    LLMCandidateIngestError,
+    LLMCandidateIngestResult,
+    build_llm_candidate_ingest_report,
+    ingest_llm_candidate_pack,
+    read_llm_candidate_pack,
+)
 from .downstream_anti_saturation import (
     ANTI_SATURATION_BASELINES,
     ANTI_SATURATION_CLAIM_BASELINES,
@@ -427,6 +437,14 @@ __all__ = [
     "HardNegativePoolError",
     "build_label_construction_report",
     "generate_hard_negative_pool",
+    "LLM_CANDIDATE_INGEST_REPORT_SCHEMA_VERSION",
+    "LLM_CANDIDATE_PACK_SCHEMA_VERSION",
+    "IngestedLLMCandidate",
+    "LLMCandidateIngestError",
+    "LLMCandidateIngestResult",
+    "build_llm_candidate_ingest_report",
+    "ingest_llm_candidate_pack",
+    "read_llm_candidate_pack",
     "anti_saturation_report_json_schema",
     "build_anti_saturation_claim_gate",
     "build_anti_saturation_report",
