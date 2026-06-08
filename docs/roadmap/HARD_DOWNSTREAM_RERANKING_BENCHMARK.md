@@ -66,12 +66,17 @@ say which gate blocked the claim.
 
 | Order | Issue | Slice | Status |
 | --- | --- | --- | --- |
-| 0 | #418 | Spec, roadmap, and tracker lock | open |
-| 1 | #419 | Benchmark schema/config and anti-saturation report | open |
-| 2 | #420 | Public-safe hard-negative candidate-pack builder | open |
-| 3 | #421 | LLM candidate-pack ingestion and redaction-preserving capture | open |
-| 4 | #422 | Baseline and CodeLeWM scoring/evaluation gate | open |
-| 5 | #423 | Artifact publication, claim audit, and paper addendum | open |
+| 0 | #418 | Spec, roadmap, and tracker lock | merged |
+| 1 | #419 | Benchmark schema/config and anti-saturation report | merged |
+| 2 | #420 | Public-safe hard-negative candidate-pack builder | merged |
+| 3 | #421 | LLM candidate-pack ingestion and redaction-preserving capture | merged |
+| 4 | #422 | Baseline and CodeLeWM scoring/evaluation gate | merged |
+| 5 | #423 | Artifact publication, claim audit, and paper addendum | merged |
+
+The harness is implemented end to end (`codelewm eval downstream-pack`,
+`downstream-rerank --hard-mode`, and `hard-downstream-publish`). The downstream
+claim gate remains closed until a locked `>=100`-problem eligible slice is
+published; public wording stays diagnostic until then.
 
 ## Acceptance Matrix
 

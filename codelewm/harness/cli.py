@@ -37,7 +37,9 @@ from codelewm.eval import (
     DownstreamBenchmarkPackError,
     DownstreamRerankEvalError,
     ExecutionRerankEvalError,
+    HardDownstreamPublishError,
     SemanticDecoyPackError,
+    assemble_hard_downstream_artifact_set,
     build_downstream_benchmark_pack,
     build_semantic_decoy_pack,
     run_downstream_rerank_evaluation,
@@ -1187,6 +1189,38 @@ def build_parser() -> argparse.ArgumentParser:
         "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
     )
     downstream_rerank.set_defaults(func=_eval_downstream_rerank_command)
+    hard_downstream_publish = eval_subcommands.add_parser(
+        "hard-downstream-publish",
+        help=(
+            "assemble the RFC-0016 hard downstream benchmark publication artifact set "
+            "(benchmark pack + hard-mode rerank) with an artifact index and claim audit"
+        ),
+    )
+    hard_downstream_publish.add_argument(
+        "--pack-manifest",
+        type=Path,
+        required=True,
+        help="downstream_benchmark pack manifest.json",
+    )
+    hard_downstream_publish.add_argument(
+        "--rerank-manifest",
+        type=Path,
+        required=True,
+        help="hard-mode eval_report rerank manifest.json",
+    )
+    hard_downstream_publish.add_argument(
+        "--out", type=Path, required=True, help="publication artifact directory"
+    )
+    hard_downstream_publish.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing publication output files",
+    )
+    hard_downstream_publish.add_argument("--json", action="store_true", help="emit JSON output")
+    hard_downstream_publish.add_argument(
+        "--log-jsonl", type=Path, help="append structured JSONL logs to this local file"
+    )
+    hard_downstream_publish.set_defaults(func=_eval_hard_downstream_publish_command)
     p_pass_calibration = eval_subcommands.add_parser(
         "p-pass-calibration",
         help="build a held-out p_pass correctness calibration report",
@@ -3980,6 +4014,110 @@ def _eval_downstream_pack_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_hard_downstream_publish_command(args: argparse.Namespace) -> int:
+    run_id = _run_id()
+    command = _eval_hard_downstream_publish_command_tuple(args)
+    try:
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.hard_downstream_publish.start",
+                level="info",
+                run_id=run_id,
+                step="eval.hard_downstream_publish",
+                message="hard downstream publication started",
+                fields={
+                    "pack_manifest": str(args.pack_manifest),
+                    "rerank_manifest": str(args.rerank_manifest),
+                    "out": str(args.out),
+                    "overwrite": bool(args.overwrite),
+                },
+            ),
+        )
+        result = assemble_hard_downstream_artifact_set(
+            pack_manifest=args.pack_manifest,
+            rerank_manifest=args.rerank_manifest,
+            out=args.out,
+            overwrite=args.overwrite,
+            command=command,
+        )
+        _emit_cli_log(
+            args,
+            LogEvent(
+                event="evaluation.hard_downstream_publish.complete",
+                level="info",
+                run_id=run_id,
+                artifact_id=result.artifact_manifest_id,
+                step="eval.hard_downstream_publish",
+                message="hard downstream publication completed",
+                fields={
+                    "artifact_manifest_path": result.artifact_manifest_path,
+                    "claim_audit_path": result.claim_audit_path,
+                    "artifact_index_path": result.artifact_index_path,
+                    "claim_allowed": result.claim_allowed,
+                    "anti_saturation_eligible": result.anti_saturation_eligible,
+                    "broad_coding_improvement_claim_allowed": (
+                        result.broad_coding_improvement_claim_allowed
+                    ),
+                },
+            ),
+        )
+    except (
+        ArtifactManifestError,
+        HardDownstreamPublishError,
+        DownstreamRerankEvalError,
+        json.JSONDecodeError,
+        OSError,
+    ) as exc:
+        error = ScoreError(
+            f"hard downstream publication failed: {exc}",
+            error_type="manifest_error",
+            remediation="verify the pack and rerank manifests, then retry",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.hard_downstream_publish",
+            event="evaluation.hard_downstream_publish.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+    except Exception as exc:
+        error = ScoreError(
+            f"hard downstream publication failed unexpectedly: {exc}",
+            error_type="scoring_error",
+            remediation="inspect the publication inputs and retry with corrected artifacts",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error_log(
+            args,
+            run_id=run_id,
+            step="eval.hard_downstream_publish",
+            event="evaluation.hard_downstream_publish.error",
+            exc=error,
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 70
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+        print(f"claim_audit: {args.out / result.claim_audit_path}")
+        print(f"artifact_index: {args.out / result.artifact_index_path}")
+        print(f"claim_allowed: {result.claim_allowed}")
+        print(f"anti_saturation_eligible: {result.anti_saturation_eligible}")
+        print(
+            "broad_coding_improvement_claim_allowed: "
+            f"{result.broad_coding_improvement_claim_allowed}"
+        )
+    return 0
+
+
 def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
     run_id = _run_id()
     command = _eval_downstream_rerank_command_tuple(args)
@@ -5279,6 +5417,27 @@ def _eval_downstream_pack_command_tuple(args: argparse.Namespace) -> tuple[str, 
         "downstream-pack",
         "--config",
         str(args.config),
+        "--out",
+        str(args.out),
+    ]
+    if args.overwrite:
+        command.append("--overwrite")
+    if args.json:
+        command.append("--json")
+    if args.log_jsonl is not None:
+        command.extend(("--log-jsonl", str(args.log_jsonl)))
+    return tuple(command)
+
+
+def _eval_hard_downstream_publish_command_tuple(args: argparse.Namespace) -> tuple[str, ...]:
+    command = [
+        "codelewm",
+        "eval",
+        "hard-downstream-publish",
+        "--pack-manifest",
+        str(args.pack_manifest),
+        "--rerank-manifest",
+        str(args.rerank_manifest),
         "--out",
         str(args.out),
     ]

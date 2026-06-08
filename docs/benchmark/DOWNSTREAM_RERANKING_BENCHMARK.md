@@ -147,6 +147,30 @@ no-action, lexical, and LLM-order on pass@1 and MRR with bootstrap confidence
 intervals over all three lifts excluding zero. If no-action or lexical are
 near-perfect, that slice is marked saturated and remains diagnostic.
 
+### Implementation status (RFC-0016 #417)
+
+The full anti-saturation harness is implemented end to end:
+
+- `codelewm eval downstream-pack` writes the
+  `codelewm.downstream_anti_saturation_report.v1` diagnostic and supports the
+  deterministic hard-negative pool generator and LLM candidate-pack ingestion
+  (`codelewm.llm_candidate_ingest_report.v1`).
+- `codelewm eval downstream-rerank --hard-mode` scores the random, LLM-order,
+  lexical, static-heuristic, no-action, shuffled-action, CodeLeWM
+  transition-energy, retrieval-prior, final-score/ensemble, and typed
+  `p_pass` rows, adds bootstrap lift confidence intervals, and applies the
+  three-baseline anti-saturation claim gate.
+- `codelewm eval hard-downstream-publish` assembles the manifest-verified,
+  secret-scanned publication artifact set with an artifact index and a
+  `codelewm.hard_downstream_claim_audit.v1`.
+
+No locked test slice has been published yet, so the downstream claim gate
+remains closed and the public wording stays diagnostic: the hard downstream
+benchmark executed and identified which baselines or slices block a positive
+claim; CodeLeWM does not yet support a broad downstream coding-usefulness
+claim. No broad coding-improvement claim is added until the claim gate opens
+on a locked `>=100`-problem eligible slice.
+
 ## Claim Gate
 
 The downstream claim gate defaults to `allowed=false`.
