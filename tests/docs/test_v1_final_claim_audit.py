@@ -110,10 +110,11 @@ class V1FinalClaimAuditTest(unittest.TestCase):
         self.assertIn("docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md", readme)
         self.assertIn("#406 consolidated benchmark tables", readme)
         self.assertIn("#406 - complete", next_goal)
-        self.assertIn("#407 - next", next_goal)
+        self.assertIn("#407 - complete", next_goal)
+        self.assertIn("#408 - next", next_goal)
         self.assertIn("docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md", next_goal)
-        self.assertIn("Issues #402 through #406 are now complete", normalized_full_completion)
-        self.assertIn("#407 is the next active child issue", normalized_full_completion)
+        self.assertIn("Issues #402 through #407 are now complete", normalized_full_completion)
+        self.assertIn("#408 is the next active child issue", normalized_full_completion)
         self.assertIn(
             "| #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Closed |",
             implementation,

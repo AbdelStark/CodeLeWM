@@ -1,0 +1,337 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\artifact}[1]{\path{#1}}
+\newcommand{\modelname}{CodeLeWM}
+
+\title{\modelname{}: A Reproducible Code World-Model Study with
+  Negative Action-Use Results and a Narrow Downstream Reranking Slice}
+\author{
+  Abdelhamid Bakhta\\
+  StarkWare\\
+  \url{https://github.com/AbdelStark/CodeLeWM}
+}
+\date{Draft of June 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Joint-embedding predictive architectures learn by predicting future latent
+states rather than reconstructing observations. \modelname{} ports this recipe
+to Python code transitions and asks whether a compact latent world model can
+add value when ranking candidate code changes. The answer is mixed. The
+original commit-edit substrate and the v0.2 action-swap intervention are
+negative: text-action retrieval reaches Recall@1 0.263 and MRR 0.370, while
+the no-action baseline reaches Recall@1 0.441 and MRR 0.533. Execution-trace
+substrates repair collapse and produce healthy diagnostics: v0.9 retrieval
+beats all retrieval controls, mutation surprise AUC is 1.0 on both seeds, and
+the downstream HumanEval WS-D replay reaches CodeLeWM pass@1 0.9787 on both
+seeds, beating no-action by +10.64 and +8.51 points with confidence intervals
+excluding zero. The aggregate public claim remains closed. MBPP-Plus is
+saturated with CodeLeWM, no-action, and lexical all at pass@1 1.0000; broad
+semantic surprise has no scorable semantic pairs; representation probes do not
+beat controls; and the final score rows do not expose a standalone \code{p\_pass}
+score key. We therefore present \modelname{} as a reproducible negative and
+diagnostic study with a narrow HumanEval WS-D positive slice, not as evidence
+that the model generally improves coding.
+\end{abstract}
+
+\section{Introduction}
+
+World models are attractive because they promise useful predictions without
+directly imitating every observation. In joint-embedding predictive
+architectures (JEPAs), the model predicts the latent of a future state rather
+than reconstructing pixels or tokens
+\citep{assran2023selfsupervisedlearningimagesjointembedding,bardes2024revisitingfeaturepredictionlearning}.
+LeWorldModel applies the idea to action-conditioned visual dynamics from
+pixels \citep{maes2026leworldmodelstableendtoendjointembedding}. \modelname{}
+asks whether the same latent-transition framing can be made useful for code.
+
+The intended downstream object is not a code generator. It is a scorer and
+reranker. Given a before-state, an edit instruction or execution input, and a
+set of candidate after-states, \modelname{} estimates which candidate best
+matches the learned transition. The transition contract is:
+\begin{equation}
+  \hat z_{\mathrm{after}} =
+  P(E(s_{\mathrm{before}}), A(a)).
+\end{equation}
+
+This paper reports the full evidence arc rather than only the strongest slice.
+The early commit-message-conditioned edit substrate failed the intended
+action-use gate. A later execution-substrate pivot produced non-collapsed
+checkpoints and useful diagnostics. The final v0.9/v1.0 downstream replay then
+found a narrow HumanEval WS-D win but did not clear the aggregate downstream
+claim because MBPP-Plus was saturated by controls. This is an honest end state
+for the artifact: reproducible systems evidence, negative model-quality
+evidence on action use, one narrow positive reranking slice, and explicit
+blocked claims.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=1.5em]
+  \item A manifest-backed code world-model harness for dataset construction,
+  training, retrieval, surprise, latent probes, downstream reranking, and
+  paper-demo replay.
+  \item A negative action-use result on commit-edit transitions, including
+  v0.2 no-action dominance and unsupported latent semantic structure.
+  \item A diagnostic execution-substrate result showing non-collapse,
+  retrieval lift over controls, and mutation-surprise separation.
+  \item A final downstream replay showing HumanEval WS-D lift over no-action on
+  two seeds while closing the aggregate claim on MBPP-Plus saturation and
+  broader representation/semantic gates.
+\end{enumerate}
+
+\section{Related Work}
+
+\paragraph{Joint-embedding prediction.}
+I-JEPA and V-JEPA learn feature predictions without pixel reconstruction
+\citep{assran2023selfsupervisedlearningimagesjointembedding,bardes2024revisitingfeaturepredictionlearning}.
+LeWorldModel studies stable end-to-end JEPA-style world modeling from pixels
+\citep{maes2026leworldmodelstableendtoendjointembedding}. Anti-collapse
+regularization is central to this family, with related ideas in VICReg, Barlow
+Twins, and LeJEPA
+\citep{bardes2022vicregvarianceinvariancecovarianceregularizationselfsupervised,zbontar2021barlowtwinsselfsupervisedlearning,balestriero2025lejepaprovablescalableselfsupervised}.
+
+\paragraph{Code modeling and execution signals.}
+Pretrained code models such as CodeBERT, GraphCodeBERT, UniXcoder, and CodeT5
+learn program representations or generation models from code and natural
+language
+\citep{feng2020codebertpretrainedmodelprogramming,guo2021graphcodebertpretrainingcoderepresentations,guo2022unixcoderunifiedcrossmodalpretraining,wang2021codet5identifierawareunifiedpretrained}.
+HumanEval, MBPP, APPS, CodeNet, and EvalPlus-style benchmark extensions provide
+candidate tasks and labels for coding evaluation
+\citep{chen2021evaluatinglargelanguagemodels,austin2021programsynthesislargelanguage,hendrycks2021measuringcodingchallengecompetence,puri2021codenetlargescaleaicode,liu2023codegeneratedchatgptreally}.
+Generated tests have also been used for reranking code generations
+\citep{chen2022codetcodegenerationgenerated}. Execution-aware pretraining and
+execution-trace work provide a complementary signal for program behavior
+\citep{zaremba2015learningexecute,ding2023tracedexecutionawarepretrainingsource,armengolestape2025iexecuteiunderstand}.
+\modelname{} differs by treating code changes and execution records as
+manifested latent transitions and by refusing to execute untrusted candidate
+code during scoring.
+
+\section{Model and Artifact Contract}
+
+\modelname{} uses bounded code or execution states, an action encoder, a
+transition predictor, and anti-collapse regularization. The exact module and
+objective variants changed across research iterations, but the public contract
+did not: every publishable run writes schema-versioned reports, artifact
+manifests, checksums, and secret-scan evidence. Candidate code and generated
+patches are untrusted. They may be parsed or scored as text, but they are not
+imported, executed, or test-run by the model-scoring path.
+
+The final paper-demo contract is deterministic. It replays checked-in v0.9 WS-D
+completion labels and score rows for four slices: seed 42 and seed 1729 crossed
+with HumanEval WS-D and MBPP-Plus WS-D. Replay mode records
+\code{score\_source=replay\_existing\_scores}; it is not a fresh checkpoint
+scoring run and not a live OpenRouter demo. The committed artifact id is
+\code{demo\_report-e6fc06c328eed245}.
+
+\section{Evidence Arc}
+
+Table~\ref{tab:arc} summarizes the evidence by milestone. The final claim audit
+is \artifact{docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md}.
+
+\begin{table}[t]
+\centering
+\caption{Evidence arc and public claim status.}
+\label{tab:arc}
+\small
+\begin{tabular}{p{0.12\linewidth}p{0.25\linewidth}p{0.22\linewidth}p{0.30\linewidth}}
+\toprule
+Milestone & Main evidence & Open claim & Closed or blocked claim \\
+\midrule
+v0.2 & action-swap A10G run & systems pipeline & action-use, latent axes, downstream utility \\
+v0.6 & execution substrate & diagnostics & downstream HumanEval/MBPP utility \\
+v0.8 & execution repair & HumanEval WS-D slice & MBPP, magnitude probe, broad semantic gate \\
+v0.9 & two-seed final gate suite & HumanEval WS-D slice & MBPP, representation, broad semantic gate \\
+v1.0 & paper-demo replay & reproducible demo package & aggregate downstream usefulness \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Negative action-use evidence}
+
+The v0.2 action-swap/inverse-action run directly tested whether action
+conditioning beat no-action on held-out retrieval. It did not. Text-action
+Recall@1 was 0.263 and MRR was 0.370, while no-action reached Recall@1 0.441
+and MRR 0.533. Exact-same-before, near-before, same-file, action-cluster,
+edit-shape, and random action-contrast pools also failed to show the required
+margin over no-action. Latent probes were explicitly unsupported for semantic
+structure: lexical or metadata controls beat the latent views on available
+targets.
+
+\subsection{Execution-substrate diagnostics}
+
+The execution substrate changed the state/action/next-state signal from noisy
+commit messages to deterministic execution triples. This improved training
+health and diagnostics. By v0.9, retrieval lift over controls passed on both
+seeds: Recall@1 was 0.2538 and 0.2731, while all listed retrieval controls were
+below 0.024 Recall@1. Mutation surprise AUC was 1.0 on both seeds. These are
+training-health and diagnostic results; they do not by themselves prove
+downstream coding usefulness.
+
+Representation claims remain closed. The v0.9 \code{passed} probe reached
+0.6552 and 0.6158 for \(\hat z_{\mathrm{after}}\), but no-action or before-state
+controls were stronger. The \code{output\_magnitude\_bucket} target was
+evaluable in v0.9 but tied a direct \code{z\_after} control. Broad semantic
+surprise also remains closed because the semantic-decoy categories have zero
+scorable aligned pairs in the final pack.
+
+\section{Final Downstream Replay}
+
+The final paper-demo replay is the paper's central downstream table. It is
+derived from \artifact{docs/benchmark/v1_0/paper_demo/reports/paper_demo_report.json}
+and summarized in Table~\ref{tab:demo}.
+
+\begin{table}[t]
+\centering
+\caption{Final v1.0 paper-demo replay. The aggregate claim gate is closed even
+though the HumanEval WS-D slices are open.}
+\label{tab:demo}
+\begin{tabular}{rlrrrrrl}
+\toprule
+Seed & Benchmark & CodeLeWM & No-action & LLM-order & Lexical & Lift & Gate \\
+\midrule
+42 & HumanEval WS-D & 0.9787 & 0.8723 & 0.1489 & 0.6596 & +10.64 & open \\
+42 & MBPP-Plus WS-D & 1.0000 & 1.0000 & 0.1765 & 1.0000 & +0.00 & closed \\
+1729 & HumanEval WS-D & 0.9787 & 0.8936 & 0.1489 & 0.6596 & +8.51 & open \\
+1729 & MBPP-Plus WS-D & 1.0000 & 1.0000 & 0.1765 & 1.0000 & +0.00 & closed \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HumanEval WS-D is the narrow positive slice: CodeLeWM reaches pass@1 0.9787 on
+both seeds and beats no-action by +10.64 and +8.51 points. The 95\% bootstrap
+confidence intervals for lift over no-action are [2.13, 21.28] and
+[2.13, 17.02], respectively. LLM-order is much weaker at pass@1 0.1489.
+
+MBPP-Plus is the counterweight. CodeLeWM reaches pass@1 1.0000, but so do
+no-action and lexical controls. The measured lift over no-action is exactly
++0.00 points on both seeds with confidence interval [0.00, 0.00]. This makes
+the aggregate downstream claim closed. The evidence supports a narrow
+HumanEval WS-D result, not a claim that \modelname{} generally improves patch
+ranking.
+
+\section{Why No-Action and Generalization Remain Hard}
+
+The no-action baseline is strong because many code transitions are sparse:
+large portions of the after-state are identical to the before-state, and many
+candidate completions can be ranked using surface similarity. A world model
+must learn when the action changes behavior, not merely when text resembles the
+prompt. The v0.2 failure shows that a commit message is often too weak or too
+underspecified to force this distinction.
+
+The MBPP-Plus result exposes a different problem. The final WS-D MBPP-Plus pack
+is saturated. CodeLeWM, no-action, and lexical all choose passing candidates at
+rank 1 on both seeds. Saturation prevents a lift claim because the model did
+not add measurable value beyond simple controls. This is not a bug in the paper
+demo; it is the reason the aggregate claim gate must close. A future positive
+claim needs harder, sufficiently large, public-safe downstream labels where
+no-action and lexical controls do not already solve the slice.
+
+The representation and semantic-surprise blockers reinforce the same point.
+Healthy retrieval and mutation diagnostics show that the model is not collapsed
+and can separate some generated decoys. They do not show stable semantic axes
+or broad behavioral understanding. Those claims require probes and decoy packs
+that beat controls across seeds and have enough scorable coverage.
+
+\section{Claim Boundary}
+
+Table~\ref{tab:claims} is the paper-level claim audit. It mirrors
+\artifact{docs/papers/codelewm_final_claim_audit.md}.
+
+\begin{table}[t]
+\centering
+\caption{Allowed and blocked public claims.}
+\label{tab:claims}
+\small
+\begin{tabular}{p{0.28\linewidth}p{0.14\linewidth}p{0.47\linewidth}}
+\toprule
+Claim & Verdict & Evidence \\
+\midrule
+Reproducible artifact pipeline & allowed & manifests, scans, HF artifacts, paper demo \\
+HumanEval WS-D reranking slice & allowed & 0.9787 pass@1 on both seeds \\
+Broad coding improvement & blocked & aggregate downstream gate closed \\
+MBPP-Plus/generalization & blocked & zero lift over no-action and lexical \\
+Action-use model-quality & blocked & v0.2 no-action dominance \\
+Semantic latent axes & blocked & probes do not beat controls \\
+Standalone \code{p\_pass} downstream score & not recorded & final rows mark \code{p\_pass} missing \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Reproducibility}
+
+The source repository is \url{https://github.com/AbdelStark/CodeLeWM}. The
+main artifact reports used in this paper are:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \artifact{docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md}
+  \item \artifact{docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md}
+  \item \artifact{docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md}
+  \item \artifact{docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md}
+  \item \artifact{docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md}
+  \item \artifact{docs/benchmark/v1_0/paper_demo/manifest.json}
+\end{itemize}
+
+The deterministic replay command for the final demo is:
+\begin{verbatim}
+uv run scripts/paper-demo --out docs/benchmark/v1_0/paper_demo --overwrite --json
+\end{verbatim}
+The paper build command is:
+\begin{verbatim}
+scripts/build-codelewm-final-paper
+\end{verbatim}
+
+\section{Limitations}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item The final positive result is a slice result, not a broad benchmark
+  result.
+  \item The final paper demo replays checked-in v0.9 score rows. It is
+  reproducible and manifest-backed, but it is not a fresh checkpoint scoring
+  run.
+  \item MBPP-Plus saturation prevents measuring lift on that slice.
+  \item The representation probes do not support naming semantic dimensions.
+  \item Broad semantic surprise remains blocked by scorable-pair coverage.
+  \item Candidate code remains untrusted; the model-scoring path does not
+  execute candidate patches.
+  \item The results do not compare against large pretrained code models as
+  generators. \modelname{} is a scorer/reranker artifact.
+\end{itemize}
+
+\section{Conclusion}
+
+\modelname{} is a completed reproducible research artifact, not a broad coding
+assistant. The artifact discipline worked: data, checkpoints, reports, claim
+gates, manifests, and scans can be regenerated and inspected. The original
+action-use hypothesis did not work: no-action stayed stronger on commit-edit
+retrieval. The execution substrate gave healthier model diagnostics and a
+narrow HumanEval WS-D downstream win, but MBPP-Plus saturation and representation
+blockers keep the public model-quality claim closed. The most useful conclusion
+is methodological: code world-model claims should be published with their
+baselines and failure gates intact, especially when no-action and lexical
+controls are strong.
+
+\bibliographystyle{plainnat}
+\bibliography{two_substrate_references}
+
+\end{document}
