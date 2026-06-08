@@ -31,6 +31,8 @@ Training and inference never execute code.
 | Dataset repo | `https://huggingface.co/datasets/abdelstark/codelewm-execution-pack/tree/v0.9.0-rc1` |
 | Results report | `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` |
 | Public artifact index | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md` |
+| Final v1.0 artifact index | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md` |
+| Final v1.0 release card | `docs/cards/codelewm-v1-0-final-release-2026-06-08.md` |
 | Seed 42 model card | `docs/cards/codelewm-v0-9-execution-model-seed-42-2026-06-07.md` |
 | Seed 1729 model card | `docs/cards/codelewm-v0-9-execution-model-seed-1729-2026-06-07.md` |
 

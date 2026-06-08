@@ -13,7 +13,7 @@ release lifecycle.
 - Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
 - Model observability/TUI roadmap:
   `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
-- Next executable prompt: `docs/roadmap/NEXT_GOAL_PROMPT.md`
+- Final v1.0 completion record: `docs/roadmap/NEXT_GOAL_PROMPT.md`
 
 ## How This Tracker Is Maintained
 
@@ -116,14 +116,14 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #124 | release: add dependency audit and provenance evidence | security | p1 | m | RFC-0012 | Closed |
 | #125 | docs: refresh public docs against first-results evidence | docs | p1 | m | RFC-0011 | Closed |
 | #126 | release: run final artifact freeze and checklist | release | p1 | l | RFC-0012 | Closed |
-| #401 | [TRACKER] v1.0 paper/demo release: downstream learned-world-model evidence and final CodeLeWM conclusions | evaluation/harness/docs/results | p1 | l | follow-up | Open |
+| #401 | [TRACKER] v1.0 paper/demo release: downstream learned-world-model evidence and final CodeLeWM conclusions | evaluation/harness/docs/results | p1 | l | follow-up | Closed |
 | #402 | v1.0 hygiene: reconcile stale v0.6 issues and final queue state | docs/results | p1 | s | follow-up | Closed |
 | #403 | v1.0 demo: define fixed downstream learned-world-model paper-demo contract | evaluation/harness | p1 | m | follow-up | Closed |
 | #404 | v1.0 demo: implement one-command downstream learned-world-model paper demo | evaluation/harness/observability | p1 | l | follow-up | Closed |
 | #405 | v1.0 run: publish final downstream paper-demo artifacts | evaluation/harness/results | p1 | m | follow-up | Closed |
 | #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Closed |
 | #407 | v1.0 paper: rewrite CodeLeWM paper around final downstream evidence | docs/results | p1 | l | follow-up | Closed |
-| #408 | v1.0 release: publish final artifact index, cards, README, and announcement package | docs/release/results | p1 | m | follow-up | Open |
+| #408 | v1.0 release: publish final artifact index, cards, README, and announcement package | docs/release/results | p1 | m | follow-up | Closed |
 
 ## Milestone: v1.1
 
@@ -362,10 +362,9 @@ cross-benchmark correctness claims.
   is recorded in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`: both
   seeds clear HumanEval WS-D reranking, MBPP-Plus has zero lift over no-action,
   and the overall public claim remains closed.
-- #401/#402-#408 define the active final v1.0 paper/demo release chain. Issues
-  #402 through #407 are complete; #408 is the next active release package slice.
-  This chain supersedes the stale v0.6-era #293/#306/#308/#309 queue and
-  preserves the v0.9 boundary: HumanEval WS-D is a narrow positive slice, while
+- #401/#402-#408 completed the final v1.0 paper/demo release chain. This chain
+  supersedes the stale v0.6-era #293/#306/#308/#309 queue and preserves the
+  v0.9 boundary: HumanEval WS-D is a narrow positive slice, while
   MBPP/generalization and broad coding-improvement claims remain closed.
 
 ## Cross-Reference Map

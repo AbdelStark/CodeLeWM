@@ -31,24 +31,24 @@ remain closed. Live GitHub state shows the older #178, #209, #210, #211, and
 #212 queue closed; roadmap language should treat those as historical, not
 active.
 
-Update 2026-06-08: live GitHub state now has the final v1.0 paper/demo release
-tracker #401 with child issues #402 through #408. The stale v0.6-era open
-issues #293, #306, #308, and #309 are superseded by #401 because the final
-public release boundary is no longer the v0.6 substrate-pivot publication
-package. The current sequence is #402 queue hygiene, #403 paper-demo contract,
-#404 one-command demo implementation, #405 final demo artifacts, #406
-benchmark tables and claim audit, #407 final paper rewrite, and #408 release
-index/cards/README/checklist/announcement. Issues #402 through #407 are now
-complete; #408 is the next active child issue. Public wording must preserve
-the same final claim boundary: narrow HumanEval WS-D positive evidence, MBPP
-and generalization failures, and no broad coding-improvement claim. The #406
-claim audit lives in
-`docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`, and the #407 final
-paper draft lives in `docs/papers/codelewm_final_paper.tex`.
+Update 2026-06-08: live GitHub state moved the final v1.0 paper/demo release
+through tracker #401 with child issues #402 through #408. The stale v0.6-era
+open issues #293, #306, #308, and #309 were superseded by #401 because the
+final public release boundary is no longer the v0.6 substrate-pivot
+publication package. The completed sequence is #402 queue hygiene, #403
+paper-demo contract, #404 one-command demo implementation, #405 final demo
+artifacts, #406 benchmark tables and claim audit, #407 final paper rewrite, and
+#408 release index/cards/README/checklist/announcement. Issues #402 through
+#408 are now complete. Public wording must preserve the same final claim
+boundary: narrow HumanEval WS-D positive evidence, MBPP and generalization
+failures, and no broad coding-improvement claim. The #406 claim audit lives in
+`docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`, the #407 final paper
+draft lives in `docs/papers/codelewm_final_paper.tex`, and the #408 release
+package lives in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`.
 
-The active final release `/goal` prompt lives in
-`docs/roadmap/NEXT_GOAL_PROMPT.md` and points at #401 plus child issues #402
-through #408. The v0.2 HF/ml-intern prompt in
+The final release prompt in `docs/roadmap/NEXT_GOAL_PROMPT.md` is now a
+completion record for #401 and child issues #402 through #408, not an active
+queue. The v0.2 HF/ml-intern prompt in
 `docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
 completed #172 run. The v0.2 research intervention spec lives in
 `docs/roadmap/V0_2_ACTION_USE_RESEARCH_PLAN.md`. The post-v0.2 harness and
@@ -109,13 +109,19 @@ Completed evidence:
 - The v0.9 data/eval repair epic #385 completed through #392; its final claim
   audit is `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`, with artifact
   links in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md`.
-- The v1.0 paper-demo stream is complete through #407. The committed final demo
-  artifact set is documented in
+- The v1.0 paper-demo and release-package stream is complete through #408. The
+  committed final demo artifact set is documented in
   `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md`, and the
   consolidated paper-ready claim audit is
   `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`. The final paper draft
   and paper-level claim audit are `docs/papers/codelewm_final_paper.tex` and
-  `docs/papers/codelewm_final_claim_audit.md`.
+  `docs/papers/codelewm_final_claim_audit.md`. The final public release index,
+  cards, reproducibility checklist, and announcement package are
+  `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`,
+  `docs/cards/codelewm-v1-0-final-release-2026-06-08.md`,
+  `docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md`,
+  `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md`, and
+  `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md`.
 
 Current blocker:
 
@@ -593,10 +599,9 @@ instead of creating duplicate trackers.
   diagnostic artifacts published in the v0.8 benchmark report.
 - #385 v0.9 data/eval repair: complete through #392, with final diagnostic
   evidence in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`.
-- #401 v1.0 paper/demo release: active; children #402 through #407 are
-  complete, and #408 remains as the final release publication queue. This
-  chain replaces the stale v0.6-era follow-through issues #293, #306, #308,
-  and #309.
+- #401 v1.0 paper/demo release: complete; children #402 through #408 are
+  complete. This chain replaces the stale v0.6-era follow-through issues #293,
+  #306, #308, and #309.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

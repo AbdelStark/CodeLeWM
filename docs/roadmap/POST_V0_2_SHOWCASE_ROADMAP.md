@@ -3,10 +3,9 @@
 Last updated: 2026-06-08
 
 This roadmap records the completed post-v0.2 harness, downstream benchmark,
-publication, meaningful-demo, and visual-observability streams. The current
-active release queue has moved to the final v1.0 paper/demo tracker #401 with
-children #402 through #408 after the completed v0.9 data/eval repair and claim
-audit.
+publication, meaningful-demo, visual-observability, and final release-package
+streams. The final v1.0 paper/demo tracker #401 is complete with children #402
+through #408 after the completed v0.9 data/eval repair and claim audit.
 
 The current evidence boundary is explicit:
 
@@ -14,10 +13,10 @@ The current evidence boundary is explicit:
   artifacts, download them, verify manifests, rerun evals, and produce cards;
 - invalidated: the tested action-use interventions as positive model-quality
   claims;
-- unsupported: named semantic latent axes and scaled downstream
+- unsupported: named semantic latent axes, live patch utility, and broad
   coding-usefulness claims;
-- next: repair the cross-benchmark data/eval gaps that kept the v0.8
-  correctness-aware execution claim closed.
+- final package: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md` links the
+  final paper/demo/benchmark/card/release surfaces.
 
 ## Stream A: LLM + World-Model Harness Demo
 

@@ -81,10 +81,15 @@ class FinalPaperPackageTest(unittest.TestCase):
 
         self.assertIn("docs/papers/codelewm_final_paper.tex", readme)
         self.assertIn("#407 rewrote the paper", readme)
-        self.assertIn("Issues #402 through #407 are now complete", full_completion)
-        self.assertIn("#408 is the next active child issue", full_completion)
+        self.assertIn("#408 published the final artifact index", readme)
+        self.assertIn("Issues #402 through #408 are now complete", full_completion)
+        self.assertIn("docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md", full_completion)
         self.assertIn(
             "| #407 | v1.0 paper: rewrite CodeLeWM paper around final downstream evidence | docs/results | p1 | l | follow-up | Closed |",
+            implementation,
+        )
+        self.assertIn(
+            "| #408 | v1.0 release: publish final artifact index, cards, README, and announcement package | docs/release/results | p1 | m | follow-up | Closed |",
             implementation,
         )
 

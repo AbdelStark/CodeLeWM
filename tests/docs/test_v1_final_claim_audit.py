@@ -100,7 +100,7 @@ class V1FinalClaimAuditTest(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.text)
 
-    def test_readme_and_roadmaps_point_at_audit_and_next_issue(self) -> None:
+    def test_readme_and_roadmaps_point_at_audit_and_final_package(self) -> None:
         readme = README.read_text(encoding="utf-8")
         next_goal = NEXT_GOAL.read_text(encoding="utf-8")
         full_completion = FULL_COMPLETION.read_text(encoding="utf-8")
@@ -111,10 +111,12 @@ class V1FinalClaimAuditTest(unittest.TestCase):
         self.assertIn("#406 consolidated benchmark tables", readme)
         self.assertIn("#406 - complete", next_goal)
         self.assertIn("#407 - complete", next_goal)
-        self.assertIn("#408 - next", next_goal)
+        self.assertIn("#408 - complete", next_goal)
+        self.assertIn("No active final release child issue remains.", next_goal)
         self.assertIn("docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md", next_goal)
-        self.assertIn("Issues #402 through #407 are now complete", normalized_full_completion)
-        self.assertIn("#408 is the next active child issue", normalized_full_completion)
+        self.assertIn("docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md", next_goal)
+        self.assertIn("Issues #402 through #408 are now complete", normalized_full_completion)
+        self.assertIn("docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md", normalized_full_completion)
         self.assertIn(
             "| #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Closed |",
             implementation,

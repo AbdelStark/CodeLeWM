@@ -1,13 +1,13 @@
-# Next Goal Prompt
+# Final Goal Completion Record
 
-This is the active prompt for the final v1.0 paper/demo release tracker #401.
+This is the completion record for the final v1.0 paper/demo release tracker #401.
 It supersedes the historical v0.6 follow-through issues #293, #306, #308, and
 #309, and it replaces the completed v0.9 data/eval repair prompt for #385.
 
 ```text
-/goal Complete CodeLeWM's final v1.0 paper/demo release tracker #401 end to
-end, landing one issue branch and PR per child issue, waiting for green CI, and
-merging each PR to main before starting the next child.
+Completed goal: CodeLeWM's final v1.0 paper/demo release tracker #401 was
+completed end to end with one issue branch and PR per child issue, hosted CI
+checks, and merges to main before continuing to the next child.
 
 Authoritative issue order:
 
@@ -20,7 +20,7 @@ Authoritative issue order:
 5. #406 - complete: consolidated benchmark tables and the final claim audit.
 6. #407 - complete: rewrote the CodeLeWM paper around final downstream
    evidence.
-7. #408 - next: publish final artifact index, cards, README,
+7. #408 - complete: published final artifact index, cards, README,
    reproducibility checklist, and announcement package.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/05-observability.md,
@@ -32,9 +32,14 @@ docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md,
 docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md,
 docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md,
 docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md,
+docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md,
+docs/cards/codelewm-v1-0-final-release-2026-06-08.md,
+docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md,
 docs/papers/codelewm_final_paper.tex,
 docs/papers/codelewm_final_claim_audit.md,
 docs/papers/ARXIV_SUBMISSION.md,
+docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md,
+docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
@@ -62,7 +67,7 @@ uses the existing explicit sandbox allowlist/timeout/disposable-checkout
 contract. Every publishable artifact must be schema-versioned where applicable,
 manifest-backed, checksum-verifiable, and secret-scanned.
 
-For each child issue:
+Workflow used for each child issue:
 
 - inspect live GitHub issue and PR state before editing;
 - read the relevant specs, RFCs, roadmap docs, and current benchmark artifacts;
@@ -73,7 +78,8 @@ For each child issue:
 - commit, push, open a PR that closes only the current child issue, wait for
   hosted CI, merge to main, return to main, pull latest main, then continue.
 
-Issue #408 is the final release package and depends on #402 through #407 being
-complete. Close #401 only after every child issue is closed, the final release
-docs are merged to main, and CI is green.
+Issue #408 was the final release package and depended on #402 through #407
+being complete. No active final release child issue remains. The #401 close
+condition is that #408 is closed, the final release docs are merged to main,
+and CI is green.
 ```
