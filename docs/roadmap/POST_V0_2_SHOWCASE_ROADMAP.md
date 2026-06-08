@@ -1,13 +1,12 @@
 # Post-v0.2 Showcase Roadmap
 
-Last updated: 2026-06-06
+Last updated: 2026-06-08
 
-This roadmap turns the completed negative v0.2 result into the next public
-milestone: a claim-safe LLM + world-model harness, a real downstream reranking
-benchmark, and a preliminary publication package. As of the terminal-demo pass,
-it also records the later meaningful harness demo and visual observability
-streams. The current active research queue has moved to v0.9 data/eval repair
-under tracker #385 after the v0.8 diagnostic result.
+This roadmap records the completed post-v0.2 harness, downstream benchmark,
+publication, meaningful-demo, and visual-observability streams. The current
+active release queue has moved to the final v1.0 paper/demo tracker #401 with
+children #402 through #408 after the completed v0.9 data/eval repair and claim
+audit.
 
 The current evidence boundary is explicit:
 

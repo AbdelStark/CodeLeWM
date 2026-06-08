@@ -1,120 +1,73 @@
 # Next Goal Prompt
 
-This is now a historical prompt for the completed v0.9 data/eval repair epic
-(#385). The v0.2 HF execution prompt in
-`docs/roadmap/HF_ML_INTERN_GOAL_PROMPT.md` is historical context for the
-completed negative v0.2 sweep. The #186 through #194 harness, publication, and
-downstream benchmark stream is complete, #206 completed the
-BYOK/local-demo/readme usability pass, and #220/#222 made the local demo
-learned-scorer-backed and terminal-first. The v0.8 and v0.9 execution-trace
-results are both published as diagnostic evidence; do not reuse this prompt as
-an active goal.
+This is the active prompt for the final v1.0 paper/demo release tracker #401.
+It supersedes the historical v0.6 follow-through issues #293, #306, #308, and
+#309, and it replaces the completed v0.9 data/eval repair prompt for #385.
 
 ```text
-/goal Historical context only: CodeLeWM v0.9 data/eval repair is complete
-through epic #385 and child issues #386 through #392. The completed work covered
-#386 roadmap/tracker hygiene, #387 cross-benchmark pass/fail execution data,
-#388 held-out p_pass AUC and calibration reports, #389 semantic-decoy coverage
-repair, #390 probe-label and representation gates, #391 guarded two-seed HF Jobs
-run, and #392 final gate-suite report and claim audit. Do not start this goal
-again without a new tracker and hypothesis.
+/goal Complete CodeLeWM's final v1.0 paper/demo release tracker #401 end to
+end, landing one issue branch and PR per child issue, waiting for green CI, and
+merging each PR to main before starting the next child.
+
+Authoritative issue order:
+
+1. #402 - v1.0 hygiene: reconcile stale v0.6 issues and final queue state.
+2. #403 - v1.0 demo: define fixed downstream learned-world-model paper-demo
+   contract.
+3. #404 - v1.0 demo: implement one-command downstream learned-world-model paper
+   demo.
+4. #405 - v1.0 run: publish final downstream paper-demo artifacts.
+5. #406 - v1.0 results: consolidate benchmark tables and final claim audit.
+6. #407 - v1.0 paper: rewrite CodeLeWM paper around final downstream evidence.
+7. #408 - v1.0 release: publish final artifact index, cards, README,
+   reproducibility checklist, and announcement package.
 
 Ground in AGENTS.md, SPEC.md, docs/spec/05-observability.md,
-docs/spec/06-security.md, docs/spec/11-llm-world-model-harness.md,
+docs/spec/06-security.md, docs/spec/09-release-and-versioning.md,
+docs/spec/11-llm-world-model-harness.md,
 docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md,
-docs/benchmark/EXECUTION_V0_8_RESULTS_2026-06-05.md,
-docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-05.md,
 docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md,
 docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md,
+docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
 docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md,
 docs/roadmap/DIAGNOSTICS_DRIVEN_MODEL_EXPERIMENT.md,
 docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md,
-docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
-docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md,
-docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md,
-docs/benchmark/ACTION_USE_RETRIEVAL_HF_RESULTS_2026-05-20.md, CONTRIBUTING.md,
-and the new issue.
+docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, and
+CONTRIBUTING.md.
 
-Do not relaunch #159, #172, or the completed v0.8/v0.9 jobs. The current public
-artifact set is valid negative/diagnostic evidence. v0.9 completed two guarded
-A10G correctness-aware execution runs and passed HumanEval WS-D reranking on
-both seeds, but MBPP-Plus zero-lift, broad semantic coverage, representation
-probe, and standalone p_pass-key limitations keep the overall cross-benchmark
-claim closed.
+Do not relaunch completed #159, #172, v0.8, or v0.9 HF Jobs. Use the checked-in
+v0.9 artifacts as the current benchmark evidence unless a child issue explicitly
+requires a new fixed paper-demo artifact run.
 
-The OpenRouter LLM candidate harness contract, adapter, candidate-pack capture,
-fixture demo, BYOK registration helper, local `uv run scripts/llm-world-model-demo`
-task, downstream schema/claim-gate contract, public-safe downstream benchmark
-pack, and downstream rerank report are complete through #206. Issue #220 makes
-the local demo use a trusted learned torch checkpoint scorer instead of the
-deterministic hashing fixture scorer; #222 makes the local demo terminal-first
-by default while preserving explicit raw JSON mode. The comment-style live
-artifact path #207/#208 is closed as superseded. The next harness queue is
-#224: #226 scenario fixtures and selection is complete, #227 task-solving prompts, #228
-static patch analysis, #229 scorer traces and compact diff previews, #230
-opt-in sandbox checks, and #231 live meaningful diagnostic artifacts. The
-public LLM adapter uses the OpenRouter Python SDK with OPENROUTER_API_KEY and
-model slugs
-such as anthropic/claude-4.5-sonnet. Anthropic BYOK is explicit: only
-`codelewm openrouter byok-register` or
-`CODELEWM_OPENROUTER_BYOK_REGISTER=1` may read `ANTHROPIC_API_KEY`. BYOK
-registration requires an OpenRouter management key such as
-`OPENROUTER_MANAGEMENT_KEY`; normal chat requests still use
-`OPENROUTER_API_KEY`. No reports may serialize raw provider keys.
+The final public claim boundary is strict. CodeLeWM has a reproducible
+code-edit world-model harness, verified HF Jobs and artifact-publication
+infrastructure, negative action-conditioned v0.2 evidence, and a narrow
+HumanEval WS-D downstream positive slice in v0.9. The overall public claim stays
+closed because MBPP-Plus shows zero lift over no-action and broader semantic,
+representation, and general coding-usefulness gates remain closed. Do not claim
+CodeLeWM generally improves coding.
 
-The #235 visual model observability and TUI tracker is complete through #245.
-#237 closed optional TensorBoard-compatible model-generation traces for
-training/checkpoint runs; #238 closed trusted checkpoint tensor/layer
-inspection; #239 closed manifest-backed latent representation matrix
-diagnostics; #240 closed manifest-backed run timelines; #242 closed the shared
-JSON/rich/HTML visual view model; #241 closed optional Textual TUI mode and
-deterministic TUI snapshots; #243 closed manifest-backed demo diagnostic links.
-Issue #244 closed the diagnostics-driven candidate-contrast action training
-plan. Issue #245 published the public visual observability artifact set. The
-latest live meaningful demo worked end to end, but it also
-showed the current scorer can rank an incomplete patch above semantically
-stronger candidates; treat that as a diagnostic failure mode to inspect, not as
-a positive model result.
+Candidate code, generated patches, configs, checkpoints, reports, and provider
+outputs are untrusted inputs. Do not execute candidate code unless a child issue
+uses the existing explicit sandbox allowlist/timeout/disposable-checkout
+contract. Every publishable artifact must be schema-versioned where applicable,
+manifest-backed, checksum-verifiable, and secret-scanned.
 
-Live issue state as of 2026-06-07: #178, #209, #210, #211, #212, #224, #235,
-and #385 through #392 are completed by the v0.9 final audit.
-The older meaningful-demo queue #224/#227-#231 is complete and is not a current
-epic path. The stale v0.7 tracker/issues #337 through #341 are superseded by the
-completed v0.8 and v0.9 evidence.
+For each child issue:
 
-For benchmark work, keep fixture/dry-run mode available so local validation does
-not require network or paid LLM calls. Any live OpenRouter mode must redact
-secrets, record SDK/model/provider metadata, and write manifest-backed candidate
-packs.
+- inspect live GitHub issue and PR state before editing;
+- read the relevant specs, RFCs, roadmap docs, and current benchmark artifacts;
+- keep public docs evidence-backed and claim-limited;
+- run the strongest relevant validation, including docs tests, focused tests,
+  compileall when code changes, manifest verification and secret scans when
+  artifacts are touched, and git diff --check;
+- commit, push, open a PR that closes only the current child issue, wait for
+  hosted CI, merge to main, return to main, pull latest main, then continue.
 
-Public docs must stay artifact-backed. The harness demo can show workflow
-value, but it must not claim CodeLeWM improves coding until the downstream
-benchmark gate passes on at least 100 labeled examples from manifest-backed
-artifacts. The current completed boundary is explicitly negative/diagnostic.
-For meaningful demo work, the default scenario should be a public-safe bug fix,
-edge-case handling task, API behavior change, or behavior-preserving refactor,
-not a comment/no-op edit. Candidate code remains untrusted; sandbox checks are
-disabled unless #230's explicit allowlist/timeout/disposable-checkout contract
-is implemented and selected.
-
-For visual observability/TUI work, keep TensorBoard-compatible export and
-Textual dependencies optional. #237 implemented the observability group and
-`codelewm train --tensorboard`; #238 implemented
-`codelewm model inspect-checkpoint`; base imports, fixture tests, JSON reports,
-and non-interactive rich terminal output must keep working without optional groups.
-Model, tensor, latent, and TUI artifacts remain diagnostic until scaled
-representation and downstream benchmark gates pass.
-
-For v0.9, the cheap data/eval preflight completed before GPU launch, #391 ran
-after #387 through #390 produced manifest-backed evidence, and #392 published
-the final diagnostic claim audit. A future positive claim must start from a new
-issue tracker and must not treat the v0.9 HumanEval-only win as a general coding
-benchmark result.
-
-After each issue, run the strongest relevant local validation, commit, push,
-open a PR, wait for available checks, merge when clean, return to main, pull
-latest main, and continue.
+Issue #408 is the final release package and depends on #402 through #407 being
+complete. Close #401 only after every child issue is closed, the final release
+docs are merged to main, and CI is green.
 ```
