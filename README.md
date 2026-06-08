@@ -29,12 +29,17 @@ The systems path works end to end:
 - downloaded-artifact verification with checksums and secret scans;
 - retrieval, action ablation, surprise, latent-probe, latent-matrix,
   scorer-quality, score,
-  rerank, downstream-pack, downstream-rerank, and LLM-demo reports.
+  rerank, downstream-pack, downstream-rerank, LLM-demo, execution-rerank, and
+  p-pass calibration reports.
 
-The first scientific result is negative. The tested action-conditioned variants
-do not beat the no-action baseline on headline retrieval, and the v0.2
-representation/downstream gates remain closed. This repository is publishable as
-infrastructure and negative evidence, not as a claim that CodeLeWM improves
+The final evidence boundary is mixed and claim-limited. CodeLeWM has a
+reproducible code-edit world-model harness, verified public artifact
+infrastructure, negative action-conditioned v0.2 evidence, and a narrow v0.9
+HumanEval WS-D downstream reranking win across two seeds. The overall public
+claim remains closed because MBPP-Plus has zero lift over no-action and broader
+semantic, representation, and coding-usefulness gates do not clear. This
+repository is publishable as a reproducible negative/diagnostic study with a
+narrow positive HumanEval slice, not as a broad claim that CodeLeWM improves
 coding.
 
 ## Quickstart
@@ -120,10 +125,10 @@ The v0.6 public artifact map is:
 - demo: `docs/demo/execution_rerank_tour_2026-05-31.html`;
 - arXiv package: `docs/papers/ARXIV_SUBMISSION.md`.
 
-The arXiv URL is still pending operator upload. Until that URL lands, the safe
-public framing is partial-positive substrate evidence: execution-pack
-retrieval and semantic-decoy score diagnostics pass, while broad semantic
-surprise and coding-agent utility claims remain closed.
+This v0.6 landing is historical evidence. Its remaining arXiv/HF publication
+follow-through is superseded by the final #401 paper/demo release queue, which
+uses the v0.9 claim audit and final downstream demo package as the public
+release boundary.
 
 Live OpenRouter mode is explicit:
 
@@ -193,6 +198,8 @@ uv run codelewm openrouter byok-register \
 | Public summary | negative/diagnostic boundary | `docs/benchmark/PRELIMINARY_RESULTS_2026-05-21.md` |
 | Public artifact index | HF dataset/model/run paths | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md` |
 | Downstream fixture gate | one example, claim-blocked | `docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md` |
+| v0.9 final claim audit | HumanEval WS-D narrow positive; MBPP/generalization closed | `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` |
+| v0.9 public artifact index | checked-in v0.9 dataset/model/run/eval surfaces | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md` |
 
 Public Hugging Face repositories:
 
@@ -302,10 +309,17 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - v0.6 execution-rerank LLM showcase complete through #307, with a committed
   asciicast and static HTML report path.
 
-Open next streams:
+Active final release queue:
 
-- scaled downstream reranking benchmark: #209/#210/#211;
-- next positive-model research hypothesis: #212, with CWM comparison in #178.
+- #401 tracks the v1.0 paper/demo release dependency chain.
+- #402 reconciles stale v0.6 issues and queue state.
+- #403 defines the fixed downstream learned-world-model paper-demo contract.
+- #404 implements the one-command downstream paper demo.
+- #405 publishes the final downstream paper-demo artifacts.
+- #406 consolidates benchmark tables and the final claim audit.
+- #407 rewrites the paper around the final downstream evidence.
+- #408 publishes the final artifact index, cards, README, reproducibility
+  checklist, and announcement package.
 
 Public wording cannot say CodeLeWM improves candidate patch ranking until a
 scaled downstream gate passes on at least 100 labeled examples.
