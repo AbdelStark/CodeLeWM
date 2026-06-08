@@ -111,6 +111,21 @@ with the v0.6 execution-substrate checkpoint, writes
 closed below the scaled 100-example downstream benchmark. A committed
 HTML report and asciicast live in `docs/demo/`.
 
+## Final Paper Demo
+
+Assemble the deterministic v1.0 downstream paper-demo artifact set:
+
+```bash
+uv run scripts/paper-demo --out .artifacts/paper-demo --overwrite
+```
+
+This is a clean-checkout replay over the checked-in v0.9 WS-D score rows, not a
+fresh checkpoint scoring run and not a live OpenRouter demo. It writes
+`reports/paper_demo_report.json`, `reports/paper_demo_claim_gate.json`,
+`reports/paper_demo_table.md`, `reports/run_timeline.json`, `demo.html`,
+`reports/secret_scan_report.json`, and `manifest.json`. The aggregate claim
+gate remains closed because MBPP-Plus is saturated against no-action.
+
 ## v0.6 Publication Landing
 
 The v0.6 public artifact map is:
@@ -223,6 +238,7 @@ uv run codelewm eval downstream-rerank --help
 uv run codelewm score --help
 uv run codelewm rerank --help
 uv run codelewm llm-demo --help
+uv run codelewm paper-demo --help
 uv run codelewm openrouter byok-register --help
 uv run codelewm manifest verify --help
 uv run codelewm secret-scan --help
@@ -314,7 +330,7 @@ Active final release queue:
 - #401 tracks the v1.0 paper/demo release dependency chain.
 - #402 reconciles stale v0.6 issues and queue state.
 - #403 defines the fixed downstream learned-world-model paper-demo contract.
-- #404 implements the one-command downstream paper demo.
+- #404 added the one-command downstream paper demo.
 - #405 publishes the final downstream paper-demo artifacts.
 - #406 consolidates benchmark tables and the final claim audit.
 - #407 rewrites the paper around the final downstream evidence.
