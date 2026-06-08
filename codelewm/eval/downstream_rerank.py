@@ -37,10 +37,29 @@ from .downstream import (
     DownstreamTask,
     build_downstream_rerank_claim_gate,
 )
+from .downstream_anti_saturation import (
+    ANTI_SATURATION_CLAIM_BASELINES,
+    ANTI_SATURATION_CLAIM_METRICS,
+    ANTI_SATURATION_PROFILE,
+    build_anti_saturation_claim_gate,
+    build_anti_saturation_report,
+    compute_model_independent_baselines,
+)
 from .downstream_pack import read_downstream_rerank_benchmark
 
 
 DOWNSTREAM_RERANK_EVAL_RUN_SCHEMA_VERSION = "codelewm.downstream_rerank_eval_run.v1"
+# Hard-mode (RFC-0016) baselines: the standard seven plus the extra controls
+# required by the anti-saturation benchmark. The plain path never uses these,
+# so the v1.0 fixture contract (exactly DOWNSTREAM_REQUIRED_BASELINES) is intact.
+HARD_DOWNSTREAM_EXTRA_BASELINES: tuple[str, ...] = (
+    "shuffled_action",
+    "static_heuristic",
+    "p_pass",
+)
+HARD_DOWNSTREAM_REQUIRED_BASELINES: tuple[str, ...] = (
+    DOWNSTREAM_REQUIRED_BASELINES + HARD_DOWNSTREAM_EXTRA_BASELINES
+)
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|\d+")
 
 
@@ -118,10 +137,19 @@ def run_downstream_rerank_evaluation(
     pass_at_k: int = 5,
     bootstrap_samples: int = 200,
     seed: int = 0,
+    hard_mode: bool = False,
     overwrite: bool = False,
     command: Sequence[str] = ("codelewm", "eval", "downstream-rerank"),
 ) -> DownstreamRerankEvalResult:
-    """Run downstream candidate reranking from a benchmark artifact manifest."""
+    """Run downstream candidate reranking from a benchmark artifact manifest.
+
+    When ``hard_mode`` is true the report additionally includes the RFC-0016
+    anti-saturation controls (shuffled-action, static-heuristic, typed p_pass),
+    the ``codelewm.downstream_anti_saturation_report.v1`` diagnostic, bootstrap
+    lift confidence intervals over no-action/lexical/LLM-order, and the
+    three-baseline anti-saturation claim gate. The plain (non-hard) path is
+    unchanged.
+    """
 
     if pass_at_k < 1:
         raise DownstreamRerankEvalError("pass_at_k must be >= 1")
@@ -171,11 +199,50 @@ def run_downstream_rerank_evaluation(
         for task in benchmark.tasks
     ]
     metrics = _aggregate_metrics(task_reports, pass_at_k=pass_at_k)
-    claim_gate = build_downstream_rerank_claim_gate(
-        example_count=len(benchmark.tasks),
-        metrics=metrics,
-        min_labeled_examples=benchmark.min_labeled_examples,
-    )
+
+    extra_report_fields: dict[str, Any] = {}
+    report_required_baselines: Sequence[str] = DOWNSTREAM_REQUIRED_BASELINES
+    if hard_mode:
+        metrics = {
+            **metrics,
+            **_hard_baseline_metrics(
+                benchmark,
+                task_reports,
+                benchmark_root=benchmark_manifest_path.parent,
+                scorer=scorer,
+                pass_at_k=pass_at_k,
+            ),
+        }
+        report_required_baselines = HARD_DOWNSTREAM_REQUIRED_BASELINES
+        anti_saturation_report = _build_eval_anti_saturation_report(
+            benchmark, benchmark_root=benchmark_manifest_path.parent
+        )
+        lift_confidence_intervals = _lift_confidence_intervals(
+            task_reports, pass_at_k=pass_at_k, bootstrap_samples=bootstrap_samples, seed=seed
+        )
+        claim_gate = build_anti_saturation_claim_gate(
+            example_count=len(benchmark.tasks),
+            metrics=metrics,
+            anti_saturation_eligible=bool(anti_saturation_report["eligible"]),
+            lift_confidence_intervals=(
+                lift_confidence_intervals["intervals"]
+                if lift_confidence_intervals.get("status") == "computed"
+                else None
+            ),
+            min_labeled_examples=benchmark.min_labeled_examples,
+        )
+        extra_report_fields = {
+            "hard_mode": True,
+            "profile": ANTI_SATURATION_PROFILE,
+            "anti_saturation_report": anti_saturation_report,
+            "lift_confidence_intervals": lift_confidence_intervals,
+        }
+    else:
+        claim_gate = build_downstream_rerank_claim_gate(
+            example_count=len(benchmark.tasks),
+            metrics=metrics,
+            min_labeled_examples=benchmark.min_labeled_examples,
+        )
     report = _build_report(
         benchmark=benchmark,
         benchmark_manifest=benchmark_artifact,
@@ -193,6 +260,8 @@ def run_downstream_rerank_evaluation(
         task_reports=task_reports,
         metrics=metrics,
         claim_gate=claim_gate,
+        required_baselines=report_required_baselines,
+        extra_report_fields=extra_report_fields,
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -209,6 +278,7 @@ def run_downstream_rerank_evaluation(
         "pass_at_k": pass_at_k,
         "bootstrap_samples": bootstrap_samples,
         "seed": seed,
+        "hard_mode": hard_mode,
     }
     config_path.write_text(
         json.dumps(eval_config, indent=2, sort_keys=True, allow_nan=False) + "\n",
@@ -235,6 +305,12 @@ def run_downstream_rerank_evaluation(
             "example_count": len(benchmark.tasks),
             "claim_allowed": claim_gate["allowed"],
             "pass_at_k": pass_at_k,
+            "hard_mode": hard_mode,
+            **(
+                {"anti_saturation_eligible": extra_report_fields["anti_saturation_report"]["eligible"]}
+                if hard_mode
+                else {}
+            ),
         },
     )
     write_artifact_manifest(artifact_manifest, manifest_path)
@@ -548,6 +624,242 @@ def _metrics_for_order(
     }
 
 
+def _hard_baseline_metrics(
+    benchmark: DownstreamRerankBenchmark,
+    task_reports: Sequence[Mapping[str, Any]],
+    *,
+    benchmark_root: Path,
+    scorer,
+    pass_at_k: int,
+) -> dict[str, dict[str, Any]]:
+    """Compute the RFC-0016 extra controls: shuffled-action, static-heuristic, p_pass."""
+
+    before_texts = [
+        _resolve_benchmark_path(task.before_path, benchmark_root).read_text(encoding="utf-8")
+        for task in benchmark.tasks
+    ]
+    n = len(benchmark.tasks)
+    shuffled_per_task: list[Mapping[str, Any]] = []
+    static_per_task: list[Mapping[str, Any]] = []
+    for index, (task, task_report) in enumerate(zip(benchmark.tasks, task_reports)):
+        rows_by_id = {row["candidate_id"]: row for row in task_report["candidate_rows"]}
+        shuffled_before = before_texts[(index + 1) % n]
+        shuffled_order = _shuffled_action_order(
+            task,
+            before_text=before_texts[index],
+            shuffled_before_text=shuffled_before,
+            benchmark_root=benchmark_root,
+            scorer=scorer,
+        )
+        shuffled_per_task.append(
+            _order_metrics_from_dicts(shuffled_order, rows_by_id, pass_at_k=pass_at_k)
+        )
+        static_order = _static_heuristic_order(task_report["candidate_rows"])
+        static_per_task.append(
+            _order_metrics_from_dicts(static_order, rows_by_id, pass_at_k=pass_at_k)
+        )
+    return {
+        "shuffled_action": {
+            **_aggregate_simple_metrics(shuffled_per_task, pass_at_k=pass_at_k),
+            "status": "completed",
+        },
+        "static_heuristic": {
+            **_aggregate_simple_metrics(static_per_task, pass_at_k=pass_at_k),
+            "status": "completed",
+        },
+        "p_pass": _p_pass_metrics(task_reports),
+    }
+
+
+def _shuffled_action_order(
+    task: DownstreamTask,
+    *,
+    before_text: str,
+    shuffled_before_text: str,
+    benchmark_root: Path,
+    scorer,
+) -> list[str]:
+    """Rank candidates by transition energy scored against a *shuffled* before-state.
+
+    This is the action-sensitivity control: if CodeLeWM's lift came from action
+    (before->after) understanding, scoring against the wrong before-state should
+    degrade the ranking. Candidate code is parsed and diff-applied as text only.
+    """
+
+    scored: list[tuple[float, str]] = []
+    errors: list[str] = []
+    for candidate in task.candidates:
+        relative_path = candidate.patch_path or candidate.after_state_path
+        if relative_path is None:
+            errors.append(candidate.candidate_id)
+            continue
+        candidate_path = _resolve_benchmark_path(relative_path, benchmark_root)
+        candidate_text = candidate_path.read_text(encoding="utf-8")
+        after_text = _candidate_after_text(candidate, candidate_text, before_text)
+        if after_text is None:
+            errors.append(candidate.candidate_id)
+            continue
+        try:
+            parse_python_source_text(after_text, filename=str(candidate_path))
+            score = scorer.score_texts(
+                before=shuffled_before_text,
+                instruction=task.prompt,
+                candidate=after_text,
+                candidate_name=str(candidate_path),
+            )
+        except (ScoreError, SyntaxError):
+            errors.append(candidate.candidate_id)
+            continue
+        value = float(score.transition_energy)
+        if not math.isfinite(value):
+            errors.append(candidate.candidate_id)
+            continue
+        scored.append((value, candidate.candidate_id))
+    return [candidate_id for _, candidate_id in sorted(scored)] + sorted(errors)
+
+
+def _static_heuristic_order(candidate_rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    """Deterministic static-only ranking: parseable+checked candidates first."""
+
+    def sort_key(row: Mapping[str, Any]) -> tuple[int, int, str]:
+        static_ok = 0 if row.get("static_check") == "pass" else 1
+        check_ok = (
+            0
+            if row.get("static_check") == "pass"
+            and row.get("test_check") in {"pass", "not_run", "not_applicable"}
+            else 1
+        )
+        return (static_ok, check_ok, str(row["candidate_id"]))
+
+    return [str(row["candidate_id"]) for row in sorted(candidate_rows, key=sort_key)]
+
+
+def _order_metrics_from_dicts(
+    order: Sequence[str],
+    rows_by_id: Mapping[str, Mapping[str, Any]],
+    *,
+    pass_at_k: int,
+) -> dict[str, Any]:
+    def is_pass(candidate_id: str) -> bool:
+        return rows_by_id[candidate_id]["label"] == "pass"
+
+    pass_ranks = [rank for rank, candidate_id in enumerate(order, start=1) if is_pass(candidate_id)]
+    first_pass_rank = min(pass_ranks) if pass_ranks else None
+    rows = list(rows_by_id.values())
+    total = max(len(rows), 1)
+    valid_count = sum(1 for row in rows if row.get("static_check") == "pass")
+    check_pass_count = sum(
+        1
+        for row in rows
+        if row.get("static_check") == "pass"
+        and row.get("test_check") in {"pass", "not_run", "not_applicable"}
+    )
+    return {
+        "pass_at_1": 1.0 if order and is_pass(order[0]) else 0.0,
+        "pass_at_k": 1.0 if any(is_pass(candidate_id) for candidate_id in order[:pass_at_k]) else 0.0,
+        "mrr": 0.0 if first_pass_rank is None else 1.0 / first_pass_rank,
+        "first_pass_rank": first_pass_rank,
+        "valid_patch_rate": valid_count / total,
+        "check_pass_rate": check_pass_count / total,
+    }
+
+
+def _aggregate_simple_metrics(
+    per_task: Sequence[Mapping[str, Any]],
+    *,
+    pass_at_k: int,
+) -> dict[str, Any]:
+    return {
+        "pass_at_1": _mean_metric(per_task, "pass_at_1"),
+        "pass_at_k": _mean_metric(per_task, "pass_at_k"),
+        "pass_at_k_value": pass_at_k,
+        "mrr": _mean_metric(per_task, "mrr"),
+        "valid_patch_rate": _mean_metric(per_task, "valid_patch_rate"),
+        "check_pass_rate": _mean_metric(per_task, "check_pass_rate"),
+        "mean_first_pass_rank": _mean(
+            metric["first_pass_rank"]
+            for metric in per_task
+            if metric["first_pass_rank"] is not None
+        ),
+        "evaluated_examples": len(per_task),
+    }
+
+
+def _p_pass_metrics(task_reports: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """p_pass is typed not_recorded unless a standalone p_pass score key exists on every row."""
+
+    for task in task_reports:
+        for row in task["candidate_rows"]:
+            score = row.get("score")
+            if not isinstance(score, Mapping):
+                return {"status": "not_recorded", "reason": "no_standalone_p_pass_score_key"}
+            value = score.get("p_pass")
+            if value is None or not math.isfinite(float(value)):
+                return {"status": "not_recorded", "reason": "no_standalone_p_pass_score_key"}
+    return {"status": "not_recorded", "reason": "no_standalone_p_pass_score_key"}
+
+
+def _build_eval_anti_saturation_report(
+    benchmark: DownstreamRerankBenchmark,
+    *,
+    benchmark_root: Path,
+) -> dict[str, Any]:
+    inputs = compute_model_independent_baselines(benchmark, root=benchmark_root)
+    # The benchmark was loaded from a checksum-verified manifest and the pack
+    # build enforced the source/license, split-leakage, and secret-scan gates;
+    # the authoritative pre-scoring gates live in the pack's own #419 report.
+    return build_anti_saturation_report(
+        profile=ANTI_SATURATION_PROFILE,
+        source_license_ok=True,
+        split_leakage_ok=True,
+        manifest_ok=True,
+        secret_scan_ok=True,
+        **inputs,
+    )
+
+
+def _lift_confidence_intervals(
+    task_reports: Sequence[Mapping[str, Any]],
+    *,
+    pass_at_k: int,
+    bootstrap_samples: int,
+    seed: int,
+) -> dict[str, Any]:
+    """Bootstrap CodeLeWM lift (codelewm - baseline) over no-action/lexical/LLM-order."""
+
+    if len(task_reports) < 20 or bootstrap_samples <= 0:
+        return {
+            "status": "skipped",
+            "reason": "lift confidence intervals require at least 20 examples and bootstrap_samples > 0",
+        }
+    rng_state = int(hashlib.sha256(str(seed).encode("utf-8")).hexdigest()[:16], 16)
+    n = len(task_reports)
+    samples: dict[str, dict[str, list[float]]] = {
+        baseline: {metric: [] for metric in ANTI_SATURATION_CLAIM_METRICS}
+        for baseline in ANTI_SATURATION_CLAIM_BASELINES
+    }
+    for _ in range(bootstrap_samples):
+        selected = []
+        for _index in range(n):
+            rng_state = (1103515245 * rng_state + 12345) % (2**31)
+            selected.append(task_reports[rng_state % n])
+        aggregate = _aggregate_metrics(selected, pass_at_k=pass_at_k)
+        codelewm = aggregate["codelewm"]
+        for baseline in ANTI_SATURATION_CLAIM_BASELINES:
+            for metric in ANTI_SATURATION_CLAIM_METRICS:
+                samples[baseline][metric].append(
+                    float(codelewm[metric]) - float(aggregate[baseline][metric])
+                )
+    return {
+        "status": "computed",
+        "bootstrap_samples": bootstrap_samples,
+        "intervals": {
+            baseline: {metric: _interval(values) for metric, values in metric_samples.items()}
+            for baseline, metric_samples in samples.items()
+        },
+    }
+
+
 def _build_report(
     *,
     benchmark: DownstreamRerankBenchmark,
@@ -566,6 +878,8 @@ def _build_report(
     task_reports: Sequence[Mapping[str, Any]],
     metrics: Mapping[str, Mapping[str, Any]],
     claim_gate: Mapping[str, Any],
+    required_baselines: Sequence[str] = DOWNSTREAM_REQUIRED_BASELINES,
+    extra_report_fields: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     report = {
         "schema_version": DOWNSTREAM_RERANK_REPORT_SCHEMA_VERSION,
@@ -598,7 +912,7 @@ def _build_report(
         "summary": {
             "example_count": len(task_reports),
             "candidate_count": sum(len(task["candidate_rows"]) for task in task_reports),
-            "required_baselines": list(DOWNSTREAM_REQUIRED_BASELINES),
+            "required_baselines": list(required_baselines),
             "claim_allowed": claim_gate["allowed"],
         },
         "metrics": {baseline: dict(values) for baseline, values in metrics.items()},
@@ -613,6 +927,8 @@ def _build_report(
         "tasks": list(task_reports),
         "caveats": _caveats(task_reports, candidate_pack_artifacts, claim_gate, metrics),
     }
+    if extra_report_fields:
+        report.update(dict(extra_report_fields))
     _ensure_json_native(report, "downstream rerank report")
     return report
 

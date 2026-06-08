@@ -1164,6 +1164,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     downstream_rerank.add_argument("--seed", type=int, default=0, help="deterministic evaluation seed")
     downstream_rerank.add_argument(
+        "--hard-mode",
+        action="store_true",
+        help=(
+            "RFC-0016 anti-saturation mode: add shuffled-action, static-heuristic, and "
+            "typed p_pass baselines, the anti-saturation report, bootstrap lift CIs, and "
+            "the three-baseline (no-action/lexical/LLM-order) claim gate"
+        ),
+    )
+    downstream_rerank.add_argument(
         "--allow-unsafe-checkpoint",
         action="store_true",
         help="load the checkpoint without verifying its manifest (trusted local use only)",
@@ -3997,6 +4006,7 @@ def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
                     "pass_at_k": args.pass_at_k,
                     "bootstrap_samples": args.bootstrap_samples,
                     "seed": args.seed,
+                    "hard_mode": bool(args.hard_mode),
                     "overwrite": bool(args.overwrite),
                 },
             ),
@@ -4014,6 +4024,7 @@ def _eval_downstream_rerank_command(args: argparse.Namespace) -> int:
             pass_at_k=args.pass_at_k,
             bootstrap_samples=args.bootstrap_samples,
             seed=args.seed,
+            hard_mode=args.hard_mode,
             overwrite=args.overwrite,
             command=command,
         )
@@ -5303,6 +5314,8 @@ def _eval_downstream_rerank_command_tuple(args: argparse.Namespace) -> tuple[str
     command.extend(("--pass-at-k", str(args.pass_at_k)))
     command.extend(("--bootstrap-samples", str(args.bootstrap_samples)))
     command.extend(("--seed", str(args.seed)))
+    if args.hard_mode:
+        command.append("--hard-mode")
     if args.allow_unsafe_checkpoint:
         command.append("--allow-unsafe-checkpoint")
     if args.overwrite:
