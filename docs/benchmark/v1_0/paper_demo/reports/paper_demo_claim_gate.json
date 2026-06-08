@@ -1,0 +1,18 @@
+{
+  "allowed": false,
+  "approved_public_wording": "On the v0.9 WS-D replay, CodeLeWM strongly reranks HumanEval slices but the aggregate downstream claim remains closed because MBPP-Plus is saturated against the no-action baseline.",
+  "blocked_positive_claims": [
+    "aggregate downstream coding usefulness",
+    "CodeLeWM improves generated code across both v0.9 downstream benchmarks",
+    "positive model-quality claim beyond the HumanEval WS-D diagnostic slice"
+  ],
+  "reasons": [
+    "slice_claim_closed:seed_42_mbpp_plus:no_action_lift=0.00pts ci=(0.00,0.00); requires lift>=3.0 and ci_lo>0",
+    "no_action_not_strictly_beaten:seed_42_mbpp_plus",
+    "slice_claim_closed:seed_1729_mbpp_plus:no_action_lift=0.00pts ci=(0.00,0.00); requires lift>=3.0 and ci_lo>0",
+    "no_action_not_strictly_beaten:seed_1729_mbpp_plus"
+  ],
+  "schema_version": "codelewm.harness.paper_demo_claim_gate.v1",
+  "score_source": "replay_existing_scores",
+  "status": "closed"
+}

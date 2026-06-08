@@ -11,13 +11,13 @@ merging each PR to main before starting the next child.
 
 Authoritative issue order:
 
-1. #402 - v1.0 hygiene: reconcile stale v0.6 issues and final queue state.
-2. #403 - v1.0 demo: define fixed downstream learned-world-model paper-demo
+1. #402 - complete: reconciled stale v0.6 issues and final queue state.
+2. #403 - complete: defined the fixed downstream learned-world-model paper-demo
    contract.
-3. #404 - v1.0 demo: implement one-command downstream learned-world-model paper
-   demo.
-4. #405 - v1.0 run: publish final downstream paper-demo artifacts.
-5. #406 - v1.0 results: consolidate benchmark tables and final claim audit.
+3. #404 - complete: implemented the one-command downstream learned-world-model
+   paper demo.
+4. #405 - complete: published final downstream paper-demo artifacts.
+5. #406 - next: consolidate benchmark tables and final claim audit.
 6. #407 - v1.0 paper: rewrite CodeLeWM paper around final downstream evidence.
 7. #408 - v1.0 release: publish final artifact index, cards, README,
    reproducibility checklist, and announcement package.
@@ -29,6 +29,7 @@ docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md,
 docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md,
 docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md,
 docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md,
+docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
@@ -39,8 +40,8 @@ docs/benchmark/V0_2_ACTION_SWAP_HF_RESULTS_2026-05-20.md, and
 CONTRIBUTING.md.
 
 Do not relaunch completed #159, #172, v0.8, or v0.9 HF Jobs. Use the checked-in
-v0.9 artifacts as the current benchmark evidence unless a child issue explicitly
-requires a new fixed paper-demo artifact run.
+v0.9 artifacts and committed #405 paper-demo artifact set as the current
+benchmark evidence unless a future issue explicitly opens a new research run.
 
 The final public claim boundary is strict. CodeLeWM has a reproducible
 code-edit world-model harness, verified HF Jobs and artifact-publication

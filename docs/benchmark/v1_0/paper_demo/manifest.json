@@ -1,0 +1,74 @@
+{
+  "artifact_id": "demo_report-e6fc06c328eed245",
+  "artifact_kind": "demo_report",
+  "command": [
+    "codelewm",
+    "paper-demo",
+    "--source-root",
+    ".",
+    "--out",
+    "docs/benchmark/v1_0/paper_demo",
+    "--overwrite",
+    "--json"
+  ],
+  "config_sha256": "0ca6808c59a4139bd13a78c4e90fd77bd2a621602fe751739af7713f3b35e2d2",
+  "created_at": "2026-06-08T08:21:52Z",
+  "files": [
+    {
+      "bytes": 609187,
+      "path": "reports/paper_demo_report.json",
+      "sha256": "5ca03d8e1e00cde109644ba7c5d98cce807e1d5e1997765932500d37e8fd6851"
+    },
+    {
+      "bytes": 967,
+      "path": "reports/paper_demo_claim_gate.json",
+      "sha256": "0de8a5d4c35f30d056b73a23b5bf312080509578e969ac9d32f8c856bdaed4bb"
+    },
+    {
+      "bytes": 776,
+      "path": "reports/paper_demo_table.md",
+      "sha256": "865ec27e7d3c775dca75385f075ca42383c793a619493b9fb42f028f0f7daa1c"
+    },
+    {
+      "bytes": 1908,
+      "path": "reports/run_timeline.json",
+      "sha256": "c3adbae45caa71f6630aeb834cd476c9cfa4422b6a4951038a9900bc301540e8"
+    },
+    {
+      "bytes": 13065,
+      "path": "demo.html",
+      "sha256": "4d94f4d9544bc7ea424adc7f2513cdf277688a096436c692e264cd5103dcd02f"
+    },
+    {
+      "bytes": 272,
+      "path": "reports/secret_scan_report.json",
+      "sha256": "b08ae0e3f3f0c0c465319c2e1fe43e6c00f5faa12386815e9ed4c712fcefae38"
+    }
+  ],
+  "metadata": {
+    "claim_allowed": false,
+    "claim_gate_schema_version": "codelewm.harness.paper_demo_claim_gate.v1",
+    "completion_count": 768,
+    "parent_manifest_paths": [
+      "docs/benchmark/v0_9/seed-42/rerank/humaneval/manifest.json",
+      "docs/benchmark/v0_9/seed-42/rerank/mbpp_plus/manifest.json",
+      "docs/benchmark/v0_9/seed-1729/rerank/humaneval/manifest.json",
+      "docs/benchmark/v0_9/seed-1729/rerank/mbpp_plus/manifest.json"
+    ],
+    "problem_count": 128,
+    "report_schema_version": "codelewm.harness.paper_demo_report.v1",
+    "schema_version": "codelewm.harness.paper_demo_run.v1",
+    "score_source": "replay_existing_scores",
+    "secret_scan_ok": true,
+    "slice_count": 4,
+    "timeline_schema_version": "codelewm.run_timeline.v1"
+  },
+  "parent_artifacts": [
+    "eval_report-0bc9a04d4a6bfa86",
+    "eval_report-7e9fa967ee6356af",
+    "eval_report-3cd1cfeeb2fe2c09",
+    "eval_report-570bdbfeac5928ef"
+  ],
+  "schema_version": "codelewm.artifact_manifest.v1",
+  "source_git_sha": "b75316bd987b2aafa016020eeb108cb189b23d3c"
+}
