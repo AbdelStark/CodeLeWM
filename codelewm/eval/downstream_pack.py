@@ -21,6 +21,13 @@ from .downstream import (
     DownstreamRerankBenchmark,
     DownstreamTask,
 )
+from .downstream_anti_saturation import (
+    ANTI_SATURATION_PROFILE,
+    DownstreamAntiSaturationError,
+    build_anti_saturation_report,
+    compute_model_independent_baselines,
+    validate_hard_negative_class,
+)
 
 
 DOWNSTREAM_BENCHMARK_CONFIG_SCHEMA_VERSION = "codelewm.downstream_rerank_benchmark_config.v1"
@@ -52,6 +59,8 @@ class DownstreamBenchmarkPackResult:
     labeled_example_count: int
     scaled_evaluation_ready: bool
     downstream_claim_allowed: bool
+    anti_saturation_report_path: str | None = None
+    anti_saturation_eligible: bool | None = None
     schema_version: str = DOWNSTREAM_BENCHMARK_PACK_RUN_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -68,6 +77,8 @@ class DownstreamBenchmarkPackResult:
             "labeled_example_count": self.labeled_example_count,
             "scaled_evaluation_ready": self.scaled_evaluation_ready,
             "downstream_claim_allowed": self.downstream_claim_allowed,
+            "anti_saturation_report_path": self.anti_saturation_report_path,
+            "anti_saturation_eligible": self.anti_saturation_eligible,
         }
 
 
@@ -82,6 +93,7 @@ class DownstreamCandidateConfig:
     after_state_path: str | None = None
     static_check: str = "not_run"
     test_check: str = "not_run"
+    hard_negative_class: str | None = None
     source: Mapping[str, Any] = field(default_factory=dict)
     provenance: Mapping[str, Any] = field(default_factory=dict)
 
@@ -97,6 +109,7 @@ class DownstreamCandidateConfig:
                 "after_state_path",
                 "static_check",
                 "test_check",
+                "hard_negative_class",
                 "source",
                 "provenance",
             },
@@ -110,6 +123,7 @@ class DownstreamCandidateConfig:
             after_state_path=_optional_string(payload, "after_state_path", "candidate"),
             static_check=_optional_string(payload, "static_check", "candidate", default="not_run"),
             test_check=_optional_string(payload, "test_check", "candidate", default="not_run"),
+            hard_negative_class=_optional_string(payload, "hard_negative_class", "candidate"),
             source=_optional_mapping(payload, "source", "candidate"),
             provenance=_optional_mapping(payload, "provenance", "candidate"),
         )
@@ -119,6 +133,11 @@ class DownstreamCandidateConfig:
             raise DownstreamBenchmarkPackError(
                 f"candidate {self.candidate_id} must set exactly one of patch_path or after_state_path"
             )
+        if self.hard_negative_class is not None:
+            try:
+                validate_hard_negative_class(self.hard_negative_class)
+            except DownstreamAntiSaturationError as exc:
+                raise DownstreamBenchmarkPackError(str(exc)) from exc
         DownstreamCandidate(
             candidate_id=self.candidate_id,
             llm_rank=self.llm_rank,
@@ -198,6 +217,7 @@ class DownstreamBenchmarkPackConfig:
     min_labeled_examples: int = DOWNSTREAM_MIN_LABELED_EXAMPLES
     required_baselines: tuple[str, ...] = DOWNSTREAM_REQUIRED_BASELINES
     required_metrics: tuple[str, ...] = DOWNSTREAM_REQUIRED_METRICS
+    profile: str | None = None
     provenance: Mapping[str, Any] = field(default_factory=dict)
     schema_version: str = DOWNSTREAM_BENCHMARK_CONFIG_SCHEMA_VERSION
 
@@ -214,6 +234,7 @@ class DownstreamBenchmarkPackConfig:
                 "min_labeled_examples",
                 "required_baselines",
                 "required_metrics",
+                "profile",
                 "provenance",
             },
             "downstream benchmark pack config",
@@ -247,6 +268,7 @@ class DownstreamBenchmarkPackConfig:
                 "required_metrics",
                 default=DOWNSTREAM_REQUIRED_METRICS,
             ),
+            profile=_optional_string(payload, "profile", "benchmark pack config"),
             provenance=_optional_mapping(payload, "provenance", "benchmark pack config"),
         )
 
@@ -267,9 +289,17 @@ class DownstreamBenchmarkPackConfig:
             )
         if not self.source_license_policy.get("publication_allowed"):
             raise DownstreamBenchmarkPackError("source license policy must allow publication")
+        if self.profile is not None and self.profile != ANTI_SATURATION_PROFILE:
+            raise DownstreamBenchmarkPackError(
+                f"unsupported benchmark profile: {self.profile!r} (expected {ANTI_SATURATION_PROFILE!r})"
+            )
+
+    @property
+    def is_anti_saturation(self) -> bool:
+        return self.profile == ANTI_SATURATION_PROFILE
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "schema_version": self.schema_version,
             "benchmark_id": self.benchmark_id,
             "source_license_policy": dict(self.source_license_policy),
@@ -280,6 +310,9 @@ class DownstreamBenchmarkPackConfig:
             "required_metrics": list(self.required_metrics),
             "provenance": dict(self.provenance),
         }
+        if self.profile is not None:
+            payload["profile"] = self.profile
+        return payload
 
 
 def load_downstream_benchmark_pack_config(path: Path | str) -> DownstreamBenchmarkPackConfig:
@@ -364,13 +397,39 @@ def build_downstream_benchmark_pack(
         json.dumps(split_leakage_report, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
-    readiness_report = _build_readiness_report(config, split_leakage_report)
+
+    anti_saturation_report: dict[str, Any] | None = None
+    anti_saturation_report_path_rel: str | None = None
+    if config.is_anti_saturation:
+        baseline_inputs = compute_model_independent_baselines(benchmark, root=output_dir)
+        anti_saturation_report = build_anti_saturation_report(
+            profile=config.profile or ANTI_SATURATION_PROFILE,
+            source_license_ok=bool(config.source_license_policy.get("publication_allowed")),
+            split_leakage_ok=bool(split_leakage_report["ok"]),
+            # The secret-scan and manifest gates are enforced below: a produced
+            # pack always has both passing because the build aborts on findings.
+            manifest_ok=True,
+            secret_scan_ok=True,
+            **baseline_inputs,
+        )
+        anti_saturation_report_file = reports_dir / "anti_saturation_report.json"
+        anti_saturation_report_file.write_text(
+            json.dumps(anti_saturation_report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        anti_saturation_report_path_rel = "reports/anti_saturation_report.json"
+
+    readiness_report = _build_readiness_report(
+        config, split_leakage_report, anti_saturation_report=anti_saturation_report
+    )
     readiness_report_path = reports_dir / "benchmark_readiness.json"
     readiness_report_path.write_text(
         json.dumps(readiness_report, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     artifact_files.extend((source_license_policy_path, split_leakage_report_path, readiness_report_path))
+    if anti_saturation_report is not None:
+        artifact_files.append(anti_saturation_report_file)
 
     scan_report = scan_paths([output_dir], include_suffixes=_SECRET_SCAN_SUFFIXES)
     secret_scan_payload = _relative_secret_scan_payload(scan_report.to_dict(), output_dir)
@@ -399,6 +458,15 @@ def build_downstream_benchmark_pack(
             "source_license_policy": "reports/source_license_policy.json",
             "split_leakage_report": "reports/split_leakage_report.json",
             "secret_scan_report": "reports/secret_scan_report.json",
+            **(
+                {
+                    "profile": config.profile,
+                    "anti_saturation_report": anti_saturation_report_path_rel,
+                    "anti_saturation_eligible": anti_saturation_report["eligible"],
+                }
+                if anti_saturation_report is not None
+                else {}
+            ),
         },
     )
     write_artifact_manifest(artifact_manifest, manifest_path)
@@ -414,6 +482,10 @@ def build_downstream_benchmark_pack(
         labeled_example_count=int(readiness_report["labeled_example_count"]),
         scaled_evaluation_ready=bool(readiness_report["scaled_evaluation_ready"]),
         downstream_claim_allowed=bool(readiness_report["downstream_claim_allowed"]),
+        anti_saturation_report_path=anti_saturation_report_path_rel,
+        anti_saturation_eligible=(
+            None if anti_saturation_report is None else bool(anti_saturation_report["eligible"])
+        ),
     )
 
 
@@ -502,6 +574,9 @@ def _materialize_task(
         shutil.copyfile(source_path, candidate_dest)
         files.append(candidate_dest)
         candidate_relative = _relative_to_root(candidate_dest, tasks_dir.parent)
+        candidate_source = dict(candidate.source)
+        if candidate.hard_negative_class is not None:
+            candidate_source["hard_negative_class"] = candidate.hard_negative_class
         materialized_candidates.append(
             DownstreamCandidate(
                 candidate_id=candidate.candidate_id,
@@ -511,7 +586,7 @@ def _materialize_task(
                 after_state_path=candidate_relative if candidate.after_state_path is not None else None,
                 static_check=candidate.static_check,  # type: ignore[arg-type]
                 test_check=candidate.test_check,  # type: ignore[arg-type]
-                source=candidate.source,
+                source=candidate_source,
                 provenance={
                     **dict(candidate.provenance),
                     "input_path": source_path_value,
@@ -570,6 +645,8 @@ def _build_split_leakage_report(config: DownstreamBenchmarkPackConfig) -> dict[s
 def _build_readiness_report(
     config: DownstreamBenchmarkPackConfig,
     split_leakage_report: Mapping[str, Any],
+    *,
+    anti_saturation_report: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     labeled_count = sum(
         1 for task in config.tasks if any(candidate.label in {"pass", "fail"} for candidate in task.candidates)
@@ -584,10 +661,12 @@ def _build_readiness_report(
         blocked_reasons.append("split_or_repository_leakage_detected")
     if not config.source_license_policy.get("publication_allowed"):
         blocked_reasons.append("source_license_policy_blocks_publication")
+    if anti_saturation_report is not None and not anti_saturation_report.get("eligible"):
+        blocked_reasons.append("anti_saturation_slice_not_eligible")
     scaled_evaluation_ready = not blocked_reasons
     if scaled_evaluation_ready:
         blocked_reasons.append("downstream_evaluation_not_run")
-    return {
+    report: dict[str, Any] = {
         "schema_version": DOWNSTREAM_BENCHMARK_READINESS_SCHEMA_VERSION,
         "benchmark_id": config.benchmark_id,
         "example_count": len(config.tasks),
@@ -598,6 +677,14 @@ def _build_readiness_report(
         "downstream_claim_allowed": False,
         "blocked_reasons": blocked_reasons,
     }
+    if config.profile is not None:
+        report["profile"] = config.profile
+    if anti_saturation_report is not None:
+        report["anti_saturation_eligible"] = bool(anti_saturation_report.get("eligible"))
+        report["anti_saturation_blocked_reasons"] = list(
+            anti_saturation_report.get("blocked_reasons", [])
+        )
+    return report
 
 
 def _relative_secret_scan_payload(payload: Mapping[str, Any], root: Path) -> dict[str, Any]:
@@ -647,7 +734,7 @@ def _task_config_to_dict(task: DownstreamTaskConfig) -> dict[str, Any]:
 
 
 def _candidate_config_to_dict(candidate: DownstreamCandidateConfig) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "candidate_id": candidate.candidate_id,
         "llm_rank": candidate.llm_rank,
         "label": candidate.label,
@@ -658,6 +745,9 @@ def _candidate_config_to_dict(candidate: DownstreamCandidateConfig) -> dict[str,
         "source": dict(candidate.source),
         "provenance": dict(candidate.provenance),
     }
+    if candidate.hard_negative_class is not None:
+        payload["hard_negative_class"] = candidate.hard_negative_class
+    return payload
 
 
 def _resolve_config_path(config_root: Path, value: str, *, field_name: str) -> Path:

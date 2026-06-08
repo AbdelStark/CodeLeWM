@@ -1,0 +1,140 @@
+{
+  "benchmark_id": "codelewm-hard-downstream-anti-saturation-fixture-v0",
+  "evaluation_only": true,
+  "min_labeled_examples": 100,
+  "profile": "anti_saturation_semantic_v1",
+  "provenance": {
+    "issue": "#419",
+    "purpose": "public-safe fixture pack exercising the anti-saturation report path",
+    "rfc": "docs/rfcs/RFC-0016-hard-downstream-reranking-benchmark.md"
+  },
+  "required_baselines": [
+    "llm_order",
+    "random",
+    "lexical",
+    "no_action",
+    "codelewm",
+    "retrieval_prior",
+    "score_ensemble"
+  ],
+  "required_metrics": [
+    "pass_at_1",
+    "pass_at_k",
+    "mrr",
+    "valid_patch_rate",
+    "check_pass_rate"
+  ],
+  "schema_version": "codelewm.downstream_rerank_benchmark_config.v1",
+  "source_license_policy": {
+    "allowed_use": [
+      "public fixture benchmark artifact",
+      "local and CI validation",
+      "claim-blocked anti-saturation evaluation smoke tests"
+    ],
+    "license": "repository license",
+    "notes": [
+      "Rows are project-owned synthetic fixtures already committed to this repository.",
+      "This fixture has one labeled task and cannot support a scaled downstream usefulness claim; it only exercises the anti-saturation report plumbing."
+    ],
+    "publication_allowed": true,
+    "schema_version": "codelewm.downstream_source_license_policy.v1",
+    "source_kind": "project_fixture"
+  },
+  "tasks": [
+    {
+      "before_path": "hard_downstream_fixtures/before.py",
+      "candidates": [
+        {
+          "after_state_path": "hard_downstream_fixtures/no_action.py",
+          "candidate_id": "candidate_001_no_action",
+          "hard_negative_class": "no_action_bait",
+          "label": "fail",
+          "llm_rank": 1,
+          "source": {
+            "candidate_kind": "no_action_bait",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        },
+        {
+          "after_state_path": "hard_downstream_fixtures/partial_fix.py",
+          "candidate_id": "candidate_002_partial_fix",
+          "hard_negative_class": "partial_fix",
+          "label": "fail",
+          "llm_rank": 2,
+          "source": {
+            "candidate_kind": "partial_fix",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        },
+        {
+          "after_state_path": "hard_downstream_fixtures/passing.py",
+          "candidate_id": "candidate_003_passing",
+          "hard_negative_class": "passing_reference",
+          "label": "pass",
+          "llm_rank": 3,
+          "source": {
+            "candidate_kind": "passing_reference",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "pass"
+        },
+        {
+          "after_state_path": "hard_downstream_fixtures/wrong_symbol.py",
+          "candidate_id": "candidate_004_wrong_symbol",
+          "hard_negative_class": "wrong_symbol",
+          "label": "fail",
+          "llm_rank": 4,
+          "source": {
+            "candidate_kind": "wrong_symbol",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        },
+        {
+          "after_state_path": "hard_downstream_fixtures/over_broad.py",
+          "candidate_id": "candidate_005_over_broad",
+          "hard_negative_class": "over_broad",
+          "label": "fail",
+          "llm_rank": 5,
+          "source": {
+            "candidate_kind": "over_broad",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        },
+        {
+          "after_state_path": "hard_downstream_fixtures/mutant.py",
+          "candidate_id": "candidate_006_mutant",
+          "hard_negative_class": "deterministic_mutant",
+          "label": "fail",
+          "llm_rank": 6,
+          "source": {
+            "candidate_kind": "deterministic_mutant",
+            "generator": "fixture"
+          },
+          "static_check": "pass",
+          "test_check": "fail"
+        }
+      ],
+      "prompt": "rewrite the accumulator update explicitly",
+      "provenance": {
+        "source_config": "config/benchmark/hard_downstream_anti_saturation_fixture.json"
+      },
+      "repo_id": "codelewm-fixtures",
+      "source": {
+        "license_policy_id": "project_fixture",
+        "source_family": "synthetic_fixture"
+      },
+      "split": "test",
+      "task_id": "accumulator-fixture",
+      "task_type": "refactor"
+    }
+  ]
+}
