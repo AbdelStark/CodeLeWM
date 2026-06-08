@@ -1,5 +1,17 @@
 # Final Goal Completion Record
 
+## Current Follow-Up
+
+The active follow-up research queue is tracker #417, the v1.5 hard
+anti-saturation downstream reranking benchmark, with child issues #418 through
+#423. Use `docs/rfcs/RFC-0016-hard-downstream-reranking-benchmark.md` and
+`docs/roadmap/HARD_DOWNSTREAM_RERANKING_BENCHMARK.md` as the contract.
+
+This follow-up exists because the final v1.0 paper found one narrow HumanEval
+WS-D positive slice while MBPP-Plus remained saturated by no-action and lexical
+controls. Do not claim broad downstream coding usefulness unless #417's hard
+benchmark gate opens.
+
 This is the completion record for the final v1.0 paper/demo release tracker #401.
 It supersedes the historical v0.6 follow-through issues #293, #306, #308, and
 #309, and it replaces the completed v0.9 data/eval repair prompt for #385.

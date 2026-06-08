@@ -501,6 +501,46 @@ Minimum scaled evidence:
 Usefulness claims remain blocked unless CodeLeWM improves over both no-action
 and LLM-order baselines on the agreed headline metrics.
 
+### Hard Anti-Saturation Downstream Benchmark
+
+RFC-0016 defines the next downstream benchmark profile after the final v1.0
+paper. The profile is `anti_saturation_semantic_v1`. It reuses the
+`codelewm.downstream_rerank_benchmark.v1` and
+`codelewm.downstream_rerank_report.v1` family, but adds a required
+`codelewm.downstream_anti_saturation_report.v1` before any positive claim can
+open.
+
+The scientific question is whether CodeLeWM improves candidate ranking when
+no-action, lexical, and LLM-order controls are not already saturated. A headline
+slice is eligible only when:
+
+- locked test `problem_count >= 100`;
+- candidate pools have `6` to `12` candidates;
+- no-action pass@1 is below `0.85`;
+- lexical pass@1 is below `0.85`;
+- LLM-order pass@1 is below `0.90`;
+- at least `70%` of problems contain two or more failing hard-negative classes;
+- source/license, split-leakage, manifest, checkpoint-trust, and secret-scan
+  gates pass.
+
+Hard candidate classes include no-action baits, partial fixes,
+wrong-symbol/wrong-branch fixes, over-broad fixes, deterministic semantic
+mutants, and LLM-generated candidates captured as
+`codelewm.llm_candidate_pack.v1` artifacts. Parser/apply failures remain visible
+failure-accounting rows; they cannot be the source of a positive claim.
+
+Every headline report must include random, LLM-order, lexical, static
+heuristic, no-action, shuffled-action, CodeLeWM transition-energy,
+retrieval-prior-only when available, and final-score/ensemble rows when used.
+`p_pass` may appear only when a standalone `p_pass` score key is serialized in
+every downstream row. Missing baselines are typed `blocked` or `not_recorded`.
+
+The hard benchmark claim gate may open only if CodeLeWM beats no-action,
+lexical, and LLM-order on pass@1 and MRR, with bootstrap confidence intervals
+over all three lifts excluding zero, on the locked eligible slices. Saturated
+slices remain valid diagnostic evidence but must keep
+`downstream_claim_allowed=false`.
+
 The first public-safe fixture pack is built with:
 
 ```bash

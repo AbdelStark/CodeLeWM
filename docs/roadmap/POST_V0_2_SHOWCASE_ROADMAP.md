@@ -5,7 +5,9 @@ Last updated: 2026-06-08
 This roadmap records the completed post-v0.2 harness, downstream benchmark,
 publication, meaningful-demo, visual-observability, and final release-package
 streams. The final v1.0 paper/demo tracker #401 is complete with children #402
-through #408 after the completed v0.9 data/eval repair and claim audit.
+through #408 after the completed v0.9 data/eval repair and claim audit. The
+follow-up hard anti-saturation downstream benchmark is tracked by #417 with
+children #418 through #423.
 
 The current evidence boundary is explicit:
 
@@ -242,6 +244,44 @@ Publication artifacts:
 - `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-21.md`
 - `docs/announcements/PRELIMINARY_RESULTS_2026-05-21.md`
 
+## Stream H: Hard Anti-Saturation Downstream Benchmark
+
+Tracker: #417. Status: Open.
+Dedicated roadmap: `docs/roadmap/HARD_DOWNSTREAM_RERANKING_BENCHMARK.md`.
+RFC: `docs/rfcs/RFC-0016-hard-downstream-reranking-benchmark.md`.
+
+Purpose: test the v1.0 blocker directly. MBPP-Plus WS-D could not show
+CodeLeWM lift because no-action and lexical controls were already perfect. This
+stream builds a harder public-safe benchmark that rejects saturated headline
+slices before model scoring.
+
+Issues:
+
+| Order | Issue | Title | Status |
+| --- | --- | --- | --- |
+| H0 | #418 | docs: lock hard downstream benchmark spec and tracker | Open |
+| H1 | #419 | data: add anti-saturation benchmark schema and readiness diagnostics | Open |
+| H2 | #420 | data: build public-safe hard-negative candidate pools | Open |
+| H3 | #421 | harness: ingest LLM candidate packs into the hard benchmark | Open |
+| H4 | #422 | eval: score hard benchmark baselines and CodeLeWM claim gate | Open |
+| H5 | #423 | results: publish hard benchmark artifacts and claim audit | Open |
+
+Success for the stream:
+
+- at least 100 locked test problems per headline slice;
+- no-action and lexical pass@1 below `0.85`;
+- LLM-order pass@1 below `0.90`;
+- candidate pools contain hard negatives such as no-action baits, partial
+  fixes, wrong-symbol/wrong-branch fixes, over-broad fixes, semantic mutants,
+  and LLM candidates;
+- CodeLeWM beats no-action, lexical, and LLM-order on pass@1 and MRR with lift
+  confidence intervals excluding zero;
+- manifest verification, checkpoint trust, source/license, split-leakage, and
+  secret-scan gates pass.
+
+If any condition fails, publish the result as diagnostic evidence and keep broad
+downstream usefulness claims closed.
+
 ## Implementation Order
 
 Recommended order:
@@ -280,11 +320,18 @@ Recommended order:
 32. #388 / #389 / #390
 33. #391
 34. #392
+35. #417 / #418
+36. #419
+37. #420
+38. #421
+39. #422
+40. #423
 
 Rationale: lock the contract first, publish the current result honestly, build
 the demo, make the public demo meaningful, add enough visual observability to
 understand model and latent failure modes, publish the v0.8 diagnostic result,
-and then repair the cross-benchmark data/eval gaps before any new GPU run.
+repair the cross-benchmark data/eval gaps before any new GPU run, then test the
+v1.0 saturation blocker with a hard anti-saturation downstream benchmark.
 
 ## `/goal` Prompt
 

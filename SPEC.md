@@ -47,6 +47,9 @@ code changes, not a patch generator.
 - `docs/rfcs/RFC-0011-public-api-cli-and-packaging.md`
 - `docs/rfcs/RFC-0012-release-ci-and-governance.md`
 - `docs/rfcs/RFC-0013-llm-world-model-harness-and-publication.md`
+- `docs/rfcs/RFC-0014-execution-trace-world-model-substrate.md`
+- `docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md`
+- `docs/rfcs/RFC-0016-hard-downstream-reranking-benchmark.md`
 
 ## Milestone Boundary
 
