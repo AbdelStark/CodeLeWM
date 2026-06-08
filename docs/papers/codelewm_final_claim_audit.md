@@ -15,6 +15,7 @@ old audit remains historical evidence for the two-substrate draft.
 | v1.0 paper-demo artifact note | `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` |
 | v1.0 final benchmark/claim audit | `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md` |
 | v1.0 demo machine report | `docs/benchmark/v1_0/paper_demo/reports/paper_demo_report.json` |
+| final reproducibility checklist | `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md` |
 
 ## Quantitative Claims
 
@@ -32,6 +33,20 @@ old audit remains historical evidence for the two-substrate draft.
 | v1.0 MBPP-Plus CodeLeWM/no-action/lexical pass@1 | 1.0000 / 1.0000 / 1.0000 | `paper_demo_report.json` |
 | v1.0 MBPP-Plus lift over no-action | +0.00 pts on both seeds | `paper_demo_report.json` |
 | v1.0 paper-demo artifact id | `demo_report-e6fc06c328eed245` | `manifest.json` |
+
+## Structural Claims
+
+The final paper is structured around three research questions, a PGFPlots
+downstream replay figure, explicit lessons, and a concrete outlook section.
+Those sections are permitted only insofar as they preserve the claim boundary
+below:
+
+- the research questions answer RQ1 negatively, RQ2 diagnostically, and RQ3 as
+  a partial/narrow downstream result;
+- the figure visualizes the v1.0 paper-demo replay and must show MBPP-Plus
+  saturation by CodeLeWM, no-action, and lexical controls;
+- the outlook lists future gates that would be required to open a stronger
+  claim, not claims already achieved by the current artifact.
 
 ## Claim Boundary
 
