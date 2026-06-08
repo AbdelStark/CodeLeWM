@@ -18,11 +18,12 @@
 > (`docs/benchmark/EXECUTION_V0_6_RESULTS_2026-05-30.md`), the
 > committed per-seed eval reports under `docs/benchmark/v0_6/`, and
 > the two-substrate paper outline
-> (`docs/papers/two_substrate_outline.md`). The full #306 paper draft
-> and arXiv source package live at
-> `docs/papers/two_substrate_paper.tex` and
-> `docs/papers/ARXIV_SUBMISSION.md`; the arXiv URL is pending operator
-> upload. The v0.6 execution-rerank tour artifact lives at
+> (`docs/papers/two_substrate_outline.md`). The final v1.0 paper draft
+> supersedes the #306 two-substrate draft for release wording and lives at
+> `docs/papers/codelewm_final_paper.tex`, with its claim audit at
+> `docs/papers/codelewm_final_claim_audit.md` and arXiv metadata at
+> `docs/papers/ARXIV_SUBMISSION.md`. The older two-substrate paper remains a
+> historical v0.6 artifact. The v0.6 execution-rerank tour artifact lives at
 > `docs/demo/execution_rerank_tour_2026-05-31.cast` and can be reproduced
 > with `scripts/llm-world-model-demo --scenario execution-rerank-mbpp --tour 5 --html <path>`
 > after downloading the seed-42 checkpoint. The v0.6 public artifact landing is
