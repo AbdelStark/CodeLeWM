@@ -121,7 +121,7 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #403 | v1.0 demo: define fixed downstream learned-world-model paper-demo contract | evaluation/harness | p1 | m | follow-up | Closed |
 | #404 | v1.0 demo: implement one-command downstream learned-world-model paper demo | evaluation/harness/observability | p1 | l | follow-up | Closed |
 | #405 | v1.0 run: publish final downstream paper-demo artifacts | evaluation/harness/results | p1 | m | follow-up | Closed |
-| #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Open |
+| #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Closed |
 | #407 | v1.0 paper: rewrite CodeLeWM paper around final downstream evidence | docs/results | p1 | l | follow-up | Open |
 | #408 | v1.0 release: publish final artifact index, cards, README, and announcement package | docs/release/results | p1 | m | follow-up | Open |
 
@@ -362,9 +362,10 @@ cross-benchmark correctness claims.
   is recorded in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`: both
   seeds clear HumanEval WS-D reranking, MBPP-Plus has zero lift over no-action,
   and the overall public claim remains closed.
-- #401/#402-#408 define the active final v1.0 paper/demo release chain. This
-  chain supersedes the stale v0.6-era #293/#306/#308/#309 queue and preserves
-  the v0.9 boundary: HumanEval WS-D is a narrow positive slice, while
+- #401/#402-#408 define the active final v1.0 paper/demo release chain. Issues
+  #402 through #406 are complete; #407 is the next active paper rewrite slice.
+  This chain supersedes the stale v0.6-era #293/#306/#308/#309 queue and
+  preserves the v0.9 boundary: HumanEval WS-D is a narrow positive slice, while
   MBPP/generalization and broad coding-improvement claims remain closed.
 
 ## Cross-Reference Map

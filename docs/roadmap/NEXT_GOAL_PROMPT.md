@@ -17,8 +17,8 @@ Authoritative issue order:
 3. #404 - complete: implemented the one-command downstream learned-world-model
    paper demo.
 4. #405 - complete: published final downstream paper-demo artifacts.
-5. #406 - next: consolidate benchmark tables and final claim audit.
-6. #407 - v1.0 paper: rewrite CodeLeWM paper around final downstream evidence.
+5. #406 - complete: consolidated benchmark tables and the final claim audit.
+6. #407 - next: rewrite CodeLeWM paper around final downstream evidence.
 7. #408 - v1.0 release: publish final artifact index, cards, README,
    reproducibility checklist, and announcement package.
 
@@ -30,6 +30,7 @@ docs/rfcs/RFC-0015-v0-7-execution-substrate-improvements.md,
 docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md,
 docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md,
 docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md,
+docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md,
 docs/roadmap/FULL_COMPLETION.md, docs/roadmap/IMPLEMENTATION.md,
 docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md,
 docs/roadmap/MEANINGFUL_HARNESS_DEMO.md,
