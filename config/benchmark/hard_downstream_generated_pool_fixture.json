@@ -1,0 +1,64 @@
+{
+  "benchmark_id": "codelewm-hard-downstream-generated-pool-fixture-v0",
+  "evaluation_only": true,
+  "min_labeled_examples": 100,
+  "profile": "anti_saturation_semantic_v1",
+  "provenance": {
+    "issue": "#420",
+    "purpose": "public-safe fixture exercising the deterministic hard-negative pool generator",
+    "rfc": "docs/rfcs/RFC-0016-hard-downstream-reranking-benchmark.md"
+  },
+  "required_baselines": [
+    "llm_order",
+    "random",
+    "lexical",
+    "no_action",
+    "codelewm",
+    "retrieval_prior",
+    "score_ensemble"
+  ],
+  "required_metrics": [
+    "pass_at_1",
+    "pass_at_k",
+    "mrr",
+    "valid_patch_rate",
+    "check_pass_rate"
+  ],
+  "schema_version": "codelewm.downstream_rerank_benchmark_config.v1",
+  "source_license_policy": {
+    "allowed_use": [
+      "public fixture benchmark artifact",
+      "local and CI validation"
+    ],
+    "license": "repository license",
+    "notes": [
+      "Candidates are deterministically generated from a project-owned reference solution."
+    ],
+    "publication_allowed": true,
+    "schema_version": "codelewm.downstream_source_license_policy.v1",
+    "source_kind": "project_fixture"
+  },
+  "tasks": [
+    {
+      "before_path": "hard_downstream_fixtures/before.py",
+      "candidates": [],
+      "generated_pool": {
+        "pool_size": 6,
+        "reference_after_path": "hard_downstream_fixtures/passing.py",
+        "seed": 17
+      },
+      "prompt": "rewrite the accumulator update explicitly",
+      "provenance": {
+        "source_config": "config/benchmark/hard_downstream_generated_pool_fixture.json"
+      },
+      "repo_id": "codelewm-fixtures",
+      "source": {
+        "license_policy_id": "project_fixture",
+        "source_family": "synthetic_fixture"
+      },
+      "split": "test",
+      "task_id": "accumulator-generated",
+      "task_type": "refactor"
+    }
+  ]
+}

@@ -23,10 +23,17 @@ from .downstream import (
 )
 from .downstream_anti_saturation import (
     ANTI_SATURATION_PROFILE,
+    MAX_CANDIDATES_PER_PROBLEM,
+    MIN_CANDIDATES_PER_PROBLEM,
     DownstreamAntiSaturationError,
     build_anti_saturation_report,
     compute_model_independent_baselines,
     validate_hard_negative_class,
+)
+from .hard_negative_pool import (
+    LABEL_CONSTRUCTION_REPORT_SCHEMA_VERSION,
+    build_label_construction_report,
+    generate_hard_negative_pool,
 )
 
 
@@ -61,6 +68,7 @@ class DownstreamBenchmarkPackResult:
     downstream_claim_allowed: bool
     anti_saturation_report_path: str | None = None
     anti_saturation_eligible: bool | None = None
+    label_construction_report_path: str | None = None
     schema_version: str = DOWNSTREAM_BENCHMARK_PACK_RUN_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -79,6 +87,7 @@ class DownstreamBenchmarkPackResult:
             "downstream_claim_allowed": self.downstream_claim_allowed,
             "anti_saturation_report_path": self.anti_saturation_report_path,
             "anti_saturation_eligible": self.anti_saturation_eligible,
+            "label_construction_report_path": self.label_construction_report_path,
         }
 
 
@@ -162,6 +171,7 @@ class DownstreamTaskConfig:
     split: str
     candidates: tuple[DownstreamCandidateConfig, ...]
     repo_id: str | None = None
+    generated_pool: Mapping[str, Any] | None = None
     source: Mapping[str, Any] = field(default_factory=dict)
     provenance: Mapping[str, Any] = field(default_factory=dict)
 
@@ -176,6 +186,7 @@ class DownstreamTaskConfig:
                 "before_path",
                 "split",
                 "repo_id",
+                "generated_pool",
                 "source",
                 "provenance",
                 "candidates",
@@ -184,7 +195,7 @@ class DownstreamTaskConfig:
         )
         candidates = tuple(
             DownstreamCandidateConfig.from_mapping(_require_mapping_item(item, "candidates"))
-            for item in _require_sequence(payload, "candidates", "task")
+            for item in payload.get("candidates", ())
         )
         return cls(
             task_id=_require_stable_id(payload, "task_id", "task"),
@@ -193,13 +204,14 @@ class DownstreamTaskConfig:
             before_path=_require_relative_path(payload, "before_path", "task"),
             split=_optional_string(payload, "split", "task", default="test"),
             repo_id=_optional_string(payload, "repo_id", "task"),
+            generated_pool=_parse_generated_pool(payload),
             source=_optional_mapping(payload, "source", "task"),
             provenance=_optional_mapping(payload, "provenance", "task"),
             candidates=candidates,
         )
 
     def __post_init__(self) -> None:
-        if len(self.candidates) < 2:
+        if self.generated_pool is None and len(self.candidates) < 2:
             raise DownstreamBenchmarkPackError(f"task {self.task_id} must have at least two candidates")
         candidate_ids = [candidate.candidate_id for candidate in self.candidates]
         if len(candidate_ids) != len(set(candidate_ids)):
@@ -362,10 +374,14 @@ def build_downstream_benchmark_pack(
 
     materialized_tasks: list[DownstreamTask] = []
     artifact_files: list[Path] = [config_copy_path]
+    generated_candidates_all: list[Any] = []
     for task in config.tasks:
-        materialized_task, task_files = _materialize_task(task, config_file.parent, tasks_dir)
+        materialized_task, task_files, generated = _materialize_task(
+            task, config_file.parent, tasks_dir
+        )
         materialized_tasks.append(materialized_task)
         artifact_files.extend(task_files)
+        generated_candidates_all.extend(generated)
 
     benchmark = DownstreamRerankBenchmark(
         benchmark_id=config.benchmark_id,
@@ -419,6 +435,19 @@ def build_downstream_benchmark_pack(
         )
         anti_saturation_report_path_rel = "reports/anti_saturation_report.json"
 
+    label_construction_report_path_rel: str | None = None
+    if generated_candidates_all:
+        label_construction_report = build_label_construction_report(
+            generated_candidates_all, sandbox_used=False
+        )
+        label_construction_report_file = reports_dir / "label_construction_report.json"
+        label_construction_report_file.write_text(
+            json.dumps(label_construction_report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        artifact_files.append(label_construction_report_file)
+        label_construction_report_path_rel = "reports/label_construction_report.json"
+
     readiness_report = _build_readiness_report(
         config, split_leakage_report, anti_saturation_report=anti_saturation_report
     )
@@ -467,6 +496,11 @@ def build_downstream_benchmark_pack(
                 if anti_saturation_report is not None
                 else {}
             ),
+            **(
+                {"label_construction_report": label_construction_report_path_rel}
+                if label_construction_report_path_rel is not None
+                else {}
+            ),
         },
     )
     write_artifact_manifest(artifact_manifest, manifest_path)
@@ -486,6 +520,7 @@ def build_downstream_benchmark_pack(
         anti_saturation_eligible=(
             None if anti_saturation_report is None else bool(anti_saturation_report["eligible"])
         ),
+        label_construction_report_path=label_construction_report_path_rel,
     )
 
 
@@ -556,7 +591,7 @@ def _materialize_task(
     task: DownstreamTaskConfig,
     config_root: Path,
     tasks_dir: Path,
-) -> tuple[DownstreamTask, tuple[Path, ...]]:
+) -> tuple[DownstreamTask, tuple[Path, ...], tuple[Any, ...]]:
     task_dir = tasks_dir / task.task_id
     candidates_dir = task_dir / "candidates"
     candidates_dir.mkdir(parents=True, exist_ok=True)
@@ -593,6 +628,20 @@ def _materialize_task(
                 },
             )
         )
+
+    generated_candidates: tuple[Any, ...] = ()
+    if task.generated_pool is not None:
+        generated_candidates = _materialize_generated_pool(
+            task,
+            config_root=config_root,
+            tasks_dir=tasks_dir,
+            candidates_dir=candidates_dir,
+            before_text=before_source.read_text(encoding="utf-8"),
+            base_llm_rank=len(materialized_candidates),
+            files=files,
+            materialized_candidates=materialized_candidates,
+        )
+
     materialized_task = DownstreamTask(
         task_id=task.task_id,
         task_type=task.task_type,
@@ -605,9 +654,78 @@ def _materialize_task(
             "repo_id": task.repo_id,
             "source": dict(task.source),
             "input_before_path": task.before_path,
+            **(
+                {"generated_pool": dict(task.generated_pool)}
+                if task.generated_pool is not None
+                else {}
+            ),
         },
     )
-    return materialized_task, tuple(files)
+    return materialized_task, tuple(files), generated_candidates
+
+
+def _materialize_generated_pool(
+    task: DownstreamTaskConfig,
+    *,
+    config_root: Path,
+    tasks_dir: Path,
+    candidates_dir: Path,
+    before_text: str,
+    base_llm_rank: int,
+    files: list[Path],
+    materialized_candidates: list[DownstreamCandidate],
+) -> tuple[Any, ...]:
+    assert task.generated_pool is not None
+    spec = task.generated_pool
+    reference_source = _resolve_config_path(
+        config_root, str(spec["reference_after_path"]), field_name="generated_pool.reference_after_path"
+    )
+    reference_after_text = reference_source.read_text(encoding="utf-8")
+    pool = generate_hard_negative_pool(
+        before_text=before_text,
+        reference_after_text=reference_after_text,
+        seed=int(spec["seed"]),
+        pool_size=int(spec["pool_size"]),
+    )
+    existing_ids = {candidate.candidate_id for candidate in materialized_candidates}
+    license_status = task.source.get("license_policy_id", "inherited_from_task_policy")
+    for offset, generated in enumerate(pool):
+        if generated.candidate_id in existing_ids:
+            raise DownstreamBenchmarkPackError(
+                f"task {task.task_id} generated candidate id collides with an existing id: "
+                f"{generated.candidate_id}"
+            )
+        existing_ids.add(generated.candidate_id)
+        candidate_dest = candidates_dir / f"{generated.candidate_id}.py"
+        candidate_dest.write_text(generated.after_text, encoding="utf-8")
+        files.append(candidate_dest)
+        candidate_relative = _relative_to_root(candidate_dest, tasks_dir.parent)
+        materialized_candidates.append(
+            DownstreamCandidate(
+                candidate_id=generated.candidate_id,
+                llm_rank=base_llm_rank + offset + 1,
+                label=generated.label,  # type: ignore[arg-type]
+                patch_path=None,
+                after_state_path=candidate_relative,
+                static_check=generated.static_check,  # type: ignore[arg-type]
+                test_check="not_run",
+                source={
+                    "hard_negative_class": generated.hard_negative_class,
+                    "candidate_kind": generated.hard_negative_class,
+                    "generator": "hard_negative_pool",
+                    "checksum": generated.checksum,
+                    "label_source": str(generated.provenance.get("label_source", "unverified")),
+                    "source_license_status": str(license_status),
+                },
+                provenance={
+                    **dict(generated.provenance),
+                    "generated": True,
+                    "reference_after_path": str(spec["reference_after_path"]),
+                    "seed": int(spec["seed"]),
+                },
+            )
+        )
+    return pool
 
 
 def _build_split_leakage_report(config: DownstreamBenchmarkPackConfig) -> dict[str, Any]:
@@ -720,7 +838,7 @@ def _require_source_license_policy(payload: Mapping[str, Any]) -> Mapping[str, A
 
 
 def _task_config_to_dict(task: DownstreamTaskConfig) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "task_id": task.task_id,
         "task_type": task.task_type,
         "prompt": task.prompt,
@@ -730,6 +848,37 @@ def _task_config_to_dict(task: DownstreamTaskConfig) -> dict[str, Any]:
         "source": dict(task.source),
         "provenance": dict(task.provenance),
         "candidates": [_candidate_config_to_dict(candidate) for candidate in task.candidates],
+    }
+    if task.generated_pool is not None:
+        payload["generated_pool"] = dict(task.generated_pool)
+    return payload
+
+
+def _parse_generated_pool(payload: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    value = payload.get("generated_pool")
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        raise DownstreamBenchmarkPackError("task.generated_pool must be a JSON object")
+    _reject_unknown(
+        value, {"reference_after_path", "seed", "pool_size"}, "task generated_pool"
+    )
+    reference_after_path = _require_relative_path(value, "reference_after_path", "generated_pool")
+    seed = value.get("seed", 0)
+    if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+        raise DownstreamBenchmarkPackError("generated_pool.seed must be a non-negative integer")
+    pool_size = _optional_positive_int(
+        value, "pool_size", default=MIN_CANDIDATES_PER_PROBLEM
+    )
+    if not (MIN_CANDIDATES_PER_PROBLEM <= pool_size <= MAX_CANDIDATES_PER_PROBLEM):
+        raise DownstreamBenchmarkPackError(
+            "generated_pool.pool_size must be in "
+            f"{MIN_CANDIDATES_PER_PROBLEM}-{MAX_CANDIDATES_PER_PROBLEM}"
+        )
+    return {
+        "reference_after_path": reference_after_path,
+        "seed": seed,
+        "pool_size": pool_size,
     }
 
 

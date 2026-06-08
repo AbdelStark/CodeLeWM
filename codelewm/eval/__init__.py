@@ -177,6 +177,14 @@ from .downstream_pack import (
     load_downstream_benchmark_pack_config,
     read_downstream_rerank_benchmark,
 )
+from .hard_negative_pool import (
+    HARD_NEGATIVE_POOL_SCHEMA_VERSION,
+    LABEL_CONSTRUCTION_REPORT_SCHEMA_VERSION,
+    HardNegativeCandidate,
+    HardNegativePoolError,
+    build_label_construction_report,
+    generate_hard_negative_pool,
+)
 from .downstream_anti_saturation import (
     ANTI_SATURATION_BASELINES,
     ANTI_SATURATION_CLAIM_BASELINES,
@@ -413,6 +421,12 @@ __all__ = [
     "NO_ACTION_SATURATION_CEILING",
     "PASSING_CANDIDATE_CLASS",
     "DownstreamAntiSaturationError",
+    "HARD_NEGATIVE_POOL_SCHEMA_VERSION",
+    "LABEL_CONSTRUCTION_REPORT_SCHEMA_VERSION",
+    "HardNegativeCandidate",
+    "HardNegativePoolError",
+    "build_label_construction_report",
+    "generate_hard_negative_pool",
     "anti_saturation_report_json_schema",
     "build_anti_saturation_claim_gate",
     "build_anti_saturation_report",
