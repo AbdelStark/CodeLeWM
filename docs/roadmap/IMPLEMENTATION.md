@@ -120,7 +120,7 @@ remediation, publishing, provenance, docs refresh, and final artifact freeze.
 | #402 | v1.0 hygiene: reconcile stale v0.6 issues and final queue state | docs/results | p1 | s | follow-up | Closed |
 | #403 | v1.0 demo: define fixed downstream learned-world-model paper-demo contract | evaluation/harness | p1 | m | follow-up | Closed |
 | #404 | v1.0 demo: implement one-command downstream learned-world-model paper demo | evaluation/harness/observability | p1 | l | follow-up | Closed |
-| #405 | v1.0 run: publish final downstream paper-demo artifacts | evaluation/harness/results | p1 | m | follow-up | Open |
+| #405 | v1.0 run: publish final downstream paper-demo artifacts | evaluation/harness/results | p1 | m | follow-up | Closed |
 | #406 | v1.0 results: consolidate benchmark tables and final claim audit | evaluation/results/docs | p1 | m | follow-up | Open |
 | #407 | v1.0 paper: rewrite CodeLeWM paper around final downstream evidence | docs/results | p1 | l | follow-up | Open |
 | #408 | v1.0 release: publish final artifact index, cards, README, and announcement package | docs/release/results | p1 | m | follow-up | Open |

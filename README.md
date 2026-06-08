@@ -125,6 +125,9 @@ fresh checkpoint scoring run and not a live OpenRouter demo. It writes
 `reports/paper_demo_table.md`, `reports/run_timeline.json`, `demo.html`,
 `reports/secret_scan_report.json`, and `manifest.json`. The aggregate claim
 gate remains closed because MBPP-Plus is saturated against no-action.
+The committed artifact set is documented in
+`docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` and lives under
+`docs/benchmark/v1_0/paper_demo/`.
 
 ## v0.6 Publication Landing
 
@@ -215,6 +218,7 @@ uv run codelewm openrouter byok-register \
 | Downstream fixture gate | one example, claim-blocked | `docs/benchmark/DOWNSTREAM_RERANKING_BENCHMARK.md` |
 | v0.9 final claim audit | HumanEval WS-D narrow positive; MBPP/generalization closed | `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` |
 | v0.9 public artifact index | checked-in v0.9 dataset/model/run/eval surfaces | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md` |
+| v1.0 paper demo artifacts | fixed downstream replay artifact set; aggregate claim gate closed | `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` |
 
 Public Hugging Face repositories:
 
@@ -331,7 +335,7 @@ Active final release queue:
 - #402 reconciles stale v0.6 issues and queue state.
 - #403 defines the fixed downstream learned-world-model paper-demo contract.
 - #404 added the one-command downstream paper demo.
-- #405 publishes the final downstream paper-demo artifacts.
+- #405 published the final downstream paper-demo artifacts.
 - #406 consolidates benchmark tables and the final claim audit.
 - #407 rewrites the paper around the final downstream evidence.
 - #408 publishes the final artifact index, cards, README, reproducibility

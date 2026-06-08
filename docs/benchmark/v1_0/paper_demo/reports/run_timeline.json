@@ -1,0 +1,72 @@
+{
+  "artifact_ids": [],
+  "command": [
+    "codelewm",
+    "paper-demo",
+    "--source-root",
+    ".",
+    "--out",
+    "docs/benchmark/v1_0/paper_demo",
+    "--overwrite",
+    "--json"
+  ],
+  "completed_at": "2026-06-08T08:21:52Z",
+  "duration_ms": 17.20370806287974,
+  "metadata": {
+    "paper_demo_schema_version": "codelewm.harness.paper_demo_report.v1",
+    "schema_version": "codelewm.run_timeline.v1",
+    "score_source": "replay_existing_scores"
+  },
+  "run_id": "run-493e25fe4cc4",
+  "schema_version": "codelewm.run_timeline.v1",
+  "started_at": "2026-06-08T08:21:52Z",
+  "status": "completed",
+  "steps": [
+    {
+      "artifact_ids": [],
+      "command_id": null,
+      "completed_at": "2026-06-08T08:21:52Z",
+      "duration_ms": 10.182666010223329,
+      "metadata": {
+        "source_root": "."
+      },
+      "name": "verify source manifests",
+      "order": 1,
+      "started_at": "2026-06-08T08:21:52Z",
+      "status": "completed",
+      "step_id": "verify_source_manifests",
+      "typed_failure": null,
+      "warnings": []
+    },
+    {
+      "artifact_ids": [],
+      "command_id": null,
+      "completed_at": "2026-06-08T08:21:52Z",
+      "duration_ms": 4.229582962580025,
+      "metadata": {},
+      "name": "aggregate replay score rows",
+      "order": 2,
+      "started_at": "2026-06-08T08:21:52Z",
+      "status": "completed",
+      "step_id": "aggregate_replay_score_rows",
+      "typed_failure": null,
+      "warnings": []
+    },
+    {
+      "artifact_ids": [],
+      "command_id": null,
+      "completed_at": "2026-06-08T08:21:52Z",
+      "duration_ms": 2.5817090645432472,
+      "metadata": {},
+      "name": "write paper demo reports",
+      "order": 3,
+      "started_at": "2026-06-08T08:21:52Z",
+      "status": "completed",
+      "step_id": "write_paper_demo_reports",
+      "typed_failure": null,
+      "warnings": []
+    }
+  ],
+  "typed_failure": null,
+  "warnings": []
+}

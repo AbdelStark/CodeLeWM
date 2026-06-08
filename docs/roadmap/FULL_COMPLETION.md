@@ -38,9 +38,10 @@ public release boundary is no longer the v0.6 substrate-pivot publication
 package. The current sequence is #402 queue hygiene, #403 paper-demo contract,
 #404 one-command demo implementation, #405 final demo artifacts, #406
 benchmark tables and claim audit, #407 final paper rewrite, and #408 release
-index/cards/README/checklist/announcement. Public wording must preserve the
-same final claim boundary: narrow HumanEval WS-D positive evidence, MBPP and
-generalization failures, and no broad coding-improvement claim.
+index/cards/README/checklist/announcement. Issues #402 through #405 are now
+complete; #406 is the next active child issue. Public wording must preserve
+the same final claim boundary: narrow HumanEval WS-D positive evidence, MBPP
+and generalization failures, and no broad coding-improvement claim.
 
 The active final release `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md` and points at #401 plus child issues #402
