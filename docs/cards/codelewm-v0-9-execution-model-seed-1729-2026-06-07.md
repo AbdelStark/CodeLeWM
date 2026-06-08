@@ -90,6 +90,10 @@ over controls and representation gates do not jointly pass.
 - Compare cross-benchmark correctness-aware scoring against no-action,
   shuffled-action, lexical, random, and LLM-order controls.
 - Inspect non-collapse, retrieval, surprise, calibration, and probe behavior.
+- Reproduce the final v1.0 paper-demo replay documented in
+  `docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md`,
+  `docs/cards/codelewm-v1-0-final-release-2026-06-08.md`, and
+  `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`.
 
 ## Out-of-Scope Use
 

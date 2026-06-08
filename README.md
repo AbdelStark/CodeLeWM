@@ -129,6 +129,25 @@ The committed artifact set is documented in
 `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` and lives under
 `docs/benchmark/v1_0/paper_demo/`.
 
+## Final v1.0 Release Package
+
+The final public release package is:
+
+- artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`;
+- release card: `docs/cards/codelewm-v1-0-final-release-2026-06-08.md`;
+- paper-demo card: `docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md`;
+- reproducibility checklist:
+  `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md`;
+- announcement draft:
+  `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md`;
+- final paper package: `docs/papers/codelewm_final_paper.tex`,
+  `docs/papers/codelewm_final_paper.pdf`, and
+  `docs/papers/codelewm_final_arxiv_source.tar.gz`.
+
+The final package preserves the same public boundary as the paper: reproducible
+research artifact, negative action-use evidence, narrow HumanEval WS-D slice,
+and no broad coding-improvement claim.
+
 ## v0.6 Publication Landing
 
 The v0.6 public artifact map is:
@@ -221,6 +240,9 @@ uv run codelewm openrouter byok-register \
 | v1.0 paper demo artifacts | fixed downstream replay artifact set; aggregate claim gate closed | `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` |
 | v1.0 final claim audit | paper-ready consolidated tables; broad coding claim closed | `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md` |
 | v1.0 final paper draft | final CodeLeWM conclusion and arXiv package metadata | `docs/papers/codelewm_final_paper.tex` |
+| v1.0 final release index | all paper/demo/benchmark/card/release surfaces | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md` |
+| v1.0 reproducibility checklist | clean-checkout paper/demo/release validation path | `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md` |
+| v1.0 announcement draft | conservative public release wording | `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md` |
 
 Public Hugging Face repositories:
 
@@ -331,7 +353,7 @@ The completed v1.1 boundary is a claim-safe diagnostic workflow:
 - v0.6 execution-rerank LLM showcase complete through #307, with a committed
   asciicast and static HTML report path.
 
-Active final release queue:
+Final release queue:
 
 - #401 tracks the v1.0 paper/demo release dependency chain.
 - #402 reconciles stale v0.6 issues and queue state.
@@ -340,13 +362,13 @@ Active final release queue:
 - #405 published the final downstream paper-demo artifacts.
 - #406 consolidated benchmark tables and the final claim audit.
 - #407 rewrote the paper around the final downstream evidence.
-- #408 publishes the final artifact index, cards, README, reproducibility
+- #408 published the final artifact index, cards, README, reproducibility
   checklist, and announcement package.
 
 Public wording cannot say CodeLeWM improves candidate patch ranking until a
 scaled downstream gate passes on at least 100 labeled examples.
 
-Live planning:
+Planning and release records:
 
 - `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`
 - `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
@@ -354,7 +376,7 @@ Live planning:
 - `docs/benchmark/VISUAL_OBSERVABILITY_ARTIFACTS_2026-05-21.md`
 - `docs/roadmap/FULL_COMPLETION.md`
 - `docs/roadmap/IMPLEMENTATION.md`
-- `docs/roadmap/NEXT_GOAL_PROMPT.md`
+- `docs/roadmap/NEXT_GOAL_PROMPT.md`, now a completion record for #401.
 
 ## Claim Boundary
 
