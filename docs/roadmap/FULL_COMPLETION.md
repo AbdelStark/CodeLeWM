@@ -38,10 +38,12 @@ public release boundary is no longer the v0.6 substrate-pivot publication
 package. The current sequence is #402 queue hygiene, #403 paper-demo contract,
 #404 one-command demo implementation, #405 final demo artifacts, #406
 benchmark tables and claim audit, #407 final paper rewrite, and #408 release
-index/cards/README/checklist/announcement. Issues #402 through #405 are now
-complete; #406 is the next active child issue. Public wording must preserve
+index/cards/README/checklist/announcement. Issues #402 through #406 are now
+complete; #407 is the next active child issue. Public wording must preserve
 the same final claim boundary: narrow HumanEval WS-D positive evidence, MBPP
-and generalization failures, and no broad coding-improvement claim.
+and generalization failures, and no broad coding-improvement claim. The #406
+claim audit lives in
+`docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`.
 
 The active final release `/goal` prompt lives in
 `docs/roadmap/NEXT_GOAL_PROMPT.md` and points at #401 plus child issues #402
@@ -106,6 +108,11 @@ Completed evidence:
 - The v0.9 data/eval repair epic #385 completed through #392; its final claim
   audit is `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`, with artifact
   links in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md`.
+- The v1.0 paper-demo stream is complete through #406. The committed final demo
+  artifact set is documented in
+  `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md`, and the
+  consolidated paper-ready claim audit is
+  `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`.
 
 Current blocker:
 
@@ -583,9 +590,10 @@ instead of creating duplicate trackers.
   diagnostic artifacts published in the v0.8 benchmark report.
 - #385 v0.9 data/eval repair: complete through #392, with final diagnostic
   evidence in `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md`.
-- #401 v1.0 paper/demo release: active; children #402 through #408 replace the
-  stale v0.6-era follow-through issues #293, #306, #308, and #309 as the final
-  publication queue.
+- #401 v1.0 paper/demo release: active; children #402 through #406 are
+  complete, and #407/#408 remain as the final paper rewrite and release
+  publication queue. This chain replaces the stale v0.6-era follow-through
+  issues #293, #306, #308, and #309.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for

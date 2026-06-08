@@ -219,6 +219,7 @@ uv run codelewm openrouter byok-register \
 | v0.9 final claim audit | HumanEval WS-D narrow positive; MBPP/generalization closed | `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` |
 | v0.9 public artifact index | checked-in v0.9 dataset/model/run/eval surfaces | `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md` |
 | v1.0 paper demo artifacts | fixed downstream replay artifact set; aggregate claim gate closed | `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` |
+| v1.0 final claim audit | paper-ready consolidated tables; broad coding claim closed | `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md` |
 
 Public Hugging Face repositories:
 
@@ -336,7 +337,7 @@ Active final release queue:
 - #403 defines the fixed downstream learned-world-model paper-demo contract.
 - #404 added the one-command downstream paper demo.
 - #405 published the final downstream paper-demo artifacts.
-- #406 consolidates benchmark tables and the final claim audit.
+- #406 consolidated benchmark tables and the final claim audit.
 - #407 rewrites the paper around the final downstream evidence.
 - #408 publishes the final artifact index, cards, README, reproducibility
   checklist, and announcement package.
