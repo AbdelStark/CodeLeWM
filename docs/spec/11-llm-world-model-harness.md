@@ -354,6 +354,113 @@ The claim gate defaults to `allowed=false` unless a benchmark report, not a demo
 report, proves the configured downstream success criteria. A demo may be
 published as workflow evidence only.
 
+## Final v1.0 Paper Demo Contract
+
+Schema: `codelewm.harness.paper_demo_report.v1`.
+
+The final v1.0 paper demo is a deterministic downstream learned-world-model
+artifact package for #401. It is not a live OpenRouter demo and it must not
+introduce a new unlabeled benchmark. The selected task source is a fixed
+public-safe paper-demo pack derived from the checked-in v0.9 WS-D benchmark
+artifacts:
+
+- HumanEval WS-D completion labels and score rows from
+  `docs/benchmark/v0_9/seed-{42,1729}/rerank/humaneval/`;
+- MBPP-Plus WS-D completion labels and score rows from
+  `docs/benchmark/v0_9/seed-{42,1729}/rerank/mbpp_plus/`;
+- parent benchmark artifacts `downstream_benchmark-f015b6696b3e29e1`
+  (HumanEval) and `downstream_benchmark-f8aaaa3b3c1eb910` (MBPP-Plus);
+- v0.9 result and artifact-index surfaces
+  `docs/benchmark/EXECUTION_V0_9_RESULTS_2026-06-07.md` and
+  `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-07.md`.
+
+The primary publication run uses both v0.9 learned checkpoints:
+
+| Seed | Run artifact | Training artifact | Checkpoint SHA-256 |
+| --- | --- | --- | --- |
+| 42 | `abdelstark/codelewm-runs/codelewm-v0-9-short-execution-20260606-69f798a-seed-42` | `training_run-992f7757f2780da4` | `c783fa0dbe5da6bd072ff0b2f2753bdbac9fe684b49bf82e70ab6a2f69d513da` |
+| 1729 | `abdelstark/codelewm-runs/codelewm-v0-9-short-execution-20260606-69f798a-seed-1729` | `training_run-91e9cf7c645379b3` | `34ebb282b284580dd123c781ae77c93cc36bbffc4eeeee9f0bd4cdf8042001eb` |
+
+Publication mode must load each checkpoint only after the checkpoint trust gate
+and parent-manifest verification against the v0.9 pass/fail execution pack
+`codelewm-passfail-execution-pack-20260606T122240Z`
+(`abdelstark/codelewm-execution-pack@v0.9.0-rc1`). A local fixture or CI replay
+mode may rebuild the aggregate report from checked-in v0.9 score rows without
+network access, but replay mode must set `score_source=replay_existing_scores`
+and must not claim a fresh checkpoint scoring run.
+
+Inputs are JSON-native and manifestable:
+
+- benchmark id: `humaneval` or `mbpp_plus`;
+- split or evaluation policy from the source WS-D artifact;
+- problem id, task prompt, before code, and scoring input metadata;
+- candidate id, LLM order rank, candidate checksum, parser/apply status, and
+  pass/fail label from the existing benchmark artifact;
+- per-candidate CodeLeWM score rows from live checkpoint scoring or replayed
+  v0.9 `completion_scores.jsonl`;
+- source manifest path, parent artifact ids, source git SHA, and secret-scan
+  status.
+
+Candidate code remains untrusted. The paper demo must not import, execute, or
+test-run candidate code. Existing pass/fail labels are treated as data from the
+checked-in WS-D artifacts. Any future re-labeling or sandbox execution must use
+the existing sandbox allowlist, disposable checkout, timeout, redaction,
+manifest, and secret-scan contract.
+
+Required baselines and metrics:
+
+- CodeLeWM score/rerank order from the learned checkpoint;
+- LLM original order;
+- random order;
+- lexical baseline;
+- no-action baseline;
+- shuffled-action baseline when emitted by the scorer;
+- retrieval-prior-only or ensemble baselines only when a verified transition
+  index produces finite retrieval-prior scores; otherwise they must be recorded
+  as `blocked` or `not_recorded`, not silently omitted;
+- pass@1, pass@5, MRR, pass count, problem count, completion count, valid
+  candidate count, and candidate parser/apply error count;
+- CodeLeWM lift over no-action and LLM-order on pass@1 and MRR, with bootstrap
+  confidence intervals when the problem count supports them.
+
+The paper-demo report must aggregate four slices:
+
+- seed 42 / HumanEval WS-D;
+- seed 42 / MBPP-Plus WS-D;
+- seed 1729 / HumanEval WS-D;
+- seed 1729 / MBPP-Plus WS-D.
+
+It must write:
+
+- `reports/paper_demo_report.json` with
+  `schema_version=codelewm.harness.paper_demo_report.v1`;
+- `reports/paper_demo_claim_gate.json` or an embedded
+  `claim_gate` object with the same information;
+- `reports/paper_demo_table.md` for paper-ready Markdown tables;
+- `demo.html`, a self-contained HTML view of rankings, baselines, slice
+  verdicts, and artifact lineage;
+- `manifest.json` with parent artifacts for every source rerank report,
+  checkpoint run, and paper-demo output;
+- `reports/secret_scan_report.json` with `ok=true` before publication.
+
+The claim gate is intentionally stricter than a demo success flag. It may open
+only when all of the following hold across both seeds and both benchmarks:
+
+- CodeLeWM pass@1 is strictly above no-action and LLM-order;
+- the lift confidence interval over no-action and LLM-order excludes zero where
+  enough problems exist to compute it;
+- no required baseline is missing without a typed `blocked` reason;
+- manifest verification and secret scans pass;
+- the report explicitly approves the public wording.
+
+If any slice is mixed or saturated, the aggregate gate must close with typed
+reasons. The current v0.9 evidence is expected to close the aggregate gate:
+HumanEval WS-D is positive, but MBPP-Plus is saturated with CodeLeWM,
+no-action, and lexical all at pass@1 `1.0000`. Allowed wording may cite the
+narrow HumanEval WS-D result and the reproducible demo package. It must not say
+CodeLeWM generally improves coding, improves MBPP-Plus, or clears a broad
+downstream usefulness gate.
+
 ## Downstream Benchmark
 
 Schema: `codelewm.downstream_rerank_benchmark.v1`.
