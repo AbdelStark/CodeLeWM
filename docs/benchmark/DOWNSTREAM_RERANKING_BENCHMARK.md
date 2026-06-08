@@ -1,6 +1,6 @@
 # Downstream Reranking Benchmark
 
-Last updated: 2026-05-21
+Last updated: 2026-06-08
 
 Issue: #192. Parent tracker: #184.
 
@@ -116,6 +116,36 @@ A scaled downstream claim needs:
 - required baselines: LLM order, random, lexical, no-action, CodeLeWM,
   retrieval prior, and score ensemble;
 - runs from downloaded Hugging Face artifacts, not a job working directory.
+
+## Hard Anti-Saturation Follow-Up
+
+RFC-0016 defines the next benchmark profile:
+`anti_saturation_semantic_v1`. This profile exists because the v1.0 paper-demo
+replay showed the core blocker: MBPP-Plus WS-D is saturated, so CodeLeWM cannot
+show added value over no-action or lexical controls on that slice.
+
+The harder benchmark must write
+`codelewm.downstream_anti_saturation_report.v1` before CodeLeWM scoring. A
+headline slice is eligible only when:
+
+- locked test `problem_count >= 100`;
+- candidate pools contain `6` to `12` candidates;
+- no-action pass@1 is below `0.85`;
+- lexical pass@1 is below `0.85`;
+- LLM-order pass@1 is below `0.90`;
+- at least `70%` of problems contain two or more failing hard-negative classes;
+- source/license, split-leakage, manifest, checkpoint-trust, and secret-scan
+  gates pass.
+
+Required hard-negative classes include no-action baits, partial fixes,
+wrong-symbol or wrong-branch fixes, over-broad fixes, deterministic semantic
+mutants, and LLM-generated valid candidates. Parser/apply failures are retained
+for accounting but cannot open a positive claim.
+
+The hard benchmark can support a stronger claim only if CodeLeWM beats
+no-action, lexical, and LLM-order on pass@1 and MRR with bootstrap confidence
+intervals over all three lifts excluding zero. If no-action or lexical are
+near-perfect, that slice is marked saturated and remains diagnostic.
 
 ## Claim Gate
 

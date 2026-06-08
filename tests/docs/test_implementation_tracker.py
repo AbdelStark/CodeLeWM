@@ -47,6 +47,7 @@ class ImplementationTrackerStructureTest(unittest.TestCase):
             "## Milestone: v1.2",
             "## Milestone: v1.3",
             "## Milestone: v1.4",
+            "## Milestone: v1.5",
             "## Milestone: v0.9",
             "## Tracking Issues",
             "## Cross-Cutting Dependencies",
@@ -57,7 +58,7 @@ class ImplementationTrackerStructureTest(unittest.TestCase):
     def test_tracker_milestone_tables_have_canonical_header(self) -> None:
         header = "| # | Title | Area | Priority | Effort | RFC | Status |"
 
-        self.assertEqual(self.text.count(header), 7, "seven milestone tables expected")
+        self.assertEqual(self.text.count(header), 8, "eight milestone tables expected")
 
 
 class ImplementationTrackerContentTest(unittest.TestCase):

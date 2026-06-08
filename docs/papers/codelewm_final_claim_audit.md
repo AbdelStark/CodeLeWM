@@ -37,12 +37,17 @@ old audit remains historical evidence for the two-substrate draft.
 ## Structural Claims
 
 The final paper is structured around three research questions, a PGFPlots
-downstream replay figure, explicit lessons, and a concrete outlook section.
-Those sections are permitted only insofar as they preserve the claim boundary
-below:
+downstream replay figure, explicit lessons, a WS-D benchmark definition, and a
+concrete outlook section. Those sections are permitted only insofar as they
+preserve the claim boundary below:
 
 - the research questions answer RQ1 negatively, RQ2 diagnostically, and RQ3 as
   a partial/narrow downstream result;
+- WS-D is described as a deterministic mutation-distractor reranking benchmark
+  over checked-in v0.9 labels and score rows, not as a live or freshly scored
+  benchmark;
+- the v1.0 replay coverage is limited to 128 problem-slice rows and 768
+  candidate completions across the four seed/benchmark slices;
 - the figure visualizes the v1.0 paper-demo replay and must show MBPP-Plus
   saturation by CodeLeWM, no-action, and lexical controls;
 - the outlook lists future gates that would be required to open a stronger

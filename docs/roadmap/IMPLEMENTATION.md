@@ -9,11 +9,13 @@ release lifecycle.
 - Last updated: 2026-06-08
 - Spec corpus: `docs/spec/00-overview.md` through `docs/spec/10-glossary.md`
 - Post-v0.2 spec: `docs/spec/11-llm-world-model-harness.md`
-- RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0013-*.md`
+- RFCs: `docs/rfcs/RFC-0001-*.md` through `docs/rfcs/RFC-0016-*.md`
 - Full completion roadmap: `docs/roadmap/FULL_COMPLETION.md`
 - Model observability/TUI roadmap:
   `docs/roadmap/MODEL_OBSERVABILITY_TUI_ROADMAP.md`
 - Final v1.0 completion record: `docs/roadmap/NEXT_GOAL_PROMPT.md`
+- Hard downstream benchmark roadmap:
+  `docs/roadmap/HARD_DOWNSTREAM_RERANKING_BENCHMARK.md`
 
 ## How This Tracker Is Maintained
 
@@ -209,6 +211,22 @@ claims by itself.
 | #256 | [Tracking] production cleanup and optimization pass | core/docs | p1 | m | RFC-0012 | Closed |
 | #257 | core: fix audit-backed cleanup findings | core/evaluation/observability/docs | p1 | m | RFC-0009 | Closed |
 
+## Milestone: v1.5
+
+Hard anti-saturation downstream reranking benchmark: a follow-up benchmark
+designed to test whether CodeLeWM adds ranking value when no-action, lexical,
+and LLM-order controls are not already saturated.
+
+| # | Title | Area | Priority | Effort | RFC | Status |
+|---|-------|------|----------|--------|-----|--------|
+| #417 | [TRACKER] v1.5 hard anti-saturation downstream reranking benchmark | evaluation/data/harness/results | p1 | l | RFC-0016 | Open |
+| #418 | docs: lock hard downstream benchmark spec and tracker | docs/evaluation | p1 | s | RFC-0016 | Open |
+| #419 | data: add anti-saturation benchmark schema and readiness diagnostics | data/evaluation/observability | p1 | m | RFC-0016 | Open |
+| #420 | data: build public-safe hard-negative candidate pools | data/security/evaluation | p1 | l | RFC-0016 | Open |
+| #421 | harness: ingest LLM candidate packs into the hard benchmark | harness/evaluation/security | p1 | m | RFC-0016 | Open |
+| #422 | eval: score hard benchmark baselines and CodeLeWM claim gate | evaluation/model/harness | p1 | l | RFC-0016 | Open |
+| #423 | results: publish hard benchmark artifacts and claim audit | results/release/evaluation | p1 | m | RFC-0016 | Open |
+
 ## Milestone: v0.9
 
 Data/eval repair for cross-benchmark correctness claims. This milestone is
@@ -256,7 +274,8 @@ publication package; #224 [Tracking] v1.3 meaningful LLM plus world-model
 harness demo; #235 [Tracking] v1.4 visual model observability and TUI harness;
 #256 [Tracking] production cleanup and optimization pass; #364 [Tracking] v0.8
 execution-trace world-model results; #385 [Tracking] v0.9 data/eval repair for
-cross-benchmark correctness claims.
+cross-benchmark correctness claims; #417 [Tracking] v1.5 hard
+anti-saturation downstream reranking benchmark.
 
 ## Cross-Cutting Dependencies
 
@@ -366,6 +385,9 @@ cross-benchmark correctness claims.
   supersedes the stale v0.6-era #293/#306/#308/#309 queue and preserves the
   v0.9 boundary: HumanEval WS-D is a narrow positive slice, while
   MBPP/generalization and broad coding-improvement claims remain closed.
+- #417/#418-#423 define the v1.5 hard anti-saturation downstream benchmark.
+  This stream tests whether CodeLeWM adds value only after no-action, lexical,
+  and LLM-order controls are proven below saturation.
 
 ## Cross-Reference Map
 

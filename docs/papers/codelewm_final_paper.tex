@@ -54,17 +54,18 @@ ranking. The main result is deliberately mixed: the original commit-edit
 action-use hypothesis is negative, with v0.2 text-action retrieval at Recall@1
 0.263 and MRR 0.370 versus no-action Recall@1 0.441 and MRR 0.533, while the
 execution-trace substrate yields healthier diagnostics and a narrow downstream
-HumanEval WS-D replay where CodeLeWM reaches pass@1 0.9787 on two seeds and
-beats no-action by +10.64 and +8.51 points. The aggregate public model-quality
-claim remains closed because MBPP-Plus is saturated, with CodeLeWM, no-action,
-and lexical controls all at pass@1 1.0000; broad semantic surprise has no
-scorable semantic pairs; representation probes do not beat controls; and the
-final downstream rows do not expose a standalone \code{p\_pass} score key. We
-therefore present \modelname{} as a reproducible negative and diagnostic study
-with one narrow positive slice, not as evidence that the model generally
-improves coding. The paper's contribution is the artifact and the lesson:
-code-world-model claims need no-action, lexical, manifest, and claim-gate
-discipline because many apparent wins vanish under those controls.
+HumanEval WS-D replay, using a deterministic mutation-distractor reranking pack,
+in which CodeLeWM reaches pass@1 0.9787 on two seeds and beats no-action by
++10.64 and +8.51 points. The aggregate public model-quality claim remains
+closed because MBPP-Plus is saturated, with CodeLeWM, no-action, and lexical
+controls all at pass@1 1.0000; broad semantic surprise has no scorable semantic
+pairs; representation probes do not beat controls; and the final downstream
+rows do not expose a standalone \code{p\_pass} score key. We therefore present
+\modelname{} as a reproducible negative and diagnostic study with one narrow
+positive slice, not as evidence that the model generally improves coding. The
+paper's contribution is the artifact and the lesson: code-world-model claims
+need no-action, lexical, manifest, and claim-gate discipline because many
+apparent wins vanish under those controls.
 \end{abstract}
 
 \section{Introduction}
@@ -96,11 +97,10 @@ strongest slice. The early commit-message-conditioned substrate fails the
 action-use gate. A later execution-trace substrate repairs collapse and
 produces useful diagnostics. The final v0.9/v1.0 downstream replay shows a
 narrow HumanEval WS-D win but closes the aggregate claim because MBPP-Plus is
-solved by controls. This is a serious publishable result if framed correctly:
-not ``we built a coding model that works,'' but ``we built a reproducible code
-world-model artifact, found where the hypothesis fails, isolated a narrow
-positive slice, and turned the failure modes into concrete next research
-requirements.''
+solved by controls. We frame the result as an artifact-backed negative study:
+the system makes the tested hypothesis falsifiable, identifies where the model
+fails, isolates a narrow positive slice, and turns the failure modes into
+concrete next research requirements.
 
 \paragraph{Research questions.}
 \begin{enumerate}[leftmargin=1.5em]
@@ -145,9 +145,14 @@ does not import, execute, or test-run candidate patches. Execution labels used
 for training or benchmark construction are produced in bounded sandboxed data
 build steps and then consumed as recorded artifacts.
 
-The final paper-demo contract is deterministic. It replays checked-in v0.9
-WS-D completion labels and score rows for four slices: seed 42 and seed 1729
-crossed with HumanEval WS-D and MBPP-Plus WS-D. Replay mode records
+The final paper-demo contract is deterministic. WS-D denotes the
+mutation-distractor reranking benchmark: for each problem, a known-correct
+reference solution is paired with lexically similar single-point AST mutants,
+then labeled by the existing sandbox pipeline and shuffled so reranking has
+pass/fail headroom. The v1.0 replay consumes checked-in v0.9 WS-D completion
+labels and score rows for four slices: seed 42 and seed 1729 crossed with
+HumanEval WS-D and MBPP-Plus WS-D. It covers 128 problem-slice rows and 768
+candidate completions. Replay mode records
 \code{score\_source=replay\_existing\_scores}; it is not a fresh checkpoint
 scoring run and not a live OpenRouter demo. The committed artifact id is
 \code{demo\_report-e6fc06c328eed245}.
@@ -219,8 +224,9 @@ aligned pairs in the final pack.
 
 \subsection{RQ3: final downstream replay}
 
-The final paper-demo replay is the central downstream result. It is derived
-from
+The final paper-demo replay is the central downstream result. It is a
+clean-checkout replay over persisted v0.9 score rows, not a new scoring run,
+and is derived from
 \artifact{docs/benchmark/v1_0/paper_demo/reports/paper_demo_report.json}
 and summarized in Figure~\ref{fig:downstream} and Table~\ref{tab:demo}.
 
@@ -399,8 +405,8 @@ The final release reproducibility checklist is
 \section{Outlook: What Would Make the Next Claim Stronger?}
 
 The next credible positive claim should be designed around gates that would
-change the conclusion, not around prettier demos. We see five concrete
-directions.
+change the conclusion, not around a more polished demonstration surface. We see
+five concrete directions.
 
 \paragraph{Action-discriminative data.}
 The training data should contain same-before and near-before candidate sets

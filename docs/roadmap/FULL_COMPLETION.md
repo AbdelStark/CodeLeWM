@@ -46,6 +46,13 @@ failures, and no broad coding-improvement claim. The #406 claim audit lives in
 draft lives in `docs/papers/codelewm_final_paper.tex`, and the #408 release
 package lives in `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`.
 
+Update 2026-06-08 follow-up: tracker #417 and child issues #418 through #423
+define the next hard anti-saturation downstream benchmark. This is not a
+positive claim; it is the planned falsification test for the v1.0 blocker. The
+benchmark must reject or quarantine slices where no-action, lexical, or
+LLM-order controls are already saturated before any CodeLeWM usefulness claim
+can open.
+
 The final release prompt in `docs/roadmap/NEXT_GOAL_PROMPT.md` is now a
 completion record for #401 and child issues #402 through #408, not an active
 queue. The v0.2 HF/ml-intern prompt in
@@ -55,6 +62,8 @@ completed #172 run. The v0.2 research intervention spec lives in
 publication roadmap lives in `docs/roadmap/POST_V0_2_SHOWCASE_ROADMAP.md`.
 The meaningful harness demo roadmap lives in
 `docs/roadmap/MEANINGFUL_HARNESS_DEMO.md`.
+The hard downstream benchmark roadmap lives in
+`docs/roadmap/HARD_DOWNSTREAM_RERANKING_BENCHMARK.md`.
 
 ## Project Status
 
@@ -157,6 +166,10 @@ Current blocker:
   and published the final gate-suite claim audit (#392). The older #178,
   #209/#210/#211, and #212 queue is closed in GitHub. Any future positive-model
   claim requires a new tracker and falsifiable hypothesis.
+- The v1.5 hard anti-saturation downstream benchmark tracker #417 is open with
+  child issues #418 through #423. It is the current follow-up path for testing
+  whether CodeLeWM can beat no-action, lexical, and LLM-order on non-saturated
+  public-safe reranking slices.
 
 Current landed CLI commands:
 
@@ -470,6 +483,30 @@ the model easier to inspect, but they still cannot prove semantic latent axes or
 coding usefulness without the scaled representation and downstream benchmark
 gates.
 
+### Phase 14: Hard Anti-Saturation Downstream Benchmark
+
+Status: open follow-up under tracker #417.
+
+Goal: build a harder downstream reranking benchmark that deliberately excludes
+headline slices where no-action, lexical, or LLM-order baselines are already
+near-perfect. This is the benchmark needed to decide whether CodeLeWM can add
+value beyond simple controls after the v1.0 MBPP-Plus saturation blocker.
+
+Deliverables:
+
+- spec, roadmap, and tracker lock (#418)
+- anti-saturation benchmark schema/config and readiness diagnostics (#419)
+- public-safe hard-negative candidate pools (#420)
+- LLM candidate-pack ingestion under the existing redaction/security contract
+  (#421)
+- baseline and CodeLeWM scoring plus claim gate (#422)
+- artifact publication, claim audit, and paper addendum (#423)
+
+Claim boundary: #417 can open a stronger downstream claim only if CodeLeWM beats
+no-action, lexical, and LLM-order on pass@1 and MRR, with confidence intervals
+excluding zero, on locked non-saturated slices. Saturated slices remain
+diagnostic blockers.
+
 ## Ordered Backlog
 
 Keep this table in implementation order and update it when issue scope changes.
@@ -519,6 +556,13 @@ Keep this table in implementation order and update it when issue scope changes.
 | 41 | #390 | v0.9 eval: enforce probe-label coverage and representation gates | v0.9 Data/Eval Repair | complete |
 | 42 | #391 | v0.9 train: guarded 2-seed HF Jobs run after data/eval preflight | v0.9 Data/Eval Repair | complete |
 | 43 | #392 | v0.9 eval/report: run full gate suite and publish claim audit | v0.9 Data/Eval Repair | complete |
+| 44 | #417 | [TRACKER] v1.5 hard anti-saturation downstream reranking benchmark | Hard Downstream Benchmark | open |
+| 45 | #418 | docs: lock hard downstream benchmark spec and tracker | Hard Downstream Benchmark | open |
+| 46 | #419 | data: add anti-saturation benchmark schema and readiness diagnostics | Hard Downstream Benchmark | open |
+| 47 | #420 | data: build public-safe hard-negative candidate pools | Hard Downstream Benchmark | open |
+| 48 | #421 | harness: ingest LLM candidate packs into the hard benchmark | Hard Downstream Benchmark | open |
+| 49 | #422 | eval: score hard benchmark baselines and CodeLeWM claim gate | Hard Downstream Benchmark | open |
+| 50 | #423 | results: publish hard benchmark artifacts and claim audit | Hard Downstream Benchmark | open |
 
 Completed backlog base:
 
@@ -602,6 +646,8 @@ instead of creating duplicate trackers.
 - #401 v1.0 paper/demo release: complete; children #402 through #408 are
   complete. This chain replaces the stale v0.6-era follow-through issues #293,
   #306, #308, and #309.
+- #417 hard anti-saturation downstream benchmark: open; children #418 through
+  #423 define the follow-up benchmark and claim-audit path.
 
 Close a tracking issue only when every child issue in its subsystem is complete
 or explicitly superseded and the release checklist no longer lists a blocker for
@@ -633,6 +679,9 @@ that subsystem.
 - #256/#257 track the audit-backed production cleanup pass. The first scoped
   slice fixes concrete dead-code and numeric-warning findings while preserving
   the legacy compatibility boundary.
+- #417 is open because current v1.0 downstream evidence is mixed: HumanEval
+  WS-D is positive, but MBPP-Plus is saturated. Until #417 passes, no broad
+  downstream coding-usefulness claim is allowed.
 - HF repositories are public diagnostic artifact repositories; the current
   evidence boundary still does not support public positive action-conditioning
   claims.
