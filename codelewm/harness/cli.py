@@ -339,6 +339,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     execution_demo.add_argument("--json", action="store_true")
     execution_demo.set_defaults(func=_execution_rerank_demo_command)
+    paper_demo = subparsers.add_parser(
+        "paper-demo",
+        help="assemble the deterministic v1.0 downstream paper-demo artifact set",
+    )
+    paper_demo.add_argument(
+        "--source-root",
+        type=Path,
+        default=Path("."),
+        help="repository root containing docs/benchmark/v0_9",
+    )
+    paper_demo.add_argument(
+        "--out",
+        type=Path,
+        default=Path(".artifacts/paper-demo"),
+        help="paper-demo artifact directory",
+    )
+    paper_demo.add_argument("--overwrite", action="store_true")
+    paper_demo.add_argument("--json", action="store_true")
+    paper_demo.set_defaults(func=_paper_demo_command)
     execution_tui = subparsers.add_parser(
         "execution-rerank-tui",
         help="open a Textual TUI for an existing execution-rerank tour",
@@ -1994,6 +2013,66 @@ def _execution_rerank_demo_command(args: argparse.Namespace) -> int:
     print(f"html: {args.out / result.html_path}")
     if result.html_export_path is not None:
         print(f"html_export: {result.html_export_path}")
+    return 0
+
+
+def _paper_demo_command(args: argparse.Namespace) -> int:
+    try:
+        from codelewm.harness.paper_demo import (
+            PaperDemoError,
+            render_paper_demo_terminal,
+            run_paper_demo,
+        )
+
+        command = [
+            "codelewm",
+            "paper-demo",
+            "--source-root",
+            str(args.source_root),
+            "--out",
+            str(args.out),
+        ]
+        if args.overwrite:
+            command.append("--overwrite")
+        if args.json:
+            command.append("--json")
+        result = run_paper_demo(
+            source_root=args.source_root,
+            out=args.out,
+            overwrite=args.overwrite,
+            command=tuple(command),
+        )
+    except (PaperDemoError, ArtifactManifestError, OSError, json.JSONDecodeError) as exc:
+        error = ScoreError(
+            f"paper demo failed: {exc}",
+            error_type="paper_demo_error",
+            remediation="inspect the v0.9 source artifacts and choose a clean output directory",
+            artifact=str(args.out),
+            caused_by=f"{exc.__class__.__name__}: {exc}",
+        )
+        _emit_error(args, error, json_output=args.json)
+        return 2
+
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0
+
+    report = json.loads((args.out / result.report_path).read_text(encoding="utf-8"))
+    print(render_paper_demo_terminal(report))
+    print(f"artifact_manifest: {args.out / result.artifact_manifest_path}")
+    print(f"paper_demo_report: {args.out / result.report_path}")
+    print(f"claim_gate: {args.out / result.claim_gate_path}")
+    print(f"paper_table: {args.out / result.table_path}")
+    print(f"timeline: {args.out / result.timeline_path}")
+    print(f"html: {args.out / result.html_path}")
+    if result.parent_manifest_paths:
+        joined = " ".join(
+            f"--parent-manifest {path}" for path in result.parent_manifest_paths
+        )
+        print(
+            "manifest_verify: "
+            f"codelewm manifest verify --manifest {args.out / result.artifact_manifest_path} {joined}"
+        )
     return 0
 
 

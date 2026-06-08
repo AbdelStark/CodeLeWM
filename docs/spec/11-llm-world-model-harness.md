@@ -443,6 +443,14 @@ It must write:
   checkpoint run, and paper-demo output;
 - `reports/secret_scan_report.json` with `ok=true` before publication.
 
+Clean-checkout replay mode may keep `manifest.json` parent artifacts limited
+to the tracked source rerank report manifests so `codelewm manifest verify`
+can run without downloaded checkpoint files. In that mode, checkpoint run
+artifacts, training artifact ids, and checkpoint SHA-256 values must still be
+recorded in `learned_checkpoint_lineage`. Publication mode that bundles or
+re-downloads the checkpoint parents must re-run the checkpoint trust and parent
+manifest gates before treating the artifact set as publication evidence.
+
 The claim gate is intentionally stricter than a demo success flag. It may open
 only when all of the following hold across both seeds and both benchmarks:
 
