@@ -30,6 +30,9 @@ old audit remains historical evidence for the two-substrate draft.
 | v1.0 HumanEval WS-D no-action pass@1 | 0.8723 / 0.8936 | `paper_demo_report.json` |
 | v1.0 HumanEval WS-D lift over no-action | +10.64 / +8.51 pts | `paper_demo_report.json` |
 | v1.0 HumanEval WS-D lift CI | [2.13, 21.28] / [2.13, 17.02] | `paper_demo_report.json` |
+| HumanEval WS-D shuffled-action pass@1 | 0.8936 / 0.9149 | `SHUFFLED_ACTION_CONTROL_2026-06-09.md` |
+| HumanEval WS-D lift over shuffled-action | +8.51 / +6.38 pts | `SHUFFLED_ACTION_CONTROL_2026-06-09.md` |
+| HumanEval WS-D lift-over-shuffled CI (includes zero) | [0.00, 19.15] / [0.00, 14.89] | `SHUFFLED_ACTION_CONTROL_2026-06-09.md` |
 | v1.0 MBPP-Plus CodeLeWM/no-action/lexical pass@1 | 1.0000 / 1.0000 / 1.0000 | `paper_demo_report.json` |
 | v1.0 MBPP-Plus lift over no-action | +0.00 pts on both seeds | `paper_demo_report.json` |
 | v1.0 paper-demo artifact id | `demo_report-e6fc06c328eed245` | `manifest.json` |
@@ -43,6 +46,9 @@ preserve the claim boundary below:
 
 - the research questions answer RQ1 negatively, RQ2 diagnostically, and RQ3 as
   a partial/narrow downstream result;
+- the HumanEval WS-D slice is reported against the strongest non-trivial control,
+  shuffled-action, whose 95% lift CI includes zero, so the slice is described as
+  suggestive and non-aggregated, not as a robust effect;
 - WS-D is described as a deterministic mutation-distractor reranking benchmark
   over checked-in v0.9 labels and score rows, not as a live or freshly scored
   benchmark;
