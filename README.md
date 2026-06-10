@@ -6,6 +6,12 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge">
   <img alt="Hugging Face artifacts" src="https://img.shields.io/badge/Hugging%20Face-public%20artifacts-FFD21E?style=for-the-badge">
   <img alt="Claim boundary" src="https://img.shields.io/badge/claims-negative%20diagnostic-111827?style=for-the-badge">
+  <a href="https://zenodo.org/records/20630120">
+    <img alt="Paper DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.20630120.svg">
+  </a>
+  <a href="docs/papers/codelewm_final_paper.pdf">
+    <img alt="Companion paper PDF" src="https://img.shields.io/badge/paper-PDF-B31B1B?style=for-the-badge">
+  </a>
 </p>
 
 CodeLeWM is a Python ML research harness for learning latent transition models
