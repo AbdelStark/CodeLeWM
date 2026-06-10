@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+DEFAULT_CACHE_DIR="${CODELEWM_EXECUTION_RERANK_CHECKPOINT_CACHE_DIR:-.artifacts/cache/codelewm-execution-rerank}"
+DEFAULT_REPO_ID="${CODELEWM_EXECUTION_RERANK_CHECKPOINT_REPO_ID:-abdelstark/codelewm-runs}"
+DEFAULT_REPO_TYPE="${CODELEWM_EXECUTION_RERANK_CHECKPOINT_REPO_TYPE:-dataset}"
+DEFAULT_RUN_PATH="${CODELEWM_EXECUTION_RERANK_CHECKPOINT_RUN_PATH:-runs/codelewm-v0-6-execution-20260530-af1a114-seed-42}"
+DEFAULT_CHECKPOINT_REL="${CODELEWM_EXECUTION_RERANK_CHECKPOINT_REL:-checkpoints/last.pt}"
+DEFAULT_SCENARIO="${CODELEWM_EXECUTION_RERANK_SCENARIO:-execution-rerank-mbpp}"
+DEFAULT_TOUR="${CODELEWM_EXECUTION_RERANK_TOUR:-5}"
+DEFAULT_OUT="${CODELEWM_EXECUTION_RERANK_OUT:-.artifacts/codelewm-execution-rerank-demo/run}"
+DEFAULT_MAX_CANDIDATES="${CODELEWM_EXECUTION_RERANK_MAX_CANDIDATES:-2}"
+DEFAULT_HTML_PATH="${DEFAULT_OUT}/demo.html"
+
+CACHE_DIR="$DEFAULT_CACHE_DIR"
+REPO_ID="$DEFAULT_REPO_ID"
+REPO_TYPE="$DEFAULT_REPO_TYPE"
+RUN_PATH="$DEFAULT_RUN_PATH"
+CHECKPOINT_REL="$DEFAULT_CHECKPOINT_REL"
+SCENARIO="$DEFAULT_SCENARIO"
+TOUR="$DEFAULT_TOUR"
+OUT_DIR="$DEFAULT_OUT"
+HTML_PATH="$DEFAULT_HTML_PATH"
+MAX_CANDIDATES="$DEFAULT_MAX_CANDIDATES"
+DRY_RUN="${CODELEWM_LLM_DRY_RUN:-1}"
+FORCE_DOWNLOAD=0
+OFFLINE=0
+HTML_EXPLICIT=0
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/codelewm-execution-rerank-demo [OPTIONS] [-- EXTRA_ARGS...]
+
+Runs the v0.6 execution rerank tour demo end-to-end with a simple checkpoint
+file cache.
+
+Options:
+  --cache-dir PATH          Directory to cache downloaded run artifacts
+                            (default: .artifacts/cache/codelewm-execution-rerank)
+  --repo-id REPO            HF repo id (default: abdelstark/codelewm-runs)
+  --repo-type TYPE          HF repo type (default: dataset)
+  --run-path PATH           Run artifact path inside repo
+                            (default: runs/codelewm-v0-6-execution-20260530-af1a114-seed-42)
+  --checkpoint-rel PATH     Relative checkpoint path inside run path
+                            (default: checkpoints/last.pt)
+  --scenario ID             Demo scenario id (default: execution-rerank-mbpp)
+  --tour N                  Problem count for the execution-rerank tour (default: 5)
+  --out PATH                Output artifact directory
+                            (default: .artifacts/codelewm-execution-rerank-demo/run)
+  --html PATH               Optional custom HTML output path
+  --max-candidates N        OpenRouter candidate count (default: 2)
+  --live                    Set CODELEWM_LLM_DRY_RUN=0 for live provider calls
+  --dry-run                 Set CODELEWM_LLM_DRY_RUN=1 for fixture mode
+  --force-refresh           Delete and redownload cached checkpoint
+  --offline                 Fail if checkpoint not already cached
+  --help, -h                Show this message
+
+Extra arguments after -- are passed through to `scripts/llm-world-model-demo`.
+
+Environment overrides are also respected:
+  CODELEWM_EXECUTION_RERANK_CHECKPOINT_CACHE_DIR, ... etc.
+EOF
+}
+
+extra_args=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --cache-dir)
+      CACHE_DIR="$2"
+      shift 2
+      ;;
+    --repo-id)
+      REPO_ID="$2"
+      shift 2
+      ;;
+    --repo-type)
+      REPO_TYPE="$2"
+      shift 2
+      ;;
+    --run-path)
+      RUN_PATH="$2"
+      shift 2
+      ;;
+    --checkpoint-rel)
+      CHECKPOINT_REL="$2"
+      shift 2
+      ;;
+    --scenario)
+      SCENARIO="$2"
+      shift 2
+      ;;
+    --tour)
+      TOUR="$2"
+      shift 2
+      ;;
+    --out)
+      OUT_DIR="$2"
+      shift 2
+      ;;
+    --html)
+      HTML_PATH="$2"
+      HTML_EXPLICIT=1
+      shift 2
+      ;;
+    --max-candidates)
+      MAX_CANDIDATES="$2"
+      shift 2
+      ;;
+    --live)
+      DRY_RUN=0
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    --force-refresh)
+      FORCE_DOWNLOAD=1
+      shift
+      ;;
+    --offline)
+      OFFLINE=1
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      extra_args=("$@")
+      break
+      ;;
+    *)
+      echo "unknown option: $1" >&2
+      usage
+      exit 2
+      ;;
+  esac
+done
+
+if [[ ! "$DRY_RUN" =~ ^[01]$ ]]; then
+  echo "CODELEWM_LLM_DRY_RUN must be 0 or 1: got $DRY_RUN" >&2
+  exit 2
+fi
+
+if [[ ! "$TOUR" =~ ^[1-9][0-9]*$ ]]; then
+  echo "--tour must be a positive integer, got: $TOUR" >&2
+  exit 2
+fi
+
+if [[ ! "$MAX_CANDIDATES" =~ ^[1-9][0-9]*$ ]]; then
+  echo "--max-candidates must be a positive integer, got: $MAX_CANDIDATES" >&2
+  exit 2
+fi
+
+if [[ "$FORCE_DOWNLOAD" == "1" ]]; then
+  rm -rf "$CACHE_DIR/$RUN_PATH"
+fi
+
+checkpoint_cache_path="$CACHE_DIR/$RUN_PATH/$CHECKPOINT_REL"
+if [[ -f "$checkpoint_cache_path" ]]; then
+  printf '[cache] hit: %s\n' "$checkpoint_cache_path"
+else
+  if [[ "$OFFLINE" == "1" ]]; then
+    echo "checkpoint cache miss and --offline was set: $checkpoint_cache_path" >&2
+    exit 2
+  fi
+  printf '[cache] miss: downloading checkpoint from HF: %s (%s)\n' "$REPO_ID" "$RUN_PATH"
+  if ! command -v hf >/dev/null 2>&1; then
+    echo "hf CLI is required to download the checkpoint but is not installed" >&2
+    exit 2
+  fi
+  mkdir -p "$CACHE_DIR"
+  hf download "$REPO_ID" \
+    --repo-type "$REPO_TYPE" \
+    --local-dir "$CACHE_DIR" \
+    --include "${RUN_PATH}/**" \
+    >/tmp/codelewm_execution_rerank_download.log 2>&1 || {
+      echo "checkpoint download failed. Full log: /tmp/codelewm_execution_rerank_download.log" >&2
+      cat /tmp/codelewm_execution_rerank_download.log >&2
+      exit 2
+    }
+  if [[ ! -f "$checkpoint_cache_path" ]]; then
+    echo "download finished but checkpoint is still missing: $checkpoint_cache_path" >&2
+    exit 2
+  fi
+fi
+
+if [[ ! -d "$(dirname "$checkpoint_cache_path")" ]]; then
+  echo "checkpoint directory not available: $(dirname "$checkpoint_cache_path")" >&2
+  exit 2
+fi
+
+mkdir -p "$OUT_DIR"
+if [[ "$HTML_EXPLICIT" == "0" ]]; then
+  HTML_PATH="$OUT_DIR/demo.html"
+fi
+
+printf 'Using checkpoint: %s\n' "$checkpoint_cache_path"
+printf 'Running demo: scenario=%s tour=%s dry_run=%s out=%s\n' "$SCENARIO" "$TOUR" "$DRY_RUN" "$OUT_DIR"
+
+CODELEWM_LLM_DRY_RUN="$DRY_RUN" \
+CODELEWM_LLM_MAX_CANDIDATES="$MAX_CANDIDATES" \
+uv run scripts/llm-world-model-demo \
+  --scenario "$SCENARIO" \
+  --tour "$TOUR" \
+  --checkpoint "$checkpoint_cache_path" \
+  --out "$OUT_DIR" \
+  --html "$HTML_PATH" \
+  ${extra_args[@]+"${extra_args[@]}"}
