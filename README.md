@@ -7,7 +7,7 @@
   <img alt="Hugging Face artifacts" src="https://img.shields.io/badge/Hugging%20Face-public%20artifacts-FFD21E?style=for-the-badge">
   <img alt="Claim boundary" src="https://img.shields.io/badge/claims-negative%20diagnostic-111827?style=for-the-badge">
   <a href="https://zenodo.org/records/20630120">
-    <img alt="Paper DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.20630120.svg">
+    <img alt="Paper DOI" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20630120-2D9CDB?style=for-the-badge&logo=zenodo&logoColor=white">
   </a>
   <a href="docs/papers/codelewm_final_paper.pdf">
     <img alt="Companion paper PDF" src="https://img.shields.io/badge/paper-PDF-B31B1B?style=for-the-badge">
