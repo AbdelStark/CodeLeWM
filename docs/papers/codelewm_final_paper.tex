@@ -15,6 +15,7 @@
 \usepackage{hyperref}
 
 \pgfplotsset{compat=1.18}
+\setlength{\emergencystretch}{2em}
 \hypersetup{
   colorlinks=true,
   linkcolor=blue!50!black,
@@ -49,38 +50,40 @@
 We study whether a JEPA-style latent code world-model can rerank candidate
 program edits without executing them, scoring candidates by predicted latent
 transitions rather than by generating patches. We release \modelname{}, a
-manifest-backed research artifact---a $\sim$45M-parameter transition model with
-an EMA target encoder and LeJEPA-family SIGReg anti-collapse---and evaluate it
-under a \emph{pre-registered}, control-first claim gate: the acceptance
+manifest-backed research artifact: a $\sim$45M-parameter transition model with
+an EMA target encoder and LeJEPA-family SIGReg anti-collapse. We evaluate it
+under a \emph{configuration-bound}, control-first claim gate: the acceptance
 thresholds and the no-action, lexical, and shuffled-action controls are fixed in
-the training configuration before any run, and a machine-readable gate decides
-which claims may open. The outcome is one falsified hypothesis, healthy
-diagnostics, and a single narrow downstream win that does not open an aggregate
-claim. The original commit-edit action-use hypothesis is negative: on $1{,}000$
-held-out retrieval examples, commit-edit text-action ranking (Recall@1 $0.263$,
-MRR $0.370$) loses to a no-action baseline ($0.441$, $0.533$). A separate
-execution-trace substrate is healthier in diagnosis---execution retrieval beats
-every control (Recall@1 $0.254$/$0.273$ vs.\ all controls below $0.024$) and
-single-point mutation surprise reaches AUC $1.0$ over $260$ scored pairs---but
-these are training-health signals, not downstream utility. The only open
-downstream slice is HumanEval WS-D, a deterministic mutation-distractor reranking
-pack of $n=47$ problems: \modelname{} reaches $46/47$ ($0.979$) on both seeds,
-beating the strongest non-trivial control, shuffled-action ($0.894$/$0.915$), by
-$+8.5$ and $+6.4$ points (4 and 3 problems; 95\% bootstrap CIs $[0.0,19.1]$ and
-$[0.0,14.9]$ that \emph{include} zero), and the no-action control by $+10.6$ and
-$+8.5$ points. The two seeds are a training-stability check on the same $47$
-problems, not independent replications. The aggregate model-quality claim stays
-closed: MBPP-Plus WS-D is saturated on its $17$ problems---\modelname{},
-no-action, and lexical all reach $17/17$, so the slice has zero headroom and is
-non-informative for any lift---representation probes do not beat controls, broad
-semantic surprise has no scorable pairs, and the downstream rows expose no
-standalone \code{p\_pass} score. We therefore present \modelname{} as a
-reproducible negative-and-diagnostic study with one narrow positive slice, not as
-evidence that the model generally improves coding, together with a released
+the training configuration before launch, and a machine-readable gate decides
+which claims may open. The outcome is one falsified hypothesis, non-collapsed
+diagnostic signals, and a single narrow downstream win that does not open an
+aggregate claim. The original commit-edit action-use hypothesis is negative: on
+$1{,}000$ held-out retrieval examples, commit-edit text-action ranking
+(Recall@1 $0.263$, MRR $0.370$) loses to a no-action baseline ($0.441$,
+$0.533$). A separate execution-trace substrate is cleaner diagnostically:
+execution retrieval beats every control (Recall@1 $0.254$/$0.273$ vs.\ all
+controls below $0.024$), and single-point mutation surprise reaches AUC $1.0$
+over $260$ scored pairs. These are training-health signals, not downstream
+utility. The only open downstream slice is HumanEval WS-D, a deterministic
+mutation-distractor reranking pack of $n=47$ problems: \modelname{} reaches
+$46/47$ ($0.979$) on both seeds, beating the strongest non-trivial control,
+shuffled-action ($0.894$/$0.915$), by $+8.5$ and $+6.4$ points (4 and 3
+problems; 95\% bootstrap CIs $[0.0,19.1]$ and $[0.0,14.9]$ that \emph{include}
+zero), and the no-action control by $+10.6$ and $+8.5$ points. The two seeds are
+a training-stability check on the same $47$ problems, not independent
+replications. The aggregate model-quality claim stays closed: MBPP-Plus WS-D is
+saturated on its $17$ problems because \modelname{}, no-action, and lexical all
+reach $17/17$, so the slice has zero headroom and is non-informative for any
+lift. Representation probes do not beat controls, broad semantic surprise has no
+scorable pairs, and the downstream rows expose no standalone \code{p\_pass}
+score. We therefore present \modelname{} as a reproducible
+negative-and-diagnostic study with one narrow positive slice, not as evidence
+that the model generally improves coding, together with a released
 anti-saturation falsification harness whose gate is deliberately still closed.
-The contribution is the artifact and the discipline: code-world-model reranking
-claims need no-action, lexical, and shuffled-action controls and pre-registered
-gates because many apparent wins vanish under those controls.
+The main contribution is a reproducible artifact and a falsification protocol:
+code-world-model reranking claims need no-action, lexical, and shuffled-action
+controls and configuration-bound gates because many apparent wins vanish under
+those controls.
 \end{abstract}
 
 \section{Introduction}
@@ -134,7 +137,7 @@ concrete next research requirements.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=1.5em]
-  \item A \emph{pre-registered, control-first claim-gate methodology} for
+  \item A \emph{configuration-bound, control-first claim-gate methodology} for
   code-world-model reranking: falsification gates (no-action, lexical,
   shuffled-action, and LLM-order controls; collapse, retrieval, surprise, and
   downstream-lift thresholds with two required seeds) are fixed in the training
@@ -151,13 +154,13 @@ concrete next research requirements.
   claims.
   \item A final downstream replay showing a single non-aggregated HumanEval WS-D
   slice ($n=47$) that beats no-action and the stronger shuffled-action control by
-  a few problems, while the pre-registered gate closes the aggregate claim on
+  a few problems, while the configuration-bound gate closes the aggregate claim on
   MBPP-Plus saturation, missing standalone \code{p\_pass} scores, and broader
   representation and semantic gates.
-  \item A \emph{released} anti-saturation falsification harness that
-  operationalizes the outlook---a hard-negative pool generator and a
-  three-baseline gate over a locked $\geq$100-problem slice---whose claim gate
-  remains deliberately closed because no eligible slice has yet been scored.
+  \item A \emph{released} anti-saturation falsification harness: a hard-negative
+  pool generator and a three-baseline gate over a locked $\geq$100-problem slice.
+  Its claim gate remains deliberately closed because no eligible slice has yet
+  been scored.
 \end{enumerate}
 
 \section{Artifact and Claim Discipline}
@@ -184,17 +187,16 @@ replay coverage, not independent problems. Replay mode records
 scoring run and not a live OpenRouter demo. The committed artifact id is
 \code{demo\_report-e6fc06c328eed245}.
 
-The release includes \emph{pre-registered}, machine-readable claim gates. The
-numeric thresholds---collapse effective-rank ratio $\geq 0.20$ (achieved
-$0.388$/$0.406$); mutation-surprise AUC $\geq 0.65$ (achieved $1.0$/$1.0$);
-retrieval Recall@1 lift over no-action $\geq 0.05$ (achieved); downstream rerank
-pass@1 lift $\geq 3.0$ points over no-action (HumanEval WS-D passes, MBPP-Plus
-WS-D $+0.00$ fails); two required seeds---were committed in the training
-configuration before the runs (Section~\ref{sec:model}), so a passing result
-cannot be retrofitted to the data. The gate is not a decorative checklist; it is
-part of the artifact contract. It allows narrow HumanEval WS-D wording and blocks
-aggregate coding-improvement wording because the cross-benchmark gate does not
-pass.
+The release includes \emph{configuration-bound}, machine-readable claim gates.
+The numeric thresholds were committed in the training configuration before the
+runs (Section~\ref{sec:model}): collapse effective-rank ratio $\geq 0.20$
+(achieved $0.388$/$0.406$), mutation-surprise AUC $\geq 0.65$ (achieved
+$1.0$/$1.0$), retrieval Recall@1 lift over no-action $\geq 0.05$ (achieved),
+downstream rerank pass@1 lift $\geq 3.0$ points over no-action (HumanEval WS-D
+passes, MBPP-Plus WS-D $+0.00$ fails), and two required seeds. The gate prevents
+retrofitting the claim to the data. It allows narrow HumanEval WS-D wording and
+blocks aggregate coding-improvement wording because the cross-benchmark gate
+does not pass.
 
 \section{Model and Training}
 \label{sec:model}
@@ -251,14 +253,14 @@ $-\big\|\hat z_{\mathrm{after}} - E(s_{\mathrm{cand}})\big\|_2^2$ (lower latent
 distance ranks higher). Candidate code is never imported, executed, or test-run
 on the scoring path.
 
-\paragraph{Pre-registered acceptance gates.}
+\paragraph{Configuration-bound acceptance gates.}
 The training configuration fixes the acceptance thresholds \emph{before} the runs,
-not after inspecting them. Non-collapse requires a predicted-latent effective-rank
-ratio above $0.20$; mutation-surprise AUC must exceed $0.65$; retrieval Recall@1
-must exceed no-action by at least $0.05$; a downstream slice may open only with a
-pass@1 lift of at least $3.0$ points over no-action; and every gate requires both
-seeds as a training-stability check. These thresholds, rather than a post-hoc
-reading of the metrics, decide which claims open.
+not after inspecting them. Collapse requires a predicted-latent effective-rank
+ratio above $0.20$. Mutation surprise must exceed AUC $0.65$. Retrieval Recall@1
+must be at least $0.05$ above no-action. A downstream slice needs pass@1 at least
+$3.0$ points above no-action, and every gate requires two seeds for training
+stability. These thresholds, rather than a post-hoc reading of the metrics,
+decide which claims open.
 
 \section{Data}
 \label{sec:data}
@@ -280,7 +282,7 @@ evaluated on the \emph{identical} $47$-problem (HumanEval) and $17$-problem
 (MBPP-Plus) WS-D sets with identical candidate pools. Cross-seed agreement is
 therefore evidence of training stability, not of independent statistical
 replication, and the per-seed confidence intervals are correlated because they
-resample the same problems. We treat the pre-registered two-seed requirement as a
+resample the same problems. We treat the configuration-bound two-seed requirement as a
 stability check accordingly.
 
 \section{Experimental Evidence}
@@ -314,14 +316,14 @@ v1.0 & paper-demo replay & reproducible demo package & aggregate downstream usef
 The v0.2 action-swap/inverse-action run directly tests whether action
 conditioning beats no-action on held-out retrieval. It does not. Text-action
 Recall@1 was 0.263 and MRR 0.370 on $1{,}000$ held-out retrieval examples, while
-no-action reached Recall@1 0.441 and MRR 0.533, a gap far outside sampling noise
-at this $n$. Exact-same-before, near-before, same-file,
+no-action reached Recall@1 0.441 and MRR 0.533; the result misses the configured
+action-use gate by a wide margin. Exact-same-before, near-before, same-file,
 action-cluster, edit-shape, and random action-contrast pools also failed to
 show the required margin over no-action. Latent probes were unsupported for
 semantic structure: lexical or metadata controls beat the latent views on the
 available targets.
 
-This is the central negative result. It means that the early edit-action signal
+This is the main negative result. It means that the early edit-action signal
 was not sufficiently action-discriminative. A commit message can describe a
 change, but it often does not force the model to use the action rather than the
 before-state. The no-action baseline is therefore not a nuisance baseline; it
@@ -336,8 +338,8 @@ passes on both seeds: Recall@1 is 0.2538 and 0.2731, while all listed retrieval
 controls are below 0.024 Recall@1. Mutation surprise AUC is 1.0 on both seeds,
 over 260 scored single-point mutation pairs; the broader semantic-decoy
 categories have zero scorable aligned pairs, so this is narrow mutation surprise,
-not broad semantic surprise. These are credible training-health results. They do
-not, by themselves, prove downstream coding usefulness.
+not broad semantic surprise. These training-health results have clear artifact
+support. They do not, by themselves, prove downstream coding usefulness.
 
 Representation claims remain closed. The v0.9 \code{passed} probe reaches
 0.6552 and 0.6158 for \(\hat z_{\mathrm{after}}\), but no-action or before-state
@@ -349,7 +351,7 @@ aligned pairs in the final pack.
 \subsection{RQ3: final downstream replay}
 \label{sec:rq3}
 
-The final paper-demo replay is the central downstream result. It is a
+The final paper-demo replay is the main downstream result. It is a
 clean-checkout replay over persisted v0.9 score rows, not a new scoring run,
 and is derived from
 \artifact{docs/benchmark/v1_0/paper_demo/reports/paper_demo_report.json}
@@ -399,10 +401,10 @@ and summarized in Figure~\ref{fig:downstream} and Table~\ref{tab:demo}.
 \end{tikzpicture}
 \caption{Final v1.0 paper-demo replay ($n=47$ HumanEval, $n=17$ MBPP-Plus
 problems per seed). HumanEval WS-D shows a narrow \modelname{} lift over both the
-no-action and the stronger shuffled-action control (their bars nearly coincide,
-just below \modelname{}; the lift over shuffled-action has a 95\% CI that includes
-zero, Table~\ref{tab:control}), while MBPP-Plus is saturated by \modelname{},
-no-action, and lexical controls. This is why the aggregate claim gate is closed.}
+no-action and the stronger shuffled-action control; the lift over
+shuffled-action has a 95\% CI that includes zero (Table~\ref{tab:control}).
+MBPP-Plus is saturated by \modelname{}, no-action, and lexical controls, so the
+aggregate claim gate is closed.}
 \label{fig:downstream}
 \end{figure}
 
@@ -446,9 +448,9 @@ strongest: shuffled-action is the strongest non-trivial control, and the
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
 Control & s.42 & s.1729 & s.42 & s.1729 & s.42 & s.1729 \\
 \midrule
-LLM-order       & $7/47$  & $7/47$  & $+83.0$ (39) & $+83.0$ (39) & ---            & ---            \\
-Random          & $10/47$ & $10/47$ & $+76.6$ (36) & $+76.6$ (36) & ---            & ---            \\
-Lexical         & $31/47$ & $31/47$ & $+31.9$ (15) & $+31.9$ (15) & ---            & ---            \\
+LLM-order       & $7/47$  & $7/47$  & $+83.0$ (39) & $+83.0$ (39) & N/A            & N/A            \\
+Random          & $10/47$ & $10/47$ & $+76.6$ (36) & $+76.6$ (36) & N/A            & N/A            \\
+Lexical         & $31/47$ & $31/47$ & $+31.9$ (15) & $+31.9$ (15) & N/A            & N/A            \\
 No-action       & $41/47$ & $42/47$ & $+10.6$ (5)  & $+8.5$ (4)   & $[2.13,21.28]$ & $[2.13,17.02]$ \\
 Shuffled-action & $42/47$ & $43/47$ & $+8.5$ (4)   & $+6.4$ (3)   & $[0.00,19.15]$ & $[0.00,14.89]$ \\
 \bottomrule
@@ -457,14 +459,14 @@ Shuffled-action & $42/47$ & $43/47$ & $+8.5$ (4)   & $+6.4$ (3)   & $[0.00,19.15
 
 HumanEval WS-D is the narrow positive slice. \modelname{} ranks a passing
 candidate first on $46/47$ problems (pass@1 0.9787) on both seeds, beating
-no-action by +10.64 and +8.51 points---that is, $5$ and $4$ of $47$
-problems---with 95\% paired-bootstrap CIs of $[2.13, 21.28]$ and $[2.13, 17.02]$
+no-action by +10.64 and +8.51 points ($5$ and $4$ of $47$ problems), with 95\%
+paired-bootstrap CIs of $[2.13, 21.28]$ and $[2.13, 17.02]$
 (Table~\ref{tab:control}). It also beats the stronger shuffled-action control,
 which supplies a real but mismatched action (pass@1 $0.8936$ and $0.9149$), by
 +8.51 and +6.38 points ($4$ and $3$ problems). Because shuffled-action dominates
-no-action on exactly these slices, the win over shuffled-action---not over
-no-action---is the binding result: the lift is not explained by the mere presence
-of an action token. But against this strongest control the 95\% CIs are
+no-action on exactly these slices, the win over shuffled-action, not over
+no-action, is the binding result: the lift is not explained by the mere presence
+of an action token. Against this strongest control the 95\% CIs are
 $[0.00, 19.15]$ and $[0.00, 14.89]$, which \emph{include} zero, so even the open
 slice is suggestive, not robust. The intervals are coarse: on $n=47$ the smallest
 resolvable lift is one problem ($2.13$ points), the CIs are percentile bootstraps
@@ -476,13 +478,13 @@ and lexical all rank a passing candidate first (pass@1 1.0000, i.e.\ $17/17$), s
 the slice has zero headroom and is non-informative for any lift: the
 $[0.00, 0.00]$ bootstrap interval reflects the absence of variation in a saturated
 $17$-problem vector, not an equivalence result. This is exactly the configuration
-the pre-registered gate refuses to aggregate, so it closes the aggregate
-downstream claim. Across the full evaluation---two benchmarks $\times$ two seeds
-$\times$ four controls---we apply no multiple-comparison correction; the single
+the configuration-bound gate refuses to aggregate, so it closes the aggregate
+downstream claim. Across the full evaluation (two benchmarks $\times$ two seeds
+$\times$ four controls), we apply no multiple-comparison correction; the single
 surviving open slice should be read as a hypothesis-generating result that cleared
-a pre-registered gate, not as a multiplicity-controlled confirmation. The evidence
-supports a narrow HumanEval WS-D result, not a claim that \modelname{} generally
-improves patch ranking.
+a configuration-bound no-action gate, not as a multiplicity-controlled
+confirmation. The evidence supports a narrow HumanEval WS-D result, not a claim
+that \modelname{} generally improves patch ranking.
 
 \section{Lessons}
 
@@ -499,7 +501,7 @@ but those diagnostics do not automatically imply useful patch ranking. This
 distinction matters. Non-collapse, retrieval lift over controls, and surprise
 separation are necessary health signals, not sufficient product claims.
 
-\paragraph{Benchmark saturation can close an otherwise promising result.}
+\paragraph{Benchmark saturation can close an otherwise positive-looking result.}
 The final WS-D MBPP-Plus pack is saturated on the available $17$ problems:
 CodeLeWM, no-action, and lexical all choose passing candidates at rank 1 on both
 seeds, so the slice has no headroom and cannot register a lift. This is not a
@@ -543,7 +545,7 @@ execution-trace work provide complementary signals for program behavior
 \citep{zaremba2015learningexecute,ding2023tracedexecutionawarepretrainingsource,armengolestape2025iexecuteiunderstand}.
 Architecturally, \modelname{} is an incremental port of LeJEPA-family
 anti-collapse and EMA-target JEPA prediction to code-execution transitions. Its
-methodological contribution is distinct: pre-registered, machine-readable claim
+methodological contribution is distinct: configuration-bound, machine-readable claim
 gates with first-class no-action, lexical, and shuffled-action controls, so that
 reranking claims are falsifiable before they are reported.
 
@@ -665,17 +667,17 @@ secret scans.
 \section{Conclusion}
 
 \modelname{} is a completed reproducible research artifact, not a broad coding
-assistant. The artifact discipline worked: datasets, checkpoints, reports,
+assistant. The artifact contract worked: datasets, checkpoints, reports,
 claim gates, manifests, and scans can be regenerated and inspected. The
 original action-use hypothesis did not work: no-action stayed stronger on
 commit-edit retrieval. The execution substrate gave healthier model diagnostics
 and a single narrow HumanEval WS-D downstream win that beats no-action and the
 stronger shuffled-action control by a few problems, but MBPP-Plus saturation, a
 shuffled-action lift whose confidence interval includes zero, and representation
-blockers keep the public model-quality claim closed. The durable contribution is
+blockers keep the public model-quality claim closed. The main contribution is
 methodological: code world-model reranking claims should be published with
-pre-registered gates and their no-action, lexical, and shuffled-action controls
-intact---and, where the gate stays closed, with a released falsification
+configuration-bound gates and their no-action, lexical, and shuffled-action
+controls intact and, where the gate stays closed, with a released falsification
 instrument rather than a louder claim.
 
 \bibliographystyle{plainnat}

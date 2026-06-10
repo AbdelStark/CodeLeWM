@@ -134,6 +134,7 @@ The committed artifact set is documented in
 The final public release package is:
 
 - artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`;
+- final claim audit: `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`;
 - release card: `docs/cards/codelewm-v1-0-final-release-2026-06-08.md`;
 - paper-demo card: `docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md`;
 - reproducibility checklist:
@@ -147,6 +148,10 @@ The final public release package is:
 The final package preserves the same public boundary as the paper: reproducible
 research artifact, negative action-use evidence, narrow HumanEval WS-D slice,
 and no broad coding-improvement claim.
+
+Release tracker status: #406 consolidated benchmark tables and the final claim
+audit, #407 rewrote the paper around the final downstream evidence, and
+#408 published the final artifact index and release package.
 
 ## v0.6 Publication Landing
 
