@@ -4,7 +4,12 @@
   <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/AbdelStark/CodeLeWM/pr.yml?branch=main&style=for-the-badge&label=CI">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10--3.14-3776AB?style=for-the-badge&logo=python&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge">
-  <img alt="Hugging Face artifacts" src="https://img.shields.io/badge/Hugging%20Face-public%20artifacts-FFD21E?style=for-the-badge">
+  <a href="https://huggingface.co/datasets/abdelstark/codelewm-execution-pack">
+    <img alt="Hugging Face datasets" src="https://img.shields.io/badge/Hugging%20Face-datasets-FFD21E?style=for-the-badge">
+  </a>
+  <a href="https://huggingface.co/abdelstark/codelewm-transition-model">
+    <img alt="Hugging Face model" src="https://img.shields.io/badge/Hugging%20Face-model-FFD21E?style=for-the-badge">
+  </a>
   <img alt="Claim boundary" src="https://img.shields.io/badge/claims-negative%20diagnostic-111827?style=for-the-badge">
   <a href="https://zenodo.org/records/20630120">
     <img alt="Paper DOI" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20630120-2D9CDB?style=for-the-badge&logo=zenodo&logoColor=white">
@@ -369,6 +374,12 @@ Useful entry points:
   `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md`;
 - final claim audit: `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`;
 - public artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`;
+- Hugging Face execution dataset:
+  `https://huggingface.co/datasets/abdelstark/codelewm-execution-pack`;
+- Hugging Face transition-model artifacts:
+  `https://huggingface.co/abdelstark/codelewm-transition-model`;
+- Hugging Face run artifacts:
+  `https://huggingface.co/datasets/abdelstark/codelewm-runs`;
 - reproducibility checklist:
   `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md`.
 - release announcement: `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md`.
