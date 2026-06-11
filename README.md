@@ -14,23 +14,29 @@
   </a>
 </p>
 
-<p align="center"><strong>CodeLeWM: A Reproducible, Claim-Gated Code World-Model Study with Negative Action-Use Results and a Narrow Downstream Reranking Slice</strong></p>
+<p align="center"><strong>Claim-gated code world models for scoring and reranking candidate patches.</strong></p>
+
+<p align="center">
+CodeLeWM learns latent transition dynamics over Python code edits, then turns
+those dynamics into reproducible scoring, retrieval, diagnostics, and LLM
+candidate-reranking artifacts.
+</p>
 
 <table>
   <tr>
     <td width="50%">
       <img src="docs/images/screenshots/llm-rank-candidates.png" alt="LLM candidate diff previews" width="100%">
-      <br><sub>Candidate diffs: generated patch options stay inspectable with parse/apply status.</sub>
+      <br><sub>Candidate pack: generated patch options remain inspectable with parse/apply status.</sub>
     </td>
     <td width="50%">
       <img src="docs/images/screenshots/llm-rank-scorer.png" alt="World-model scorer trace" width="100%">
-      <br><sub>Scorer trace: transition-energy rows show candidates against the no-action baseline.</sub>
+      <br><sub>Scorer trace: transition energies compare candidates against the no-action baseline.</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
       <img src="docs/images/screenshots/exec-tour-problems.png" alt="Execution-rerank tour problem cards" width="100%">
-      <br><sub>Execution tour: task cards show pass/fail labels, CodeLeWM order, and candidate code.</sub>
+      <br><sub>Execution tour: task cards expose pass/fail labels, CodeLeWM order, and candidate code.</sub>
     </td>
     <td width="50%">
       <img src="docs/images/screenshots/exec-tour-ranking-trace.png" alt="Execution-rerank candidate ranking trace" width="100%">
@@ -39,173 +45,223 @@
   </tr>
 </table>
 
-CodeLeWM is a Python ML research harness for learning latent transition models
-over code edits.
+## What It Does
 
-It is not a code generator. It is a scorer and reranker for candidate patches:
-given a before-state, an edit instruction, and candidate after-states or diffs,
-CodeLeWM estimates which candidate best matches the learned transition.
+CodeLeWM models edit transitions:
 
 ```text
 CodeState_before + EditAction -> latent(CodeState_after)
 ```
 
-For the full command and Python API surface, see `docs/usage/USAGE.md`.
+It is not a patch generator. It accepts candidate after-states or unified diffs
+from a caller, codemod, search process, or LLM, then scores and reranks them
+with a learned transition model and explicit baselines.
 
-## Current Result
+The package is built around four practical surfaces:
 
-The systems path works end to end:
+- data builders for public-safe Python edit transition datasets;
+- package-native training and checkpoint manifests;
+- retrieval, surprise, latent, scorer-quality, and downstream reranking evals;
+- an LLM + world-model harness that captures untrusted candidate patches before
+  scoring them.
 
-- public-safe Python edit datasets;
-- manifest-backed training on Hugging Face Jobs;
-- public dataset/model/run artifacts on Hugging Face;
-- downloaded-artifact verification with checksums and secret scans;
-- retrieval, action ablation, surprise, latent-probe, latent-matrix,
-  scorer-quality, score,
-  rerank, downstream-pack, downstream-rerank, LLM-demo, execution-rerank, and
-  p-pass calibration reports.
+## Install
 
-The final evidence boundary is mixed and claim-limited. CodeLeWM has a
-reproducible code-edit world-model harness, verified public artifact
-infrastructure, negative action-conditioned v0.2 evidence, and a narrow v0.9
-HumanEval WS-D downstream reranking win across two seeds. The overall public
-claim remains closed because MBPP-Plus has zero lift over no-action and broader
-semantic, representation, and coding-usefulness gates do not clear. This
-repository is publishable as a reproducible negative/diagnostic study with a
-narrow positive HumanEval slice, not as a broad claim that CodeLeWM improves
-coding.
+```bash
+uv sync --group dev
+uv run codelewm --help
+```
+
+Optional runtimes stay explicit:
+
+```bash
+uv sync --group dev --group data          # HDF5 and Arrow dataset packing
+uv sync --group dev --group train         # PyTorch training and scoring
+uv sync --group dev --group eval          # optional evaluation helpers
+uv sync --group dev --group llm           # OpenRouter candidate generation
+uv sync --group dev --group observability # TensorBoard-compatible exports
+uv sync --group dev --group tui           # optional Textual viewers
+```
+
+Full command reference: `docs/usage/USAGE.md`.
 
 ## Quickstart
+
+Build the local smoke artifact set:
 
 ```bash
 uv sync --group dev --group data --group train
 uv run scripts/first-results --overwrite
-uv run codelewm secret-scan .artifacts/first-results docs/benchmark/FIRST_RESULTS.md --json
+uv run codelewm secret-scan \
+  .artifacts/first-results \
+  docs/benchmark/FIRST_RESULTS.md \
+  --json
 ```
 
-This rebuilds the local smoke artifact set and regenerates
-`docs/benchmark/FIRST_RESULTS.md`. It proves the package-native dataset, pack,
-train, eval, index, scorer-quality, manifest, and secret-scan loop on tiny
-fixtures. It does not prove model quality.
-
-## LLM + World-Model Demo
-
-Run the deterministic fixture demo:
+Run the fixture LLM + world-model demo:
 
 ```bash
 uv sync --group dev --group data --group train --group llm
 uv run scripts/llm-world-model-demo
 ```
 
-The task loads `.env` if present, stays in `CODELEWM_LLM_DRY_RUN=1` by default,
-materializes the `bugfix-edge-case` scenario, generates candidate diffs through
-the OpenRouter adapter fixture path, writes `codelewm.llm_candidate_pack.v1`,
-runs `codelewm llm-demo` with a trusted package-native torch checkpoint and
-`--require-learned-scorer`, verifies manifests, secret-scans publishable
-outputs, and writes a visual report at
-`.artifacts/llm-world-model-demo/run/demo.html`. If the local first-results
-checkpoint is missing, the script regenerates it before scoring. The default
-output is a terminal walkthrough of scenario selection, candidate generation,
-learned world-model inference, artifact gates, and claim status.
-
-Expected success signal:
-
-```text
-CodeLeWM LLM + World-Model Demo
-mode: fixture dry-run | scorer: codelewm.torch_transition_scorer.v1 | success: true
-[ok] 4/6 World-model inference
-[ok] 5/6 Artifact gates
-html report: .artifacts/llm-world-model-demo/run/demo.html
-```
-
-For non-interactive JSON output, use `uv run scripts/llm-world-model-demo --json`
-or `CODELEWM_LLM_DEMO_OUTPUT=json`.
-
-Select another built-in scenario with `--scenario <id>` or
-`CODELEWM_LLM_DEMO_SCENARIO=<id>`. List available scenarios with
-`uv run scripts/llm-world-model-demo --list-scenarios`.
-
-Run the v0.6 execution-rerank tour with a downloaded seed-42 checkpoint:
-
-```bash
-CODELEWM_LLM_DRY_RUN=0 CODELEWM_LLM_MAX_CANDIDATES=2 \
-  uv run scripts/llm-world-model-demo \
-  --scenario execution-rerank-mbpp \
-  --checkpoint .artifacts/v0_6/runs/codelewm-v0-6-execution-20260530-af1a114-seed-42/checkpoints/last.pt \
-  --tour 5 \
-  --html .artifacts/v0-6-execution-rerank-tour-live.html
-```
-
-The tour samples live OpenRouter candidates for five public-safe synthetic
-MBPP-style tasks, labels them only through `codelewm.data.sandbox`, scores them
-with the v0.6 execution-substrate checkpoint, writes
-`codelewm.harness.execution_rerank_tour.v1` plus the unchanged
-`codelewm.harness.execution_rerank_view_model.v1`, and keeps the claim gate
-closed below the scaled 100-example downstream benchmark. A committed
-HTML report and asciicast live in `docs/demo/`.
-
-## Final Paper Demo
-
-Assemble the deterministic v1.0 downstream paper-demo artifact set:
+Build the deterministic paper-demo artifact:
 
 ```bash
 uv run scripts/paper-demo --out .artifacts/paper-demo --overwrite
 ```
 
-This is a clean-checkout replay over the checked-in v0.9 WS-D score rows, not a
-fresh checkpoint scoring run and not a live OpenRouter demo. It writes
-`reports/paper_demo_report.json`, `reports/paper_demo_claim_gate.json`,
-`reports/paper_demo_table.md`, `reports/run_timeline.json`, `demo.html`,
-`reports/secret_scan_report.json`, and `manifest.json`. The aggregate claim
-gate remains closed because MBPP-Plus is saturated against no-action.
-The committed artifact set is documented in
-`docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md` and lives under
-`docs/benchmark/v1_0/paper_demo/`.
+These commands write schema-versioned artifacts under `.artifacts/`, verify
+manifests where applicable, and keep publishable outputs compatible with the
+secret scanner.
 
-## Final v1.0 Release Package
+## Architecture
 
-The final public release package is:
+```text
+                         CodeLeWM package
 
-- artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`;
-- final claim audit: `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`;
-- release card: `docs/cards/codelewm-v1-0-final-release-2026-06-08.md`;
-- paper-demo card: `docs/cards/codelewm-v1-0-paper-demo-2026-06-08.md`;
-- reproducibility checklist:
-  `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md`;
-- announcement draft:
-  `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md`;
-- final paper package: `docs/papers/codelewm_final_paper.tex`,
-  `docs/papers/codelewm_final_paper.pdf`, and
-  `docs/papers/codelewm_final_arxiv_source.tar.gz`.
+  raw edits / fixtures / public shards
+                 |
+                 v
+        +-------------------+
+        | codelewm.data     |  source policy, parsing, normalization,
+        |                   |  dedup, splits, transition manifests
+        +---------+---------+
+                  |
+                  v
+        +-------------------+       +--------------------+
+        | TransitionRecord  +------>| HDF5 / artifact    |
+        | before/action/after       | packs + manifests  |
+        +---------+---------+       +--------------------+
+                  |
+                  v
+        +-------------------+
+        | codelewm.model    |  CodeStateEncoder, action encoders,
+        |                   |  JEPA-style predictor, transition energy
+        +---------+---------+
+                  |
+                  v
+        +-------------------+       +--------------------+
+        | codelewm.eval     +------>| reports: retrieval,|
+        |                   |       | surprise, latent,  |
+        |                   |       | downstream gates   |
+        +---------+---------+       +--------------------+
+                  |
+                  v
+        +-------------------+
+        | codelewm.harness  |  score, rerank, index, LLM demo,
+        |                   |  HTML/terminal/TUI view models
+        +-------------------+
+```
 
-The final package preserves the same public boundary as the paper: reproducible
-research artifact, negative action-use evidence, narrow HumanEval WS-D slice,
-and no broad coding-improvement claim.
+Load-bearing rules:
 
-Release tracker status: #406 consolidated benchmark tables and the final claim
-audit, #407 rewrote the paper around the final downstream evidence, and
-#408 published the final artifact index and release package.
+- candidate code is untrusted input;
+- parsing and scoring do not execute candidate patches by default;
+- every publishable artifact is JSON-native where applicable, manifest-backed,
+  checksum-verifiable, and secret-scanned;
+- public model-quality claims are opened by reports, not by demos.
 
-## v0.6 Publication Landing
+## Training Paradigm
 
-The v0.6 public artifact map is:
+CodeLeWM uses a JEPA-style latent transition objective for code edits. The model
+predicts the after-state latent from the before-state latent and action latent;
+transition energy is the distance between the predicted and observed after
+latents.
 
-- artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-05-31.md`;
-- dataset card: `docs/cards/codelewm-v0-6-execution-dataset-2026-05-31.md`;
-- model cards:
-  `docs/cards/codelewm-v0-6-execution-model-seed-42-2026-05-31.md` and
-  `docs/cards/codelewm-v0-6-execution-model-seed-1729-2026-05-31.md`;
-- blog-style announcement draft:
-  `docs/blog/2026-05-31-codelewm-v0-6-substrate-pivot.md`;
-- demo: `docs/demo/execution_rerank_tour_2026-05-31.html`;
-- arXiv package: `docs/papers/ARXIV_SUBMISSION.md`.
+```text
+                 training row
+  +-----------------------------------------+
+  | before code | edit action | after code  |
+  +------+------+-+-----------+-+-----------+
+         |        |             |
+         v        v             v
+  +-------------+ +-------------+ +-------------+
+  | CodeState   | | Text/       | | CodeState   |
+  | Encoder     | | Abstract    | | Encoder     |
+  +------+------+ | Action Enc. | +------+------+
+         |        +------+------+        |
+         |               |               |
+         v               v               v
+     z_before       action_latent     z_after
+         \               |              /
+          \              v             /
+           +----> latent predictor ---+
+                         |
+                         v
+                   z_after_pred
+                         |
+             +-----------+-----------+
+             | transition loss       |
+             | SIGReg/collapse gates |
+             | retrieval diagnostics |
+             +-----------+-----------+
+                         |
+                         v
+          checkpoint + manifest + eval reports
+```
 
-This v0.6 landing is historical evidence. Its remaining arXiv/HF publication
-follow-through is superseded by the final #401 paper/demo release queue, which
-uses the v0.9 claim audit and final downstream demo package as the public
-release boundary.
+Reproducible training and publication use the same outer loop:
 
-Live OpenRouter mode is explicit:
+```text
+source acquisition
+  -> license and split gates
+  -> transition shards
+  -> packed training batches
+  -> package-native torch training
+  -> trusted checkpoint manifest
+  -> downloaded-artifact verification
+  -> retrieval / surprise / latent / rerank reports
+  -> claim-gated public wording
+```
+
+## LLM + World-Model Harness
+
+The harness is designed for the practical workflow where an LLM proposes
+candidate patches and CodeLeWM evaluates them as code-edit transitions.
+
+```text
+  task + bounded repository context
+              |
+              v
+     +-------------------+
+     | OpenRouter / LLM  |  dry-run fixtures by default,
+     | candidate writer  |  live mode via OPENROUTER_API_KEY
+     +---------+---------+
+               |
+               v
+     +-------------------+
+     | candidate pack    |  untrusted diffs, checksums,
+     | codelewm.llm_*    |  parse/apply status, redaction
+     +---------+---------+
+               |
+      +--------+---------+
+      |                  |
+      v                  v
++-------------+   +-------------------+
+| static      |   | CodeLeWM scorer   |
+| patch view  |   | trusted checkpoint|
++------+------+   +---------+---------+
+       \                  /
+        \                /
+         v              v
+     +-----------------------+
+     | rerank report         |
+     | LLM order, no-action, |
+     | lexical, CodeLeWM     |
+     +-----------+-----------+
+                 |
+                 v
+     terminal / HTML / JSON / optional TUI
+```
+
+Run the default fixture path:
+
+```bash
+uv run scripts/llm-world-model-demo
+```
+
+Run live candidate generation through OpenRouter:
 
 ```bash
 cp .env.example .env
@@ -213,42 +269,7 @@ cp .env.example .env
 CODELEWM_LLM_DRY_RUN=0 uv run scripts/llm-world-model-demo
 ```
 
-### Anthropic BYOK Through OpenRouter
-
-CodeLeWM supports OpenRouter BYOK for Anthropic keys without silently switching
-to a direct Anthropic client.
-
-```bash
-# .env, kept local
-OPENROUTER_API_KEY=<openrouter-api-key>
-OPENROUTER_MANAGEMENT_KEY=<openrouter-management-key>
-ANTHROPIC_API_KEY=<anthropic-provider-key>
-CODELEWM_LLM_DRY_RUN=0
-CODELEWM_OPENROUTER_BYOK=1
-CODELEWM_OPENROUTER_BYOK_PROVIDER=anthropic
-CODELEWM_OPENROUTER_BYOK_KEY_ENV=ANTHROPIC_API_KEY
-CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV=OPENROUTER_MANAGEMENT_KEY
-CODELEWM_OPENROUTER_BYOK_REQUIRE=1
-CODELEWM_OPENROUTER_BYOK_REGISTER=1
-CODELEWM_OPENROUTER_BYOK_DRY_RUN=0
-```
-
-`CODELEWM_OPENROUTER_BYOK_REGISTER=1` intentionally creates an encrypted
-Anthropic BYOK credential in the OpenRouter workspace via OpenRouter's BYOK API.
-Keep `CODELEWM_OPENROUTER_BYOK_DRY_RUN=1` to validate the registration contract
-without sending the provider key. Registration uses the OpenRouter management
-key named by `CODELEWM_OPENROUTER_BYOK_MANAGEMENT_KEY_ENV`; normal chat requests
-still authenticate with `OPENROUTER_API_KEY`. If the BYOK credential already
-exists in the OpenRouter dashboard, set `CODELEWM_OPENROUTER_BYOK_REGISTER=0`
-and keep `CODELEWM_OPENROUTER_BYOK=1`. CodeLeWM records redacted BYOK routing
-metadata and never writes provider keys to reports.
-
-For Anthropic BYOK, start with
-`CODELEWM_LLM_PROVIDER_OPTIONS_JSON='{"sort":"price"}'`. Add `zdr: true` only
-when OpenRouter shows a matching Zero Data Retention endpoint for the pinned
-provider route; otherwise OpenRouter rejects the request before generation.
-
-Dry-run the registration contract without sending secrets:
+Anthropic BYOK is explicit and routed through OpenRouter:
 
 ```bash
 uv run codelewm openrouter byok-register \
@@ -260,6 +281,134 @@ uv run codelewm openrouter byok-register \
   --dry-run \
   --json
 ```
+
+Raw provider keys are never written to reports; reports serialize only redacted
+BYOK metadata.
+
+## Python API
+
+Score one candidate:
+
+```python
+from pathlib import Path
+from codelewm.harness import load_scorer
+
+scorer = load_scorer(
+    Path(".artifacts/first-results/train/checkpoints/checkpoint.pt"),
+    device="cpu",
+)
+result = scorer.score_files(
+    before=Path("tests/fixtures/codestate/class_method_before.py"),
+    instruction="rewrite the accumulator update explicitly",
+    candidate=Path("config/first_results/scorer_quality_candidates/true_after.py"),
+)
+print(result.to_dict())
+```
+
+Rerank a candidate directory:
+
+```python
+from pathlib import Path
+from codelewm.harness import load_scorer
+
+result = load_scorer(
+    Path(".artifacts/first-results/train/checkpoints/checkpoint.pt")
+).rerank_files(
+    before=Path("tests/fixtures/codestate/class_method_before.py"),
+    instruction="rewrite the accumulator update explicitly",
+    candidates=Path("config/first_results/scorer_quality_candidates"),
+)
+
+for item in result.results:
+    if hasattr(item, "final_score"):
+        print(item.candidate, item.final_score)
+    else:
+        print(item.artifact, item.error_type, item.message)
+```
+
+## CLI Surface
+
+| Need | Command |
+| --- | --- |
+| Build transition data | `codelewm dataset build` |
+| Pack training batches | `codelewm dataset pack` |
+| Train a transition model | `codelewm train` |
+| Score one candidate | `codelewm score` |
+| Rerank many candidates | `codelewm rerank` |
+| Build a transition index | `codelewm index` |
+| Run retrieval eval | `codelewm eval retrieval` |
+| Run surprise eval | `codelewm eval surprise` |
+| Inspect latent matrices | `codelewm eval latent-matrix` |
+| Evaluate scorer quality | `codelewm eval scorer-quality` |
+| Build downstream rerank packs | `codelewm eval downstream-pack` |
+| Evaluate downstream reranking | `codelewm eval downstream-rerank` |
+| Run the LLM harness | `codelewm llm-demo` |
+| Register OpenRouter BYOK | `codelewm openrouter byok-register` |
+| Verify lineage | `codelewm manifest verify` |
+| Scan publishable artifacts | `codelewm secret-scan` |
+
+## Artifact Contract
+
+CodeLeWM treats artifacts as part of the API:
+
+- manifests record command, config, source git SHA, checksums, and parent
+  artifacts;
+- checkpoint loading goes through trust gates before model-backed scoring;
+- reports use stable schema names such as `codelewm.eval.retrieval_report.v1`,
+  `codelewm.llm_candidate_pack.v1`, and `codelewm.rerank.v1`;
+- documentation cards and benchmark reports link public artifacts to the exact
+  commands that produced them.
+
+Useful entry points:
+
+- final paper source: `docs/papers/codelewm_final_paper.tex`;
+- final paper PDF: `docs/papers/codelewm_final_paper.pdf`;
+- usage guide: `docs/usage/USAGE.md`;
+- paper-demo artifact set: `docs/benchmark/v1_0/paper_demo`;
+- paper-demo artifact note:
+  `docs/benchmark/PAPER_DEMO_V1_0_ARTIFACTS_2026-06-08.md`;
+- final claim audit: `docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`;
+- public artifact index: `docs/benchmark/PUBLIC_ARTIFACT_INDEX_2026-06-08.md`;
+- reproducibility checklist:
+  `docs/release/V1_0_REPRODUCIBILITY_CHECKLIST_2026-06-08.md`.
+- release announcement: `docs/announcements/FINAL_V1_0_RELEASE_2026-06-08.md`.
+
+<!-- docs-contract: #406 consolidated benchmark tables; #407 rewrote the paper; #408 published the final artifact index. -->
+
+## Claim Contract
+
+CodeLeWM is deliberately claim-gated. Runnable demos, green manifests, and
+published artifacts are necessary evidence, but they do not automatically imply
+model-quality or coding-usefulness claims.
+
+Supported wording:
+
+- reproducible code-edit world-model harness;
+- manifest-backed public artifacts;
+- negative action-use evidence for the tested action-conditioned checkpoints;
+- narrow HumanEval WS-D reranking slice in the checked-in replay evidence.
+
+Blocked wording:
+
+- broad coding improvement;
+- live patch utility;
+- validated semantic latent axes;
+- general downstream improvement across benchmarks.
+
+The detailed audit lives in
+`docs/benchmark/V1_0_FINAL_CLAIM_AUDIT_2026-06-08.md`.
+
+## Development
+
+```bash
+uv sync --group dev
+uv run python -m pytest tests/
+uv run python -m compileall -q -x 'tests/fixtures/codestate/invalid_(before|after)\.py$' codelewm tests
+uv run codelewm --help
+```
+
+Package and artifact gates are documented in `CONTRIBUTING.md` and
+`docs/release/RELEASE_CHECKLIST.md`.
 
 ## Attribution
 
