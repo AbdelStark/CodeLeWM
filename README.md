@@ -14,6 +14,31 @@
   </a>
 </p>
 
+<p align="center"><strong>CodeLeWM: A Reproducible, Claim-Gated Code World-Model Study with Negative Action-Use Results and a Narrow Downstream Reranking Slice</strong></p>
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/screenshots/llm-rank-candidates.png" alt="LLM candidate diff previews" width="100%">
+      <br><sub>Candidate diffs: generated patch options stay inspectable with parse/apply status.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/images/screenshots/llm-rank-scorer.png" alt="World-model scorer trace" width="100%">
+      <br><sub>Scorer trace: transition-energy rows show candidates against the no-action baseline.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/images/screenshots/exec-tour-problems.png" alt="Execution-rerank tour problem cards" width="100%">
+      <br><sub>Execution tour: task cards show pass/fail labels, CodeLeWM order, and candidate code.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/images/screenshots/exec-tour-ranking-trace.png" alt="Execution-rerank candidate ranking trace" width="100%">
+      <br><sub>Ranking trace: CodeLeWM, LLM-order, and lexical ranks are compared as diagnostic evidence.</sub>
+    </td>
+  </tr>
+</table>
+
 CodeLeWM is a Python ML research harness for learning latent transition models
 over code edits.
 
@@ -24,6 +49,8 @@ CodeLeWM estimates which candidate best matches the learned transition.
 ```text
 CodeState_before + EditAction -> latent(CodeState_after)
 ```
+
+For the full command and Python API surface, see `docs/usage/USAGE.md`.
 
 ## Current Result
 
